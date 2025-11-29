@@ -1,0 +1,6 @@
+{
+  "name": "libsweetline.so",
+  "version": "0.0.1",
+  "description": "SweetLine highlight engine ArkTS bindings",
+  "types": "./Index.d.ts"
+}

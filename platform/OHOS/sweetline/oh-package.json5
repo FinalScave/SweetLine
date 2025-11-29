@@ -1,0 +1,11 @@
+{
+  "name": "@qiplat/sweetline",
+  "version": "0.0.1",
+  "description": "SweetLine highlight engine ArkTS bindings",
+  "main": "./src/main/ets/Index.ets",
+  "author": "Scave",
+  "license": "MIT",
+  "dependencies": {
+    "libsweetline.so": "file:./src/main/cpp/types/libsweetline"
+  }
+}

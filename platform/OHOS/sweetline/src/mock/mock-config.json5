@@ -1,0 +1,5 @@
+{
+  "libsweetline.so": {
+    "source": "src/mock/Libsweetline.mock.ets"
+  }
+}
