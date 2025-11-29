@@ -1,0 +1,81 @@
+{
+  "name": "java",
+  "fileExtensions": [".java"],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "classExtends": "(?:${whiteSpace}+\\b(extends)\\b${whiteSpace}+(${identifier}))?",
+    "classImplements": "(?:${whiteSpace}+\\b(implements)\\b${whiteSpace}+(${identifier})(?:(,)${whiteSpace}*(${identifier}))*)?"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(class|interface|enum)\\b${whiteSpace}+(${identifier})${classExtends}${classImplements}",
+        "styles": [1, "keyword", 2, "class", 3, "keyword", 4, "class", 5, "keyword", 6, "class", 7, "punctuation", 8, "class"]
+      },
+      {
+        "pattern": "\\b(new)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(package|class|import|public|private|protected|default|static|final|abstract|synchronized|transient|native|volatile)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(extends|implements|new|this|super|true|false|try|catch|finally|throw|throws|switch|case|if|else|for|while|do)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(@)${whiteSpace}*(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(?:${whiteSpace}*(\\[\\])+${whiteSpace}*)*${whiteSpace}+(${identifier})${whiteSpace}*([;=:,)])",
+        "styles": [1, "class",2, "punctuation", 3, "variable", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]*\\.?[0-9]+(?:[eE][+-]?[0-9]+)?[fFdD]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "[.()\\[\\]?!@%^&|+\\-*/<>=,{};:]",
+        "style": "punctuation"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

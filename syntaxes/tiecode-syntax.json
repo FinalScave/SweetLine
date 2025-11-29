@@ -1,0 +1,100 @@
+{
+  "name": "tiecode",
+  "fileExtensions": [".t"],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "classExtends": "(?:${whiteSpace}+(:)${whiteSpace}+(${identifier}))?"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(类)\\b${whiteSpace}+(${identifier})${classExtends}",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(创建)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(变量)${whiteSpace}+(${identifier})(?:${whiteSpace}*(:)${whiteSpace}*(${identifier}))?",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "(事件)${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "method", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(包名|类|继承|变量|常量|方法|属性写|属性读|属性|定义事件|事件|结束|为|真|假|空|本对象|父对象|变体型)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(如果|且|或|则|否则|假如|是|循环|跳过循环|退出循环|订阅事件|属于|返回|创建|等待)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(@)${whiteSpace}*(${identifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*([,)])",
+        "styles": [1, "variable", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]*\\.?[0-9]+(?:[eE][+-]?[0-9]+)?[fFdD]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\[\\[",
+        "style": "string",
+        "state": "longString"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "[.()\\[\\]?@%+\\-*/<>=,{}:]",
+        "style": "punctuation"
+      }
+    ],
+    "longString": [
+      {
+        "pattern": "\\]\\]",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}
