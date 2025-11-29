@@ -68,10 +68,10 @@ signing {
 centralPortal {
     username = rootProject.property("sonatype.username")
     password = rootProject.property("sonatype.password")
-    name = "fasthighlight"
+    name = "sweetline"
 
     pom {
-        url = "https://github.com/FinalScave/FastCodeHighlight"
+        url = "https://github.com/FinalScave/SweetLine"
         licenses {
             license {
                 name = "MIT License"
@@ -87,9 +87,9 @@ centralPortal {
             }
         }
         scm {
-            connection = "scm:git:https://github.com/FinalScave/FastCodeHighlight.git"
-            developerConnection = "scm:git:https://github.com/FinalScave/FastCodeHighlight"
-            url = "https://github.com/FinalScave/FastCodeHighlight"
+            connection = "scm:git:https://github.com/FinalScave/SweetLine.git"
+            developerConnection = "scm:git:https://github.com/FinalScave/SweetLine"
+            url = "https://github.com/FinalScave/SweetLine"
         }
     }
 }
