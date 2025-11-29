@@ -1,0 +1,16 @@
+*.iml
+*.DS_Store
+.idea
+.vscode
+.vs
+.cxx
+.cache
+.gradle
+*.gv
+/cmake-build-*
+/build
+/out
+/docs/doxygen
+tests/output
+tests/build
+CMakeSettings.json

@@ -1,0 +1,3 @@
+rootProject.name = 'Java22'
+include 'sweetline'
+include 'demo'

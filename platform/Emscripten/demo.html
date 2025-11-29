@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SweetLine Highlight Test</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+<input type="file" id="syntaxFileInput" accept=".json">
+<input type="file" id="codeFileInput" accept="*">
+<button onclick="testHighlight()">Test Highlight</button>
+</body>
+
+<script type="module">
+    import sweetline from '../../cmake-build-emscripten/bin/libsweetline.js';
+    let lib
+    let syntaxJson;
+    let docName;
+    let docContent;
+
+    sweetline().then(function(sweetline) {
+        lib = sweetline;
+    });
+
+    function testHighlight() {
+        const config = new lib.HighlightConfig();
+        config.showIndex = true;
+        config.inlineStyle = true;
+        const engine = new lib.HighlightEngine(config);
+        engine.compileSyntaxFromJson(syntaxJson);
+
+        const document = new lib.Document("file:///" + docName, docContent);
+        const analyzer = engine.loadDocument(document);
+        const highlight = analyzer.analyze();
+        console.log(highlight.toJson());
+    }
+    window.testHighlight = testHighlight;
+
+    document.getElementById('syntaxFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            console.log('Select syntax file: ' + file.name)
+            syntaxJson = e.target.result;
+        };
+        reader.readAsText(file);
+    });
+    document.getElementById('codeFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            console.log('Select code file: ' + file.name)
+            docName = file.name;
+            docContent = e.target.result;
+        };
+        reader.readAsText(file);
+    });
+</script>
+
+</html>

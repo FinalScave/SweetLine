@@ -1,0 +1,100 @@
+# YAML Highlight Example
+---
+# Basic key-value pairs
+name: SweetLine
+version: "1.0.0"
+description: 'A lightweight syntax highlighter'
+enabled: true
+debug: false
+empty: null
+nothing: ~
+
+# Numbers
+count: 42
+negative: -17
+hex: 0xFF
+octal: 0o755
+float: 3.14
+scientific: 1.5e+10
+infinity: .inf
+pos_infinity: +.inf
+neg_infinity: -.inf
+not_a_number: .nan
+nan_upper: .NaN
+
+# Nested structure
+database:
+  host: "192.168.1.1"
+  port: 5432
+  credentials:
+    username: admin
+    password: "s3cr3t"
+  options:
+    timeout: 30
+    retries: 3
+    ssl: true
+
+# Lists
+languages:
+  - name: Rust
+    type: compiled
+    year: 2010
+  - name: Python
+    type: interpreted
+    year: 1991
+  - name: Go
+    type: compiled
+    year: 2009
+
+# Flow sequences and mappings
+colors: [red, green, blue]
+point: {x: 10, y: 20, z: 30}
+
+# Type tags
+binary: !!binary aGVsbG8=
+timestamp: !!timestamp 2024-01-15T10:30:00Z
+custom: !custom_tag value
+
+# Anchors and aliases
+defaults: &defaults
+  adapter: postgres
+  pool: 5
+
+development:
+  <<: *defaults
+  database: dev_db
+
+production:
+  <<: *defaults
+  database: prod_db
+  pool: 25
+
+# Block scalars
+literal_block: |
+  This is line 1.
+  This is line 2.
+  Preserves newlines.
+
+folded_block: >
+  This will be
+  folded into
+  a single line.
+
+stripped: |-
+  No trailing
+  newline here
+
+# Dates
+created: 2024-01-15
+updated: 2024-06-20T15:30:00+08:00
+
+# Boolean variants
+yes_val: yes
+no_val: no
+on_val: on
+off_val: off
+
+# Inline comments
+key: value # this is an inline comment
+url: "https://example.com#not-a-comment"
+...

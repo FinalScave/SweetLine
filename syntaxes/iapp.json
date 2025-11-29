@@ -1,0 +1,99 @@
+{
+  "name": "iapp",
+  "fileExtensions": [".iyu", ".myu"],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(fn)${whiteSpace}+(${identifier})(\\.)(${identifier})",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(fn)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "(s|ss|sss)${whiteSpace}+(${identifier})${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(s|ss|sss)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(ss|s\\+|s\\-|s\\*|s\\/|s\\%)${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(tw|syso|t|fd|fe|fs|fr|fra|fw|fc|fl|ft|fdir|fuz|fuzs|fo)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sr|sj|sl|siof|slof|ssg|slg|strim|slower|supper)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(stop|hs|hd|huf|hw|ug|us|uigo|utw|end|sran|fa|sgsz|sgszl|fj|bfm|ula|uls|usms|ucall)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(time|fi|swh|stobm|uycl|ushsp|bfv|endcode|esl|inroot|ftz|uapp|uapplist|uapplistgo|ucapp|uninapp|uwifilist|uwifigo|ucwifi|ukgwifi|uiswifi)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(apksigner|nvw|ssj|urvw|sbp|bfs|sdeg|fsc|ssc|sfc|tot|tzz|tsf|tfz|sxb|shb|tcc|sjxx|usjxm|ufnsui)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gdr|gse|gseset|gcppm|gcxy|gcxyadd|gcxysub|gcxyget|gcsize|gcsizeget|gcxxyy|gcxxyyget|gcxxyyin|gcmap|gcmapadd|gcadd|gcmapget|gcmapset)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gclayer|gclayercon|gcimg|gcs|gcsget|gcsset|gcsin|gcatn|gcatnadd|gcsde|gcsdeset|gcame|gcsqe|gcsan|gccfnd|gccsft|gccsfb|gccxzt|gccxzb)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gccqxt|gccqxb|gcctyt|gcctyb|gccydt|gccydb|gccbrt|gccbrb|gccjbcx|gccjbxs|gccscbht|gccscbhb|gccss|gccyc|gccqmxz|gccgs|gccftlks|gccftljs|gccftl)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gcchlks|gcchljs|gcchl|gcctxks|gcctxjs|gcctx|gcchmks|gcchmjs|gcchm|gcckmks|gcckmjs|gcckm|gccsdjb|gcccf|gcccgyj|gccfz|gcckj|gct|gctget|gctset)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gcyfgdh|gcyxnyg|gcyxnan|gcysbkzdx|slt|sltget|sltset|aGid|aGxy|bGid|bGxy|cGid|cGxy)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(null|f|else|w|for|fn|end|break)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ]
+  }
+}

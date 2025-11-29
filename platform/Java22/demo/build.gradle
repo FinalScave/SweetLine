@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_22
+    targetCompatibility = JavaVersion.VERSION_22
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':sweetline')
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+application {
+    mainClass = 'com.qiplat.sweetline.demo.Main'
+    def osName = System.getProperty('os.name').toLowerCase()
+    def nativeLibSubDir
+    if (osName.contains('windows')) {
+        nativeLibSubDir = '../../cmake-build-debug-visual-studio/bin'
+    } else if (osName.contains('mac')) {
+        nativeLibSubDir = '../../build/lib'
+    } else if (osName.contains('linux')) {
+        nativeLibSubDir = '../../build/lib'
+    } else {
+        throw new GradleException("Unsupported OS for SweetLine demo nativeLibDir: ${System.getProperty('os.name')}")
+    }
+    def nativeLibDir = rootProject.projectDir.toPath().resolve(nativeLibSubDir).toAbsolutePath().normalize().toString()
+    applicationDefaultJvmArgs = [
+            '--enable-preview',
+            '--enable-native-access=ALL-UNNAMED',
+            "-Djava.library.path=${nativeLibDir}",
+            "-Dsweetline.lib.path=${nativeLibDir}"
+    ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['--enable-preview']
+}
+
+run {
+    def syntaxesDir = rootProject.projectDir.toPath().resolve('../../syntaxes').toAbsolutePath().normalize().toString()
+    def examplesDir = rootProject.projectDir.toPath().resolve('../../tests/files').toAbsolutePath().normalize().toString()
+    args = [syntaxesDir, examplesDir]
+}
+
+test {
+    useJUnitPlatform()
+    jvmArgs '--enable-preview', '--enable-native-access=ALL-UNNAMED'
+}

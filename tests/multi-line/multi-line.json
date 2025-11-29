@@ -1,0 +1,25 @@
+{
+  "name": "multi-line",
+  "fileExtensions": [".test"],
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment",
+        "multiLine": true
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "[\\S\\s]",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "sweetline",
+    "type": "har",
+    "description": "$string:module_desc",
+    "deviceTypes": [
+      "default"
+    ]
+  }
+}

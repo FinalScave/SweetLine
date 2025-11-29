@@ -1,0 +1,18 @@
+{
+  "name": "multi-group",
+  "fileExtensions": [".test"],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "whiteSpace": "[ \\t\\f]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "operator"]
+      }
+    ]
+  }
+}
