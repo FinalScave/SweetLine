@@ -1,0 +1,83 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.maven.publisher)
+}
+apply plugin: "signing"
+
+description = "Markwon highlight plugin"
+group = "com.qiplat"
+version = "0.0.2"
+
+android {
+    namespace 'com.qiplat.sweetline.markwon'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 21
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation "io.noties.markwon:core:4.6.2"
+    implementation "io.noties.markwon:syntax-highlight:4.6.2"
+    implementation 'com.qiplat:sweetline:0.0.2'
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}
+
+javadoc {
+    failOnError false
+    options {
+        locale("zh_CN")
+        encoding("utf-8")
+        links("http://docs.oracle.com/javase/7/docs/api")
+    }
+}
+
+signing {
+    useGpgCmd()
+}
+
+centralPortal {
+    username = rootProject.property("sonatype.username")
+    password = rootProject.property("sonatype.password")
+    name = "sweetline-markwon"
+
+    pom {
+        url = "https://github.com/FinalScave/SweetLine"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://www.mit-license.org"
+            }
+        }
+        developers {
+            developer {
+                name = "Scave"
+                email = "iscave@163.com"
+                organization = "Mobile IPE"
+                organizationUrl = "https://github.com/mobile-ipe"
+            }
+        }
+        scm {
+            connection = "scm:git:https://github.com/FinalScave/SweetLine.git"
+            developerConnection = "scm:git:https://github.com/FinalScave/SweetLine"
+            url = "https://github.com/FinalScave/SweetLine"
+        }
+    }
+}

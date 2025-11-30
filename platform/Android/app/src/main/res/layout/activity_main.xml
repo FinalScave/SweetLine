@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/main"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.qiplat.sweetline.demo.MyEditText
@@ -16,16 +17,44 @@
         android:id="@+id/test_java_btn"
         android:text="高亮Java"
         app:layout_constraintTop_toBottomOf="@id/span_text"
-        app:layout_constraintBottom_toTopOf="@id/test_tiecode_btn"
-        android:layout_width="match_parent"
+        app:layout_constraintBottom_toTopOf="@id/test_json_btn"
+        app:layout_constraintRight_toLeftOf="@id/test_tiecode_btn"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_width="0dp"
         android:layout_height="wrap_content" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/test_tiecode_btn"
         android:text="高亮结绳"
-        app:layout_constraintTop_toBottomOf="@id/test_java_btn"
+        app:layout_constraintTop_toBottomOf="@id/span_text"
+        app:layout_constraintBottom_toTopOf="@id/test_json_btn"
+        app:layout_constraintLeft_toRightOf="@id/test_java_btn"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/test_json_btn"
+        android:text="高亮JSON"
+        app:layout_constraintTop_toBottomOf="@id/test_tiecode_btn"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_width="match_parent"
+        app:layout_constraintRight_toLeftOf="@id/test_markwon_btn"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/test_markwon_btn"
+        android:text="Markwon插件"
+        app:layout_constraintTop_toBottomOf="@id/test_tiecode_btn"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/test_json_btn"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        android:layout_width="0dp"
         android:layout_height="wrap_content" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,72 @@
+{
+  "name": "json",
+  "fileExtensions": [".json"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(\")([^\"]*)(\")${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "keyword", 3, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "stringValue"
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:[0-9]*\\.?[0-9]+(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "[\\[\\]{}(),:]",
+        "style": "punctuation"
+      }
+    ],
+    "stringValue": [
+      {
+        "pattern": "\\$\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": ".",
+        "style": "string"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

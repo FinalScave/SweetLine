@@ -1,5 +1,6 @@
 package com.qiplat.sweetline.demo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Spannable;
@@ -8,9 +9,13 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.SparseIntArray;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
@@ -22,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "SampleHighlight";
     private AppCompatButton testJavaButton;
     private AppCompatButton testTiecodeButton;
+    private AppCompatButton testJsonButton;
+    private AppCompatButton gotoMarkwonBtn;
     private MyEditText spanText;
     private CharSequence previousText;
     private DocumentAnalyzer analyzer;
@@ -54,8 +61,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         testJavaButton = findViewById(R.id.test_java_btn);
         testTiecodeButton = findViewById(R.id.test_tiecode_btn);
+        testJsonButton = findViewById(R.id.test_json_btn);
+        gotoMarkwonBtn = findViewById(R.id.test_markwon_btn);
         spanText = findViewById(R.id.span_text);
         testJavaButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
@@ -64,6 +74,13 @@ public class MainActivity extends AppCompatActivity {
         testTiecodeButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
             highlight("结绳.t", "tiecode-syntax.json");
+        });
+        testJsonButton.setOnClickListener(v -> {
+            shouldAnalyzeChange = false;
+            highlight("java-syntax.json", "json-syntax.json");
+        });
+        gotoMarkwonBtn.setOnClickListener(v -> {
+            startActivity(new Intent(this, MarkwonActivity.class));
         });
         spanText.setOnSelectionChangeListener((startIndex, endIndex) -> {
             Log.i(TAG, String.format("start: %d, end: %d", startIndex, endIndex));

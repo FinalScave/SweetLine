@@ -28,10 +28,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    configurations {
+        cleanedAnnotations
+        implementation.exclude group: 'org.jetbrains', module: 'annotations'
+        implementation.exclude group: 'com.intellij', module: 'annotations'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
@@ -39,8 +47,13 @@ android {
 }
 
 dependencies {
+    implementation libs.activity
+    implementation libs.constraintlayout
+    implementation 'io.noties.markwon:core:4.6.2'
     debugImplementation project(":sweetline")
+    debugImplementation project(":markwon-plugin")
     releaseImplementation 'com.qiplat:sweetline:0.0.2'
+    releaseImplementation 'com.qiplat:sweetline-markwon:0.0.2'
     implementation libs.appcompat
     implementation libs.material
     testImplementation libs.junit
