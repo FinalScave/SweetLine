@@ -124,7 +124,7 @@ Ptr<SyntaxRule> syntax = engine->getSyntaxRuleByExtension(".py");
 ### Android集成
 Android提供了便捷的JNI绑定，类名和函数名与C++侧保持一致，可直接源码依赖，也可以从maven引入：
 ```groovy
-implementation 'com.qiplat:sweetline:0.0.1'
+implementation 'com.qiplat:sweetline:0.0.2'
 ```
 
 ## 共建代码仓库

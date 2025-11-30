@@ -123,7 +123,7 @@ Ptr<SyntaxRule> syntax = engine->getSyntaxRuleByExtension(".py");
 ### Android Integration
 Android provides convenient JNI bindings with class and function names consistent with the C++ side. You can directly depend on the source code or import from maven:
 ```groovy
-implementation 'com.qiplat:sweetline:0.0.1'
+implementation 'com.qiplat:sweetline:0.0.2'
 ```
 
 ## Contributing

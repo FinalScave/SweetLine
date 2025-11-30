@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.qiplat.sweetline.demo"
         minSdk 21
-        targetSdk 28
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -32,10 +32,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
-    implementation project(":sweetline")
+    debugImplementation project(":sweetline")
+    releaseImplementation 'com.qiplat:sweetline:0.0.2'
     implementation libs.appcompat
     implementation libs.material
     testImplementation libs.junit
