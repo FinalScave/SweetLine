@@ -41,6 +41,10 @@ public class HighlightEngine {
         return new DocumentAnalyzer(analyzerHandle);
     }
 
+    public void removeDocument(String uri) {
+        nativeRemoveDocument(nativeHandle, uri);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -62,6 +66,8 @@ public class HighlightEngine {
     private static native long nativeCompileSyntaxFromFile(long handle, String path) throws SyntaxCompileError;
     @CriticalNative
     private static native long nativeLoadDocument(long handle, long documentHandle);
+    @FastNative
+    private static native void nativeRemoveDocument(long handle, String uri);
 
     static {
         System.loadLibrary("sweetline");

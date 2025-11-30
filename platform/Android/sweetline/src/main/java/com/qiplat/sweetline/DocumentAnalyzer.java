@@ -14,11 +14,6 @@ public class DocumentAnalyzer {
     protected DocumentAnalyzer(long nativeHandle) {
         this.nativeHandle = nativeHandle;
     }
-
-    public DocumentAnalyzer(Document document, SyntaxRule rule, HighlightConfig config) {
-        nativeHandle = nativeMakeAnalyzer(document.nativeHandle, rule.nativeHandle, config.showIndex);
-    }
-
     public DocumentHighlight analyze() {
         int[] buffer = nativeAnalyze(nativeHandle);
         return readDocumentHighlight(buffer);
@@ -139,9 +134,6 @@ public class DocumentAnalyzer {
     public interface StyleFactory {
         CharacterStyle createCharacterStyle(int styleId);
     }
-
-    @CriticalNative
-    private static native long nativeMakeAnalyzer(long documentHandle, long ruleHandle, boolean showIndex);
     @CriticalNative
     private static native void nativeFinalizeAnalyzer(long handle);
     @FastNative

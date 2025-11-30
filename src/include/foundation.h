@@ -1,9 +1,7 @@
 #ifndef SWEETLINE_FOUNDATION_H
 #define SWEETLINE_FOUNDATION_H
 
-#include <vector>
-
-#ifdef FH_DEBUG
+#ifdef SWEETLINE_DEBUG
 #include <nlohmann/json.hpp>
 #include <iostream>
 #endif
@@ -22,12 +20,8 @@ namespace NS_SWEETLINE {
 
     bool operator<(const TextPosition& other) const;
     bool operator==(const TextPosition& other) const;
-#ifdef FH_DEBUG
-    void dump() const {
-      const nlohmann::json json = *this;
-      std::cout << json.dump(2) << std::endl;
-    }
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(TextPosition, line, column, index);
+#ifdef SWEETLINE_DEBUG
+    void dump() const;
 #endif
   };
 
@@ -38,12 +32,8 @@ namespace NS_SWEETLINE {
 
     bool operator==(const TextRange& other) const;
     bool contains(const TextPosition& pos) const;
-#ifdef FH_DEBUG
-    void dump() const {
-      const nlohmann::json json = *this;
-      std::cout << json.dump(2) << std::endl;
-    }
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(TextRange, start, end);
+#ifdef SWEETLINE_DEBUG
+    void dump() const;
 #endif
   };
 
@@ -62,9 +52,6 @@ namespace NS_SWEETLINE {
     /// 获取完整文本
     String getText() const;
 
-    /// 获取指定行的文本
-    const String& getLine(size_t line) const;
-
     /// 取总字符数
     size_t totalChars() const;
 
@@ -74,6 +61,9 @@ namespace NS_SWEETLINE {
 
     /// 获取总行数
     size_t getLineCount() const;
+
+    /// 获取指定行的文本
+    const String& getLine(size_t line) const;
 
     /// 根据指定的行列范围进行增量更新
     /// @param range 更新的范围区间

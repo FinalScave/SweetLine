@@ -5,6 +5,11 @@ public class TextPosition {
     public int column;
     public int index;
 
+    public TextPosition(int line, int column) {
+        this.line = line;
+        this.column = column;
+    }
+
     public TextPosition(int line, int column, int index) {
         this.line = line;
         this.column = column;

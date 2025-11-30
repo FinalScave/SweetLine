@@ -141,6 +141,77 @@ static napi_value Document_Create(napi_env env, napi_callback_info info) {
   return makePtrHolderToNapiHandle<Document>(env, uri, text);
 }
 
+static napi_value Document_GetUri(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  if (document == nullptr) {
+    return getNapiUndefined(env);
+  }
+  return createNapiString(env, document->getUri());
+}
+
+static napi_value Document_TotalChars(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  if (document == nullptr) {
+    return createNapiInt32(env, 0);
+  }
+  return createNapiInt32(env, static_cast<int32_t>(document->totalChars()));
+}
+
+static napi_value Document_GetLineCharCount(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  if (document == nullptr) {
+    return createNapiInt32(env, 0);
+  }
+  int32_t line = 0;
+  napi_get_value_int32(env, args[1], &line);
+  return createNapiInt32(env, static_cast<int32_t>(document->getLineCharCount(line)));
+}
+
+static napi_value Document_CharIndexOfLine(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  if (document == nullptr) {
+    return createNapiInt32(env, 0);
+  }
+  int32_t line = 0;
+  napi_get_value_int32(env, args[1], &line);
+  return createNapiInt32(env, static_cast<int32_t>(document->charIndexOfLine(line)));
+}
+
+static napi_value Document_CharIndexToPosition(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  if (document == nullptr) {
+    return createNapiInt32(env, 0);
+  }
+  int32_t index = 0;
+  napi_get_value_int32(env, args[1], &index);
+  TextPosition position = document->charIndexToPosition(index);
+  napi_value array;
+  napi_create_array_with_length(env, 2, &array);
+  napi_set_element(env, array, 0, createNapiInt32(env, static_cast<int32_t>(position.line)));
+  napi_set_element(env, array, 1, createNapiInt32(env, static_cast<int32_t>(position.column)));
+  return array;
+}
+
 static napi_value Document_GetLineCount(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1] = {nullptr};
@@ -216,25 +287,6 @@ static napi_value SyntaxRule_GetFileExtensions(napi_env env, napi_callback_info 
 }
 
 // ================================================ DocumentAnalyzer ====================================================
-static napi_value DocumentAnalyzer_Create(napi_env env, napi_callback_info info) {
-  size_t argc = 3;
-  napi_value args[3] = {nullptr};
-  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
-  if (document == nullptr) {
-    return createNapiInt64(env, 0);
-  }
-  Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(env, args[1]);
-  if (rule == nullptr) {
-    return createNapiInt64(env, 0);
-  }
-  bool show_index;
-  napi_get_value_bool(env, args[2], &show_index);
-  HighlightConfig config = {show_index};
-  return makePtrHolderToNapiHandle<DocumentAnalyzer>(env, document, rule, config);
-}
-
 static napi_value DocumentAnalyzer_Delete(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1] = {nullptr};
@@ -439,16 +491,37 @@ static napi_value HighlightEngine_LoadDocument(napi_env env, napi_callback_info 
   return toNapiHandle(env, analyzer);
 }
 
+static napi_value HighlightEngine_RemoveDocument(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  
+  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  if (engine == nullptr) {
+    return getNapiBoolean(env, false);
+  }
+  String uri;
+  if (!getStdStringFromNapiValue(env, args[1], uri)) {
+    return getNapiBoolean(env, false);
+  }
+  engine->removeDocument(uri);
+  return getNapiBoolean(env, true);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
   napi_property_descriptor desc[] = {
     {"Document_Create", nullptr, Document_Create, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"Document_GetUri", nullptr, Document_GetUri, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"Document_TotalChars", nullptr, Document_TotalChars, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"Document_GetLineCharCount", nullptr, Document_GetLineCharCount, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"Document_CharIndexOfLine", nullptr, Document_CharIndexOfLine, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"Document_CharIndexToPosition", nullptr, Document_CharIndexToPosition, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"Document_GetLineCount", nullptr, Document_GetLineCount, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"Document_GetLine", nullptr, Document_GetLine, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"Document_GetText", nullptr, Document_GetText, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"SyntaxRule_GetName", nullptr, SyntaxRule_GetName, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"SyntaxRule_GetFileExtensions", nullptr, SyntaxRule_GetFileExtensions, nullptr, nullptr, nullptr, napi_default, nullptr},
-    {"DocumentAnalyzer_Create", nullptr, DocumentAnalyzer_Create, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Delete", nullptr, DocumentAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Analyze", nullptr, DocumentAnalyzer_Analyze, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges", nullptr, DocumentAnalyzer_AnalyzeChanges, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -462,6 +535,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"HighlightEngine_CompileSyntaxFromJson", nullptr, HighlightEngine_CompileSyntaxFromJson, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_CompileSyntaxFromFile", nullptr, HighlightEngine_CompileSyntaxFromFile, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_LoadDocument", nullptr, HighlightEngine_LoadDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"HighlightEngine_RemoveDocument", nullptr, HighlightEngine_RemoveDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
   napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
   return exports;

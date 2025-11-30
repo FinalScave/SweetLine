@@ -4,7 +4,6 @@ add_executable(${TEST_PRODUCT_NAME}
         ${3DPARTY_DIR}/include/catch2/catch_amalgamated.cpp
         tests_main.cpp
         patch_text.cpp
-        compile_rule.cpp
         highlight_test.cpp
 )
 

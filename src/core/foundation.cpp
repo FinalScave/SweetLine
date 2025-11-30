@@ -4,8 +4,10 @@
 #include "util.h"
 
 namespace NS_SWEETLINE {
-  // ===================================== TextPosition ============================================
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRange, start, end);
 
+  // ===================================== TextPosition ============================================
   bool TextPosition::operator<(const TextPosition& other) const {
     if (line != other.line) return line < other.line;
     return column < other.column;
@@ -15,6 +17,13 @@ namespace NS_SWEETLINE {
     return line == other.line && column == other.column;
   }
 
+#ifdef SWEETLINE_DEBUG
+  void TextPosition::dump() const {
+    const nlohmann::json json = *this;
+    std::cout << json.dump(2) << std::endl;
+  }
+#endif
+
   // ===================================== TextRange ============================================
   bool TextRange::operator==(const TextRange& other) const {
     return start == other.start && end == other.end;
@@ -23,6 +32,13 @@ namespace NS_SWEETLINE {
   bool TextRange::contains(const TextPosition& pos) const {
     return !(pos < start) && (pos < end || pos == end);
   }
+
+#ifdef SWEETLINE_DEBUG
+  void TextRange::dump() const {
+    const nlohmann::json json = *this;
+    std::cout << json.dump(2) << std::endl;
+  }
+#endif
 
   // ===================================== Document ============================================
   Document::Document(const String& uri, const String& initial_text): uri_(uri) {
@@ -56,13 +72,6 @@ namespace NS_SWEETLINE {
     return result;
   }
 
-  const String& Document::getLine(size_t line) const {
-    if (line >= lines.size()) {
-      throw std::out_of_range("Line number out of range");
-    }
-    return lines[line];
-  }
-
   size_t Document::totalChars() const {
     size_t count = 0;
     for (const auto& line : lines) {
@@ -84,6 +93,13 @@ namespace NS_SWEETLINE {
 
   size_t Document::getLineCount() const {
     return lines.size();
+  }
+
+  const String& Document::getLine(size_t line) const {
+    if (line >= lines.size()) {
+      throw std::out_of_range("Line number out of range");
+    }
+    return lines[line];
   }
   
   int32_t Document::patch(const TextRange& range, const String& new_text) {

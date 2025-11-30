@@ -55,8 +55,32 @@ export namespace sweetline {
   export class Document {
     protected nativeHandle: number = 0;
 
-    protected constructor(nativeHandle: number) {
-      this.nativeHandle = nativeHandle;
+    public constructor(uri?: string, content?: string) {
+      if (uri == undefined || content == undefined) {
+        return;
+      }
+      this.nativeHandle = lib.Document_Create(uri, content);
+    }
+
+    public getUri(): string {
+      return lib.Document_GetUri(this.nativeHandle);
+    }
+
+    public totalChars(): number {
+      return lib.Document_TotalChars(this.nativeHandle);
+    }
+
+    public getLineCharCount(line: number): number {
+      return lib.Document_GetLineCharCount(this.nativeHandle, line);
+    }
+
+    public charIndexOfLine(line: number): number {
+      return lib.Document_CharIndexOfLine(this.nativeHandle, line);
+    }
+
+    public charIndexToPosition(index: number): TextPosition {
+      const array: Int32Array = lib.Document_CharIndexToPosition(this.nativeHandle, index);
+      return new TextPosition(array[0], array[1], index);
     }
 
     public getLineCount(): number {
@@ -71,17 +95,14 @@ export namespace sweetline {
       return lib.Document_GetText(this.nativeHandle);
     }
 
-    public static create(uri: string, content: string) {
-      let handle: number = lib.Document_Create(uri, content);
-      return new Document(handle);
-    }
-
     public __getNativeHandle(): number {
       return this.nativeHandle;
     }
 
-    public static __createNative(nativeHandle: number) {
-      return new Document(nativeHandle);
+    public static __createNative(nativeHandle: number): Document {
+      const document = new Document();
+      document.nativeHandle = nativeHandle;
+      return document;
     }
   }
 
@@ -139,11 +160,6 @@ export namespace sweetline {
     public getDocument(): Document {
       let documentHandle: number = lib.DocumentAnalyzer_GetDocument(this.nativeHandle);
       return Document.__createNative(documentHandle);
-    }
-
-    public static create(document: Document, syntaxRule: SyntaxRule, config: HighlightConfig) {
-      let handle: number = lib.DocumentAnalyzer_Create(document.__getNativeHandle(), syntaxRule.__getNativeHandle(), config.showIndex);
-      return new DocumentAnalyzer(handle);
     }
 
     public static __createNative(nativeHandle: number) {
@@ -232,6 +248,10 @@ export namespace sweetline {
     public loadDocument(document: Document): DocumentAnalyzer {
       let handle: number = lib.HighlightEngine_LoadDocument(this.nativeHandle, document.__getNativeHandle());
       return DocumentAnalyzer.__createNative(handle);
+    }
+
+    public removeDocument(uri: string): boolean {
+      return lib.HighlightEngine_RemoveDocument(this.nativeHandle, uri);
     }
   }
 }

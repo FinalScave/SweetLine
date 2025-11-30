@@ -36,7 +36,7 @@ struct Index {
     this.highlightEngine.compileSyntaxFromJson(syntaxJson);
 
     const codeText = await ResourceUtils.readRawTextFile(this.getUIContext().getHostContext(), fileName);
-    const document = sweetline.Document.create(fileName, codeText);
+    const document = new sweetline.Document(fileName, codeText);
     this.documentAnalyzer = this.highlightEngine.loadDocument(document);
 
     const highlight = this.documentAnalyzer.analyze();

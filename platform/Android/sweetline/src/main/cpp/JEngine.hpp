@@ -17,6 +17,49 @@ public:
     return makePtrHolderToJavaHandle<Document>(uri_str, content_str);
   }
 
+  static jstring getUri(JNIEnv* env, jclass clazz, jlong handle) {
+    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    if (document == nullptr) {
+      return env->NewStringUTF("");
+    }
+    return env->NewStringUTF(document->getUri().c_str());
+  }
+
+  static jint totalChars(jlong handle) {
+    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    if (document == nullptr) {
+      return 0;
+    }
+    return static_cast<jint>(document->totalChars());
+  }
+
+  static jint getLineCharCount(jlong handle, jint line) {
+    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    if (document == nullptr) {
+      return 0;
+    }
+    return static_cast<jint>(document->getLineCharCount(line));
+  }
+
+  static jint charIndexOfLine(jlong handle, jint index) {
+    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    if (document == nullptr) {
+      return 0;
+    }
+    return static_cast<jint>(document->charIndexOfLine(index));
+  }
+
+  static jlong charIndexToPosition(jlong handle, jint index) {
+    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    if (document == nullptr) {
+      return 0;
+    }
+    TextPosition position = document->charIndexToPosition(index);
+    jlong line = (jlong)position.line;
+    jlong column = (jlong)position.column;
+    return (line << 32) | (column & 0XFFFFFFFFLL);
+  }
+
   static jint getLineCount(jlong handle) {
     Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
     if (document == nullptr) {
@@ -45,6 +88,11 @@ public:
   constexpr static const char *kJClassName = "com/qiplat/sweetline/Document";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeMakeDocument", "(Ljava/lang/String;Ljava/lang/String;)J", (void*) makeDocument},
+      {"nativeGetUri", "(J)Ljava/lang/String;", (void*) getUri},
+      {"nativeTotalChars", "(J)I", (void*) totalChars},
+      {"nativeGetLineCharCount", "(JI)I", (void*) getLineCharCount},
+      {"nativeCharIndexOfLine", "(JI)I", (void*) charIndexOfLine},
+      {"nativeCharIndexToPosition", "(JI)J", (void*) charIndexToPosition},
       {"nativeGetLineCount", "(J)I", (void*) getLineCount},
       {"nativeGetLine", "(JI)Ljava/lang/String;", (void*) getLine},
       {"nativeGetText", "(J)Ljava/lang/String;", (void*) getText},
@@ -99,16 +147,6 @@ public:
 // ====================================== DocumentAnalyzerJni ===========================================
 class DocumentAnalyzerJni {
 public:
-  static jlong makeAnalyzer(jlong document_handle, jlong rule_handle, jboolean show_index) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(document_handle);
-    Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(rule_handle);
-    if (document == nullptr || rule == nullptr) {
-      return 0;
-    }
-    HighlightConfig config = {static_cast<bool>(show_index)};
-    return makePtrHolderToJavaHandle<DocumentAnalyzer>(document, rule, config);
-  }
-
   static void finalizeAnalyzer(jlong handle) {
     JPtrHolder<DocumentAnalyzer>* holder = toNativePtrHolder<DocumentAnalyzer>(handle);
     delete holder;
@@ -209,7 +247,6 @@ public:
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/DocumentAnalyzer";
   constexpr static const JNINativeMethod kJMethods[] = {
-      {"nativeMakeAnalyzer", "(JJZ)J", (void*) makeAnalyzer},
       {"nativeFinalizeAnalyzer", "(J)V", (void*) finalizeAnalyzer},
       {"nativeAnalyze", "(J)[I", (void*) analyze},
       {"nativeAnalyzeChanges", "(JJJLjava/lang/String;)[I", (void*) analyzeChanges},
@@ -298,6 +335,15 @@ public:
     return toJavaHandle(analyzer);
   }
 
+  static void removeDocument(JNIEnv* env, jclass clazz, jlong handle, jstring uri) {
+    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    if (engine == nullptr) {
+      return;
+    }
+    const char* uri_str = env->GetStringUTFChars(uri, JNI_FALSE);
+    engine->removeDocument(uri_str);
+  }
+
   constexpr static const char *kJClassName = "com/qiplat/sweetline/HighlightEngine";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeMakeEngine", "(Z)J", (void*) makeEngine},
@@ -307,6 +353,7 @@ public:
       {"nativeCompileSyntaxFromJson", "(JLjava/lang/String;)J", (void*) compileSyntaxFromJson},
       {"nativeCompileSyntaxFromFile", "(JLjava/lang/String;)J", (void*) compileSyntaxFromFile},
       {"nativeLoadDocument", "(JJ)J", (void*) loadDocument},
+      {"nativeRemoveDocument", "(JLjava/lang/String;)V", (void*) removeDocument},
   };
 
   static void RegisterMethods(JNIEnv *env) {

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "SweetLine highlight engine ArkTS bindings",
   "main": "./src/main/ets/Index.ets",
+  "types": "./src/main/ets/Index.d.ts",
   "author": "Scave",
   "license": "MIT",
   "dependencies": {
