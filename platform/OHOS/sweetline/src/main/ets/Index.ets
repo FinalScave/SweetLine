@@ -44,6 +44,12 @@ export namespace sweetline {
 
   export class HighlightConfig {
     public showIndex: boolean = false;
+
+    public static withIndex(): HighlightConfig {
+      const config = new HighlightConfig();
+      config.showIndex = true;
+      return config;
+    }
   }
 
   export class Document {
@@ -145,9 +151,9 @@ export namespace sweetline {
     }
 
     private readDocumentHighlight(buffer: Int32Array): DocumentHighlight {
-      let highlight = new DocumentHighlight();
+      const highlight = new DocumentHighlight();
       let lineHighlight = new LineHighlight();
-      let spanCount = buffer.length / 7;
+      const spanCount = buffer.length / 7;
       let line = -1;
       for (let i = 0; i < spanCount; i++) {
         let baseIndex = i * 7;
