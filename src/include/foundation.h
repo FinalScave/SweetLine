@@ -37,6 +37,22 @@ namespace NS_SWEETLINE {
 #endif
   };
 
+  /// 换行符类型
+  enum struct LineEnding {
+    NONE, // 最后一行没有换行符
+    LF, // \n
+    CRLF, // \r\n
+    CR // \r
+  };
+
+  /// 文本行结构定义
+  struct DocumentLine {
+    /// 当前行文本内容 (不包含换行符)
+    String text;
+    /// 当前行换行符类型
+    LineEnding ending {LineEnding::NONE};
+  };
+
   /// 支持增量更新的文本
   class Document {
   public:
@@ -47,6 +63,7 @@ namespace NS_SWEETLINE {
     /// @param text 文本内容
     void setText(const String& text);
 
+    /// 获取当前文档的Uri
     String getUri() const;
 
     /// 获取完整文本
@@ -62,8 +79,8 @@ namespace NS_SWEETLINE {
     /// 获取总行数
     size_t getLineCount() const;
 
-    /// 获取指定行的文本
-    const String& getLine(size_t line) const;
+    /// 获取指定行的文本信息
+    const DocumentLine& getLine(size_t line) const;
 
     /// 根据指定的行列范围进行增量更新
     /// @param range 更新的范围区间
@@ -73,7 +90,7 @@ namespace NS_SWEETLINE {
 
     /// 追加文本
     /// @param text 要追加的文本
-    int32_t appendText(const std::string& text);
+    int32_t appendText(const String& text);
 
     /// 在指定位置插入文本
     /// @param position 要插入的位置
@@ -92,14 +109,20 @@ namespace NS_SWEETLINE {
     /// @param char_index 字符索引
     /// @return 行列位置
     TextPosition charIndexToPosition(size_t char_index) const;
+
+    /// 获取结尾换行符的宽度
+    /// @param ending 换行符类型
+    /// @return 对应的换行符宽度
+    static uint8_t getLineEndingWidth(LineEnding ending);
   private:
-    String uri_;
-    std::vector<String> lines;
+    String m_uri_;
+    std::vector<DocumentLine> m_lines_;
     bool isValidPosition(const TextPosition& pos) const;
     size_t positionToCharIndex(const TextPosition& pos) const;
-    void splitTextIntoLines(const std::string& text, std::vector<std::string>& result);
-    int32_t patchSingleLine(const TextRange& range, const std::vector<std::string>& new_lines);
-    int32_t patchMultipleLines(const TextRange& range, const std::vector<std::string>& new_lines);
+    void splitTextIntoLines(const String& text, std::vector<DocumentLine>& result);
+    int32_t patchSingleLine(const TextRange& range, const std::vector<DocumentLine>& new_lines);
+    int32_t patchMultipleLines(const TextRange& range, const std::vector<DocumentLine>& new_lines);
+    static void appendLineEnding(String& text, LineEnding ending);
   };
 }
 

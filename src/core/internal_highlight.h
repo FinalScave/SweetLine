@@ -55,11 +55,11 @@ namespace NS_SWEETLINE {
 
     Ptr<Document> getDocument() const;
   private:
-    Ptr<Document> document_;
-    Ptr<DocumentHighlight> highlight_;
-    Ptr<SyntaxRule> rule_;
-    HighlightConfig config_;
-    List<int32_t> line_states_;
+    Ptr<Document> m_document_;
+    Ptr<DocumentHighlight> m_highlight_;
+    Ptr<SyntaxRule> m_rule_;
+    HighlightConfig m_config_;
+    List<int32_t> m_line_states_;
 
     size_t analyzeLineWithState(size_t line,
       size_t line_start_index, int32_t start_state, LineHighlight& line_highlight);

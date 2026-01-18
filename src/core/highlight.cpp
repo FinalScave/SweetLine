@@ -101,65 +101,61 @@ namespace NS_SWEETLINE {
 
   // ===================================== InternalDocumentAnalyzer ============================================
   InternalDocumentAnalyzer::InternalDocumentAnalyzer(const Ptr<Document>& document, const Ptr<SyntaxRule>& rule,
-    const HighlightConfig& config): document_(document), rule_(rule), config_(config) {
-    highlight_ = MAKE_PTR<DocumentHighlight>();
+    const HighlightConfig& config): m_document_(document), m_rule_(rule), m_config_(config) {
+    m_highlight_ = MAKE_PTR<DocumentHighlight>();
   }
 
   Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyze() {
-    if (rule_ == nullptr) {
+    if (m_rule_ == nullptr) {
       return nullptr;
     }
     int32_t current_state = SyntaxRule::kDefaultStateId;
-    const size_t line_count = document_->getLineCount();
-    line_states_.resize(line_count, SyntaxRule::kDefaultStateId);
-    highlight_->reset();
+    const size_t line_count = m_document_->getLineCount();
+    m_line_states_.resize(line_count, SyntaxRule::kDefaultStateId);
+    m_highlight_->reset();
     size_t line_start_index = 0;
     for (size_t line_num = 0; line_num < line_count; ++line_num) {
       LineHighlight line_highlight;
       size_t char_count = analyzeLineWithState(line_num, line_start_index, current_state, line_highlight);
-      highlight_->addLine(std::move(line_highlight));
-      current_state = line_states_[line_num];
-#ifdef _WIN32
-      line_start_index += char_count + 2; // \r\n + 2
-#else
-      line_start_index += char_count + 1; // \n + 1
-#endif
+      m_highlight_->addLine(std::move(line_highlight));
+      current_state = m_line_states_[line_num];
+      line_start_index += char_count + Document::getLineEndingWidth(m_document_->getLine(line_num).ending);
     }
-    return highlight_;
+    return m_highlight_;
   }
 
   Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(const TextRange& range, const String& new_text) {
-    if (rule_ == nullptr) {
+    if (m_rule_ == nullptr) {
       return nullptr;
     }
-    int32_t line_change = document_->patch(range, new_text);
+    int32_t line_change = m_document_->patch(range, new_text);
     size_t change_start_line = range.start.line;
     size_t change_end_line = static_cast<int32_t>(range.end.line) + line_change;
-    line_states_[change_start_line] = change_start_line > 0 ? line_states_[change_start_line - 1] : SyntaxRule::kDefaultStateId;
+    m_line_states_[change_start_line] = change_start_line > 0 ? m_line_states_[change_start_line - 1] : SyntaxRule::kDefaultStateId;
     if (line_change < 0) {
-      line_states_.erase(line_states_.begin() + range.end.line + line_change + 1,
-        line_states_.begin() + range.end.line + 1);
-      highlight_->lines.erase(highlight_->lines.begin() + range.end.line + line_change + 1,
-        highlight_->lines.begin() + range.end.line + 1);
+      m_line_states_.erase(m_line_states_.begin() + range.end.line + line_change + 1,
+        m_line_states_.begin() + range.end.line + 1);
+      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + line_change + 1,
+        m_highlight_->lines.begin() + range.end.line + 1);
     } else if (line_change > 0) {
-      line_states_.insert(line_states_.begin() + range.end.line + 1, line_change, SyntaxRule::kDefaultStateId);
-      highlight_->lines.insert(highlight_->lines.begin() + range.end.line + 1, line_change, {});
+      m_line_states_.insert(m_line_states_.begin() + range.end.line + 1, line_change, SyntaxRule::kDefaultStateId);
+      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, line_change, {});
     }
 
     // 从patch的起始行开始分析，直到状态稳定
-    int32_t current_state = line_states_[change_start_line];
-    size_t total_line_count = document_->getLineCount();
-    size_t line_start_index = document_->charIndexOfLine(change_start_line);
+    int32_t current_state = m_line_states_[change_start_line];
+    size_t total_line_count = m_document_->getLineCount();
+    size_t line_start_index = m_document_->charIndexOfLine(change_start_line);
     size_t line = change_start_line;
     bool stable = false;
     for (; line < total_line_count; ++line) {
       if (stable) {
         break;
       }
-      int32_t old_state = line_states_[line];
+      int32_t old_state = m_line_states_[line];
       LineHighlight new_line_highlight;
       size_t char_count = analyzeLineWithState(line, line_start_index, current_state, new_line_highlight);
-      current_state = line_states_[line];
+      current_state = m_line_states_[line];
 
       // 已经将patch range末尾后一行分析完毕，检查状态是否已经稳定
       if (line > change_end_line && old_state == current_state) {
@@ -171,58 +167,55 @@ namespace NS_SWEETLINE {
           }
         }*/
         // 或许不需要遍历后续所有行比对状态？只需要这一行的状态和高亮信息与patch前一致就可以判定为稳定
-        LineHighlight old_line_highlight = highlight_->lines[line];
+        LineHighlight old_line_highlight = m_highlight_->lines[line];
         if (old_line_highlight == new_line_highlight) {
           stable = true;
         }
       }
-      highlight_->lines[line] = new_line_highlight;
-#ifdef _WIN32
-      line_start_index += char_count + 2;
-#else
-      line_start_index += char_count + 1;
-#endif
+      m_highlight_->lines[line] = new_line_highlight;
+      line_start_index += char_count + Document::getLineEndingWidth(m_document_->getLine(line).ending);
     }
     // 更新后续行的索引
-    if (config_.show_index) {
+    if (m_config_.show_index) {
       for (; line < total_line_count; ++line) {
-        LineHighlight& line_highlight = highlight_->lines[line];
+        LineHighlight& line_highlight = m_highlight_->lines[line];
         for (TokenSpan& span : line_highlight.spans) {
           span.range.start.index = line_start_index + span.range.start.column;
           span.range.end.index = line_start_index + span.range.end.column;
         }
-        line_start_index += document_->getLineCharCount(line);
+        line_start_index += m_document_->getLineCharCount(line);
       }
     }
-    return highlight_;
+    return m_highlight_;
   }
 
   Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const String& new_text) {
-    TextPosition start_pos = document_->charIndexToPosition(start_index);
-    end_index = std::min(end_index, document_->totalChars());
-    TextPosition end_pos = document_->charIndexToPosition(end_index);
+    TextPosition start_pos = m_document_->charIndexToPosition(start_index);
+    end_index = std::min(end_index, m_document_->totalChars());
+    TextPosition end_pos = m_document_->charIndexToPosition(end_index);
     return analyzeChanges(TextRange{start_pos, end_pos}, new_text);
   }
 
   void InternalDocumentAnalyzer::analyzeLine(size_t line, LineHighlight& line_highlight) {
-    if (rule_ == nullptr) {
+    if (m_rule_ == nullptr) {
       return;
     }
-    int32_t start_state = (line > 0) ? line_states_[line - 1] : SyntaxRule::kDefaultStateId;
-    size_t line_start_index = document_->charIndexOfLine(line);
+    int32_t start_state = (line > 0) ? m_line_states_[line - 1] : SyntaxRule::kDefaultStateId;
+    size_t line_start_index = m_document_->charIndexOfLine(line);
     analyzeLineWithState(line, line_start_index, start_state, line_highlight);
   }
 
   Ptr<Document> InternalDocumentAnalyzer::getDocument() const {
-    return document_;
+    return m_document_;
   }
 
   size_t InternalDocumentAnalyzer::analyzeLineWithState(size_t line,
-                                                size_t line_start_index, int32_t start_state, LineHighlight& line_highlight) {
-    const String& line_text = document_->getLine(line);
+    size_t line_start_index, int32_t start_state, LineHighlight& line_highlight) {
+    const DocumentLine& document_line = m_document_->getLine(line);
+    const String& line_text = document_line.text;
 
     if (line_text.empty()) {
-      line_states_[line] = start_state;
+      m_line_states_[line] = start_state;
       return 0;
     }
 
@@ -244,7 +237,7 @@ namespace NS_SWEETLINE {
       }
     }
 
-    line_states_[line] = current_state;
+    m_line_states_[line] = current_state;
     return line_char_count;
   }
 
@@ -274,10 +267,10 @@ namespace NS_SWEETLINE {
 
   MatchResult InternalDocumentAnalyzer::matchAtPosition(const String& text, size_t start_char_pos, int32_t state) {
     MatchResult result;
-    if (!rule_->containsRule(state)) {
+    if (!m_rule_->containsRule(state)) {
       return result;
     }
-    StateRule& state_rule = rule_->getStateRule(state);
+    StateRule& state_rule = m_rule_->getStateRule(state);
     size_t start_byte_pos = Utf8Util::charPosToBytePos(text, start_char_pos);
 
     OnigRegion* region = onig_region_new();

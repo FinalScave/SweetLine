@@ -29,8 +29,8 @@ namespace NS_SWEETLINE {
     const char* what() const noexcept override;
     const String& message() const noexcept;
   private:
-    int err_code_;
-    String message_;
+    int m_err_code_;
+    String m_message_;
   };
 
   struct StateRule;
@@ -58,7 +58,7 @@ namespace NS_SWEETLINE {
     void dump() const;
 #endif
   private:
-    int32_t state_id_counter_ {1};
+    int32_t m_state_id_counter_ {1};
   };
 
   /// 高亮样式id和名称的映射
@@ -75,7 +75,7 @@ namespace NS_SWEETLINE {
     int32_t getOrCreateStyleId(const String& style_name);
     const String& getStyleName(int32_t style_id);
   private:
-    int32_t style_id_counter_ {4};
+    int32_t m_style_id_counter_ {4};
     static int32_t kDefaultStyleId;
     static String kDefaultStyleName;
   };

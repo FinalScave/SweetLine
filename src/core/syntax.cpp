@@ -7,17 +7,17 @@
 
 namespace NS_SWEETLINE {
  // ===================================== SyntaxRuleParseError ============================================
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code): err_code_(err_code) {
+  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code): m_err_code_(err_code) {
   }
 
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const String& message): err_code_(err_code), message_(message) {
+  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const String& message): m_err_code_(err_code), m_message_(message) {
   }
 
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const char* message): err_code_(err_code), message_(message) {
+  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const char* message): m_err_code_(err_code), m_message_(message) {
   }
 
   const char* SyntaxRuleParseError::what() const noexcept {
-    switch (err_code_) {
+    switch (m_err_code_) {
     case kErrCodePropertyExpected:
       return "Miss property";
     case kErrCodePropertyInvalid:
@@ -34,7 +34,7 @@ namespace NS_SWEETLINE {
   }
 
   const String& SyntaxRuleParseError::message() const noexcept {
-    return message_;
+    return m_message_;
   }
 
   // ===================================== TokenRule ============================================
@@ -70,7 +70,7 @@ namespace NS_SWEETLINE {
   int32_t SyntaxRule::getOrCreateStateId(const String& state_name) {
     auto it = state_id_map_.find(state_name);
     if (it == state_id_map_.end()) {
-      int32_t new_state_id_ = state_id_counter_++;
+      int32_t new_state_id_ = m_state_id_counter_++;
       state_id_map_.insert_or_assign(state_name, new_state_id_);
       return new_state_id_;
     } else {
@@ -123,12 +123,12 @@ namespace NS_SWEETLINE {
     if (auto it = style_name_id_map_.find(style_name); it != style_name_id_map_.end()) {
       return it->second;
     }
-    while (style_id_name_map_.find(style_id_counter_) != style_id_name_map_.end()) {
-      style_id_counter_++;
+    while (style_id_name_map_.find(m_style_id_counter_) != style_id_name_map_.end()) {
+      m_style_id_counter_++;
     }
-    style_id_name_map_.insert_or_assign(style_id_counter_, style_name);
-    style_name_id_map_.insert_or_assign(style_name, style_id_counter_);
-    return style_id_counter_;
+    style_id_name_map_.insert_or_assign(m_style_id_counter_, style_name);
+    style_name_id_map_.insert_or_assign(style_name, m_style_id_counter_);
+    return m_style_id_counter_;
   }
 
   const String& StyleMapping::getStyleName(int32_t style_id) {
