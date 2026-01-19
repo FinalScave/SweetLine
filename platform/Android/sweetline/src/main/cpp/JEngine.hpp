@@ -2,8 +2,7 @@
 #define SWEETLINE_JENGINE_HPP
 
 #include <jni.h>
-#include "JniUtil.h"
-#include "highlight.h"
+#include "c_wrapper.hpp"
 #include "util.h"
 
 using namespace NS_SWEETLINE;
@@ -14,11 +13,11 @@ public:
   static jlong makeDocument(JNIEnv* env, jclass clazz, jstring uri, jstring content) {
     const char* uri_str = env->GetStringUTFChars(uri, JNI_FALSE);
     const char* content_str = env->GetStringUTFChars(content, JNI_FALSE);
-    return makePtrHolderToJavaHandle<Document>(uri_str, content_str);
+    return makeCPtrHolderToIntPtr<Document>(uri_str, content_str);
   }
 
   static jstring getUri(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return env->NewStringUTF("");
     }
@@ -26,7 +25,7 @@ public:
   }
 
   static jint totalChars(jlong handle) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -34,7 +33,7 @@ public:
   }
 
   static jint getLineCharCount(jlong handle, jint line) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -42,7 +41,7 @@ public:
   }
 
   static jint charIndexOfLine(jlong handle, jint index) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -50,7 +49,7 @@ public:
   }
 
   static jlong charIndexToPosition(jlong handle, jint index) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -61,7 +60,7 @@ public:
   }
 
   static jint getLineCount(jlong handle) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -69,16 +68,16 @@ public:
   }
 
   static jstring getLine(JNIEnv* env, jclass clazz, jlong handle, jint line) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
-    const String& line_text = document->getLine(line);
+    const String& line_text = document->getLine(line).text;
     return env->NewStringUTF(line_text.c_str());
   }
 
   static jstring getText(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<Document> document = getNativePtrHolderValue<Document>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(handle);
     if (document == nullptr) {
       return 0;
     }
@@ -109,7 +108,7 @@ public:
 class SyntaxRuleJni {
 public:
   static jstring getName(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(handle);
+    SharedPtr<SyntaxRule> rule = getCPtrHolderValue<SyntaxRule>(handle);
     if (rule == nullptr) {
       return env->NewStringUTF("");
     }
@@ -118,7 +117,7 @@ public:
 
   static jobjectArray getFileExtensions(JNIEnv* env, jclass clazz, jlong handle) {
     jclass string_class = env->FindClass("java/lang/String");
-    Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(handle);
+    SharedPtr<SyntaxRule> rule = getCPtrHolderValue<SyntaxRule>(handle);
     if (rule == nullptr) {
       return env->NewObjectArray(0, string_class, NULL);
     }
@@ -148,44 +147,32 @@ public:
 class DocumentAnalyzerJni {
 public:
   static void finalizeAnalyzer(jlong handle) {
-    JPtrHolder<DocumentAnalyzer>* holder = toNativePtrHolder<DocumentAnalyzer>(handle);
-    delete holder;
+    deleteCPtrHolder<DocumentAnalyzer>(handle);
   }
 
-  static jintArray convertHighlightAsIntArray(JNIEnv* env, const Ptr<DocumentHighlight>& highlight) {
+  static jintArray convertHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight) {
     size_t span_count = highlight->spanCount();
     jintArray result = env->NewIntArray(static_cast<jsize>(span_count * 7));
     if (result == nullptr) {
       return nullptr;
     }
     jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
-    size_t index = 0;
-    for (const LineHighlight& line : highlight->lines) {
-      for (const TokenSpan& span : line.spans) {
-        buffer[index++] = static_cast<jint>(span.range.start.line);
-        buffer[index++] = static_cast<jint>(span.range.start.column);
-        buffer[index++] = static_cast<jint>(span.range.start.index);
-        buffer[index++] = static_cast<jint>(span.range.end.line);
-        buffer[index++] = static_cast<jint>(span.range.end.column);
-        buffer[index++] = static_cast<jint>(span.range.end.index);
-        buffer[index++] = static_cast<jint>(span.style);
-      }
-    }
+    convertHighlightsToBuffer(highlight, buffer, true);
     env->ReleaseIntArrayElements(result, buffer, 0);
     return result;
   }
 
   static jintArray analyze(JNIEnv* env, jclass clazz, jlong handle) {
-    Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(handle);
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return nullptr;
     }
-    Ptr<DocumentHighlight> highlight = analyzer->analyze();
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
     return convertHighlightAsIntArray(env, highlight);
   }
 
   static jintArray analyzeChanges(JNIEnv* env, jclass clazz, jlong handle, jlong start_position, jlong end_position, jstring new_text) {
-    Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(handle);
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return nullptr;
     }
@@ -195,24 +182,24 @@ public:
     size_t end_column = (size_t)(jint)(end_position & 0XFFFFFFFF);
     TextRange range = {{start_line, start_column}, {end_line, end_column}};
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
-    Ptr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text_str);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text_str);
     return convertHighlightAsIntArray(env, highlight);
   }
 
   static jintArray analyzeChanges2(JNIEnv* env, jclass clazz, jlong handle, jint start_index, jint end_index, jstring new_text) {
-    Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(handle);
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return nullptr;
     }
     size_t unsigned_start_index = (size_t)start_index;
     size_t unsigned_end_index = (size_t)end_index;
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
-    Ptr<DocumentHighlight> highlight = analyzer->analyzeChanges(unsigned_start_index, unsigned_end_index, new_text_str);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(unsigned_start_index, unsigned_end_index, new_text_str);
     return convertHighlightAsIntArray(env, highlight);
   }
 
   static jintArray analyzeLine(JNIEnv* env, jclass clazz, jlong handle, jint line) {
-    Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(handle);
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return nullptr;
     }
@@ -238,11 +225,11 @@ public:
   }
 
   static jlong getDocument(jlong handle) {
-    Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(handle);
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return 0;
     }
-    return toJavaHandle(analyzer->getDocument());
+    return toIntPtr(analyzer->getDocument());
   }
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/DocumentAnalyzer";
@@ -266,17 +253,16 @@ public:
 class HighlightEngineJni {
 public:
   static void deleteEngine(jlong handle) {
-    JPtrHolder<HighlightEngine>* holder = toNativePtrHolder<HighlightEngine>(handle);
-    delete holder;
+    deleteCPtrHolder<HighlightEngine>(handle);
   }
 
   static jlong makeEngine(jlong handle, jboolean show_index) {
     HighlightConfig config = {static_cast<bool>(show_index)};
-    return makePtrHolderToJavaHandle<HighlightEngine>(config);
+    return makeCPtrHolderToIntPtr<HighlightEngine>(config);
   }
 
   static void registerStyleName(JNIEnv* env, jclass clazz, jlong handle, jstring name, jint id) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     if (engine == nullptr) {
       return;
     }
@@ -285,7 +271,7 @@ public:
   }
 
   static jstring getStyleName(JNIEnv* env, jclass clazz, jlong handle, jint id) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     if (engine == nullptr) {
       return env->NewStringUTF("");
     }
@@ -294,49 +280,49 @@ public:
   }
 
   static jlong compileSyntaxFromJson(JNIEnv* env, jclass clazz, jlong handle, jstring json) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     if (engine == nullptr) {
       return 0;
     }
     const char* json_str = env->GetStringUTFChars(json, JNI_FALSE);
-    Ptr<SyntaxRule> rule;
+    SharedPtr<SyntaxRule> rule;
     try {
       rule = engine->compileSyntaxFromJson(json_str);
     } catch (SyntaxRuleParseError& error) {
       jclass ex_class = env->FindClass("com/qiplat/sweetline/SyntaxCompileError");
       env->ThrowNew(ex_class, StrUtil::formatString("%s: %s", error.what(), error.message().c_str()).c_str());
     }
-    return toJavaHandle(rule);
+    return toIntPtr(rule);
   }
 
   static jlong compileSyntaxFromFile(JNIEnv* env, jclass clazz, jlong handle, jstring path) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     if (engine == nullptr) {
       return 0;
     }
     const char* path_str = env->GetStringUTFChars(path, JNI_FALSE);
-    Ptr<SyntaxRule> rule;
+    SharedPtr<SyntaxRule> rule;
     try {
       rule = engine->compileSyntaxFromFile(path_str);
     } catch (SyntaxRuleParseError& error) {
       jclass ex_class = env->FindClass("com/qiplat/sweetline/SyntaxCompileError");
       env->ThrowNew(ex_class, StrUtil::formatString("%s: %s", error.what(), error.message().c_str()).c_str());
     }
-    return toJavaHandle(rule);
+    return toIntPtr(rule);
   }
 
   static jlong loadDocument(jlong handle, jlong document_handle) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
-    Ptr<Document> document = getNativePtrHolderValue<Document>(document_handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
     if (engine == nullptr || document == nullptr) {
       return 0;
     }
-    Ptr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-    return toJavaHandle(analyzer);
+    SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+    return toIntPtr(analyzer);
   }
 
   static void removeDocument(JNIEnv* env, jclass clazz, jlong handle, jstring uri) {
-    Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(handle);
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     if (engine == nullptr) {
       return;
     }

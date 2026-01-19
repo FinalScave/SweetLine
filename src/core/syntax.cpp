@@ -140,11 +140,11 @@ namespace NS_SWEETLINE {
   }
 
   // ===================================== SyntaxRuleCompiler ============================================
-  SyntaxRuleCompiler::SyntaxRuleCompiler(const Ptr<StyleMapping>& style_mapping): style_mapping_(style_mapping) {
+  SyntaxRuleCompiler::SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping): style_mapping_(style_mapping) {
   }
 
-  Ptr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromJson(const String& json) {
-    Ptr<SyntaxRule> syntax_rule = MAKE_PTR<SyntaxRule>();
+  SharedPtr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromJson(const String& json) {
+    SharedPtr<SyntaxRule> syntax_rule = makeSharedPtr<SyntaxRule>();
     nlohmann::json root;
     try {
       root = nlohmann::json::parse(json);
@@ -165,7 +165,7 @@ namespace NS_SWEETLINE {
     return syntax_rule;
   }
 
-  Ptr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromFile(const String& file) {
+  SharedPtr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromFile(const String& file) {
     if (!FileUtil::isFile(file)) {
       throw SyntaxRuleParseError(SyntaxRuleParseError::kErrCodeFileNotExists, "File does not exist: " + file);
     }
@@ -176,7 +176,7 @@ namespace NS_SWEETLINE {
     return compileSyntaxFromJson(content);
   }
 
-  void SyntaxRuleCompiler::parseSyntaxName(const Ptr<SyntaxRule>& rule, nlohmann::json& root) {
+  void SyntaxRuleCompiler::parseSyntaxName(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("name")) {
       throw SyntaxRuleParseError(SyntaxRuleParseError::kErrCodePropertyExpected, "name");
     }
@@ -188,7 +188,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseFileExtensions(const Ptr<SyntaxRule>& rule, nlohmann::json& root) {
+  void SyntaxRuleCompiler::parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (root.contains("fileExtensions")) {
       nlohmann::json extensions_json = root["fileExtensions"];
       if (!extensions_json.is_array()) {
@@ -215,7 +215,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseVariables(const Ptr<SyntaxRule>& rule, nlohmann::json& root) {
+  void SyntaxRuleCompiler::parseVariables(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("variables")) {
       return;
     }
@@ -237,7 +237,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseStates(const Ptr<SyntaxRule>& rule, nlohmann::json& root) {
+  void SyntaxRuleCompiler::parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("states")) {
       throw SyntaxRuleParseError(SyntaxRuleParseError::kErrCodePropertyExpected, "states");
     }
@@ -272,7 +272,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseState(const Ptr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json) {
+  void SyntaxRuleCompiler::parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json) {
     for (const nlohmann::json& token_json : state_json) {
       if (!token_json.is_object()) {
         throw SyntaxRuleParseError(SyntaxRuleParseError::kErrCodePropertyInvalid, "state element");

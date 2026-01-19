@@ -2,24 +2,11 @@
 #define SWEETLINE_NAPIUTIL_H
 
 #include "napi/native_api.h"
+#include "c_wrapper.hpp"
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
-
-template<typename T>
-class NapiPtrHolder {
-public:
-  explicit NapiPtrHolder(const std::shared_ptr<T>& ptr): m_ptr_(ptr) {
-  }
-
-  std::shared_ptr<T>& get() {
-    return m_ptr_;
-  }
-  
-private:
-  std::shared_ptr<T> m_ptr_;
-};
 
 static napi_value createNapiString(napi_env env, const std::string& str) {
   napi_value result;
@@ -51,65 +38,22 @@ static napi_value getNapiUndefined(napi_env env) {
   return result;
 }
 
-template<typename T, typename... Args>
-napi_value makePtrHolderToNapiHandle(napi_env env, Args... args) {
-  std::shared_ptr<T> ptr = std::make_shared<T>((args)...);
-  NapiPtrHolder<T>* holder = new NapiPtrHolder<T>(ptr);
-  return createNapiInt64(env, reinterpret_cast<int64_t>(holder));
+static int64_t getNapiInt64(napi_env env, napi_value value) {
+  int64_t res = 0;
+  napi_get_value_int64(env, value, &res);
+  return res;
 }
 
 template<typename T>
-napi_value toNapiHandle(napi_env env, T* raw_ptr) {
-  if (raw_ptr == nullptr) {
-    return createNapiInt64(env, 0);
-  }
-  return createNapiInt64(env, reinterpret_cast<int64_t>(raw_ptr));
+std::shared_ptr<T> getNapiCPtrHolderValue(napi_env env, napi_value handle_value) {
+  int64_t handle = getNapiInt64(env, handle_value);
+  return getCPtrHolderValue<T>(handle);
 }
 
 template<typename T>
-napi_value toNapiHandle(napi_env env, NapiPtrHolder<T>* holder) {
-  return createNapiInt64(env, reinterpret_cast<int64_t>(holder));
-}
-
-template<typename T>
-napi_value toNapiHandle(napi_env env, const std::shared_ptr<T>& ptr) {
-  if (ptr == nullptr) {
-    return createNapiInt64(env, 0);
-  }
-  NapiPtrHolder<T>* holder = new NapiPtrHolder<T>(ptr);
-  return toNapiHandle<T>(env, holder);
-}
-
-template<typename T>
-NapiPtrHolder<T>* toNativePtrHolder(napi_env env, napi_value handle) {
-  int64_t native_handle;
-  napi_status status = napi_get_value_int64(env, handle, &native_handle);
-  if (status != napi_ok || native_handle == 0) {
-    return nullptr;
-  }
-  return reinterpret_cast<NapiPtrHolder<T>*>(native_handle);
-}
-
-template<typename T>
-std::shared_ptr<T> getNativePtrHolderValue(napi_env env, napi_value handle) {
-  NapiPtrHolder<T>* holder = toNativePtrHolder<T>(env, handle);
-  if (holder != nullptr) {
-    return holder->get();
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename T>
-napi_value releasePtrHolder(napi_env env, napi_value handle) {
-  NapiPtrHolder<T>* holder = toNativePtrHolder<T>(env, handle);
-  if (holder != nullptr) {
-    delete holder;
-    napi_value result;
-    napi_create_int64(env, 0, &result);
-    return result;
-  }
-  return handle;
+void deleteNapiCPtrHolder(napi_env env, napi_value handle_value) {
+  int64_t handle = getNapiInt64(env, handle_value);
+  return deleteCPtrHolder<T>(handle);
 }
 
 static bool getStdStringFromNapiValue(napi_env env, napi_value value, std::string& result, size_t max_length = 0) {

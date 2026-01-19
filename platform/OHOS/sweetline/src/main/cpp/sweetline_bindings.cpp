@@ -5,7 +5,7 @@
 
 using namespace NS_SWEETLINE;
 
-static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Ptr<DocumentHighlight>& highlight) {
+static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const SharedPtr<DocumentHighlight>& highlight) {
   if (!highlight) {
     napi_throw_error(env, nullptr, "Highlight pointer is null");
     return nullptr;
@@ -22,7 +22,7 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Ptr<Doc
   const size_t buffer_size = buffer_count * sizeof(int32_t);
 
   napi_value array_buffer;
-  UPtr<int32_t[]> buffer = MAKE_UPTR<int32_t[]>(buffer_count);
+  UniquePtr<int32_t[]> buffer = makeUniquePtr<int32_t[]>(buffer_count);
   if (!buffer) {
     napi_throw_error(env, nullptr, "Failed to allocate buffer memory");
     return nullptr;
@@ -79,7 +79,7 @@ static napi_value ConvertLineHighlightAsIntArray(napi_env env, const LineHighlig
   const size_t buffer_size = buffer_count * sizeof(int32_t);
 
   napi_value array_buffer;
-  UPtr<int32_t[]> buffer = MAKE_UPTR<int32_t[]>(buffer_count);
+  UniquePtr<int32_t[]> buffer = makeUniquePtr<int32_t[]>(buffer_count);
   if (!buffer) {
     napi_throw_error(env, nullptr, "Failed to allocate buffer memory");
     return nullptr;
@@ -138,7 +138,8 @@ static napi_value Document_Create(napi_env env, napi_callback_info info) {
   if (!status) {
     return createNapiInt32(env, 0);
   }
-  return makePtrHolderToNapiHandle<Document>(env, uri, text);
+  intptr_t handle = makeCPtrHolderToIntPtr<Document>(uri, text);
+  return createNapiInt64(env, handle);
 }
 
 static napi_value Document_GetUri(napi_env env, napi_callback_info info) {
@@ -146,7 +147,7 @@ static napi_value Document_GetUri(napi_env env, napi_callback_info info) {
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return getNapiUndefined(env);
   }
@@ -158,7 +159,7 @@ static napi_value Document_TotalChars(napi_env env, napi_callback_info info) {
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return createNapiInt32(env, 0);
   }
@@ -170,7 +171,7 @@ static napi_value Document_GetLineCharCount(napi_env env, napi_callback_info inf
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return createNapiInt32(env, 0);
   }
@@ -184,7 +185,7 @@ static napi_value Document_CharIndexOfLine(napi_env env, napi_callback_info info
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return createNapiInt32(env, 0);
   }
@@ -198,7 +199,7 @@ static napi_value Document_CharIndexToPosition(napi_env env, napi_callback_info 
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return createNapiInt32(env, 0);
   }
@@ -217,7 +218,7 @@ static napi_value Document_GetLineCount(napi_env env, napi_callback_info info) {
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return createNapiInt32(env, 0);
   }
@@ -231,13 +232,13 @@ static napi_value Document_GetLine(napi_env env, napi_callback_info info) {
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return getNapiUndefined(env);
   }
   int32_t line;
   napi_get_value_int32(env, args[1], &line);
-  const String& line_text = document->getLine(line);
+  const String& line_text = document->getLine(line).text;
   return createNapiString(env, line_text);
 }
 
@@ -246,7 +247,7 @@ static napi_value Document_GetText(napi_env env, napi_callback_info info) {
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[0]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[0]);
   if (document == nullptr) {
     return getNapiUndefined(env);
   }
@@ -260,7 +261,7 @@ static napi_value SyntaxRule_GetName(napi_env env, napi_callback_info info) {
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(env, args[0]);
+  SharedPtr<SyntaxRule> rule = getNapiCPtrHolderValue<SyntaxRule>(env, args[0]);
   if (rule == nullptr) {
     return getNapiUndefined(env);
   }
@@ -272,7 +273,7 @@ static napi_value SyntaxRule_GetFileExtensions(napi_env env, napi_callback_info 
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  Ptr<SyntaxRule> rule = getNativePtrHolderValue<SyntaxRule>(env, args[0]);
+  SharedPtr<SyntaxRule> rule = getNapiCPtrHolderValue<SyntaxRule>(env, args[0]);
   if (rule == nullptr) {
     return getNapiUndefined(env);
   }
@@ -292,7 +293,8 @@ static napi_value DocumentAnalyzer_Delete(napi_env env, napi_callback_info info)
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  return releasePtrHolder<DocumentAnalyzer>(env, args[0]);
+  deleteNapiCPtrHolder<DocumentAnalyzer>(env, args[0]);
+  return getNapiUndefined(env);
 }
 
 static napi_value DocumentAnalyzer_Analyze(napi_env env, napi_callback_info info) {
@@ -300,11 +302,11 @@ static napi_value DocumentAnalyzer_Analyze(napi_env env, napi_callback_info info
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
   }
-  Ptr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
   return ConvertDocumentHighlightAsIntArray(env, highlight);
 }
 
@@ -313,7 +315,7 @@ static napi_value DocumentAnalyzer_AnalyzeChanges(napi_env env, napi_callback_in
   napi_value args[6] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
   }
@@ -333,7 +335,7 @@ static napi_value DocumentAnalyzer_AnalyzeChanges(napi_env env, napi_callback_in
     {static_cast<size_t>(start_line), static_cast<size_t>(start_column)},
     {static_cast<size_t>(end_line), static_cast<size_t>(end_column)}
   };
-  Ptr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text);
   return ConvertDocumentHighlightAsIntArray(env, highlight);
 }
 
@@ -342,7 +344,7 @@ static napi_value DocumentAnalyzer_AnalyzeChanges2(napi_env env, napi_callback_i
   napi_value args[4] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
   }
@@ -354,7 +356,7 @@ static napi_value DocumentAnalyzer_AnalyzeChanges2(napi_env env, napi_callback_i
   napi_get_value_int32(env, args[1], &start_index);
   int32_t end_index = 0;
   napi_get_value_int32(env, args[2], &end_index);
-  Ptr<DocumentHighlight> highlight = analyzer->analyzeChanges(start_index, end_index, new_text);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(start_index, end_index, new_text);
   return ConvertDocumentHighlightAsIntArray(env, highlight);
 }
 
@@ -363,7 +365,7 @@ static napi_value DocumentAnalyzer_AnalyzeLine(napi_env env, napi_callback_info 
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
   }
@@ -379,11 +381,12 @@ static napi_value DocumentAnalyzer_GetDocument(napi_env env, napi_callback_info 
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<DocumentAnalyzer> analyzer = getNativePtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
   }
-  return toNapiHandle(env, analyzer->getDocument());
+  intptr_t handle = toIntPtr(analyzer->getDocument());
+  return createNapiInt64(env, handle);
 }
 
 // ================================================ HighlightEngine ====================================================
@@ -395,7 +398,8 @@ static napi_value HighlightEngine_Create(napi_env env, napi_callback_info info) 
   bool show_index;
   napi_get_value_bool(env, args[0], &show_index);
   HighlightConfig config = {show_index};
-  return makePtrHolderToNapiHandle<HighlightEngine>(env, config);
+  intptr_t handle =  makeCPtrHolderToIntPtr<HighlightEngine>(config);
+  return createNapiInt64(env, handle);
 }
 
 static napi_value HighlightEngine_Delete(napi_env env, napi_callback_info info) {
@@ -403,7 +407,8 @@ static napi_value HighlightEngine_Delete(napi_env env, napi_callback_info info) 
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  return releasePtrHolder<HighlightEngine>(env, args[0]);
+  deleteNapiCPtrHolder<HighlightEngine>(env, args[0]);
+  return getNapiUndefined(env);
 }
 
 static napi_value HighlightEngine_RegisterStyleName(napi_env env, napi_callback_info info) {
@@ -411,7 +416,7 @@ static napi_value HighlightEngine_RegisterStyleName(napi_env env, napi_callback_
   napi_value args[3] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiBoolean(env, false);
   }
@@ -430,7 +435,7 @@ static napi_value HighlightEngine_GetStyleName(napi_env env, napi_callback_info 
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiUndefined(env);
   }
@@ -445,7 +450,7 @@ static napi_value HighlightEngine_CompileSyntaxFromJson(napi_env env, napi_callb
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiUndefined(env);
   }
@@ -453,8 +458,9 @@ static napi_value HighlightEngine_CompileSyntaxFromJson(napi_env env, napi_callb
   if (!getStdStringFromNapiValue(env, args[1], json)) {
     return getNapiUndefined(env);
   }
-  Ptr<SyntaxRule> rule = engine->compileSyntaxFromJson(json);
-  return toNapiHandle(env, rule);
+  SharedPtr<SyntaxRule> rule = engine->compileSyntaxFromJson(json);
+  intptr_t handle = toIntPtr(rule);
+  return createNapiInt64(env, handle);
 }
 
 static napi_value HighlightEngine_CompileSyntaxFromFile(napi_env env, napi_callback_info info) {
@@ -462,7 +468,7 @@ static napi_value HighlightEngine_CompileSyntaxFromFile(napi_env env, napi_callb
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiUndefined(env);
   }
@@ -470,8 +476,9 @@ static napi_value HighlightEngine_CompileSyntaxFromFile(napi_env env, napi_callb
   if (!getStdStringFromNapiValue(env, args[1], path)) {
     return getNapiUndefined(env);
   }
-  Ptr<SyntaxRule> rule = engine->compileSyntaxFromFile(path);
-  return toNapiHandle(env, rule);
+  SharedPtr<SyntaxRule> rule = engine->compileSyntaxFromFile(path);
+  intptr_t handle = toIntPtr(rule);
+  return createNapiInt64(env, handle);
 }
 
 static napi_value HighlightEngine_LoadDocument(napi_env env, napi_callback_info info) {
@@ -479,16 +486,17 @@ static napi_value HighlightEngine_LoadDocument(napi_env env, napi_callback_info 
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiUndefined(env);
   }
-  Ptr<Document> document = getNativePtrHolderValue<Document>(env, args[1]);
+  SharedPtr<Document> document = getNapiCPtrHolderValue<Document>(env, args[1]);
   if (document == nullptr) {
     return getNapiUndefined(env);
   }
-  Ptr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  return toNapiHandle(env, analyzer);
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  intptr_t handle = toIntPtr(analyzer);
+  return createNapiInt64(env, handle);
 }
 
 static napi_value HighlightEngine_RemoveDocument(napi_env env, napi_callback_info info) {
@@ -496,7 +504,7 @@ static napi_value HighlightEngine_RemoveDocument(napi_env env, napi_callback_inf
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
   
-  Ptr<HighlightEngine> engine = getNativePtrHolderValue<HighlightEngine>(env, args[0]);
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
   if (engine == nullptr) {
     return getNapiBoolean(env, false);
   }

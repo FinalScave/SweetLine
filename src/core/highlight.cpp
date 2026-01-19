@@ -2,6 +2,12 @@
 #include "internal_highlight.h"
 #include "util.h"
 
+#ifdef SWEETLINE_DEBUG
+  #define DUMP_JSON_TO_RESULT(json, result) result = json.dump(2);
+#else
+  #define DUMP_JSON_TO_RESULT(json, result) result = json.dump();
+#endif
+
 namespace NS_SWEETLINE {
   // ===================================== TokenSpan ============================================
   bool TokenSpan::operator==(const TokenSpan& other) const {
@@ -49,11 +55,7 @@ namespace NS_SWEETLINE {
 
   void LineHighlight::toJson(String& result) const {
     nlohmann::json json = *this;
-#ifdef SWEETLINE_DEBUG
-    result = json.dump(2);
-#else
-    result = json.dump();
-#endif
+    DUMP_JSON_TO_RESULT(json, result);
   }
 
 #ifdef SWEETLINE_DEBUG
@@ -82,11 +84,7 @@ namespace NS_SWEETLINE {
 
   void DocumentHighlight::toJson(String& result) const {
     nlohmann::json json = *this;
-#ifdef SWEETLINE_DEBUG
-    result = json.dump(2);
-#else
-    result = json.dump();
-#endif
+    DUMP_JSON_TO_RESULT(json, result);
   }
 
 #ifdef SWEETLINE_DEBUG
@@ -100,12 +98,12 @@ namespace NS_SWEETLINE {
   HighlightConfig HighlightConfig::kDefault = {};
 
   // ===================================== InternalDocumentAnalyzer ============================================
-  InternalDocumentAnalyzer::InternalDocumentAnalyzer(const Ptr<Document>& document, const Ptr<SyntaxRule>& rule,
+  InternalDocumentAnalyzer::InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
     const HighlightConfig& config): m_document_(document), m_rule_(rule), m_config_(config) {
-    m_highlight_ = MAKE_PTR<DocumentHighlight>();
+    m_highlight_ = makeSharedPtr<DocumentHighlight>();
   }
 
-  Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyze() {
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyze() {
     if (m_rule_ == nullptr) {
       return nullptr;
     }
@@ -124,7 +122,7 @@ namespace NS_SWEETLINE {
     return m_highlight_;
   }
 
-  Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(const TextRange& range, const String& new_text) {
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(const TextRange& range, const String& new_text) {
     if (m_rule_ == nullptr) {
       return nullptr;
     }
@@ -189,7 +187,7 @@ namespace NS_SWEETLINE {
     return m_highlight_;
   }
 
-  Ptr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const String& new_text) {
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const String& new_text) {
     TextPosition start_pos = m_document_->charIndexToPosition(start_index);
     end_index = std::min(end_index, m_document_->totalChars());
     TextPosition end_pos = m_document_->charIndexToPosition(end_index);
@@ -205,7 +203,7 @@ namespace NS_SWEETLINE {
     analyzeLineWithState(line, line_start_index, start_state, line_highlight);
   }
 
-  Ptr<Document> InternalDocumentAnalyzer::getDocument() const {
+  SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
     return m_document_;
   }
 
@@ -339,19 +337,19 @@ namespace NS_SWEETLINE {
   }
 
   // ===================================== DocumentAnalyzer ============================================
-  DocumentAnalyzer::DocumentAnalyzer(const Ptr<Document>& document, const Ptr<SyntaxRule>& rule,
-    const HighlightConfig& config): analyzer_impl_(MAKE_UPTR<InternalDocumentAnalyzer>(document, rule, config)) {
+  DocumentAnalyzer::DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
+    const HighlightConfig& config): analyzer_impl_(makeUniquePtr<InternalDocumentAnalyzer>(document, rule, config)) {
   }
 
-  Ptr<DocumentHighlight> DocumentAnalyzer::analyze() const {
+  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyze() const {
     return analyzer_impl_->analyze();
   }
 
-  Ptr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(const TextRange& range, const String& new_text) const {
+  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(const TextRange& range, const String& new_text) const {
     return analyzer_impl_->analyzeChanges(range, new_text);
   }
 
-  Ptr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const String& new_text) const {
+  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const String& new_text) const {
     return analyzer_impl_->analyzeChanges(start_index, end_index, new_text);
   }
 
@@ -359,31 +357,31 @@ namespace NS_SWEETLINE {
     analyzer_impl_->analyzeLine(line, line_highlight);
   }
 
-  Ptr<Document> DocumentAnalyzer::getDocument() const {
+  SharedPtr<Document> DocumentAnalyzer::getDocument() const {
     return analyzer_impl_->getDocument();
   }
 
   // ===================================== HighlightEngine ============================================
   HighlightEngine::HighlightEngine(const HighlightConfig& config): config_(config) {
-    style_mapping_ = MAKE_PTR<StyleMapping>();
+    style_mapping_ = makeSharedPtr<StyleMapping>();
   }
 
-  Ptr<SyntaxRule> HighlightEngine::compileSyntaxFromJson(const String& json) {
-    UPtr<SyntaxRuleCompiler> compiler = MAKE_UPTR<SyntaxRuleCompiler>(style_mapping_);
-    Ptr<SyntaxRule> rule = compiler->compileSyntaxFromJson(json);
+  SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromJson(const String& json) {
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(style_mapping_);
+    SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromJson(json);
     syntax_rules_.emplace(rule);
     return rule;
   }
 
-  Ptr<SyntaxRule> HighlightEngine::compileSyntaxFromFile(const String& file) {
-    UPtr<SyntaxRuleCompiler> compiler = MAKE_UPTR<SyntaxRuleCompiler>(style_mapping_);
-    Ptr<SyntaxRule> rule = compiler->compileSyntaxFromFile(file);
+  SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromFile(const String& file) {
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(style_mapping_);
+    SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromFile(file);
     syntax_rules_.emplace(rule);
     return rule;
   }
 
-  Ptr<SyntaxRule> HighlightEngine::getSyntaxRuleByName(const String& name) const {
-    for (const Ptr<SyntaxRule>& rule : syntax_rules_) {
+  SharedPtr<SyntaxRule> HighlightEngine::getSyntaxRuleByName(const String& name) const {
+    for (const SharedPtr<SyntaxRule>& rule : syntax_rules_) {
       if (rule->name == name) {
         return rule;
       }
@@ -391,7 +389,7 @@ namespace NS_SWEETLINE {
     return nullptr;
   }
 
-  Ptr<SyntaxRule> HighlightEngine::getSyntaxRuleByExtension(const String& extension) const {
+  SharedPtr<SyntaxRule> HighlightEngine::getSyntaxRuleByExtension(const String& extension) const {
     if (extension.empty()) {
       return nullptr;
     }
@@ -399,7 +397,7 @@ namespace NS_SWEETLINE {
     if (fixed_extension[0] != '.') {
       fixed_extension.insert(0, ".");
     }
-    for (const Ptr<SyntaxRule>& rule : syntax_rules_) {
+    for (const SharedPtr<SyntaxRule>& rule : syntax_rules_) {
       if (rule->file_extensions_.find(fixed_extension) != rule->file_extensions_.end()) {
         return rule;
       }
@@ -415,15 +413,15 @@ namespace NS_SWEETLINE {
     return style_mapping_->getStyleName(style_id);
   }
 
-  Ptr<DocumentAnalyzer> HighlightEngine::loadDocument(const Ptr<Document>& document) {
+  SharedPtr<DocumentAnalyzer> HighlightEngine::loadDocument(const SharedPtr<Document>& document) {
     auto it = analyzer_map_.find(document->getUri());
     if (it == analyzer_map_.end()) {
       String uri = document->getUri();
-      Ptr<SyntaxRule> rule = getSyntaxRuleByExtension(FileUtil::getExtension(uri));
+      SharedPtr<SyntaxRule> rule = getSyntaxRuleByExtension(FileUtil::getExtension(uri));
       if (rule == nullptr) {
         return nullptr;
       }
-      Ptr<DocumentAnalyzer> analyzer = Ptr<DocumentAnalyzer>(new DocumentAnalyzer(document, rule, config_));
+      SharedPtr<DocumentAnalyzer> analyzer = SharedPtr<DocumentAnalyzer>(new DocumentAnalyzer(document, rule, config_));
       analyzer_map_.insert_or_assign(uri, analyzer);
       return analyzer;
     } else {

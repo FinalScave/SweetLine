@@ -162,11 +162,11 @@ namespace NS_SWEETLINE {
 #endif
   }
 
-  UPtr<const char[]> StrUtil::toCString(const std::wstring& ws) {
+  UniquePtr<const char[]> StrUtil::toCString(const std::wstring& ws) {
 #ifdef _WIN32
     const int size_needed = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(),
       static_cast<int>(ws.size()), nullptr, 0, nullptr, nullptr);
-    UPtr<char[]> ptr = MAKE_UPTR<char[]>(size_needed + 1);
+    UniquePtr<char[]> ptr = makeUniquePtr<char[]>(size_needed + 1);
     WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), static_cast<int>(ws.size()),
       ptr.get(), size_needed, nullptr,nullptr);
     ptr[size_needed] = '\0';
@@ -174,7 +174,7 @@ namespace NS_SWEETLINE {
 #else
     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
     std::string utf8_str = converter.to_bytes(ws.c_str());
-    UPtr<char[]> ptr = MAKE_UPTR<char[]>(utf8_str.size() + 1);
+    UniquePtr<char[]> ptr = makeUniquePtr<char[]>(utf8_str.size() + 1);
     std::copy(utf8_str.begin(), utf8_str.end(), ptr.get());
     ptr[utf8_str.size()] = '\0';
     return ptr;

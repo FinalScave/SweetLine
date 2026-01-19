@@ -42,22 +42,22 @@ namespace NS_SWEETLINE {
 
   class InternalDocumentAnalyzer {
   public:
-    explicit InternalDocumentAnalyzer(const Ptr<Document>& document, const Ptr<SyntaxRule>& rule,
+    explicit InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
       const HighlightConfig& config = HighlightConfig::kDefault);
 
-    Ptr<DocumentHighlight> analyze();
+    SharedPtr<DocumentHighlight> analyze();
 
-    Ptr<DocumentHighlight> analyzeChanges(const TextRange& range, const String& new_text);
+    SharedPtr<DocumentHighlight> analyzeChanges(const TextRange& range, const String& new_text);
 
-    Ptr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const String& new_text);
+    SharedPtr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const String& new_text);
 
     void analyzeLine(size_t line, LineHighlight& line_highlight);
 
-    Ptr<Document> getDocument() const;
+    SharedPtr<Document> getDocument() const;
   private:
-    Ptr<Document> m_document_;
-    Ptr<DocumentHighlight> m_highlight_;
-    Ptr<SyntaxRule> m_rule_;
+    SharedPtr<Document> m_document_;
+    SharedPtr<DocumentHighlight> m_highlight_;
+    SharedPtr<SyntaxRule> m_rule_;
     HighlightConfig m_config_;
     List<int32_t> m_line_states_;
 

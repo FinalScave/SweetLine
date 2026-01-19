@@ -8,18 +8,25 @@
 #include <vector>
 
 #define NS_SWEETLINE sweetline
-#define MAKE_PTR std::make_shared
-#define MAKE_UPTR std::make_unique
-#define MAKE_WPTR std::make_weak
 
 template<typename T>
-using Ptr = std::shared_ptr<T>;
+using SharedPtr = std::shared_ptr<T>;
 
 template<typename T>
-using UPtr = std::unique_ptr<T>;
+using UniquePtr = std::unique_ptr<T>;
 
 template<typename T>
-using WPtr = std::weak_ptr<T>;
+using WeakPtr = std::weak_ptr<T>;
+
+template<typename T, typename... Args>
+SharedPtr<T> makeSharedPtr(Args&&... args) {
+  return std::make_shared<T>(std::forward<Args>(args)...);
+}
+
+template<typename T, typename... Args>
+UniquePtr<T> makeUniquePtr(Args&&... args) {
+  return std::make_unique<T>(std::forward<Args>(args)...);
+}
 
 using String = std::string;
 

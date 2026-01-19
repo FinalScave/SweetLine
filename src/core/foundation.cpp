@@ -159,7 +159,7 @@ namespace NS_SWEETLINE {
         pos.index = char_index;
         return pos;
       }
-      current += getLineEndingWidth(m_lines_[pos.line].ending);
+      current += lineLength + getLineEndingWidth(m_lines_[pos.line].ending);
     }
     throw std::out_of_range("Index out of range");
   }

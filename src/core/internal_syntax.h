@@ -53,22 +53,22 @@ namespace NS_SWEETLINE {
   /// 语法规则编译器
   class SyntaxRuleCompiler {
   public:
-    explicit SyntaxRuleCompiler(const Ptr<StyleMapping>& style_mapping);
+    explicit SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping);
 
     /// 通过json编译语法规则
     /// @param json 语法规则文件的json
-    Ptr<SyntaxRule> compileSyntaxFromJson(const String& json);
+    SharedPtr<SyntaxRule> compileSyntaxFromJson(const String& json);
 
     /// 编译语法规则
     /// @param file 语法规则定义文件(json)
-    Ptr<SyntaxRule> compileSyntaxFromFile(const String& file);
+    SharedPtr<SyntaxRule> compileSyntaxFromFile(const String& file);
   private:
-    Ptr<StyleMapping> style_mapping_;
-    static void parseSyntaxName(const Ptr<SyntaxRule>& rule, nlohmann::json& root);
-    static void parseFileExtensions(const Ptr<SyntaxRule>& rule, nlohmann::json& root);
-    static void parseVariables(const Ptr<SyntaxRule>& rule, nlohmann::json& root);
-    void parseStates(const Ptr<SyntaxRule>& rule, nlohmann::json& root);
-    void parseState(const Ptr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
+    SharedPtr<StyleMapping> style_mapping_;
+    static void parseSyntaxName(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseVariables(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    void parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    void parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
     static void compileStatePattern(StateRule& state_rule);
     static void replaceVariable(String& text, HashMap<String, String>& variables_map);
   };

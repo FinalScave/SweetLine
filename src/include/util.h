@@ -57,7 +57,7 @@ namespace NS_SWEETLINE {
 
     /// 将宽文本转换为C风格字符串（内存安全）
     /// @param ws 宽文本
-    static UPtr<const char[]> toCString(const std::wstring& ws);
+    static UniquePtr<const char[]> toCString(const std::wstring& ws);
 
     /// 接受va_list作为参数进行格式化
     /// @param format 格式

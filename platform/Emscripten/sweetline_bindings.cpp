@@ -38,9 +38,9 @@ EMSCRIPTEN_BINDINGS(foundation) {
     .property("start", &TextRange::start)
     .property("end", &TextRange::end);
   emscripten::class_<Document>("Document")
-    .smart_ptr<Ptr<Document>>("Ptr<Document>")
+    .smart_ptr<SharedPtr<Document>>("SharedPtr<Document>")
     .constructor<>(emscripten::optional_override([](const String& uri, const String& content) {
-        return MAKE_PTR<Document>(uri, content);
+        return makeSharedPtr<Document>(uri, content);
       })
     )
     .function("getUri", &Document::getUri)
@@ -69,7 +69,7 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     );
   emscripten::class_<DocumentHighlight>("DocumentHighlight")
-    .smart_ptr<Ptr<DocumentHighlight>>("Ptr<DocumentHighlight>")
+    .smart_ptr<SharedPtr<DocumentHighlight>>("SharedPtr<DocumentHighlight>")
     .property("lines", &DocumentHighlight::lines)
     .function("toJson",emscripten::optional_override([](const Ptr<DocumentHighlight>& self) {
         String json;
@@ -78,26 +78,26 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     );
   emscripten::class_<DocumentAnalyzer>("DocumentAnalyzer")
-    .smart_ptr<Ptr<DocumentAnalyzer>>("Ptr<DocumentAnalyzer>")
+    .smart_ptr<SharedPtr<DocumentAnalyzer>>("SharedPtr<DocumentAnalyzer>")
     .function("analyze", &DocumentAnalyzer::analyze)
-    .function("analyzeChanges", emscripten::select_overload<Ptr<DocumentHighlight>(const TextRange&, const String&) const>(&DocumentAnalyzer::analyzeChanges))
-    .function("analyzeChanges", emscripten::select_overload<Ptr<DocumentHighlight>(size_t, size_t, const String&) const>(&DocumentAnalyzer::analyzeChanges))
+    .function("analyzeChanges", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const String&) const>(&DocumentAnalyzer::analyzeChanges))
+    .function("analyzeChanges", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const String&) const>(&DocumentAnalyzer::analyzeChanges))
     .function("analyzeLine", &DocumentAnalyzer::analyzeLine)
     .function("getDocument", &DocumentAnalyzer::getDocument);
   emscripten::class_<HighlightConfig>("HighlightConfig")
     .constructor<>()
     .property("showIndex", &HighlightConfig::show_index);
   emscripten::class_<SyntaxRule>("SyntaxRule")
-    .smart_ptr<Ptr<SyntaxRule>>("Ptr<SyntaxRule>")
+    .smart_ptr<SharedPtr<SyntaxRule>>("SharedPtr<SyntaxRule>")
     .function("getName",
-      emscripten::optional_override([](const Ptr<SyntaxRule>& self) {
+      emscripten::optional_override([](const SharedPtr<SyntaxRule>& self) {
         return self->name;
       })
     );
   emscripten::class_<HighlightEngine>("HighlightEngine")
-    .smart_ptr<Ptr<HighlightEngine>>("Ptr<HighlightEngine>")
+    .smart_ptr<SharedPtr<HighlightEngine>>("SharedPtr<HighlightEngine>")
     .constructor<>(emscripten::optional_override([](const HighlightConfig& config) {
-        return MAKE_PTR<HighlightEngine>(config);
+        return makeSharedPtr<HighlightEngine>(config);
       })
     )
     .function("registerStyleName", &HighlightEngine::registerStyleName)

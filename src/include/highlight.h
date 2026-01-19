@@ -67,20 +67,20 @@ namespace NS_SWEETLINE {
   public:
     /// 对整个文本进行高亮分析
     /// @return 整个文本的高亮结果
-    Ptr<DocumentHighlight> analyze() const;
+    SharedPtr<DocumentHighlight> analyze() const;
 
     /// 根据patch内容重新分析整个文本的高亮结果
     /// @param range patch的变更范围
     /// @param new_text patch的文本
     /// @return 整个文本的高亮结果
-    Ptr<DocumentHighlight> analyzeChanges(const TextRange& range, const String& new_text) const;
+    SharedPtr<DocumentHighlight> analyzeChanges(const TextRange& range, const String& new_text) const;
 
     /// 根据patch内容重新分析整个文本的高亮结果
     /// @param start_index patch变更的起始字符索引
     /// @param end_index patch变更的结束字符索引
     /// @param new_text patch的文本
     /// @return 整个文本的高亮结果
-    Ptr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const String& new_text) const;
+    SharedPtr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const String& new_text) const;
 
     /// 分析一行的高亮结果
     /// @param line 行号
@@ -90,12 +90,12 @@ namespace NS_SWEETLINE {
 
     /// 获取当前高亮分析器持有的文本内容
     /// @return std::shared_ptr<Document>
-    Ptr<Document> getDocument() const;
+    SharedPtr<Document> getDocument() const;
   private:
     friend class HighlightEngine;
-    DocumentAnalyzer(const Ptr<Document>& document, const Ptr<SyntaxRule>& rule,
+    DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
       const HighlightConfig& config = HighlightConfig::kDefault);
-    UPtr<InternalDocumentAnalyzer> analyzer_impl_;
+    UniquePtr<InternalDocumentAnalyzer> analyzer_impl_;
   };
 
   /// 高亮引擎
@@ -106,20 +106,20 @@ namespace NS_SWEETLINE {
     /// 通过json编译语法规则
     /// @param json 语法规则文件的json
     /// @throws SyntaxRuleParseError 编译错误时会抛出 SyntaxRuleParseError
-    Ptr<SyntaxRule> compileSyntaxFromJson(const String& json);
+    SharedPtr<SyntaxRule> compileSyntaxFromJson(const String& json);
 
     /// 编译语法规则
     /// @param file 语法规则定义文件(json)
     /// @throws SyntaxRuleParseError 编译错误时会抛出 SyntaxRuleParseError
-    Ptr<SyntaxRule> compileSyntaxFromFile(const String& file);
+    SharedPtr<SyntaxRule> compileSyntaxFromFile(const String& file);
 
     /// 获取指定名称的语法规则(如 java)
     /// @param name 语法规则名称
-    Ptr<SyntaxRule> getSyntaxRuleByName(const String& name) const;
+    SharedPtr<SyntaxRule> getSyntaxRuleByName(const String& name) const;
 
     /// 获取指定后缀名匹配的的语法规则(如 .t)
     /// @param extension 后缀名
-    Ptr<SyntaxRule> getSyntaxRuleByExtension(const String& extension) const;
+    SharedPtr<SyntaxRule> getSyntaxRuleByExtension(const String& extension) const;
 
     /// 注册一个高亮样式，用于名称映射
     /// @param style_name 样式名称
@@ -133,16 +133,16 @@ namespace NS_SWEETLINE {
     /// 加载文本并进行首次分析
     /// @param document 文本内容
     /// @return 整个文本的高亮结果
-    Ptr<DocumentAnalyzer> loadDocument(const Ptr<Document>& document);
+    SharedPtr<DocumentAnalyzer> loadDocument(const SharedPtr<Document>& document);
 
     /// 移除加载过的文本
     /// @param uri 文本内容的Uri
     void removeDocument(const String& uri);
   private:
     HighlightConfig config_;
-    HashSet<Ptr<SyntaxRule>> syntax_rules_;
-    HashMap<String, Ptr<DocumentAnalyzer>> analyzer_map_;
-    Ptr<StyleMapping> style_mapping_;
+    HashSet<SharedPtr<SyntaxRule>> syntax_rules_;
+    HashMap<String, SharedPtr<DocumentAnalyzer>> analyzer_map_;
+    SharedPtr<StyleMapping> style_mapping_;
   };
 }
 

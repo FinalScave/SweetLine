@@ -13,8 +13,11 @@ endif ()
 
 # options
 option(BUILD_TESTING "Includes testing source for unit tests" ON)
+option(STATIC_LIB "Build static library" ON)
+option(SHARED_LIB "Build dynamic library" ON)
 add_definitions(-DTESTS_DIR="${CMAKE_SOURCE_DIR}/tests")
 add_definitions(-DSYNTAX_DIR="${CMAKE_SOURCE_DIR}/syntaxes")
+add_definitions(-DSWEETLINE_EXPORT=1)
 add_definitions(-DSWEETLINE_DEBUG=1)
 
 # initial config
@@ -22,6 +25,8 @@ set(LINK_LIB)
 set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
 set(SRC_DIR ${CMAKE_PROJECT_DIR}/src)
 set(3DPARTY_DIR ${CMAKE_PROJECT_DIR}/3dparty)
+set(STATIC_LIB_NAME "${CMAKE_PROJECT_NAME}_static")
+set(SHARED_LIB_NAME "${CMAKE_PROJECT_NAME}")
 
 # header search path
 list(APPEND INCLUDE_DIRS
@@ -39,15 +44,16 @@ set(PLATFORM_FILES)
 if (ANDROID)
     file(GLOB_RECURSE PLATFORM_FILES ${CMAKE_PROJECT_DIR}/platform/Android/sweetline/src/main/cpp/*.*)
     add_definitions(-DANDROID)
+    unset(STATIC_LIB)
 elseif (OHOS)
     file(GLOB_RECURSE PLATFORM_FILES ${CMAKE_PROJECT_DIR}/platform/OHOS/sweetline/src/main/cpp/*.*)
     add_definitions(-DOHOS)
+    unset(STATIC_LIB)
 elseif (WIN32)
     add_definitions(-DWINDOWS -D_POSIX -D_POSIX_THREAD_SAFE_FUNCTIONS)
-    set(STATIC_LIB ON)
 elseif (EMSCRIPTEN)
     add_definitions(-DWASM)
-    set(STATIC_LIB ON)
+    set(SHARED_LIB OFF)
     file(GLOB_RECURSE WASM_FILES ${CMAKE_PROJECT_DIR}/platform/Emscripten/*.*)
     message(STATUS "add target: libsweetline for wasm")
     add_executable("libsweetline" ${WASM_FILES})
@@ -55,7 +61,7 @@ elseif (EMSCRIPTEN)
             "--bind"
             "-s WASM=1"
             "-s MODULARIZE=1"
-            "-s EXPORT_NAME='sweetline'"
+            "-s EXPORT_NAME='libsweetline'"
             "-s EXPORT_ES6=1"
             "-s FORCE_FILESYSTEM=1"
             "-s ALLOW_MEMORY_GROWTH=1"
@@ -66,11 +72,14 @@ endif ()
 # project shared/dynamic lib
 if (STATIC_LIB)
     add_definitions(-DONIG_STATIC=ON)
-    message(STATUS "add target: sweetline as static lib")
-    add_library(${CMAKE_PROJECT_NAME} STATIC ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
-else ()
-    message(STATUS "add target: sweetline as dynamic lib")
-    add_library(${CMAKE_PROJECT_NAME} SHARED ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
+    message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
+    add_library(${STATIC_LIB_NAME} STATIC ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
+endif ()
+if (SHARED_LIB)
+    include_directories(${SRC_DIR}/shared)
+    file(GLOB_RECURSE C_FILES ${SRC_DIR}/shared/*.*)
+    message(STATUS "add target: ${SHARED_LIB_NAME} as dynamic lib")
+    add_library(${SHARED_LIB_NAME} SHARED ${CORE_SOURCE_FILES} ${PLATFORM_FILES} ${C_FILES})
 endif ()
 
 # add library functions
@@ -107,12 +116,12 @@ endfunction()
 
 # add library
 if (ANDROID)
-    add_platform_library(oniguruma libonig.so SHARED)
+    add_platform_library(oniguruma libonig.a STATIC)
     find_library(ANDROID_LIB android)
     find_library(LOG_LIB log)
     set(LINK_LIB ${LINK_LIB} ${ANDROID_LIB} ${LOG_LIB})
 elseif (OHOS)
-    add_platform_library(oniguruma libonig.so SHARED)
+    add_platform_library(oniguruma libonig.a STATIC)
     set(LINK_LIB ${LINK_LIB} libace_napi.z.so libhilog_ndk.z.so)
 elseif (WIN32)
     if (MSVC)
@@ -124,13 +133,16 @@ elseif (WIN32)
 elseif (EMSCRIPTEN)
     add_platform_library(oniguruma libonig.a STATIC)
 endif ()
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${LINK_LIB})
 
 # merge static libs
-if (STATIC_LIB)
+if (STATIC_LIB AND NOT APPLE)
+    target_link_libraries(${STATIC_LIB_NAME} PRIVATE ${LINK_LIB})
     include(MergeStaticLib.cmake)
     get_target_property(ONIG_PATH oniguruma IMPORTED_LOCATION)
-    merge_static_libs(${CMAKE_PROJECT_NAME} ${ONIG_PATH})
+    merge_static_libs(${STATIC_LIB_NAME} ${ONIG_PATH})
+endif ()
+if (SHARED_LIB)
+    target_link_libraries(${SHARED_LIB_NAME} PRIVATE ${LINK_LIB})
 endif ()
 
 # Unit tests
