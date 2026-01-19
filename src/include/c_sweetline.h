@@ -21,8 +21,22 @@ extern "C" {
 typedef enum sl_error {
   SL_OK = 0, // 没有错误
   SL_HANDLE_INVALID = 1, // 句柄不合法
-  SL_PATTERN_INVALID = 2, // 正则表达式错误
+  SL_JSON_PROPERTY_MISSED = -1, // 语法规则json缺少属性
+  SL_JSON_PROPERTY_INVALID = -2, // 语法规则json属性值错误
+  SL_PATTERN_INVALID = -3, // 语法规则json中正则表达式错误
+  SL_STATE_INVALID = -4, // 语法规则json中状态错误
+  SL_JSON_INVALID = -5, // 语法规则json错误
+  SL_FILE_IO_ERR = -6, // 文件IO错误
+  SL_FILE_EMPTY = -7, // 文件内容为空
 } sl_error_t;
+
+/// 语法规则错误信息
+typedef struct sl_syntax_error {
+  /// 错误码
+  sl_error_t err_code;
+  /// 错误信息
+  const char* err_msg;
+} sl_syntax_error_t;
 
 /// 创建引擎托管文档(Document)
 /// @param uri 文档Uri
@@ -48,14 +62,14 @@ SL_API sl_error_t sl_free_engine(intptr_t engine_handle);
 /// 编译高亮规则(直接根据json配置内容编译)
 /// @param engine_handle 高亮引擎句柄
 /// @param syntax_json 语法规则json配置
-/// @return 返回错误码，编译成功时返回 @see {SL_OK}
-SL_API sl_error_t sl_engine_compile_json(intptr_t engine_handle, const char* syntax_json);
+/// @return 返回编译语法规则错误信息(如果有错误)
+SL_API sl_syntax_error_t sl_engine_compile_json(intptr_t engine_handle, const char* syntax_json);
 
 /// 编译高亮规则(读取文本json配置文件内容编译)
 /// @param engine_handle 高亮引擎句柄
 /// @param syntax_file 语法规则json文件路径
-/// @return 返回错误码，编译成功时返回 @see {SL_OK}
-SL_API sl_error_t sl_engine_compile_file(intptr_t engine_handle, const char* syntax_file);
+/// @return 返回编译语法规则错误信息(如果有错误)
+SL_API sl_syntax_error_t sl_engine_compile_file(intptr_t engine_handle, const char* syntax_file);
 
 /// 注册样式名称，高亮规则中的样式名称最终会映射到注册的样式ID
 /// @param engine_handle 高亮引擎句柄

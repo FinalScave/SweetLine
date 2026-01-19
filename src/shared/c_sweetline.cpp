@@ -1,5 +1,14 @@
 #include "c_wrapper.hpp"
 
+StringKeepAlive& StringKeepAlive::getInstance() {
+  static thread_local StringKeepAlive string_pool;
+  return string_pool;
+}
+
+void StringKeepAlive::clear() {
+  vector_.clear();
+}
+
 extern "C" {
 
 intptr_t sl_create_document(const char* uri, const char* text) {
@@ -21,22 +30,32 @@ sl_error_t sl_free_engine(intptr_t engine_handle) {
   return SL_OK;
 }
 
-sl_error_t sl_engine_compile_json(intptr_t engine_handle, const char* syntax_json) {
+sl_syntax_error_t sl_engine_compile_json(intptr_t engine_handle, const char* syntax_json) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(engine_handle);
   if (engine == nullptr) {
-    return SL_HANDLE_INVALID;
+    return {SL_HANDLE_INVALID};
   }
-  engine->compileSyntaxFromJson(syntax_json);
-  return SL_OK;
+  try {
+    engine->compileSyntaxFromJson(syntax_json);
+    return {SL_OK};
+  } catch (SyntaxRuleParseError& err) {
+    StringKeepAlive::getInstance().clear();
+    return {static_cast<sl_error_t>(err.code()), StringKeepAlive::getInstance().getAliveCString(err.message())};
+  }
 }
 
-sl_error_t sl_engine_compile_file(intptr_t engine_handle, const char* syntax_file) {
+sl_syntax_error_t sl_engine_compile_file(intptr_t engine_handle, const char* syntax_file) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(engine_handle);
   if (engine == nullptr) {
-    return SL_HANDLE_INVALID;
+    return {SL_HANDLE_INVALID};
   }
-  engine->compileSyntaxFromFile(syntax_file);
-  return SL_OK;
+  try {
+    engine->compileSyntaxFromFile(syntax_file);
+    return {SL_OK};
+  } catch (SyntaxRuleParseError& err) {
+    StringKeepAlive::getInstance().clear();
+    return {static_cast<sl_error_t>(err.code()), StringKeepAlive::getInstance().getAliveCString(err.message())};
+  }
 }
 
 sl_error_t sl_engine_register_style_name(intptr_t engine_handle, const char* style_name, int32_t style_id) {

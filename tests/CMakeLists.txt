@@ -13,7 +13,7 @@ target_include_directories(${TEST_PRODUCT_NAME} PRIVATE
 )
 
 target_link_libraries(${TEST_PRODUCT_NAME} PRIVATE
-        sweetline
+        sweetline_static
 )
 
 enable_testing()

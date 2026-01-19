@@ -37,6 +37,10 @@ namespace NS_SWEETLINE {
     return m_message_;
   }
 
+  int SyntaxRuleParseError::code() const noexcept {
+    return m_err_code_;
+  }
+
   // ===================================== TokenRule ============================================
   int32_t TokenRule::getGroupStyle(const int32_t group) const {
     auto it = styles.find(group);

@@ -28,6 +28,7 @@ namespace NS_SWEETLINE {
 
     const char* what() const noexcept override;
     const String& message() const noexcept;
+    int code() const noexcept;
   private:
     int m_err_code_;
     String m_message_;
