@@ -54,10 +54,10 @@ elseif (WIN32)
 elseif (EMSCRIPTEN)
     add_definitions(-DWASM)
     set(SHARED_LIB OFF)
-    file(GLOB_RECURSE WASM_FILES ${CMAKE_PROJECT_DIR}/platform/Emscripten/*.*)
+    file(GLOB_RECURSE WASM_FILES ${CMAKE_PROJECT_DIR}/platform/Emscripten/*.cpp)
     message(STATUS "add target: libsweetline for wasm")
     add_executable("libsweetline" ${WASM_FILES})
-    target_link_libraries("libsweetline" PRIVATE ${CMAKE_PROJECT_NAME}
+    target_link_libraries("libsweetline" PRIVATE ${STATIC_LIB_NAME}
             "--bind"
             "-s WASM=1"
             "-s MODULARIZE=1"
@@ -137,7 +137,7 @@ endif ()
 # merge static libs
 if (STATIC_LIB AND NOT APPLE)
     target_link_libraries(${STATIC_LIB_NAME} PRIVATE ${LINK_LIB})
-    include(MergeStaticLib.cmake)
+    include(cmake/MergeStaticLib.cmake)
     get_target_property(ONIG_PATH oniguruma IMPORTED_LOCATION)
     merge_static_libs(${STATIC_LIB_NAME} ${ONIG_PATH})
 endif ()

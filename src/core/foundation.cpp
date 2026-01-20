@@ -314,7 +314,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  inline uint8_t Document::getLineEndingWidth(LineEnding ending) {
+  uint8_t Document::getLineEndingWidth(LineEnding ending) {
     switch (ending) {
     case LineEnding::LF:
     case LineEnding::CR:
