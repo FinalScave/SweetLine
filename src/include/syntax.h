@@ -8,47 +8,92 @@ namespace NS_SWEETLINE {
   class SyntaxRuleParseError : public std::exception {
   public:
     /// 缺少属性
-    static constexpr int kErrCodePropertyExpected = -1;
+    static constexpr int ERR_JSON_PROPERTY_MISSED = -1;
     /// 属性内容错误
-    static constexpr int kErrCodePropertyInvalid = -2;
+    static constexpr int ERR_JSON_PROPERTY_INVALID = -2;
     /// 正则表达式错误
-    static constexpr int kErrCodePatternInvalid = -3;
+    static constexpr int ERR_PATTERN_INVALID = -3;
     /// state错误
-    static constexpr int kErrCodeStateInvalid = -4;
+    static constexpr int ERR_STATE_INVALID = -4;
     /// json存在语法错误
-    static constexpr int kErrCodeJsonInvalid = -5;
+    static constexpr int ERR_JSON_INVALID = -5;
     /// 文件不存在
-    static constexpr int kErrCodeFileNotExists = -6;
+    static constexpr int ERR_FILE_NOT_EXISTS = -6;
     /// 文件内容为空
-    static constexpr int kErrCodeFileInvalid = -7;
+    static constexpr int ERR_FILE_INVALID = -7;
 
     explicit SyntaxRuleParseError(int err_code);
-    explicit SyntaxRuleParseError(int err_code, const String& message);
+    explicit SyntaxRuleParseError(int err_code, const U8String& message);
     explicit SyntaxRuleParseError(int err_code, const char* message);
 
     const char* what() const noexcept override;
-    const String& message() const noexcept;
+    const U8String& message() const noexcept;
     int code() const noexcept;
   private:
     int m_err_code_;
-    String m_message_;
+    U8String m_message_;
+  };
+
+  /// 高亮样式tags枚举
+  enum struct InlineStyleTag : int16_t {
+    /// 加粗显示
+    BOLD = 1,
+    /// 斜体显示
+    ITALIC = 1 << 1,
+  };
+
+  /// 语法规则中直接包含的样式定义
+  struct InlineStyle {
+    /// 前景色(ARGB)
+    int32_t foreground {0};
+    /// 背景色(ARGB)
+    int32_t background {0};
+    /// tags
+    int16_t tags {0};
+  };
+
+  /// 高亮样式id和名称的映射
+  struct StyleMapping {
+    StyleMapping();
+
+    /// style 名称 到 id的映射
+    HashMap<U8String, int32_t> style_name_id_map;
+    /// style id 到 名称的映射
+    HashMap<int32_t, U8String> style_id_name_map;
+
+    void registerStyleName(const U8String& style_name, int32_t style_id);
+    int32_t getStyleId(const U8String& style_name);
+    int32_t getOrCreateStyleId(const U8String& style_name);
+    const U8String& getStyleName(int32_t style_id);
+  private:
+    int32_t m_style_id_counter_ {1};
+    static int32_t kDefaultStyleId;
+    static U8String kDefaultStyleName;
   };
 
   struct StateRule;
+  struct BlockRule;
   /// 语法规则
   struct SyntaxRule {
     /// 语法规则的名称
-    String name;
+    U8String name;
     /// 支持的文件扩展名
-    HashSet<String> file_extensions_;
+    HashSet<U8String> file_extensions;
+    /// 语法规则中定义的styles(可空),样式ID->InlineStyle
+    HashMap<int32_t, InlineStyle> inline_styles;
+    /// 语法规则内联样式定义表 (inline_style模式)
+    UniquePtr<StyleMapping> style_mapping;
     /// variables
-    HashMap<String, String> variables_map_;
+    HashMap<U8String, U8String> variables_map;
     /// state id 到 StateRule 的映射
-    HashMap<int32_t, StateRule> state_rules_map_;
+    HashMap<int32_t, StateRule> state_rules_map;
     /// state名称 到 id 的映射
-    HashMap<String, int32_t> state_id_map_;
+    HashMap<U8String, int32_t> state_id_map;
 
-    int32_t getOrCreateStateId(const String& state_name);
+    bool containsInlineStyle(int32_t style_id);
+    InlineStyle& getInlineStyle(int32_t style_id);
+
+    int32_t getOrCreateStateId(const U8String& state_name);
     bool containsRule(int32_t state_id) const;
     StateRule& getStateRule(int32_t state_id);
     SyntaxRule();
@@ -60,25 +105,6 @@ namespace NS_SWEETLINE {
 #endif
   private:
     int32_t m_state_id_counter_ {1};
-  };
-
-  /// 高亮样式id和名称的映射
-  struct StyleMapping {
-    StyleMapping();
-
-    /// style 名称 到 id的映射
-    HashMap<String, int32_t> style_name_id_map_;
-    /// style id 到 名称的映射
-    HashMap<int32_t, String> style_id_name_map_;
-
-    void registerStyleName(const String& style_name, int32_t style_id);
-    int32_t getStyleId(const String& style_name);
-    int32_t getOrCreateStyleId(const String& style_name);
-    const String& getStyleName(int32_t style_id);
-  private:
-    int32_t m_style_id_counter_ {4};
-    static int32_t kDefaultStyleId;
-    static String kDefaultStyleName;
   };
 }
 

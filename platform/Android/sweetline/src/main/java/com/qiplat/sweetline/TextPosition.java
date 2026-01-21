@@ -1,8 +1,20 @@
 package com.qiplat.sweetline;
 
+/**
+ * 文本位置描述
+ */
 public class TextPosition {
+    /**
+     * 文字所处行，起始为0
+     */
     public int line;
+    /**
+     * 文字所处列，起始为0
+     */
     public int column;
+    /**
+     * 文字在全文中的索引，起始为0
+     */
     public int index;
 
     public TextPosition(int line, int column) {

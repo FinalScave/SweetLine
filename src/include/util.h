@@ -14,28 +14,28 @@ namespace NS_SWEETLINE {
 
     /// 计算UTF-8字符串中的字符数
     /// @param str UTF8文本
-    static size_t countChars(const String& str);
+    static size_t countChars(const U8String& str);
 
     /// 将字符位置转换为字节位置
     /// @param str UTF8文本
     /// @param char_pos 字符位置
-    static size_t charPosToBytePos(const String& str, size_t char_pos);
+    static size_t charPosToBytePos(const U8String& str, size_t char_pos);
 
     /// 将字节位置转换为字符位置
     /// @param str UTF8文本
     /// @param byte_pos 字节位置
-    static size_t bytePosToCharPos(const String& str, size_t byte_pos);
+    static size_t bytePosToCharPos(const U8String& str, size_t byte_pos);
 
     /// 获取UTF-8子字符串（按字符计数）
     /// @param str UTF8文本
     /// @param start_char 字符起始位置
     /// @param char_count 字符数量
     /// @return 截取的子串
-    static String utf8Substr(const String& str, size_t start_char, size_t char_count);
+    static U8String utf8Substr(const U8String& str, size_t start_char, size_t char_count);
 
     /// 检查UTF-8字符串是否有效
     /// @param str UTF8文本
-    static bool isValidUTF8(const String& str);
+    static bool isValidUTF8(const U8String& str);
   };
 
   /// 字符串处理工具
@@ -63,51 +63,51 @@ namespace NS_SWEETLINE {
     /// @param format 格式
     /// @param args 参数
     /// @return 格式化之后的文本
-    static String vFormatString(const char* format, va_list args);
+    static U8String vFormatString(const char* format, va_list args);
 
     /// 格式化字符串
     /// \param format 格式
     /// \param ... 替换参数
     /// \return 格式化之后的文本
-    static String formatString(const char* format, ...);
+    static U8String formatString(const char* format, ...);
 
     /// 去首尾空
     /// \param str 要去除首尾空的文本
-    static String trim(const String& str);
+    static U8String trim(const U8String& str);
 
     /// 替换文本中指定的第一个文本为另一个文本
     /// @param str 原始文本
     /// @param from 要替换的文本
     /// @param to 替换后文本
     /// @return 替换成功返回true
-    static bool replaceFirst(String& str, const String& from, const String& to);
+    static bool replaceFirst(U8String& str, const U8String& from, const U8String& to);
 
     /// 替换文本中指定文本为另一个文本（全部替换）
     /// @param source 原始文本
     /// @param from 要替换的文本
     /// @param to 替换后文本
     /// @return 替换成功返回true
-    static String replaceAll(const String& source, const String& from, const String& to);
+    static U8String replaceAll(const U8String& source, const U8String& from, const U8String& to);
 
     /// 判断文本开头是否为指定文本
     /// @param str 文本
     /// @param prefix 前缀
-    static bool startsWith(const String& str, const String& prefix);
+    static bool startsWith(const U8String& str, const U8String& prefix);
 
     /// 判断文本是否包含指定内容
     /// @param str 文本
     /// @param partial 包含的内容
-    static bool contains(const String& str, const String& partial);
+    static bool contains(const U8String& str, const U8String& partial);
 
     /// GBK编码文本转UTF8编码
     /// @param str GBK文本
     /// @return UTF8文本
-    static String convertGBKToUTF8(const String& str);
+    static U8String convertGBKToUTF8(const U8String& str);
 
     /// UTF8编码文本转GBK编码
     /// @param str UTF8文本
     /// @return GBK文本
-    static String convertUTF8ToGBK(const String& str);
+    static U8String convertUTF8ToGBK(const U8String& str);
   };
 
   /// Pattern处理工具
@@ -120,11 +120,11 @@ namespace NS_SWEETLINE {
     /// 计算一个Pattern中包含的捕获组数量
     /// @param pattern_str Pattern字符串
     /// @param error 接收正则表达式的编译错误
-    static int32_t countCaptureGroups(const String& pattern_str, String& error);
+    static int32_t countCaptureGroups(const U8String& pattern_str, U8String& error);
 
     /// 判断Pattern是否包含多行匹配
     /// @param pattern_ptr Pattern字符串
-    static bool isMultiLinePattern(const String& pattern_ptr);
+    static bool isMultiLinePattern(const U8String& pattern_ptr);
   };
 
   /// 文件操作工具类
@@ -137,52 +137,52 @@ namespace NS_SWEETLINE {
     /// 获取指定路径文件的名称
     /// @param path 文件路径
     /// @return 文件名称（包含后缀名）
-    static String getPathName(const String& path);
+    static U8String getPathName(const U8String& path);
 
     /// 获取指定路径文件的扩展名
     /// @param path 文件路径
     /// @return 文件扩展名
-    static String getExtension(const String& path);
+    static U8String getExtension(const U8String& path);
 
     /// 获取指定路径的所处目录
     /// @param path 文件路径
     /// @return 文件目录路径
-    static String getParentPath(const String& path);
+    static U8String getParentPath(const U8String& path);
 
     /// 判断指定路径文件是否存在
     /// @param path 文件路径
     /// @return 如果文件存在返回true
-    static bool exists(const String& path);
+    static bool exists(const U8String& path);
 
     /// 创建文件夹(会递归创建父目录)
     /// @param path 文件夹路径
     /// @return 创建成功返回true
-    static bool mkdirs(const String& path);
+    static bool mkdirs(const U8String& path);
 
     /// 创建文件夹(不递归创建父目录)
     /// @param path 文件夹路径
     /// @return 创建成功返回true
-    static bool mkdir(const String& path);
+    static bool mkdir(const U8String& path);
 
     /// 判断指定路径是否为文件，不是文件夹
     /// @param path 文件路径
     /// @return 如果文件存在并且不是文件夹返回true
-    static bool isFile(const String& path);
+    static bool isFile(const U8String& path);
 
     /// 判断指定路径是否为文件夹，不是文件
     /// @param path 文件路径
     /// @return 如果文件夹存在并且不是文件返回true
-    static bool isDirectory(const String& path);
+    static bool isDirectory(const U8String& path);
 
     /// 读取指定文件的内容
     /// @param path 文件路径
-    static String readString(const String& path);
+    static U8String readString(const U8String& path);
 
     /// 向指定文件路径写入内容
     /// @param path 文件路径
     /// @param text 文本内容
     /// @return 写入成功返回true
-    static bool writeString(const String& path, const String& text);
+    static bool writeString(const U8String& path, const U8String& text);
   };
 }
 

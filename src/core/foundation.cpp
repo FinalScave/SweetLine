@@ -41,24 +41,24 @@ namespace NS_SWEETLINE {
 #endif
 
   // ===================================== Document ============================================
-  Document::Document(const String& uri, const String& initial_text): m_uri_(uri) {
+  Document::Document(const U8String& uri, const U8String& initial_text): m_uri_(uri) {
     setText(initial_text);
   }
 
-  Document::Document(String&& uri, const String& initial_text): m_uri_(std::move(uri)) {
+  Document::Document(U8String&& uri, const U8String& initial_text): m_uri_(std::move(uri)) {
     setText(initial_text);
   }
 
-  void Document::setText(const String& text) {
+  void Document::setText(const U8String& text) {
     splitTextIntoLines(text, m_lines_);
   }
 
-  String Document::getUri() const {
+  U8String Document::getUri() const {
     return m_uri_;
   }
 
-  String Document::getText() const {
-    String result;
+  U8String Document::getText() const {
+    U8String result;
     for (const DocumentLine& line : m_lines_) {
       result += line.text;
       appendLineEnding(result, line.ending);
@@ -92,7 +92,7 @@ namespace NS_SWEETLINE {
     return m_lines_[line];
   }
 
-  int32_t Document::patch(const TextRange& range, const String& new_text) {
+  int32_t Document::patch(const TextRange& range, const U8String& new_text) {
     if (range.start.line >= m_lines_.size()) {
       // 追加到末尾
       return appendText(new_text);
@@ -110,7 +110,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  int32_t Document::appendText(const String& text) {
+  int32_t Document::appendText(const U8String& text) {
     std::vector<DocumentLine> new_lines;
     splitTextIntoLines(text, new_lines);
 
@@ -127,7 +127,7 @@ namespace NS_SWEETLINE {
     return static_cast<int32_t>(new_lines.size());
   }
 
-  void Document::insert(const TextPosition& position, const String& text) {
+  void Document::insert(const TextPosition& position, const U8String& text) {
     if (!isValidPosition(position)) {
       throw std::out_of_range("Invalid insert position");
     }
@@ -183,13 +183,13 @@ namespace NS_SWEETLINE {
     return index;
   }
 
-  void Document::splitTextIntoLines(const String& text, std::vector<DocumentLine>& result) {
+  void Document::splitTextIntoLines(const U8String& text, std::vector<DocumentLine>& result) {
     result.clear();
     if (text.empty()) {
       return;
     }
     std::stringstream ss(text);
-    String line;
+    U8String line;
     while (std::getline(ss, line)) {
       LineEnding ending = LineEnding::LF;
       if (!line.empty() && line.back() == '\r') {
@@ -222,7 +222,7 @@ namespace NS_SWEETLINE {
       return 0;
     } else {
       // 第一行从range两边截断，左边拼接new_lines[0]
-      String rest_of_line = line.text.substr(end_byte);
+      U8String rest_of_line = line.text.substr(end_byte);
       line.text = line.text.substr(0, start_byte) + new_lines[0].text;
 
       // 插入新行
@@ -246,7 +246,7 @@ namespace NS_SWEETLINE {
     // 最后一行
     DocumentLine& last_line = m_lines_[range.end.line];
     size_t end_byte = Utf8Util::charPosToBytePos(last_line.text, range.end.column);
-    String rest_of_last_line = last_line.text.substr(end_byte);
+    U8String rest_of_last_line = last_line.text.substr(end_byte);
     LineEnding ending_of_last_line = last_line.ending;
 
     // patch的文本为空，则将range替换为""，即删除range内的文本
@@ -299,7 +299,7 @@ namespace NS_SWEETLINE {
     return static_cast<int32_t>(new_lines.size() - (range.end.line - range.start.line));
   }
 
-  inline void Document::appendLineEnding(String& text, LineEnding ending) {
+  inline void Document::appendLineEnding(U8String& text, LineEnding ending) {
     switch (ending) {
     case LineEnding::LF:
       text += "\n";

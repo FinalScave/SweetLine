@@ -97,7 +97,7 @@ int32_t* sl_document_analyze(intptr_t analyzer_handle, int32_t* data_size) {
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
   *data_size = highlight->spanCount();
   int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * *data_size));
-  convertHighlightsToBuffer(highlight, result, false);
+  writeDocumentHighlight(highlight, result, analyzer->getHighlightConfig());
   return result;
 }
 
@@ -112,7 +112,7 @@ int32_t* sl_document_analyze_changes(intptr_t analyzer_handle, size_t* changes_r
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges({start, end}, new_text);
   *data_size = highlight->spanCount();
   int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * *data_size));
-  convertHighlightsToBuffer(highlight, result, false);
+  writeDocumentHighlight(highlight, result, analyzer->getHighlightConfig());
   return result;
 }
 

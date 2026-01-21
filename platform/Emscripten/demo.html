@@ -26,6 +26,7 @@
     function testHighlight() {
         const config = new lib.HighlightConfig();
         config.showIndex = true;
+        config.inlineStyle = true;
         const engine = new lib.HighlightEngine(config);
         engine.compileSyntaxFromJson(syntaxJson);
 

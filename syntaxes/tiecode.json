@@ -7,13 +7,14 @@
     "identifier": "${identifierStart}${identifierPart}",
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",
-    "classExtends": "(?:${whiteSpace}+(:)${whiteSpace}+(${identifier}))?"
+    "classExtends": "(?:${whiteSpace}+(:)${whiteSpace}+${type})?"
   },
   "states": {
     "default": [
       {
-        "pattern": "\\b(类)\\b${whiteSpace}+(${identifier})${classExtends}",
-        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "class"]
+        "pattern": "\\b(类)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeDeclare"
       },
       {
         "pattern": "\\b(创建)\\b${whiteSpace}+(${identifier})",
@@ -72,6 +73,19 @@
       {
         "pattern": "[.()\\[\\]?@%+\\-*/<>=,{}:]",
         "style": "punctuation"
+      }
+    ],
+    "typeDeclare": [
+      {
+        "pattern": "[<>,\\[\\]:]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "onLineEndState": "default"
       }
     ],
     "longString": [

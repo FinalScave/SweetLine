@@ -35,7 +35,7 @@ namespace NS_SWEETLINE {
     /// 要切换的state
     int32_t goto_state {-1};
     /// 匹配到的文本内容
-    String matched_text;
+    U8String matched_text;
     /// 所有匹配的捕获组
     List<CaptureGroupMatch> capture_groups;
   };
@@ -47,32 +47,35 @@ namespace NS_SWEETLINE {
 
     SharedPtr<DocumentHighlight> analyze();
 
-    SharedPtr<DocumentHighlight> analyzeChanges(const TextRange& range, const String& new_text);
+    SharedPtr<DocumentHighlight> analyzeChanges(const TextRange& range, const U8String& new_text);
 
-    SharedPtr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const String& new_text);
+    SharedPtr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const U8String& new_text);
 
     void analyzeLine(size_t line, LineHighlight& line_highlight);
 
     SharedPtr<Document> getDocument() const;
+
+    const HighlightConfig& getHighlightConfig() const;
   private:
     SharedPtr<Document> m_document_;
     SharedPtr<DocumentHighlight> m_highlight_;
     SharedPtr<SyntaxRule> m_rule_;
     HighlightConfig m_config_;
-    List<int32_t> m_line_states_;
+    List<LineState> m_line_states_;
 
     size_t analyzeLineWithState(size_t line,
-      size_t line_start_index, int32_t start_state, LineHighlight& line_highlight);
-    void addLineMatchResult(LineHighlight& highlight, size_t line_num, size_t line_char_pos,
-      size_t line_start_index, int32_t state, const MatchResult& match_result);
-    MatchResult matchAtPosition(const String& text, size_t start_char_pos, int32_t state);
-    void findMatchedRuleAndGroup(const StateRule& state_rule, OnigRegion* region, const String& text,
+      size_t line_start_index, const LineState& start_state, LineHighlight& line_highlight);
+    void addLineHighlightResult(LineHighlight& highlight, size_t line_num, size_t line_char_pos,
+      size_t line_start_index, int32_t syntax_state, const MatchResult& match_result);
+    MatchResult matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state);
+    void findMatchedRuleAndGroup(const StateRule& state_rule, OnigRegion* region, const U8String& text,
       size_t match_start_byte, size_t match_end_byte, MatchResult& result);
   };
 
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRange, start, end);
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TokenSpan, range, style, state, goto_state);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InlineStyle, foreground, background, tags);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TokenSpan, range, style_id, inline_style, state, goto_state);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LineHighlight, spans);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentHighlight, lines)
 }

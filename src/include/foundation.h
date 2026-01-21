@@ -48,7 +48,7 @@ namespace NS_SWEETLINE {
   /// 文本行结构定义
   struct DocumentLine {
     /// 当前行文本内容 (不包含换行符)
-    String text;
+    U8String text;
     /// 当前行换行符类型
     LineEnding ending {LineEnding::NONE};
   };
@@ -56,18 +56,18 @@ namespace NS_SWEETLINE {
   /// 支持增量更新的文本
   class Document {
   public:
-    explicit Document(const String& uri, const String& initial_text = "");
-    explicit Document(String&& uri, const String& initial_text = "");
+    explicit Document(const U8String& uri, const U8String& initial_text = "");
+    explicit Document(U8String&& uri, const U8String& initial_text = "");
 
     /// 设置完整的文本内容，设置后会按行分割
     /// @param text 文本内容
-    void setText(const String& text);
+    void setText(const U8String& text);
 
     /// 获取当前文档的Uri
-    String getUri() const;
+    U8String getUri() const;
 
     /// 获取完整文本
-    String getText() const;
+    U8String getText() const;
 
     /// 取总字符数
     size_t totalChars() const;
@@ -86,16 +86,16 @@ namespace NS_SWEETLINE {
     /// @param range 更新的范围区间
     /// @param new_text 更新后的文本
     /// @return 返回行数变更的情况，假设返回结果为n，如果为负数说明删除了n行，如果为正数说明新增了n行，如果为0，说明只改变了当前行
-    int32_t patch(const TextRange& range, const String& new_text);
+    int32_t patch(const TextRange& range, const U8String& new_text);
 
     /// 追加文本
     /// @param text 要追加的文本
-    int32_t appendText(const String& text);
+    int32_t appendText(const U8String& text);
 
     /// 在指定位置插入文本
     /// @param position 要插入的位置
     /// @param text 要插入的文本
-    void insert(const TextPosition& position, const String& text);
+    void insert(const TextPosition& position, const U8String& text);
 
     /// 删除指定范围的文本
     /// @param range 范围
@@ -115,14 +115,14 @@ namespace NS_SWEETLINE {
     /// @return 对应的换行符宽度
     static uint8_t getLineEndingWidth(LineEnding ending);
   private:
-    String m_uri_;
+    U8String m_uri_;
     std::vector<DocumentLine> m_lines_;
     bool isValidPosition(const TextPosition& pos) const;
     size_t positionToCharIndex(const TextPosition& pos) const;
-    void splitTextIntoLines(const String& text, std::vector<DocumentLine>& result);
+    void splitTextIntoLines(const U8String& text, std::vector<DocumentLine>& result);
     int32_t patchSingleLine(const TextRange& range, const std::vector<DocumentLine>& new_lines);
     int32_t patchMultipleLines(const TextRange& range, const std::vector<DocumentLine>& new_lines);
-    static void appendLineEnding(String& text, LineEnding ending);
+    static void appendLineEnding(U8String& text, LineEnding ending);
   };
 }
 

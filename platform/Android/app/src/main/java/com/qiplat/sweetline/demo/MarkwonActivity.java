@@ -2,16 +2,15 @@ package com.qiplat.sweetline.demo;
 
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.SparseIntArray;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
+import com.qiplat.sweetline.DocumentAnalyzer;
+import com.qiplat.sweetline.InlineStyle;
 import com.qiplat.sweetline.markwon.CodeBackground;
 import com.qiplat.sweetline.markwon.SweetLineGlobal;
 import com.qiplat.sweetline.markwon.SweetLineHighlightPlugin;
@@ -19,7 +18,7 @@ import com.qiplat.sweetline.util.AssetUtils;
 
 import io.noties.markwon.Markwon;
 
-public class MarkwonActivity extends AppCompatActivity {
+public class MarkwonActivity extends AppCompatActivity implements DocumentAnalyzer.StyleFactory {
     private AppCompatTextView mainTextView;
     private static SparseIntArray colorMap = new SparseIntArray();
 
@@ -52,9 +51,7 @@ public class MarkwonActivity extends AppCompatActivity {
         preCompileSyntax();
 
         CodeBackground background = new CodeBackground(new RectF(100, 100, 100, 100), 0, null);
-        SweetLineHighlightPlugin plugin = new SweetLineHighlightPlugin(background, styleId -> {
-            return new ForegroundColorSpan(colorMap.get(styleId));
-        });
+        SweetLineHighlightPlugin plugin = new SweetLineHighlightPlugin(background, this);
         Markwon markwon = Markwon.builder(this).usePlugin(plugin).build();
 
         try {
@@ -67,12 +64,22 @@ public class MarkwonActivity extends AppCompatActivity {
 
     private void preCompileSyntax() {
         try {
-            String javaSyntaxJson = AssetUtils.readAsset(this, "java-syntax.json");
-            String tiecodeSyntaxJson = AssetUtils.readAsset(this, "tiecode-syntax.json");
+            String javaSyntaxJson = AssetUtils.readAsset(this, "java.json");
+            String tiecodeSyntaxJson = AssetUtils.readAsset(this, "tiecode.json");
             SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(javaSyntaxJson);
             SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(tiecodeSyntaxJson);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public CharacterStyle createCharacterStyle(int styleId) {
+        return new ForegroundColorSpan(colorMap.get(styleId));
+    }
+
+    @Override
+    public CharacterStyle createCharacterStyle(InlineStyle inlineStyle) {
+        return new ForegroundColorSpan(inlineStyle.foreground);
     }
 }

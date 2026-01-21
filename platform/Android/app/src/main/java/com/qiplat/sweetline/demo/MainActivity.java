@@ -5,25 +5,23 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
+import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.SparseIntArray;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.HighlightConfig;
 import com.qiplat.sweetline.HighlightEngine;
+import com.qiplat.sweetline.InlineStyle;
 import com.qiplat.sweetline.util.AssetUtils;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DocumentAnalyzer.StyleFactory {
     private static final String TAG = "SampleHighlight";
     private AppCompatButton testJavaButton;
     private AppCompatButton testTiecodeButton;
@@ -33,19 +31,20 @@ public class MainActivity extends AppCompatActivity {
     private CharSequence previousText;
     private DocumentAnalyzer analyzer;
     private boolean shouldAnalyzeChange = false;
-    private static HighlightEngine highlightEngine = new HighlightEngine(HighlightConfig.withIndex());
+    private static HighlightEngine inlineStyleEngine = new HighlightEngine(new HighlightConfig(true, true));
+    private static HighlightEngine commonEngine = new HighlightEngine(new HighlightConfig(true, false));
     private static SparseIntArray colorMap = new SparseIntArray();
 
     static {
-        highlightEngine.registerStyleName("keyword", 1);
-        highlightEngine.registerStyleName("string", 2);
-        highlightEngine.registerStyleName("number", 3);
-        highlightEngine.registerStyleName("comment", 4);
-        highlightEngine.registerStyleName("class", 5);
-        highlightEngine.registerStyleName("method", 6);
-        highlightEngine.registerStyleName("variable", 7);
-        highlightEngine.registerStyleName("punctuation", 8);
-        highlightEngine.registerStyleName("annotation", 9);
+        commonEngine.registerStyleName("keyword", 1);
+        commonEngine.registerStyleName("string", 2);
+        commonEngine.registerStyleName("number", 3);
+        commonEngine.registerStyleName("comment", 4);
+        commonEngine.registerStyleName("class", 5);
+        commonEngine.registerStyleName("method", 6);
+        commonEngine.registerStyleName("variable", 7);
+        commonEngine.registerStyleName("punctuation", 8);
+        commonEngine.registerStyleName("annotation", 9);
         colorMap.append(1, 0XFF569CD6);
         colorMap.append(2, 0XFFBD63C5);
         colorMap.append(3, 0XFFE4FAD5);
@@ -69,15 +68,15 @@ public class MainActivity extends AppCompatActivity {
         spanText = findViewById(R.id.span_text);
         testJavaButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
-            highlight("Main.java", "java-syntax.json");
+            highlight("Main.java", "java.json", false);
         });
         testTiecodeButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
-            highlight("结绳.t", "tiecode-syntax.json");
+            highlight("结绳.t", "tiecode-inlineStyle.json", true);
         });
         testJsonButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
-            highlight("java-syntax.json", "json-syntax.json");
+            highlight("java.json", "json-sweetline.json", false);
         });
         gotoMarkwonBtn.setOnClickListener(v -> {
             startActivity(new Intent(this, MarkwonActivity.class));
@@ -107,27 +106,33 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void highlight(String testFileName, String syntaxFileName) {
+    private void highlight(String testFileName, String syntaxFileName, boolean inlineStyle) {
         try {
             String testCode = AssetUtils.readAsset(this, testFileName);
             String json = AssetUtils.readAsset(this, syntaxFileName);
 
             long start = System.nanoTime();
-            highlightEngine.compileSyntaxFromJson(json);
+            if (inlineStyle) {
+                inlineStyleEngine.compileSyntaxFromJson(json);
+            } else {
+                commonEngine.compileSyntaxFromJson(json);
+            }
             long end = System.nanoTime();
             Log.i(TAG, String.format("====compileSyntaxFromJson: %dus", (end - start) / 1000));
 
             Document document = new Document(testFileName, testCode);
 
             start = System.nanoTime();
-            analyzer = highlightEngine.loadDocument(document);
+            if (inlineStyle) {
+                analyzer = inlineStyleEngine.loadDocument(document);
+            } else {
+                analyzer = commonEngine.loadDocument(document);
+            }
             end = System.nanoTime();
             Log.i(TAG, String.format("====loadDocument: %dus", (end - start) / 1000));
 
             start = System.nanoTime();
-            Spannable highlightedText = analyzer.analyzeAsSpannable(styleId -> {
-                return new ForegroundColorSpan(colorMap.get(styleId));
-            });
+            Spannable highlightedText = analyzer.analyzeAsSpannable(this);
             end = System.nanoTime();
             Log.i(TAG, String.format("====analyze: %dus", (end - start) / 1000));
 
@@ -150,14 +155,14 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "delete: index=" + start +
                     ", length=" + before + ", content='" + deleted + "'");
             newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
-                    "", styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
+                    "", this);
         } else if (before == 0 && count > 0) {
             // 插入文本
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "insert: index=" + start +
                     ", length=" + count + ", content='" + inserted + "'");
             newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start,
-                    inserted, styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
+                    inserted, this);
         } else if (before > 0 && count > 0) {
             // 替换文本
             String deleted = oldText.subSequence(start, start + before).toString();
@@ -165,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "replace: index=" + start +
                     ", deleted='" + deleted + "', inserted='" + inserted + "'");
             newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
-                    inserted, styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
+                    inserted, this);
         }
         long endTime = System.nanoTime();
         Log.i(TAG, String.format("====analyzeChanges: %dus", (endTime - startTime) / 1000));
@@ -173,5 +178,15 @@ public class MainActivity extends AppCompatActivity {
         int selectionStart = spanText.getSelectionStart();
         spanText.setText(newHighlightedText);
         spanText.setSelection(selectionStart);
+    }
+
+    @Override
+    public CharacterStyle createCharacterStyle(int styleId) {
+        return new ForegroundColorSpan(colorMap.get(styleId));
+    }
+
+    @Override
+    public CharacterStyle createCharacterStyle(InlineStyle inlineStyle) {
+        return new ForegroundColorSpan(inlineStyle.foreground);
     }
 }

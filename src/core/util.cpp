@@ -79,11 +79,11 @@ std::string convertEncoding(const std::string& input,
 
 namespace NS_SWEETLINE {
   // ===================================== Utf8Util ============================================
-  size_t Utf8Util::countChars(const String& str) {
+  size_t Utf8Util::countChars(const U8String& str) {
     return utf8::distance(str.begin(), str.end());
   }
   
-  size_t Utf8Util::charPosToBytePos(const String& str, size_t char_pos) {
+  size_t Utf8Util::charPosToBytePos(const U8String& str, size_t char_pos) {
     if (char_pos == 0) return 0;
 
     auto it = str.begin();
@@ -93,7 +93,7 @@ namespace NS_SWEETLINE {
     return it - str.begin();
   }
   
-  size_t Utf8Util::bytePosToCharPos(const String& str, size_t byte_pos) {
+  size_t Utf8Util::bytePosToCharPos(const U8String& str, size_t byte_pos) {
     if (byte_pos == 0) return 0;
 
     size_t char_count = 0;
@@ -105,7 +105,7 @@ namespace NS_SWEETLINE {
     return char_count;
   }
   
-  String Utf8Util::utf8Substr(const String& str, size_t start_char, size_t char_count) {
+  U8String Utf8Util::utf8Substr(const U8String& str, size_t start_char, size_t char_count) {
     auto start_it = str.begin();
     auto end_it = str.begin();
 
@@ -123,7 +123,7 @@ namespace NS_SWEETLINE {
     return {start_it, end_it};
   }
   
-  bool Utf8Util::isValidUTF8(const String& str) {
+  bool Utf8Util::isValidUTF8(const U8String& str) {
     return utf8::is_valid(str.begin(), str.end());
   }
 
@@ -181,46 +181,46 @@ namespace NS_SWEETLINE {
 #endif
   }
 
-  String StrUtil::vFormatString(const char* format, va_list args) {
+  U8String StrUtil::vFormatString(const char* format, va_list args) {
     va_list args_copy;
     va_copy(args_copy, args); // 复制 va_list（因为 args 可能被多次使用）
     int size = std::vsnprintf(nullptr, 0, format, args_copy);
     va_end(args_copy);
 
     if (size < 0) return "";
-    String result(size + 1, '\0');
+    U8String result(size + 1, '\0');
     std::vsnprintf(result.data(), size + 1, format, args);
     result.resize(size); // 移除末尾的 '\0'
     return result;
   }
 
-  String StrUtil::formatString(const char* format, ...) {
+  U8String StrUtil::formatString(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    String result = vFormatString(format, args);
+    U8String result = vFormatString(format, args);
     va_end(args);
     return result;
   }
 
-  String StrUtil::trim(const String& str) {
+  U8String StrUtil::trim(const U8String& str) {
     size_t first = str.find_first_not_of(" \t");
-    if (first == String::npos) {
+    if (first == U8String::npos) {
       return "";
     }
     size_t last = str.find_last_not_of(" \t");
     return str.substr(first, (last - first + 1));
   }
 
-  bool StrUtil::replaceFirst(String& str, const String& from, const String& to) {
+  bool StrUtil::replaceFirst(U8String& str, const U8String& from, const U8String& to) {
     size_t start_pos = str.find(from);
-    if (start_pos == String::npos) {
+    if (start_pos == U8String::npos) {
       return false;
     }
     str.replace(start_pos, from.length(), to);
     return true;
   }
 
-  String StrUtil::replaceAll(const String& source, const String& from, const String& to) {
+  U8String StrUtil::replaceAll(const U8String& source, const U8String& from, const U8String& to) {
     if (from.empty()) {
       return source;
     }
@@ -228,7 +228,7 @@ namespace NS_SWEETLINE {
     size_t pos = 0;
 
     // 收集所有匹配位置
-    while ((pos = source.find(from, pos)) != String::npos) {
+    while ((pos = source.find(from, pos)) != U8String::npos) {
       positions.push_back(pos);
       pos += from.length();
     }
@@ -239,7 +239,7 @@ namespace NS_SWEETLINE {
     size_t result_length = source.length() +
                           positions.size() * (to.length() - from.length());
 
-    String result;
+    U8String result;
     result.reserve(result_length);
 
     size_t last_pos = 0;
@@ -253,15 +253,15 @@ namespace NS_SWEETLINE {
     return result;
   }
 
-  bool StrUtil::startsWith(const String& str, const String& prefix) {
+  bool StrUtil::startsWith(const U8String& str, const U8String& prefix) {
     return str.find(prefix) == 0;
   }
 
-  bool StrUtil::contains(const String& str, const String& partial) {
-    return str.find(partial) != String::npos;
+  bool StrUtil::contains(const U8String& str, const U8String& partial) {
+    return str.find(partial) != U8String::npos;
   }
 
-  String StrUtil::convertGBKToUTF8(const String& str) {
+  U8String StrUtil::convertGBKToUTF8(const U8String& str) {
 #ifdef _WIN32
     return windowsGBKToUTF8(str);
 #elif !defined(ANDROID)
@@ -271,7 +271,7 @@ namespace NS_SWEETLINE {
 #endif
   }
 
-  String StrUtil::convertUTF8ToGBK(const String& str) {
+  U8String StrUtil::convertUTF8ToGBK(const U8String& str) {
 #ifdef _WIN32
     return windowsUTF8ToGBK(str);
 #elif !defined(ANDROID)
@@ -282,7 +282,7 @@ namespace NS_SWEETLINE {
   }
 
   // ===================================== PatternUtil ============================================
-  int32_t PatternUtil::countCaptureGroups(const String& pattern_str, String& error) {
+  int32_t PatternUtil::countCaptureGroups(const U8String& pattern_str, U8String& error) {
     OnigRegex reg;
     OnigErrorInfo einfo;
     OnigUChar error_buf[ONIG_MAX_ERROR_MESSAGE_LEN];
@@ -301,12 +301,12 @@ namespace NS_SWEETLINE {
     return number;
   }
 
-  bool PatternUtil::isMultiLinePattern(const String& pattern_str) {
-    static std::vector<String> multi_line_indicators = {
+  bool PatternUtil::isMultiLinePattern(const U8String& pattern_str) {
+    static std::vector<U8String> multi_line_indicators = {
       R"(\\s\\S)", R"([\\s\\S])", "[^]*", ".*", R"(\\n)"
     };
     for (const auto& indicator : multi_line_indicators) {
-      if (pattern_str.find(indicator) != String::npos) {
+      if (pattern_str.find(indicator) != U8String::npos) {
         return true;
       }
     }
@@ -321,15 +321,15 @@ namespace NS_SWEETLINE {
 #endif
 
   namespace fs = std::filesystem;
-  String FileUtil::getPathName(const String& path) {
+  U8String FileUtil::getPathName(const U8String& path) {
     const size_t index = path.find_last_of(kPathSeparator);
-    if (index == String::npos) {
+    if (index == U8String::npos) {
       return path;
     }
     return path.substr(index + 1);
   }
 
-  String FileUtil::getExtension(const String& path) {
+  U8String FileUtil::getExtension(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -342,7 +342,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  String FileUtil::getParentPath(const String& path) {
+  U8String FileUtil::getParentPath(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -356,7 +356,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  bool FileUtil::exists(const String& path) {
+  bool FileUtil::exists(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -369,7 +369,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  bool FileUtil::mkdirs(const String& path) {
+  bool FileUtil::mkdirs(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -382,7 +382,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  bool FileUtil::mkdir(const String& path) {
+  bool FileUtil::mkdir(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -395,7 +395,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  bool FileUtil::isFile(const String& path) {
+  bool FileUtil::isFile(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -408,7 +408,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  bool FileUtil::isDirectory(const String& path) {
+  bool FileUtil::isDirectory(const U8String& path) {
     try {
 #ifdef _WIN32
       fs::path fs_path = fs::u8path(path);
@@ -421,7 +421,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  String FileUtil::readString(const String& path) {
+  U8String FileUtil::readString(const U8String& path) {
 #ifdef _WIN32
     fs::path fs_path = fs::u8path(path);
     std::ifstream in(fs_path, std::ios::binary);
@@ -436,13 +436,13 @@ namespace NS_SWEETLINE {
     const std::streamsize size = in.tellg();
     in.seekg(0, std::ios::beg);
 
-    String content(size, '\0');
+    U8String content(size, '\0');
     in.read(&content[0], size);
     in.close();
     return content;
   }
 
-  bool FileUtil::writeString(const String& path, const String& text) {
+  bool FileUtil::writeString(const U8String& path, const U8String& text) {
 #ifdef _WIN32
     std::filesystem::path fs_path = std::filesystem::u8path(path);
     std::ofstream out(fs_path, std::ios::binary);

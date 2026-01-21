@@ -153,22 +153,22 @@ TEST_CASE("Analyze Main.java Incrementally") {
   // 第1行末尾插入'//'注释
   TextRange range = {{0, 19}, {0, 19}};
   SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeChanges(range, "//aaa");
-  REQUIRE(updated_highlight->lines[0].spans.back().style == 4);
+  REQUIRE(updated_highlight->lines[0].spans.back().style_id == 4);
   // 第4行'/'删除，后面应该全部变为注释
   range = {{3, 6}, {3, 7}};
   updated_highlight = analyzer->analyzeChanges(range, "");
-  REQUIRE(updated_highlight->lines[4].spans.back().style == 4);
-  REQUIRE(updated_highlight->lines[9].spans.back().style == 4);
+  REQUIRE(updated_highlight->lines[4].spans.back().style_id == 4);
+  REQUIRE(updated_highlight->lines[9].spans.back().style_id == 4);
   // 第4行末尾插入 *AAA\n*/，第5行是注释结束，第6行正常高亮
   range = {{3, 6}, {3, 6}};
   updated_highlight = analyzer->analyzeChanges(range, "*AAA\n*/");
-  REQUIRE(updated_highlight->lines[4].spans.back().style == 4);
-  REQUIRE(updated_highlight->lines[5].spans.front().style == 1);
+  REQUIRE(updated_highlight->lines[4].spans.back().style_id == 4);
+  REQUIRE(updated_highlight->lines[5].spans.front().style_id == 1);
   // 第3-5行替换为*/，第3行注释结束，后续正常高亮
   range = {{2, 0}, {4, 2}};
   updated_highlight = analyzer->analyzeChanges(range, "*/");
-  REQUIRE(updated_highlight->lines[2].spans.back().style == 4);
-  REQUIRE(updated_highlight->lines[3].spans.front().style == 1);
+  REQUIRE(updated_highlight->lines[2].spans.back().style_id == 4);
+  REQUIRE(updated_highlight->lines[3].spans.front().style_id == 1);
 }
 
 TEST_CASE("Analyze Main.java Incrementally Benchmark") {
@@ -187,6 +187,6 @@ TEST_CASE("Analyze Main.java Incrementally Benchmark") {
     // 第 1 行末尾插入 //注释
     TextRange range = {{0, 19}, {0, 19}};
     SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeChanges(range, "//");
-    REQUIRE(updated_highlight->lines[0].spans.back().style == 4);
+    REQUIRE(updated_highlight->lines[0].spans.back().style_id == 4);
   };
 }

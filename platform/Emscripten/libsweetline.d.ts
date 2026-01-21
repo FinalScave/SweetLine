@@ -49,6 +49,20 @@ export namespace sweetline {
     }
 
     /**
+     * 语法规则中直接包含的样式定义
+     */
+    export class InlineStyle {
+        /**
+         * 前景色
+         */
+        foreground: number;
+        /**
+         * 前景色
+         */
+        background: number;
+    }
+
+    /**
      * 每一个高亮块
      */
     export class TokenSpan {
@@ -59,7 +73,11 @@ export namespace sweetline {
         /**
          * 高亮样式ID
          */
-        style: number;
+        styleId: number;
+        /**
+         * 高亮块样式详细信息，inlineStyle 模式下才有该字段
+         */
+        inlineStyle: InlineStyle;
     }
 
     export class TokenSpanList {
@@ -137,6 +155,10 @@ export namespace sweetline {
          * 分析的高亮信息是否携带index，不携带的情况下每个TokenSpan只有line和column
          */
         showIndex: boolean;
+        /**
+         * 是否支持内联样式，即不需要外部注册高亮样式，直接在语法规则json中定义高亮样式，高亮分析结果中直接包含高亮样式(前景色、加粗等），而不是返回样式ID
+         */
+        inlineStyle: boolean;
     }
 
     /**

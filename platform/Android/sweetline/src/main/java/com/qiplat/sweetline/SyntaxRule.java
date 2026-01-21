@@ -2,6 +2,9 @@ package com.qiplat.sweetline;
 
 import dalvik.annotation.optimization.FastNative;
 
+/**
+ * 语法规则
+ */
 public class SyntaxRule {
     protected long nativeHandle;
 
@@ -9,10 +12,17 @@ public class SyntaxRule {
         this.nativeHandle = nativeHandle;
     }
 
+    /**
+     * 获取语法规则的名称
+     */
     public String getName() {
         return nativeGetName(nativeHandle);
     }
 
+    /**
+     * 获取语法规则支持的文件扩展名
+     * @return 扩展名数组
+     */
     public String[] getFileExtensions() {
         return nativeGetFileExtensions(nativeHandle);
     }

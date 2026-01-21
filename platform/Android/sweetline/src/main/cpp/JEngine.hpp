@@ -72,7 +72,7 @@ public:
     if (document == nullptr) {
       return 0;
     }
-    const String& line_text = document->getLine(line).text;
+    const U8String& line_text = document->getLine(line).text;
     return env->NewStringUTF(line_text.c_str());
   }
 
@@ -121,10 +121,10 @@ public:
     if (rule == nullptr) {
       return env->NewObjectArray(0, string_class, NULL);
     }
-    const size_t ext_count = rule->file_extensions_.size();
+    const size_t ext_count = rule->file_extensions.size();
     jobjectArray array = env->NewObjectArray(ext_count, string_class, env->NewStringUTF(""));
     size_t index = 0;
-    for (const String& extension: rule->file_extensions_) {
+    for (const U8String& extension: rule->file_extensions) {
       env->SetObjectArrayElement(array, index++, env->NewStringUTF(extension.c_str()));
     }
     return array;
@@ -150,14 +150,28 @@ public:
     deleteCPtrHolder<DocumentAnalyzer>(handle);
   }
 
-  static jintArray convertHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight) {
+  static jintArray convertDocumentHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight, const HighlightConfig& config) {
     size_t span_count = highlight->spanCount();
-    jintArray result = env->NewIntArray(static_cast<jsize>(span_count * 7));
+    size_t span_ints = computeSpanBufferSize(config);
+    jintArray result = env->NewIntArray(static_cast<jsize>(span_count * span_ints));
     if (result == nullptr) {
       return nullptr;
     }
     jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
-    convertHighlightsToBuffer(highlight, buffer, true);
+    writeDocumentHighlight(highlight, buffer, config);
+    env->ReleaseIntArrayElements(result, buffer, 0);
+    return result;
+  }
+
+  static jintArray convertLineHighlightAsIntArray(JNIEnv* env, const LineHighlight& highlight, const HighlightConfig& config) {
+    size_t span_count = highlight.spans.size();
+    size_t span_ints = computeSpanBufferSize(config);
+    jintArray result = env->NewIntArray(static_cast<jsize>(span_count * span_ints));
+    if (result == nullptr) {
+      return nullptr;
+    }
+    jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
+    writeLineHighlight(highlight, buffer, config);
     env->ReleaseIntArrayElements(result, buffer, 0);
     return result;
   }
@@ -168,7 +182,7 @@ public:
       return nullptr;
     }
     SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-    return convertHighlightAsIntArray(env, highlight);
+    return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
   static jintArray analyzeChanges(JNIEnv* env, jclass clazz, jlong handle, jlong start_position, jlong end_position, jstring new_text) {
@@ -183,7 +197,7 @@ public:
     TextRange range = {{start_line, start_column}, {end_line, end_column}};
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
     SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text_str);
-    return convertHighlightAsIntArray(env, highlight);
+    return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
   static jintArray analyzeChanges2(JNIEnv* env, jclass clazz, jlong handle, jint start_index, jint end_index, jstring new_text) {
@@ -195,7 +209,7 @@ public:
     size_t unsigned_end_index = (size_t)end_index;
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
     SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(unsigned_start_index, unsigned_end_index, new_text_str);
-    return convertHighlightAsIntArray(env, highlight);
+    return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
   static jintArray analyzeLine(JNIEnv* env, jclass clazz, jlong handle, jint line) {
@@ -209,19 +223,7 @@ public:
     if (result == nullptr) {
       return nullptr;
     }
-    jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
-    size_t index = 0;
-    for (const TokenSpan& span: line_highlight.spans) {
-      buffer[index++] = static_cast<jint>(span.range.start.line);
-      buffer[index++] = static_cast<jint>(span.range.start.column);
-      buffer[index++] = static_cast<jint>(span.range.start.index);
-      buffer[index++] = static_cast<jint>(span.range.end.line);
-      buffer[index++] = static_cast<jint>(span.range.end.column);
-      buffer[index++] = static_cast<jint>(span.range.end.index);
-      buffer[index++] = static_cast<jint>(span.style);
-    }
-    env->ReleaseIntArrayElements(result, buffer, 0);
-    return result;
+    return convertLineHighlightAsIntArray(env, line_highlight, analyzer->getHighlightConfig());
   }
 
   static jlong getDocument(jlong handle) {
@@ -232,6 +234,15 @@ public:
     return toIntPtr(analyzer->getDocument());
   }
 
+  static jint getHighlightConfig(jlong handle) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return 0;
+    }
+    const HighlightConfig& config = analyzer->getHighlightConfig();
+    return packHighlightConfig(config);
+  }
+
   constexpr static const char *kJClassName = "com/qiplat/sweetline/DocumentAnalyzer";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeFinalizeAnalyzer", "(J)V", (void*) finalizeAnalyzer},
@@ -240,6 +251,7 @@ public:
       {"nativeAnalyzeChanges2", "(JIILjava/lang/String;)[I", (void*) analyzeChanges2},
       {"nativeAnalyzeLine", "(JI)[I", (void*) analyzeLine},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
+      {"nativeGetHighlightConfig", "(J)I", (void*) getHighlightConfig},
   };
 
   static void RegisterMethods(JNIEnv *env) {
@@ -256,8 +268,8 @@ public:
     deleteCPtrHolder<HighlightEngine>(handle);
   }
 
-  static jlong makeEngine(jlong handle, jboolean show_index) {
-    HighlightConfig config = {static_cast<bool>(show_index)};
+  static jlong makeEngine(jint config_bits) {
+    HighlightConfig config = unpackHighlightConfig(config_bits);
     return makeCPtrHolderToIntPtr<HighlightEngine>(config);
   }
 
@@ -275,7 +287,7 @@ public:
     if (engine == nullptr) {
       return env->NewStringUTF("");
     }
-    const String& name = engine->getStyleName(id);
+    const U8String& name = engine->getStyleName(id);
     return env->NewStringUTF(name.c_str());
   }
 
@@ -332,7 +344,7 @@ public:
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/HighlightEngine";
   constexpr static const JNINativeMethod kJMethods[] = {
-      {"nativeMakeEngine", "(Z)J", (void*) makeEngine},
+      {"nativeMakeEngine", "(I)J", (void*) makeEngine},
       {"nativeFinalizeEngine", "(J)V", (void*) deleteEngine},
       {"nativeRegisterStyle", "(JLjava/lang/String;I)V", (void*) registerStyleName},
       {"nativeGetStyleName", "(JI)Ljava/lang/String;", (void*) getStyleName},

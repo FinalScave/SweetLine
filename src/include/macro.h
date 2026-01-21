@@ -28,7 +28,15 @@ UniquePtr<T> makeUniquePtr(Args&&... args) {
   return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-using String = std::string;
+#ifdef _WIN32
+  using U16String = std::wstring;
+  #define SL_U16(str) L##str
+#else
+  using U16String = std::u16string;
+  #define SL_U16(str) u##str
+#endif
+
+using U8String = std::string;
 
 template<typename T>
 using List = std::vector<T>;
