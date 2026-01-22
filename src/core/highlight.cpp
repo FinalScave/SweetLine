@@ -95,198 +95,79 @@ namespace NS_SWEETLINE {
 #endif
 
   // ===================================== LineState ============================================
-  bool LineState::operator==(const LineState& other) const {
-    return syntax_state == other.syntax_state && nesting_level == other.nesting_level
+#ifdef SWEETLINE_DEBUG
+  void CodeBlock::dump() const {
+    nlohmann::json json = *this;
+    std::cout << json.dump(2) << std::endl;
+  }
+#endif
+
+  // ===================================== LineState ============================================
+  bool LineBlockState::operator==(const LineBlockState& other) const {
+    return nesting_level == other.nesting_level
       && block_state == other.block_state && block_column == other.block_column;
   }
 
   // ===================================== HighlightConfig ============================================
   HighlightConfig HighlightConfig::kDefault = {};
 
-  // ===================================== InternalDocumentAnalyzer ============================================
-  InternalDocumentAnalyzer::InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
-    const HighlightConfig& config): m_document_(document), m_rule_(rule), m_config_(config) {
-    m_highlight_ = makeSharedPtr<DocumentHighlight>();
+  // ===================================== HighlightConfig ============================================
+  TextAnalyzer::TextAnalyzer(const SharedPtr<SyntaxRule>& rule, const HighlightConfig& config) {
+    m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(rule, config);
   }
 
-  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyze() {
-    if (m_rule_ == nullptr) {
-      return nullptr;
-    }
-    LineState current_state;
-    const size_t line_count = m_document_->getLineCount();
-    m_line_states_.resize(line_count, {});
-    m_highlight_->reset();
-    size_t line_start_index = 0;
-    for (size_t line_num = 0; line_num < line_count; ++line_num) {
-      LineHighlight line_highlight;
-      size_t char_count = analyzeLineWithState(line_num, line_start_index, current_state, line_highlight);
-      m_highlight_->addLine(std::move(line_highlight));
-      current_state = m_line_states_[line_num];
-      line_start_index += char_count + Document::getLineEndingWidth(m_document_->getLine(line_num).ending);
-    }
-    return m_highlight_;
+  SharedPtr<DocumentHighlight> TextAnalyzer::analyzeText(const U8String& text) {
   }
 
-  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(const TextRange& range, const U8String& new_text) {
-    if (m_rule_ == nullptr) {
-      return nullptr;
-    }
-    int32_t line_change = m_document_->patch(range, new_text);
-    size_t change_start_line = range.start.line;
-    size_t change_end_line = static_cast<int32_t>(range.end.line) + line_change;
-    m_line_states_[change_start_line] = change_start_line > 0 ? m_line_states_[change_start_line - 1] : LineState{};
-    if (line_change < 0) {
-      m_line_states_.erase(m_line_states_.begin() + range.end.line + line_change + 1,
-        m_line_states_.begin() + range.end.line + 1);
-      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + line_change + 1,
-        m_highlight_->lines.begin() + range.end.line + 1);
-    } else if (line_change > 0) {
-      m_line_states_.insert(m_line_states_.begin() + range.end.line + 1, line_change, {});
-      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, line_change, {});
-    }
-
-    // 从patch的起始行开始分析，直到状态稳定
-    LineState& current_state = m_line_states_[change_start_line];
-    size_t total_line_count = m_document_->getLineCount();
-    size_t line_start_index = m_document_->charIndexOfLine(change_start_line);
-    size_t line = change_start_line;
-    bool stable = false;
-    for (; line < total_line_count; ++line) {
-      if (stable) {
-        break;
-      }
-      LineState& old_state = m_line_states_[line];
-      LineHighlight new_line_highlight;
-      size_t char_count = analyzeLineWithState(line, line_start_index, current_state, new_line_highlight);
-      current_state = m_line_states_[line];
-
-      // 已经将patch range末尾后一行分析完毕，检查状态是否已经稳定
-      if (line > change_end_line && old_state == current_state) {
-        /*stable = true;
-        for (size_t check_line = line + 1; check_line < total_line_count; ++check_line) {
-          if (line_states_[check_line] != highlight_->lines[check_line].spans.back().state) {
-            stable = false;
-            break;
-          }
-        }*/
-        // 或许不需要遍历后续所有行比对状态？只需要这一行的状态和高亮信息与patch前一致就可以判定为稳定
-        LineHighlight old_line_highlight = m_highlight_->lines[line];
-        if (old_line_highlight == new_line_highlight) {
-          stable = true;
-        }
-      }
-      m_highlight_->lines[line] = new_line_highlight;
-      line_start_index += char_count + Document::getLineEndingWidth(m_document_->getLine(line).ending);
-    }
-    // 更新后续行的索引
-    if (m_config_.show_index) {
-      for (; line < total_line_count; ++line) {
-        LineHighlight& line_highlight = m_highlight_->lines[line];
-        for (TokenSpan& span : line_highlight.spans) {
-          span.range.start.index = line_start_index + span.range.start.column;
-          span.range.end.index = line_start_index + span.range.end.column;
-        }
-        line_start_index += m_document_->getLineCharCount(line);
-      }
-    }
-    return m_highlight_;
+  void TextAnalyzer::analyzeLine(const U8String& text, const TextLineInfo& line_info, LineAnalyzeResult& result) const {
+    m_line_highlight_analyzer_->analyzeLine(text, line_info, result);
   }
 
-  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const U8String& new_text) {
-    TextPosition start_pos = m_document_->charIndexToPosition(start_index);
-    end_index = std::min(end_index, m_document_->totalChars());
-    TextPosition end_pos = m_document_->charIndexToPosition(end_index);
-    return analyzeChanges(TextRange{start_pos, end_pos}, new_text);
+  const HighlightConfig& TextAnalyzer::getHighlightConfig() const {
+    return m_line_highlight_analyzer_->getHighlightConfig();
   }
 
-  void InternalDocumentAnalyzer::analyzeLine(size_t line, LineHighlight& line_highlight) {
-    if (m_rule_ == nullptr) {
+  // ===================================== LineHighlightAnalyzer ============================================
+  LineHighlightAnalyzer::LineHighlightAnalyzer(const SharedPtr<SyntaxRule>& syntax_rule, const HighlightConfig& config)
+    : m_rule_(syntax_rule), m_config_(config) {
+  }
+
+  void LineHighlightAnalyzer::analyzeLine(const U8String& text, const TextLineInfo& info, LineAnalyzeResult& result) const {
+    if (text.empty()) {
+      result.end_state = info.start_state;
+      result.char_count = 0;
       return;
-    }
-    LineState& start_state = m_line_states_[line - 1];
-    size_t line_start_index = m_document_->charIndexOfLine(line);
-    analyzeLineWithState(line, line_start_index, start_state, line_highlight);
-  }
-
-  SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
-    return m_document_;
-  }
-
-  const HighlightConfig& InternalDocumentAnalyzer::getHighlightConfig() const {
-    return m_config_;
-  }
-
-  size_t InternalDocumentAnalyzer::analyzeLineWithState(size_t line,
-                                                        size_t line_start_index, const LineState& start_state, LineHighlight& line_highlight) {
-    const DocumentLine& document_line = m_document_->getLine(line);
-    const U8String& line_text = document_line.text;
-
-    if (line_text.empty()) {
-      m_line_states_[line] = start_state;
-      return 0;
     }
 
     size_t current_char_pos = 0;
-    LineState current_state = start_state;
-    size_t line_char_count = Utf8Util::countChars(line_text);
+    int32_t current_state = info.start_state;
+    size_t line_char_count = Utf8Util::countChars(text);
     // 一直匹配到当前行最后一个字符
     while (current_char_pos < line_char_count) {
-      MatchResult match_result = matchAtPosition(line_text, current_char_pos, current_state.syntax_state);
+      MatchResult match_result = matchAtPosition(text, current_char_pos, current_state);
       if (!match_result.matched) {
         current_char_pos++;
         continue;
       }
-      addLineHighlightResult(line_highlight, line,
-        current_char_pos, line_start_index, current_state.syntax_state, match_result);
+      addLineHighlightResult(result.highlight, info, current_state, match_result);
       current_char_pos = match_result.start + match_result.length;
       if (match_result.goto_state >= 0) {
-        current_state = {};
-        current_state.syntax_state = match_result.goto_state;
+        current_state = match_result.goto_state;
       }
     }
-    StateRule& state_rule = m_rule_->getStateRule(current_state.syntax_state);
-		if (state_rule.line_end_state >= 0) { // 如果当前状态有行结束状态，则将当前状态切换到行结束状态
-      current_state.syntax_state = state_rule.line_end_state;
+    StateRule& state_rule = m_rule_->getStateRule(current_state);
+    if (state_rule.line_end_state >= 0) { // 如果当前状态有行结束状态，则将当前状态切换到行结束状态
+      current_state = state_rule.line_end_state;
     }
-    // 分析作用域划线
-
-
-    m_line_states_[line] = current_state;
-    return line_char_count;
+    result.end_state = current_state;
+    result.char_count = line_char_count;
   }
 
-  void InternalDocumentAnalyzer::addLineHighlightResult(LineHighlight& highlight, size_t line_num,
-    size_t line_char_pos, size_t line_start_index, int32_t syntax_state, const MatchResult& match_result) {
-    if (match_result.capture_groups.empty()) {
-      TokenSpan span;
-      span.range.start = {line_num, match_result.start, line_start_index + match_result.start};
-      span.range.end = {line_num, match_result.start + match_result.length, line_start_index + match_result.start + match_result.length};
-      span.state = syntax_state;
-      span.matched_text = match_result.matched_text;
-      span.style_id = match_result.style;
-      if (m_config_.inline_style) {
-        span.inline_style = m_rule_->getInlineStyle(match_result.style);
-      }
-      span.goto_state = match_result.goto_state;
-      highlight.pushOrMergeSpan(std::move(span));
-    } else {
-      for (const CaptureGroupMatch& group_match : match_result.capture_groups) {
-        TokenSpan span;
-        span.range.start = {line_num, group_match.start, line_start_index + group_match.start};
-        span.range.end = {line_num, group_match.start + group_match.length, line_start_index + group_match.start + group_match.length};
-        span.state = syntax_state;
-        span.style_id = group_match.style;
-        if (m_config_.inline_style) {
-          span.inline_style = m_rule_->getInlineStyle(group_match.style);
-        }
-        span.goto_state = match_result.goto_state;
-        highlight.pushOrMergeSpan(std::move(span));
-      }
-    }
+  const HighlightConfig& LineHighlightAnalyzer::getHighlightConfig() const {
+    return m_config_;
   }
 
-  MatchResult InternalDocumentAnalyzer::matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state) {
+  MatchResult LineHighlightAnalyzer::matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state) const {
     MatchResult result;
     if (!m_rule_->containsRule(syntax_state)) {
       return result;
@@ -325,24 +206,25 @@ namespace NS_SWEETLINE {
     return result;
   }
 
-  void InternalDocumentAnalyzer::findMatchedRuleAndGroup(const StateRule& state_rule, OnigRegion* region,
+  void LineHighlightAnalyzer::findMatchedRuleAndGroup(const StateRule& state_rule, const OnigRegion* region,
     const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) {
     for (int32_t rule_idx = 0; rule_idx < static_cast<int32_t>(state_rule.token_rules.size()); ++rule_idx) {
       const TokenRule& token_rule = state_rule.token_rules[rule_idx];
       int32_t token_group_start = token_rule.group_offset_start;
 
-      if (region->beg[token_group_start] == static_cast<int>(match_start_byte) &&
-          region->end[token_group_start] == static_cast<int>(match_end_byte)) {
+      if (region->beg[token_group_start] == static_cast<int>(match_start_byte)
+        && region->end[token_group_start] == static_cast<int>(match_end_byte)) {
         result.token_rule_idx = rule_idx;
         result.goto_state = token_rule.goto_state;
         result.style = token_rule.getGroupStyleId(0);
         result.matched_group = token_group_start;
 
-        for (int32_t group = 1;group <= token_rule.group_count;++group) {
+        for (int32_t group = 1; group <= token_rule.group_count; ++group) {
           int32_t absolute_group = group + token_group_start;
           int group_start_byte = region->beg[absolute_group];
           int group_end_byte = region->end[absolute_group];
-          if (group_start_byte >= static_cast<int>(match_start_byte) && group_end_byte <= static_cast<int>(match_end_byte)) {
+          if (group_start_byte >= static_cast<int>(match_start_byte)
+            && group_end_byte <= static_cast<int>(match_end_byte)) {
             CaptureGroupMatch group_match;
             group_match.group = group;
             group_match.style = token_rule.getGroupStyleId(group);
@@ -359,25 +241,179 @@ namespace NS_SWEETLINE {
     }
   }
 
+  void LineHighlightAnalyzer::addLineHighlightResult(LineHighlight& highlight, const TextLineInfo& info,
+    int32_t syntax_state, const MatchResult& match_result) const {
+    if (match_result.capture_groups.empty()) {
+      TokenSpan span;
+      span.range.start = {
+        info.line,
+        match_result.start,
+        info.start_char_offset + match_result.start
+      };
+      span.range.end = {
+        info.line,
+        match_result.start + match_result.length,
+        info.start_char_offset + match_result.start + match_result.length
+      };
+      span.state = syntax_state;
+      span.matched_text = match_result.matched_text;
+      span.style_id = match_result.style;
+      if (m_config_.inline_style) {
+        span.inline_style = m_rule_->getInlineStyle(match_result.style);
+      }
+      span.goto_state = match_result.goto_state;
+      highlight.pushOrMergeSpan(std::move(span));
+    } else {
+      for (const CaptureGroupMatch& group_match : match_result.capture_groups) {
+        TokenSpan span;
+        span.range.start = {
+          info.line,
+          group_match.start,
+          info.start_char_offset + group_match.start
+        };
+        span.range.end = {
+          info.line,
+          group_match.start + group_match.length,
+          info.start_char_offset + group_match.start + group_match.length
+        };
+        span.state = syntax_state;
+        span.style_id = group_match.style;
+        if (m_config_.inline_style) {
+          span.inline_style = m_rule_->getInlineStyle(group_match.style);
+        }
+        span.goto_state = match_result.goto_state;
+        highlight.pushOrMergeSpan(std::move(span));
+      }
+    }
+  }
+
+  // ===================================== InternalDocumentAnalyzer ============================================
+  InternalDocumentAnalyzer::InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
+    const HighlightConfig& config): m_document_(document), m_rule_(rule), m_config_(config) {
+    m_highlight_ = makeSharedPtr<DocumentHighlight>();
+    m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(m_rule_, config);
+  }
+
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlight() {
+    if (m_rule_ == nullptr) {
+      return nullptr;
+    }
+    int32_t current_state = SyntaxRule::kDefaultStateId;
+    const size_t line_count = m_document_->getLineCount();
+    m_line_syntax_states_.resize(line_count, {});
+    m_highlight_->reset();
+    size_t line_start_index = 0;
+    for (size_t line_num = 0; line_num < line_count; ++line_num) {
+      TextLineInfo info = {line_num, current_state, line_start_index};
+      LineAnalyzeResult result;
+      const DocumentLine& document_line = m_document_->getLine(line_num);
+      m_line_highlight_analyzer_->analyzeLine(document_line.text, info, result);
+      m_line_syntax_states_[line_num] = result.end_state;
+      m_highlight_->addLine(std::move(result.highlight));
+      current_state = result.end_state;
+      line_start_index += result.char_count + Document::getLineEndingWidth(m_document_->getLine(line_num).ending);
+    }
+    return m_highlight_;
+  }
+
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlightIncremental(const TextRange& range, const U8String& new_text) {
+    if (m_rule_ == nullptr) {
+      return nullptr;
+    }
+    int32_t line_change = m_document_->patch(range, new_text);
+    size_t change_start_line = range.start.line;
+    size_t change_end_line = static_cast<int32_t>(range.end.line) + line_change;
+    m_line_syntax_states_[change_start_line] = change_start_line > 0 ? m_line_syntax_states_[change_start_line - 1] : SyntaxRule::kDefaultStateId;
+    if (line_change < 0) {
+      m_line_syntax_states_.erase(m_line_syntax_states_.begin() + range.end.line + line_change + 1,
+        m_line_syntax_states_.begin() + range.end.line + 1);
+      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + line_change + 1,
+        m_highlight_->lines.begin() + range.end.line + 1);
+    } else if (line_change > 0) {
+      m_line_syntax_states_.insert(m_line_syntax_states_.begin() + range.end.line + 1, line_change, {});
+      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, line_change, {});
+    }
+
+    // 从patch的起始行开始分析，直到状态稳定
+    int32_t current_state = m_line_syntax_states_[change_start_line];
+    size_t total_line_count = m_document_->getLineCount();
+    size_t line_start_index = m_document_->charIndexOfLine(change_start_line);
+    size_t line = change_start_line;
+    bool stable = false;
+    for (; line < total_line_count; ++line) {
+      if (stable) {
+        break;
+      }
+      int32_t old_state = m_line_syntax_states_[line];
+      TextLineInfo line_info = {line, current_state, line_start_index};
+      LineAnalyzeResult result;
+      const DocumentLine& document_line = m_document_->getLine(line);
+      m_line_highlight_analyzer_->analyzeLine(document_line.text, line_info, result);
+      m_line_syntax_states_[line] = result.end_state;
+      current_state = result.end_state;
+
+      // 已经将patch range末尾后一行分析完毕，检查状态是否已经稳定
+      if (line > change_end_line && old_state == current_state) {
+        /*stable = true;
+        for (size_t check_line = line + 1; check_line < total_line_count; ++check_line) {
+          if (line_states_[check_line] != highlight_->lines[check_line].spans.back().state) {
+            stable = false;
+            break;
+          }
+        }*/
+        // 或许不需要遍历后续所有行比对状态？只需要这一行的状态和高亮信息与patch前一致就可以判定为稳定
+        const LineHighlight& old_line_highlight = m_highlight_->lines[line];
+        if (old_line_highlight == result.highlight) {
+          stable = true;
+        }
+      }
+      m_highlight_->lines[line] = std::move(result.highlight);
+      line_start_index += result.char_count + Document::getLineEndingWidth(m_document_->getLine(line).ending);
+    }
+    // 更新后续行的索引
+    if (m_config_.show_index) {
+      for (; line < total_line_count; ++line) {
+        LineHighlight& line_highlight = m_highlight_->lines[line];
+        for (TokenSpan& span : line_highlight.spans) {
+          span.range.start.index = line_start_index + span.range.start.column;
+          span.range.end.index = line_start_index + span.range.end.column;
+        }
+        line_start_index += m_document_->getLineCharCount(line);
+      }
+    }
+    return m_highlight_;
+  }
+
+  SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text) {
+    TextPosition start_pos = m_document_->charIndexToPosition(start_index);
+    end_index = std::min(end_index, m_document_->totalChars());
+    TextPosition end_pos = m_document_->charIndexToPosition(end_index);
+    return analyzeHighlightIncremental(TextRange{start_pos, end_pos}, new_text);
+  }
+
+  SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
+    return m_document_;
+  }
+
+  const HighlightConfig& InternalDocumentAnalyzer::getHighlightConfig() const {
+    return m_config_;
+  }
+
   // ===================================== DocumentAnalyzer ============================================
   DocumentAnalyzer::DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
     const HighlightConfig& config): analyzer_impl_(makeUniquePtr<InternalDocumentAnalyzer>(document, rule, config)) {
   }
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyze() const {
-    return analyzer_impl_->analyze();
+    return analyzer_impl_->analyzeHighlight();
   }
 
-  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(const TextRange& range, const U8String& new_text) const {
-    return analyzer_impl_->analyzeChanges(range, new_text);
+  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(const TextRange& range, const U8String& new_text) const {
+    return analyzer_impl_->analyzeHighlightIncremental(range, new_text);
   }
 
-  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeChanges(size_t start_index, size_t end_index, const U8String& new_text) const {
-    return analyzer_impl_->analyzeChanges(start_index, end_index, new_text);
-  }
-
-  void DocumentAnalyzer::analyzeLine(size_t line, LineHighlight& line_highlight) const {
-    analyzer_impl_->analyzeLine(line, line_highlight);
+  SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(size_t start_index, size_t end_index, const U8String& new_text) const {
+    return analyzer_impl_->analyzeHighlightIncremental(start_index, end_index, new_text);
   }
 
   SharedPtr<Document> DocumentAnalyzer::getDocument() const {
@@ -389,26 +425,26 @@ namespace NS_SWEETLINE {
   }
 
   // ===================================== HighlightEngine ============================================
-  HighlightEngine::HighlightEngine(const HighlightConfig& config): config_(config) {
-    style_mapping_ = makeSharedPtr<StyleMapping>();
+  HighlightEngine::HighlightEngine(const HighlightConfig& config): m_config_(config) {
+    m_style_mapping_ = makeSharedPtr<StyleMapping>();
   }
 
   SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromJson(const U8String& json) {
-    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(style_mapping_, config_.inline_style);
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style);
     SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromJson(json);
-    syntax_rules_.emplace(rule);
+    m_syntax_rules_.emplace(rule);
     return rule;
   }
 
   SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromFile(const U8String& file) {
-    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(style_mapping_, config_.inline_style);
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style);
     SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromFile(file);
-    syntax_rules_.emplace(rule);
+    m_syntax_rules_.emplace(rule);
     return rule;
   }
 
   SharedPtr<SyntaxRule> HighlightEngine::getSyntaxRuleByName(const U8String& name) const {
-    for (const SharedPtr<SyntaxRule>& rule : syntax_rules_) {
+    for (const SharedPtr<SyntaxRule>& rule : m_syntax_rules_) {
       if (rule->name == name) {
         return rule;
       }
@@ -424,7 +460,7 @@ namespace NS_SWEETLINE {
     if (fixed_extension[0] != '.') {
       fixed_extension.insert(0, ".");
     }
-    for (const SharedPtr<SyntaxRule>& rule : syntax_rules_) {
+    for (const SharedPtr<SyntaxRule>& rule : m_syntax_rules_) {
       if (rule->file_extensions.find(fixed_extension) != rule->file_extensions.end()) {
         return rule;
       }
@@ -433,23 +469,39 @@ namespace NS_SWEETLINE {
   }
 
   void HighlightEngine::registerStyleName(const U8String& style_name, int32_t style_id) const {
-    style_mapping_->registerStyleName(style_name, style_id);
+    m_style_mapping_->registerStyleName(style_name, style_id);
   }
 
   const U8String& HighlightEngine::getStyleName(int32_t style_id) const {
-    return style_mapping_->getStyleName(style_id);
+    return m_style_mapping_->getStyleName(style_id);
+  }
+
+  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerByName(const U8String& syntax_name) const {
+    SharedPtr<SyntaxRule> rule = getSyntaxRuleByName(syntax_name);
+    if (rule == nullptr) {
+      return nullptr;
+    }
+    return makeSharedPtr<TextAnalyzer>(rule, m_config_);
+  }
+
+  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerByExtension(const U8String& extension) const {
+    SharedPtr<SyntaxRule> rule = getSyntaxRuleByExtension(extension);
+    if (rule == nullptr) {
+      return nullptr;
+    }
+    return makeSharedPtr<TextAnalyzer>(rule, m_config_);
   }
 
   SharedPtr<DocumentAnalyzer> HighlightEngine::loadDocument(const SharedPtr<Document>& document) {
-    auto it = analyzer_map_.find(document->getUri());
-    if (it == analyzer_map_.end()) {
+    auto it = m_analyzer_map_.find(document->getUri());
+    if (it == m_analyzer_map_.end()) {
       U8String uri = document->getUri();
       SharedPtr<SyntaxRule> rule = getSyntaxRuleByExtension(FileUtil::getExtension(uri));
       if (rule == nullptr) {
         return nullptr;
       }
-      SharedPtr<DocumentAnalyzer> analyzer = SharedPtr<DocumentAnalyzer>(new DocumentAnalyzer(document, rule, config_));
-      analyzer_map_.insert_or_assign(uri, analyzer);
+      SharedPtr<DocumentAnalyzer> analyzer = SharedPtr<DocumentAnalyzer>(new DocumentAnalyzer(document, rule, m_config_));
+      m_analyzer_map_.insert_or_assign(uri, analyzer);
       return analyzer;
     } else {
       return it->second;
@@ -457,6 +509,6 @@ namespace NS_SWEETLINE {
   }
 
   void HighlightEngine::removeDocument(const U8String& uri) {
-    analyzer_map_.erase(uri);
+    m_analyzer_map_.erase(uri);
   }
 }

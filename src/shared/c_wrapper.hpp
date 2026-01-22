@@ -108,8 +108,38 @@ inline HighlightConfig unpackHighlightConfig(int32_t bits) {
   return config;
 }
 
-inline size_t computeSpanBufferSize(const HighlightConfig& config) {
-  size_t base_count = 6; //起始和结束行列，以及索引
+inline int32_t packInlineStyleTags(const InlineStyle& style) {
+  int32_t bits = 0;
+  if (style.is_bold) {
+    bits |= kStyleBold;
+  }
+  if (style.is_italic) {
+    bits |= kStyleItalic;
+  }
+  if (style.is_strikethrough) {
+    bits |= kStyleStrikeThrough;
+  }
+  return bits;
+}
+
+inline int64_t packTextPosition(const TextPosition& position) {
+  int64_t line = (int64_t)position.line;
+  int64_t column = (int64_t)position.column;
+  return (line << 32) | (column & 0XFFFFFFFFLL);
+}
+
+inline TextPosition unpackTextPosition(int64_t bits) {
+  size_t start_line = (size_t)(int32_t)(bits >> 32);
+  size_t start_column = (size_t)(int32_t)(bits & 0XFFFFFFFF);
+  return {start_line, start_column};
+}
+
+inline TextLineInfo unpackTextLineInfo(int32_t* arr) {
+  return {static_cast<size_t>(arr[0]), arr[1], static_cast<size_t>(arr[2])};
+}
+
+inline int32_t computeSpanBufferStride(const HighlightConfig& config) {
+  int32_t base_count = 6; //起始和结束行列，以及索引
   if (config.inline_style) {
     base_count += 3; //前景色、背景色、tags各占一个int32
   } else {
@@ -131,7 +161,7 @@ inline void writeDocumentHighlight(const SharedPtr<DocumentHighlight>& highlight
       if (config.inline_style) {
         buffer[index++] = static_cast<int32_t>(span.inline_style.foreground);
         buffer[index++] = static_cast<int32_t>(span.inline_style.background);
-        buffer[index++] = static_cast<int32_t>(span.inline_style.tags);
+        buffer[index++] = packInlineStyleTags(span.inline_style);
       } else {
         buffer[index++] = static_cast<int32_t>(span.style_id);
       }
@@ -151,7 +181,7 @@ inline void writeLineHighlight(const LineHighlight& highlight, int32_t* buffer, 
     if (config.inline_style) {
       buffer[index++] = static_cast<int32_t>(span.inline_style.foreground);
       buffer[index++] = static_cast<int32_t>(span.inline_style.background);
-      buffer[index++] = static_cast<int32_t>(span.inline_style.tags);
+      buffer[index++] = packInlineStyleTags(span.inline_style);
     } else {
       buffer[index++] = static_cast<int32_t>(span.style_id);
     }

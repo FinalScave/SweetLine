@@ -59,7 +59,10 @@ EMSCRIPTEN_BINDINGS(highlight) {
   emscripten::class_<InlineStyle>("InlineStyle")
     .constructor<>()
     .property("foreground", &InlineStyle::foreground)
-    .property("background", &InlineStyle::background);
+    .property("background", &InlineStyle::background)
+    .property("isBold", &InlineStyle::is_bold)
+    .property("isItalic", &InlineStyle::is_italic)
+    .property("isStrikethrough", &InlineStyle::is_strikethrough);
   emscripten::class_<TokenSpan>("TokenSpan")
     .constructor<>()
     .property("range", &TokenSpan::range)
@@ -88,12 +91,34 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     );
 
+  emscripten::class_<TextLineInfo>("TextLineInfo")
+    .constructor<>()
+    .property("line", &TextLineInfo::line)
+    .property("startState", &TextLineInfo::start_state)
+    .property("startCharOffset", &TextLineInfo::start_char_offset);
+
+  emscripten::class_<LineAnalyzeResult>("LineAnalyzeResult")
+    .constructor<>()
+    .property("highlight", &LineAnalyzeResult::highlight)
+    .property("endState", &LineAnalyzeResult::end_state)
+    .property("charCount", &LineAnalyzeResult::char_count);
+
+  emscripten::class_<TextAnalyzer>("TextAnalyzer")
+    .smart_ptr<SharedPtr<TextAnalyzer>>("SharedPtr<TextAnalyzer>")
+    .function("analyzeText", &TextAnalyzer::analyzeText)
+    .function("analyzeLine",
+      emscripten::optional_override([](SharedPtr<TextAnalyzer>& self, const U8String& text, const TextLineInfo& info) {
+        LineAnalyzeResult result;
+        self->analyzeLine(text, info, result);
+        return result;
+      })
+    );
+
   emscripten::class_<DocumentAnalyzer>("DocumentAnalyzer")
     .smart_ptr<SharedPtr<DocumentAnalyzer>>("SharedPtr<DocumentAnalyzer>")
     .function("analyze", &DocumentAnalyzer::analyze)
-    .function("analyzeChanges", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeChanges))
-    .function("analyzeChanges", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeChanges))
-    .function("analyzeLine", &DocumentAnalyzer::analyzeLine)
+    .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
+    .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("getDocument", &DocumentAnalyzer::getDocument);
 
   emscripten::class_<HighlightConfig>("HighlightConfig")
@@ -121,6 +146,8 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("compileSyntaxFromFile", &HighlightEngine::compileSyntaxFromFile)
     .function("getSyntaxRuleByName", &HighlightEngine::getSyntaxRuleByName)
     .function("getSyntaxRuleByExtension", &HighlightEngine::getSyntaxRuleByExtension)
+    .function("createAnalyzerByName", &HighlightEngine::createAnalyzerByName)
+    .function("createAnalyzerByExtension", &HighlightEngine::createAnalyzerByExtension)
     .function("loadDocument", &HighlightEngine::loadDocument)
     .function("removeDocument", &HighlightEngine::removeDocument);
 }

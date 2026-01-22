@@ -176,6 +176,8 @@ namespace NS_SWEETLINE {
     for (std::pair<const int32_t, StateRule>& pair : syntax_rule->state_rules_map) {
       compileStatePattern(pair.second);
     }
+    // 解析作用域划线规则
+    parseBlockPairs(syntax_rule, root);
 #ifdef SWEETLINE_DEBUG
     //syntax_rule->dump();
 #endif
@@ -289,10 +291,13 @@ namespace NS_SWEETLINE {
             throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles[i].tags[i]");
           }
           if (tag_json == "bold") {
-            style.tags |= static_cast<int16_t>(InlineStyleTag::BOLD);
+            style.is_bold = true;
           }
           if (tag_json == "italic") {
-            style.tags |= static_cast<int16_t>(InlineStyleTag::ITALIC);
+            style.is_italic = true;
+          }
+          if (tag_json == "strikethrough") {
+            style.is_strikethrough = true;
           }
         }
       }
@@ -405,6 +410,31 @@ namespace NS_SWEETLINE {
   }
 
   void SyntaxRuleCompiler::parseBlockPairs(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    if (!root.contains("blockPairs")) {
+      return;
+    }
+    const nlohmann::json& block_pairs_json = root["blockPairs"];
+    if (!block_pairs_json.is_array()) {
+      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "blockPairs");
+    }
+    BlockRule block_rule;
+    for (const nlohmann::json& block_pair_json : block_pairs_json) {
+      if (!block_pair_json.contains("start")) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "start");
+      }
+      block_rule.start = block_pair_json["start"];
+      if (!block_pair_json.contains("end")) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "end");
+      }
+      block_rule.end = block_pair_json["end"];
+      if (block_pair_json.contains("branches")) {
+        for (const nlohmann::json& branch_json : block_pair_json["branches"]) {
+          block_rule.branch_keywords.emplace(branch_json);
+        }
+      }
+    }
+    //rule->first_byte_block_table.insert_or_assign(block_rule.start[0], std::move(block_rule));
+    //rule->first_byte_block_table.insert_or_assign(block_rule.end[0], std::move(block_rule));
   }
 
   void SyntaxRuleCompiler::compileStatePattern(StateRule& state_rule) {
@@ -470,7 +500,7 @@ namespace NS_SWEETLINE {
       ptr++;
     }
     char* end_ptr;
-    uint32_t color = strtol(str, &end_ptr, 16);
+    uint32_t color = strtoul(str, &end_ptr, 16);
     // 检查是否解析了整个字符串（end_ptr 应该指向字符串结尾）
     if (*end_ptr != '\0') {
       // 解析失败，或者包含非十六进制字符

@@ -46,7 +46,9 @@
     "identifier": "${identifierStart}${identifierPart}",
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",
-    "classExtends": "(?:${whiteSpace}+(:)${whiteSpace}+${type})?"
+    "classExtends": "(?:${whiteSpace}+(:)${whiteSpace}+${type})?",
+    "embedCodeRefThis": "(#)(this)",
+    "embedCodeRefClass": "(#)(cls|ncls)(<)(${identifier})(>)"
   },
   "states": {
     "default": [
@@ -60,8 +62,9 @@
         "styles": [1, "keyword", 2, "class"]
       },
       {
-        "pattern": "(变量)${whiteSpace}+(${identifier})(?:${whiteSpace}*(:)${whiteSpace}*(${identifier}))?",
-        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+        "pattern": "(变量)${whiteSpace}+(${identifier})(?:${whiteSpace}*(:)${whiteSpace}*)?",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
+        "state": "typeDeclare"
       },
       {
         "pattern": "(事件)${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
@@ -76,8 +79,38 @@
         "styles": [1, "keyword"]
       },
       {
+        "pattern": "\\b(code)\\b",
+        "styles": [1, "keyword"],
+        "state": "singleLineEmbedCode"
+      },
+      {
+        "pattern": "(@)${whiteSpace}*(code)",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "multiLineEmbedCode"
+      },
+      {
         "pattern": "(@)${whiteSpace}*(${identifier})",
         "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})(<)(${identifier})(>)",
+        "styles": [1, "class", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(<)(${identifier})(,)(${identifier})(>)",
+        "styles": [1, "class", 2, "punctuation", 3, "class", 4, "punctuation", 5, "class", 6, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(<)(${identifier})(>)(,)${whiteSpace}*(<)(${identifier})(>)",
+        "styles": [1, "class", 2, "punctuation", 3, "class", 4, "punctuation", 5, "punctuation", 6, "class", 7, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(<)(${identifier})(<)(${identifier})(>)(>)",
+        "styles": [1, "class", 2, "punctuation", 3, "class", 4, "punctuation", 5, "class", 6, "punctuation", 7, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(<)(${identifier})(>)",
+        "styles": [1, "class", 2, "punctuation", 3, "class", 4, "punctuation"]
       },
       {
         "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*([,)])",
@@ -120,6 +153,11 @@
         "style": "punctuation"
       },
       {
+        "pattern": "=",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
         "pattern": "${identifier}",
         "style": "class"
       },
@@ -147,6 +185,34 @@
       {
         "pattern": "${any}",
         "style": "comment"
+      }
+    ],
+    "singleLineEmbedCode": [
+      {
+        "pattern": "${embedCodeRefThis}",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "${embedCodeRefClass}",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "class", 5, "punctuation"]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "multiLineEmbedCode": [
+      {
+        "pattern": "${embedCodeRefThis}",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "${embedCodeRefClass}",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "class", 5, "punctuation"]
+      },
+      {
+        "pattern": "(@)${whiteSpace}*(end)",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "default"
       }
     ]
   }

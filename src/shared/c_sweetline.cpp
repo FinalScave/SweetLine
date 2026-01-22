@@ -75,6 +75,44 @@ const char* sl_engine_get_style_name(intptr_t engine_handle, int32_t style_id) {
   return engine->getStyleName(style_id).c_str();
 }
 
+intptr_t sl_engine_create_text_analyzer(intptr_t engine_handle, const char* syntax_name) {
+  SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(engine_handle);
+  if (engine == nullptr) {
+    return SL_HANDLE_INVALID;
+  }
+  return toIntPtr(engine->createAnalyzerByName(syntax_name));
+}
+
+intptr_t sl_engine_create_text_analyzer2(intptr_t engine_handle, const char* extension) {
+  SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(engine_handle);
+  if (engine == nullptr) {
+    return SL_HANDLE_INVALID;
+  }
+  return toIntPtr(engine->createAnalyzerByExtension(extension));
+}
+
+int32_t* sl_text_analyze(intptr_t analyzer_handle, const char* text, int32_t* data_size) {
+  SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<TextAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    *data_size = 0;
+    return nullptr;
+  }
+  analyzer->analyzeText(text);
+  // TODO: 组织返回数据格式
+  return nullptr;
+}
+
+int32_t* sl_text_analyze_line(intptr_t analyzer_handle, const char* text, int32_t* line_info, int32_t* data_size) {
+  SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<TextAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    *data_size = 0;
+    return nullptr;
+  }
+  //analyzer->analyzeText(text);
+  // TODO: 组织返回数据格式
+  return nullptr;
+}
+
 intptr_t sl_engine_load_document(intptr_t engine_handle, intptr_t document_handle) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(engine_handle);
   if (engine == nullptr) {
@@ -101,7 +139,7 @@ int32_t* sl_document_analyze(intptr_t analyzer_handle, int32_t* data_size) {
   return result;
 }
 
-int32_t* sl_document_analyze_changes(intptr_t analyzer_handle, size_t* changes_range, const char* new_text, int32_t* data_size) {
+int32_t* sl_document_analyze_incremental(intptr_t analyzer_handle, size_t* changes_range, const char* new_text, int32_t* data_size) {
   SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(analyzer_handle);
   if (analyzer == nullptr) {
     *data_size = 0;
@@ -109,7 +147,7 @@ int32_t* sl_document_analyze_changes(intptr_t analyzer_handle, size_t* changes_r
   }
   TextPosition start = {changes_range[0], changes_range[1]};
   TextPosition end = {changes_range[2], changes_range[3]};
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges({start, end}, new_text);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeIncremental({start, end}, new_text);
   *data_size = highlight->spanCount();
   int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * *data_size));
   writeDocumentHighlight(highlight, result, analyzer->getHighlightConfig());

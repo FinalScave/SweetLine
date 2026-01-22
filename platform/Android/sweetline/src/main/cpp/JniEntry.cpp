@@ -9,6 +9,7 @@ jint JNI_OnLoad(JavaVM *javaVm, void *) {
   }
   DocumentJni::RegisterMethods(env);
   SyntaxRuleJni::RegisterMethods(env);
+  TextAnalyzerJni::RegisterMethods(env);
   DocumentAnalyzerJni::RegisterMethods(env);
   HighlightEngineJni::RegisterMethods(env);
   return JNI_VERSION_1_6;

@@ -38,10 +38,10 @@ TEST_CASE("Highlight multi-group") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kMultiGroupTestPath);
+  U8String code_txt = FileUtil::readString(kMultiGroupTestPath);
   SharedPtr<Document> document = makeSharedPtr<Document>("multi-group.test", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   highlight->dump();
 }
 
@@ -53,10 +53,10 @@ TEST_CASE("Highlight multi-line") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kMultiLineTestPath);
+  U8String code_txt = FileUtil::readString(kMultiLineTestPath);
   SharedPtr<Document> document = makeSharedPtr<Document>("multi-line.test", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   highlight->dump();
 }
 
@@ -68,10 +68,10 @@ TEST_CASE("Highlight Test.java") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kJavaTestFilePath);
+  U8String code_txt = FileUtil::readString(kJavaTestFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("Test.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   highlight->dump();
 }
 
@@ -83,10 +83,10 @@ TEST_CASE("Highlight View.java") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kJavaViewFilePath);
+  U8String code_txt = FileUtil::readString(kJavaViewFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("View.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   highlight->dump();
 }
 
@@ -98,43 +98,43 @@ TEST_CASE("Highlight 结绳.t") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kTiecodeFilePath);
+  U8String code_txt = FileUtil::readString(kTiecodeFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("结绳.t", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   highlight->dump();
 }
 
 TEST_CASE("Highlight Test.java Benchmark") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   engine->compileSyntaxFromFile(kJavaSyntaxPath);
-  String code_txt = FileUtil::readString(kJavaTestFilePath);
+  U8String code_txt = FileUtil::readString(kJavaTestFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("test.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   BENCHMARK("Highlight Test.java Performance") {
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   };
 }
 
 TEST_CASE("Highlight View.java Benchmark") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   engine->compileSyntaxFromFile(kJavaSyntaxPath);
-  String code_txt = FileUtil::readString(kJavaViewFilePath);
+  U8String code_txt = FileUtil::readString(kJavaViewFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("View.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   BENCHMARK("Highlight View.java Performance") {
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   };
 }
 
 TEST_CASE("Highlight 结绳.t Benchmark") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   engine->compileSyntaxFromFile(kTiecodeSyntaxPath);
-  String code_txt = FileUtil::readString(kTiecodeFilePath);
+  U8String code_txt = FileUtil::readString(kTiecodeFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("结绳.t", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   BENCHMARK("Highlight  结绳.t Performance") {
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   };
 }
 
@@ -146,27 +146,27 @@ TEST_CASE("Analyze Main.java Incrementally") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kJavaMainFilePath);
+  U8String code_txt = FileUtil::readString(kJavaMainFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("Main.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   // 第1行末尾插入'//'注释
   TextRange range = {{0, 19}, {0, 19}};
-  SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeChanges(range, "//aaa");
+  SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeHighlightIncremental(range, "//aaa");
   REQUIRE(updated_highlight->lines[0].spans.back().style_id == 4);
   // 第4行'/'删除，后面应该全部变为注释
   range = {{3, 6}, {3, 7}};
-  updated_highlight = analyzer->analyzeChanges(range, "");
+  updated_highlight = analyzer->analyzeHighlightIncremental(range, "");
   REQUIRE(updated_highlight->lines[4].spans.back().style_id == 4);
   REQUIRE(updated_highlight->lines[9].spans.back().style_id == 4);
   // 第4行末尾插入 *AAA\n*/，第5行是注释结束，第6行正常高亮
   range = {{3, 6}, {3, 6}};
-  updated_highlight = analyzer->analyzeChanges(range, "*AAA\n*/");
+  updated_highlight = analyzer->analyzeHighlightIncremental(range, "*AAA\n*/");
   REQUIRE(updated_highlight->lines[4].spans.back().style_id == 4);
   REQUIRE(updated_highlight->lines[5].spans.front().style_id == 1);
   // 第3-5行替换为*/，第3行注释结束，后续正常高亮
   range = {{2, 0}, {4, 2}};
-  updated_highlight = analyzer->analyzeChanges(range, "*/");
+  updated_highlight = analyzer->analyzeHighlightIncremental(range, "*/");
   REQUIRE(updated_highlight->lines[2].spans.back().style_id == 4);
   REQUIRE(updated_highlight->lines[3].spans.front().style_id == 1);
 }
@@ -179,14 +179,14 @@ TEST_CASE("Analyze Main.java Incrementally Benchmark") {
     std::cerr << error.what() << ": " << error.message() << std::endl;
     return;
   }
-  String code_txt = FileUtil::readString(kJavaMainFilePath);
+  U8String code_txt = FileUtil::readString(kJavaMainFilePath);
   SharedPtr<Document> document = makeSharedPtr<Document>("Main.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeHighlight();
   BENCHMARK("Analyze Main.java Incrementally Performance") {
     // 第 1 行末尾插入 //注释
     TextRange range = {{0, 19}, {0, 19}};
-    SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeChanges(range, "//");
+    SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeHighlightIncremental(range, "//");
     REQUIRE(updated_highlight->lines[0].spans.back().style_id == 4);
   };
 }

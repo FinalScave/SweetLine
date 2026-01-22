@@ -1,5 +1,7 @@
 package com.qiplat.sweetline;
 
+import com.qiplat.sweetline.util.NativeBufferPack;
+
 import dalvik.annotation.optimization.CriticalNative;
 import dalvik.annotation.optimization.FastNative;
 
@@ -57,9 +59,7 @@ public class Document {
             return null;
         }
         long value = nativeCharIndexToPosition(nativeHandle, index);
-        int line = (int) (value >> 32);
-        int column = (int) (value & 0XFFFFFFFFL);
-        return new TextPosition(line, column, index);
+        return NativeBufferPack.unpackTextPosition(value);
     }
 
     public int getLineCount() {

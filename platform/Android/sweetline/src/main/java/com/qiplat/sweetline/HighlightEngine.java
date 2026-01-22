@@ -72,6 +72,30 @@ public class HighlightEngine {
     }
 
     /**
+     * 根据语法规则名称创建一个文本高亮分析器(不支持增量分析,但可以分析单行并获得行状态,可以在上层自行实现增量分析)
+     * @param syntaxName 语法规则名称(如 java)
+     */
+    public TextAnalyzer createAnalyzerByName(String syntaxName) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        long analyzerHandle = nativeCreateAnalyzerByName(nativeHandle, syntaxName);
+        return new TextAnalyzer(analyzerHandle);
+    }
+
+    /**
+     * 根据文件后缀名创建一个文本高亮分析器(不支持增量分析,但可以分析单行并获得行状态,可以在上层自行实现增量分析)
+     * @param extension 文件后缀名(如 .t)
+     */
+    public TextAnalyzer createAnalyzerByExtension(String extension) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        long analyzerHandle = nativeCreateAnalyzerByExtension(nativeHandle, extension);
+        return new TextAnalyzer(analyzerHandle);
+    }
+
+    /**
      * 加载托管文档对象获得文档高亮分析器
      * @param document 托管文档对象
      * @return 文档高亮分析器
@@ -116,6 +140,10 @@ public class HighlightEngine {
     private static native long nativeCompileSyntaxFromJson(long handle, String json) throws SyntaxCompileError;
     @FastNative
     private static native long nativeCompileSyntaxFromFile(long handle, String path) throws SyntaxCompileError;
+    @FastNative
+    private static native long nativeCreateAnalyzerByName(long handle, String syntaxName);
+    @FastNative
+    private static native long nativeCreateAnalyzerByExtension(long handle, String extension);
     @CriticalNative
     private static native long nativeLoadDocument(long handle, long documentHandle);
     @FastNative

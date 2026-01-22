@@ -57,9 +57,21 @@ export namespace sweetline {
          */
         foreground: number;
         /**
-         * 前景色
+         * 背景色
          */
         background: number;
+        /**
+         * 是否粗体显示
+         */
+        isBold: boolean;
+        /**
+         * 是否斜体显示
+         */
+        isItalic: boolean;
+        /**
+         * 是否需要显示删除线
+         */
+        isStrikethrough: boolean;
     }
 
     /**
@@ -129,22 +141,91 @@ export namespace sweetline {
     }
 
     /**
-     * 高亮分析器
+     * 文本行元数据信息
+     */
+    export class TextLineInfo {
+        /**
+         * 行号索引
+         */
+        line: number;
+
+        /**
+         * 行起始高亮状态
+         */
+        startState: number;
+
+        /**
+         * 行在整个文本中起始字符偏移 (不是字节)，用于计算高亮块(TokenSpan) index，HighlightConfig中未开启 showIndex 时 无需该字段
+         */
+        startCharOffset: number;
+    }
+
+    /**
+     * 单行语法高亮分析结果
+     */
+    export class LineAnalyzeResult {
+        /**
+         * 当前行高亮序列
+         */
+        highlight: LineHighlight;
+
+        /**
+         * 行分析完毕后结束状态
+         */
+        endState: number;
+
+        /**
+         * 当前行总计分析的字符总数，不包含换行符
+         */
+        charCount: number;
+    }
+
+    /**
+     * 纯文本高亮分析器，不支持增量更新，适用于全量分析的场景
+     */
+    export class TextAnalyzer {
+        /**
+         * 分析一段文本内容，并返回整段文本的高亮结果
+         * @param text 整段文本内容
+         * @return 高亮结果
+         */
+        analyzeText(text: string): DocumentHighlight;
+
+        /**
+         * 分析单行文本
+         * @param text 单行文本内容
+         * @param info 当前行元数据信息
+         * @return 单行高亮分析结果
+         */
+        analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
+    }
+
+    /**
+     * 托管文档高亮分析器，支持自动patch文本进行增量分析
      */
     export class DocumentAnalyzer {
         /**
-         * 对整个文本进行高亮分析
-         * @return 整个文本的高亮结果
+         * 对整个托管文档进行高亮分析
+         * @return 整个托管文档的高亮结果
          */
         analyze(): DocumentHighlight;
 
         /**
-         * 根据patch内容重新分析整个文本的高亮结果
+         * 根据patch内容重新分析整个托管文档的高亮结果
          * @param range patch的变更范围
          * @param newText patch的文本
-         * @return 整个文本的高亮结果
+         * @return 整个托管文档的高亮结果
          */
-        analyzeChanges(range: TextRange, newText: string): DocumentHighlight;
+        analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
+
+        /**
+         * 根据patch内容重新分析整个托管文档的高亮结果
+         * @param startOffset patch变更的起始字符索引
+         * @param endOffset patch变更的结束字符索引
+         * @param newText patch的文本
+         * @return 整个托管文档的高亮结果
+         */
+        analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
     }
 
     /**
@@ -220,6 +301,18 @@ export namespace sweetline {
          * @param extension 后缀名
          */
         getSyntaxRuleByExtension(extension: string): SyntaxRule;
+
+        /**
+         * 根据语法规则名称创建一个文本高亮分析器(不支持增量分析,但可以分析单行并获得行状态,可以在上层自行实现增量分析)
+         * @param syntaxName 语法规则名称(如 java)
+         */
+        createAnalyzerByName(syntaxName: string): TextAnalyzer;
+
+        /**
+         * 根据文件后缀名创建一个文本高亮分析器(不支持增量分析,但可以分析单行并获得行状态,可以在上层自行实现增量分析)
+         * @param extension 文件后缀名(如 .t)
+         */
+        createAnalyzerByExtension(extension: string): TextAnalyzer;
 
         /**
          * 加载托管文档对象获得文档高亮分析器

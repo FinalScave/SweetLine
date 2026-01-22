@@ -34,13 +34,12 @@ namespace NS_SWEETLINE {
     U8String m_message_;
   };
 
-  /// 高亮样式tags枚举
-  enum struct InlineStyleTag : int16_t {
-    /// 加粗显示
-    BOLD = 1,
-    /// 斜体显示
-    ITALIC = 1 << 1,
-  };
+  /// 加粗显示
+  constexpr static int16_t kStyleBold = 1;
+  /// 斜体显示
+  constexpr static int16_t kStyleItalic = kStyleBold << 1;
+  /// 显示删除线
+  constexpr static int16_t kStyleStrikeThrough = kStyleItalic << 1;
 
   /// 语法规则中直接包含的样式定义
   struct InlineStyle {
@@ -48,8 +47,12 @@ namespace NS_SWEETLINE {
     int32_t foreground {0};
     /// 背景色(ARGB)
     int32_t background {0};
-    /// tags
-    int16_t tags {0};
+    /// 是否粗体显示
+    bool is_bold {false};
+    /// 是否斜体显示
+    bool is_italic {false};
+    /// 是否需要显示删除线
+    bool is_strikethrough {false};
   };
 
   /// 高亮样式id和名称的映射
@@ -89,6 +92,8 @@ namespace NS_SWEETLINE {
     HashMap<int32_t, StateRule> state_rules_map;
     /// state名称 到 id 的映射
     HashMap<U8String, int32_t> state_id_map;
+    /// block rule id 到 BlockRule的映射
+    HashMap<int32_t, BlockRule> block_rules_map;
 
     bool containsInlineStyle(int32_t style_id);
     InlineStyle& getInlineStyle(int32_t style_id);

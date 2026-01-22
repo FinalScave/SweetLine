@@ -54,9 +54,7 @@ public:
       return 0;
     }
     TextPosition position = document->charIndexToPosition(index);
-    jlong line = (jlong)position.line;
-    jlong column = (jlong)position.column;
-    return (line << 32) | (column & 0XFFFFFFFFLL);
+    return packTextPosition(position);
   }
 
   static jint getLineCount(jlong handle) {
@@ -143,37 +141,92 @@ public:
   }
 };
 
+static jintArray convertDocumentHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight,
+                                                    const HighlightConfig& config) {
+  size_t span_count = highlight->spanCount();
+  size_t stride = computeSpanBufferStride(config);
+  jintArray result = env->NewIntArray(static_cast<jsize>(span_count * stride));
+  if (result == nullptr) {
+    return nullptr;
+  }
+  jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
+  writeDocumentHighlight(highlight, buffer, config);
+  env->ReleaseIntArrayElements(result, buffer, 0);
+  return result;
+}
+
+// ====================================== TextAnalyzerJni ===========================================
+class TextAnalyzerJni {
+public:
+  static void finalizeAnalyzer(jlong handle) {
+    deleteCPtrHolder<TextAnalyzer>(handle);
+  }
+
+  static jintArray analyzeText(JNIEnv* env, jclass clazz, jlong handle, jstring text) {
+    SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<TextAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    const char* c_text = env->GetStringUTFChars(text, JNI_FALSE);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(c_text);
+    return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
+  }
+
+  static jintArray analyzeLine(JNIEnv* env, jclass clazz, jlong handle, jstring text, jintArray info) {
+    SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<TextAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    const char* c_text = env->GetStringUTFChars(text, JNI_FALSE);
+    TextLineInfo line_info = unpackTextLineInfo(env->GetIntArrayElements(info, JNI_FALSE));
+    LineAnalyzeResult analyze_result;
+    analyzer->analyzeLine(c_text, line_info, analyze_result);
+
+    size_t span_count = analyze_result.highlight.spans.size();
+    const HighlightConfig& config = analyzer->getHighlightConfig();
+    size_t stride = computeSpanBufferStride(config);
+    jintArray result = env->NewIntArray(static_cast<jsize>(1 + span_count * stride + 2));
+    if (result == nullptr) {
+      return nullptr;
+    }
+    jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
+    buffer[0] = span_count;
+    writeLineHighlight(analyze_result.highlight, buffer + 1, config);
+    buffer[1 + span_count * stride] = analyze_result.end_state;
+    buffer[1 + span_count * stride + 1] = analyze_result.char_count;
+    env->ReleaseIntArrayElements(result, buffer, 0);
+    return result;
+  }
+
+  static jint getSpanBufferStride(jlong handle) {
+    SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<TextAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return 0;
+    }
+    const HighlightConfig& config = analyzer->getHighlightConfig();
+    return computeSpanBufferStride(config);
+  }
+
+  constexpr static const char *kJClassName = "com/qiplat/sweetline/TextAnalyzer";
+  constexpr static const JNINativeMethod kJMethods[] = {
+      {"nativeFinalize", "(J)V", (void*) finalizeAnalyzer},
+      {"nativeAnalyzeText", "(JLjava/lang/String;)[I", (void*) analyzeText},
+      {"nativeAnalyzeLine", "(JLjava/lang/String;[I)[I", (void*) analyzeLine},
+      {"nativeGetSpanBufferStride", "(J)I", (void*) getSpanBufferStride},
+  };
+
+  static void RegisterMethods(JNIEnv *env) {
+    jclass java_class = env->FindClass(kJClassName);
+    env->RegisterNatives(java_class, kJMethods,
+                         sizeof(kJMethods) / sizeof(JNINativeMethod));
+  }
+};
+
 // ====================================== DocumentAnalyzerJni ===========================================
 class DocumentAnalyzerJni {
 public:
   static void finalizeAnalyzer(jlong handle) {
     deleteCPtrHolder<DocumentAnalyzer>(handle);
-  }
-
-  static jintArray convertDocumentHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight, const HighlightConfig& config) {
-    size_t span_count = highlight->spanCount();
-    size_t span_ints = computeSpanBufferSize(config);
-    jintArray result = env->NewIntArray(static_cast<jsize>(span_count * span_ints));
-    if (result == nullptr) {
-      return nullptr;
-    }
-    jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
-    writeDocumentHighlight(highlight, buffer, config);
-    env->ReleaseIntArrayElements(result, buffer, 0);
-    return result;
-  }
-
-  static jintArray convertLineHighlightAsIntArray(JNIEnv* env, const LineHighlight& highlight, const HighlightConfig& config) {
-    size_t span_count = highlight.spans.size();
-    size_t span_ints = computeSpanBufferSize(config);
-    jintArray result = env->NewIntArray(static_cast<jsize>(span_count * span_ints));
-    if (result == nullptr) {
-      return nullptr;
-    }
-    jint* buffer = env->GetIntArrayElements(result, JNI_FALSE);
-    writeLineHighlight(highlight, buffer, config);
-    env->ReleaseIntArrayElements(result, buffer, 0);
-    return result;
   }
 
   static jintArray analyze(JNIEnv* env, jclass clazz, jlong handle) {
@@ -190,13 +243,9 @@ public:
     if (analyzer == nullptr) {
       return nullptr;
     }
-    size_t start_line = (size_t)(jint)(start_position >> 32);
-    size_t start_column = (size_t)(jint)(start_position & 0XFFFFFFFF);
-    size_t end_line = (size_t)(jint)(end_position >> 32);
-    size_t end_column = (size_t)(jint)(end_position & 0XFFFFFFFF);
-    TextRange range = {{start_line, start_column}, {end_line, end_column}};
+    TextRange range = {unpackTextPosition(start_position), unpackTextPosition(end_position)};
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(range, new_text_str);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeIncremental(range, new_text_str);
     return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
@@ -208,22 +257,8 @@ public:
     size_t unsigned_start_index = (size_t)start_index;
     size_t unsigned_end_index = (size_t)end_index;
     const char* new_text_str = env->GetStringUTFChars(new_text, JNI_FALSE);
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeChanges(unsigned_start_index, unsigned_end_index, new_text_str);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeIncremental(unsigned_start_index, unsigned_end_index, new_text_str);
     return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
-  }
-
-  static jintArray analyzeLine(JNIEnv* env, jclass clazz, jlong handle, jint line) {
-    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
-    if (analyzer == nullptr) {
-      return nullptr;
-    }
-    LineHighlight line_highlight;
-    analyzer->analyzeLine((size_t)line, line_highlight);
-    jintArray result = env->NewIntArray(static_cast<jsize>(line_highlight.spans.size() * 7));
-    if (result == nullptr) {
-      return nullptr;
-    }
-    return convertLineHighlightAsIntArray(env, line_highlight, analyzer->getHighlightConfig());
   }
 
   static jlong getDocument(jlong handle) {
@@ -234,13 +269,13 @@ public:
     return toIntPtr(analyzer->getDocument());
   }
 
-  static jint getHighlightConfig(jlong handle) {
+  static jint getSpanBufferStride(jlong handle) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
       return 0;
     }
     const HighlightConfig& config = analyzer->getHighlightConfig();
-    return packHighlightConfig(config);
+    return computeSpanBufferStride(config);
   }
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/DocumentAnalyzer";
@@ -249,9 +284,8 @@ public:
       {"nativeAnalyze", "(J)[I", (void*) analyze},
       {"nativeAnalyzeChanges", "(JJJLjava/lang/String;)[I", (void*) analyzeChanges},
       {"nativeAnalyzeChanges2", "(JIILjava/lang/String;)[I", (void*) analyzeChanges2},
-      {"nativeAnalyzeLine", "(JI)[I", (void*) analyzeLine},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
-      {"nativeGetHighlightConfig", "(J)I", (void*) getHighlightConfig},
+      {"nativeGetSpanBufferStride", "(J)I", (void*) getSpanBufferStride},
   };
 
   static void RegisterMethods(JNIEnv *env) {
@@ -323,6 +357,26 @@ public:
     return toIntPtr(rule);
   }
 
+  static jlong createAnalyzerByName(JNIEnv* env, jclass clazz, jlong handle, jstring syntax_name) {
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
+    if (engine == nullptr) {
+      return 0;
+    }
+    const char* c_syntax_name = env->GetStringUTFChars(syntax_name, JNI_FALSE);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName(c_syntax_name);
+    return toIntPtr(analyzer);
+  }
+
+  static jlong createAnalyzerByExtension(JNIEnv* env, jclass clazz, jlong handle, jstring extension) {
+    SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
+    if (engine == nullptr) {
+      return 0;
+    }
+    const char* c_extension = env->GetStringUTFChars(extension, JNI_FALSE);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByExtension(c_extension);
+    return toIntPtr(analyzer);
+  }
+
   static jlong loadDocument(jlong handle, jlong document_handle) {
     SharedPtr<HighlightEngine> engine = getCPtrHolderValue<HighlightEngine>(handle);
     SharedPtr<Document> document = getCPtrHolderValue<Document>(document_handle);
@@ -350,6 +404,8 @@ public:
       {"nativeGetStyleName", "(JI)Ljava/lang/String;", (void*) getStyleName},
       {"nativeCompileSyntaxFromJson", "(JLjava/lang/String;)J", (void*) compileSyntaxFromJson},
       {"nativeCompileSyntaxFromFile", "(JLjava/lang/String;)J", (void*) compileSyntaxFromFile},
+      {"nativeCreateAnalyzerByName", "(JLjava/lang/String;)J", (void*) createAnalyzerByName},
+      {"nativeCreateAnalyzerByExtension", "(JLjava/lang/String;)J", (void*) createAnalyzerByExtension},
       {"nativeLoadDocument", "(JJ)J", (void*) loadDocument},
       {"nativeRemoveDocument", "(JLjava/lang/String;)V", (void*) removeDocument},
   };

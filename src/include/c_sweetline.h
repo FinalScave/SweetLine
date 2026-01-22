@@ -84,7 +84,48 @@ SL_API sl_error_t sl_engine_register_style_name(intptr_t engine_handle, const ch
 /// @return 返回对应ID在引擎中注册的高亮样式名称
 SL_API const char* sl_engine_get_style_name(intptr_t engine_handle, int32_t style_id);
 
-/// 加载托管文档并获得文档高亮分析器句柄
+/// 根域语法规则名称创建纯文本高亮分析器(不支持增量分析)
+/// @param engine_handle 高亮引擎句柄
+/// @param syntax_name 语法规则名称
+/// @return 纯文本高亮分析器句柄
+SL_API intptr_t sl_engine_create_text_analyzer(intptr_t engine_handle, const char* syntax_name);
+
+/// 根域文件后缀名创建纯文本高亮分析器(不支持增量分析)
+/// @param engine_handle 高亮引擎句柄
+/// @param extension 文件后缀名
+/// @return 纯文本高亮分析器句柄
+SL_API intptr_t sl_engine_create_text_analyzer2(intptr_t engine_handle, const char* extension);
+
+/// 对整段文本进行全量高亮分析
+/// @param analyzer_handle 纯文本高亮分析器句柄
+/// @param text 整段文本内容
+/// @param data_size 分析结果数组的大小，分析完毕后设置给该参数
+/// @return 分析结果，按字节顺序紧密排列，结构如下:
+/// @code
+/// [高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]...[高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]
+/// 其中每个字段都为4字节整数
+/// @endcode
+SL_API int32_t* sl_text_analyze(intptr_t analyzer_handle, const char* text, int32_t* data_size);
+
+/// 对单行文本进行高亮分析并获得返回的单行分析结果
+/// @param analyzer_handle 纯文本高亮分析器句柄
+/// @param text 单文本内容
+/// @param line_info 当前行的元数据信息，必须指定为长度为3的 int32_t 数组，其中每个元素规定如下:
+/// @code
+/// line_info[0] = 当前行号
+/// line_info[1] = 当前起始高亮状态，一般由上一行分析结果的 end_state 得到，第 0 行状态为 0
+/// line_info[2] = 当前行累计字符总数，不包含换行符
+/// @endcode
+/// @param data_size 分析结果数组的大小，分析完毕后设置给该参数
+/// @return 分析结果，按字节顺序紧密排列，结构如下:
+/// @code
+/// result[0] = 高亮块数量
+/// [高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]...[高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]
+/// 其中每个字段都为4字节整数
+/// @endcode
+SL_API int32_t* sl_text_analyze_line(intptr_t analyzer_handle, const char* text, int32_t* line_info, int32_t* data_size);
+
+/// 加载托管文档并获得文档高亮分析器句柄(支持增量分析)
 /// @param engine_handle 高亮引擎句柄
 /// @param document_handle 托管文档句柄
 /// @return 文档高亮分析器句柄
@@ -110,7 +151,7 @@ SL_API int32_t* sl_document_analyze(intptr_t analyzer_handle, int32_t* data_size
 /// [高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]...[高亮起始行],[高亮起始列],[高亮结束行],[高亮结束列],[高亮样式ID]
 /// 其中每个字段都为4字节整数
 /// @endcode
-SL_API int32_t* sl_document_analyze_changes(intptr_t analyzer_handle, size_t* changes_range, const char* new_text, int32_t* data_size);
+SL_API int32_t* sl_document_analyze_incremental(intptr_t analyzer_handle, size_t* changes_range, const char* new_text, int32_t* data_size);
 
 #ifdef __cplusplus
 }

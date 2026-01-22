@@ -19,9 +19,10 @@ import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.HighlightConfig;
 import com.qiplat.sweetline.HighlightEngine;
 import com.qiplat.sweetline.InlineStyle;
+import com.qiplat.sweetline.SpannableStyleFactory;
 import com.qiplat.sweetline.util.AssetUtils;
 
-public class MainActivity extends AppCompatActivity implements DocumentAnalyzer.StyleFactory {
+public class MainActivity extends AppCompatActivity implements SpannableStyleFactory {
     private static final String TAG = "SampleHighlight";
     private AppCompatButton testJavaButton;
     private AppCompatButton testTiecodeButton;
@@ -154,14 +155,14 @@ public class MainActivity extends AppCompatActivity implements DocumentAnalyzer.
             String deleted = oldText.subSequence(start, start + before).toString();
             Log.d(TAG, "delete: index=" + start +
                     ", length=" + before + ", content='" + deleted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start + before,
                     "", this);
         } else if (before == 0 && count > 0) {
             // 插入文本
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "insert: index=" + start +
                     ", length=" + count + ", content='" + inserted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start,
                     inserted, this);
         } else if (before > 0 && count > 0) {
             // 替换文本
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements DocumentAnalyzer.
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "replace: index=" + start +
                     ", deleted='" + deleted + "', inserted='" + inserted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start + before,
                     inserted, this);
         }
         long endTime = System.nanoTime();

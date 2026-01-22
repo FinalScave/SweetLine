@@ -6,7 +6,7 @@ apply plugin: "signing"
 
 description = "Fast code highlight engine"
 group = "com.qiplat"
-version = "0.0.4"
+version = "0.0.5"
 
 android {
     namespace 'com.qiplat.sweetline'

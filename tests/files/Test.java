@@ -133,14 +133,14 @@ public class MainActivity extends AppCompatActivity {
             String deleted = oldText.subSequence(start, start + before).toString();
             Log.d(TAG, "delete: index=" + start +
                     ", length=" + before + ", content='" + deleted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start + before,
                     "", styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
         } else if (before == 0 && count > 0) {
             // 插入文本
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "insert: index=" + start +
                     ", length=" + count + ", content='" + inserted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start,
                     inserted, styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
         } else if (before > 0 && count > 0) {
             // 替换文本
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "replace: index=" + start +
                     ", deleted='" + deleted + "', inserted='" + inserted + "'");
-            newHighlightedText = analyzer.analyzeChangesAsSpannable(start, start + before,
+            newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start + before,
                     inserted, styleId -> new ForegroundColorSpan(colorMap.get(styleId)));
         }
         long endTime = System.nanoTime();

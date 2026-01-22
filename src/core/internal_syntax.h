@@ -61,9 +61,9 @@ namespace NS_SWEETLINE {
     /// 符号对结束文本(如 }, @end)
     U8String end;
     /// 分支关键字
-    std::vector<U8String> branch_keywords;
-    /// 作用域划线首字符命中表
-    HashMap<char, U8String> first_byte_block_table;
+    std::unordered_set<U8String> branch_keywords;
+    /// ID，解析后生成
+    int32_t rule_id {0};
 
 #ifdef SWEETLINE_DEBUG
     void dump() const;

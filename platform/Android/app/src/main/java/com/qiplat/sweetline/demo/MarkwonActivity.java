@@ -9,8 +9,8 @@ import android.util.SparseIntArray;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
 
-import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.InlineStyle;
+import com.qiplat.sweetline.SpannableStyleFactory;
 import com.qiplat.sweetline.markwon.CodeBackground;
 import com.qiplat.sweetline.markwon.SweetLineGlobal;
 import com.qiplat.sweetline.markwon.SweetLineHighlightPlugin;
@@ -18,7 +18,7 @@ import com.qiplat.sweetline.util.AssetUtils;
 
 import io.noties.markwon.Markwon;
 
-public class MarkwonActivity extends AppCompatActivity implements DocumentAnalyzer.StyleFactory {
+public class MarkwonActivity extends AppCompatActivity implements SpannableStyleFactory {
     private AppCompatTextView mainTextView;
     private static SparseIntArray colorMap = new SparseIntArray();
 

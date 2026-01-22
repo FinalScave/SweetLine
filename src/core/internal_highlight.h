@@ -40,18 +40,44 @@ namespace NS_SWEETLINE {
     List<CaptureGroupMatch> capture_groups;
   };
 
+  /// 单行文本语法分析
+  class LineHighlightAnalyzer {
+  public:
+    LineHighlightAnalyzer(const SharedPtr<SyntaxRule>& syntax_rule,
+      const HighlightConfig& config = HighlightConfig::kDefault);
+
+    /// 传入行号和对应行文本进行语法分析
+    /// @param text 对应行文本
+    /// @param info 行起始高亮状态信息、行号等元数据信息
+    /// @param result 高亮结果，用于接收分析时结果
+    /// @return 分析完毕后的一些信息，供后续使用
+    void analyzeLine(const U8String& text, const TextLineInfo& info, LineAnalyzeResult& result) const;
+
+    /// 获取当前配置的高亮选项
+    const HighlightConfig& getHighlightConfig() const;
+  private:
+    SharedPtr<SyntaxRule> m_rule_;
+    HighlightConfig m_config_;
+
+    MatchResult matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state) const;
+
+    static void findMatchedRuleAndGroup(const StateRule& state_rule, const OnigRegion* region,
+      const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result);
+
+    void addLineHighlightResult(LineHighlight& highlight, const TextLineInfo& info,
+      int32_t syntax_state, const MatchResult& match_result) const;
+  };
+
   class InternalDocumentAnalyzer {
   public:
     explicit InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
       const HighlightConfig& config = HighlightConfig::kDefault);
 
-    SharedPtr<DocumentHighlight> analyze();
+    SharedPtr<DocumentHighlight> analyzeHighlight();
 
-    SharedPtr<DocumentHighlight> analyzeChanges(const TextRange& range, const U8String& new_text);
+    SharedPtr<DocumentHighlight> analyzeHighlightIncremental(const TextRange& range, const U8String& new_text);
 
-    SharedPtr<DocumentHighlight> analyzeChanges(size_t start_index, size_t end_index, const U8String& new_text);
-
-    void analyzeLine(size_t line, LineHighlight& line_highlight);
+    SharedPtr<DocumentHighlight> analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text);
 
     SharedPtr<Document> getDocument() const;
 
@@ -60,24 +86,19 @@ namespace NS_SWEETLINE {
     SharedPtr<Document> m_document_;
     SharedPtr<DocumentHighlight> m_highlight_;
     SharedPtr<SyntaxRule> m_rule_;
+    UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     HighlightConfig m_config_;
-    List<LineState> m_line_states_;
-
-    size_t analyzeLineWithState(size_t line,
-      size_t line_start_index, const LineState& start_state, LineHighlight& line_highlight);
-    void addLineHighlightResult(LineHighlight& highlight, size_t line_num, size_t line_char_pos,
-      size_t line_start_index, int32_t syntax_state, const MatchResult& match_result);
-    MatchResult matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state);
-    void findMatchedRuleAndGroup(const StateRule& state_rule, OnigRegion* region, const U8String& text,
-      size_t match_start_byte, size_t match_end_byte, MatchResult& result);
+    List<int32_t> m_line_syntax_states_;
+    List<LineBlockState> m_line_block_states_;
   };
 
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRange, start, end);
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InlineStyle, foreground, background, tags);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InlineStyle, foreground, background, is_bold, is_italic, is_strikethrough);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TokenSpan, range, style_id, inline_style, state, goto_state);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LineHighlight, spans);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentHighlight, lines)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CodeBlock, start, end, branches)
 }
 
 #endif //SWEETLINE_INTERNAL_HIGHLIGHT_H
