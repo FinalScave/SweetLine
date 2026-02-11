@@ -25,6 +25,12 @@ using namespace NS_SWEETLINE;
     .function("isEmpty", &List<element_type>::empty) \
     .function("size", &List<element_type>::size);
 
+void throwJsException(const U8String& msg) {
+  emscripten::val err = emscripten::val::global("Error");
+  emscripten::val err_obj = err.new_(msg);
+  err_obj.throw_();
+}
+
 extern "C" {
 
 EMSCRIPTEN_BINDINGS(foundation) {
@@ -144,8 +150,22 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("getStyleName", &HighlightEngine::getStyleName)
     .function("defineMacro", &HighlightEngine::defineMacro)
     .function("undefineMacro", &HighlightEngine::undefineMacro)
-    .function("compileSyntaxFromJson", &HighlightEngine::compileSyntaxFromJson)
-    .function("compileSyntaxFromFile", &HighlightEngine::compileSyntaxFromFile)
+    .function("compileSyntaxFromJson", emscripten::optional_override([](const SharedPtr<HighlightEngine>& self, const U8String& json) {
+        try {
+          self->compileSyntaxFromJson(json);
+        } catch (const SyntaxRuleParseError& err) {
+          throwJsException(err.what() + U8String(",") + err.message());
+        }
+      })
+    )
+    .function("compileSyntaxFromFile", emscripten::optional_override([](const SharedPtr<HighlightEngine>& self, const U8String& file) {
+        try {
+          self->compileSyntaxFromFile(file);
+        } catch (const SyntaxRuleParseError& err) {
+          throwJsException(err.what() + U8String(",") + err.message());
+        }
+      })
+    )
     .function("getSyntaxRuleByName", &HighlightEngine::getSyntaxRuleByName)
     .function("getSyntaxRuleByExtension", &HighlightEngine::getSyntaxRuleByExtension)
     .function("createAnalyzerByName", &HighlightEngine::createAnalyzerByName)

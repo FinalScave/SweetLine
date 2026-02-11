@@ -116,7 +116,7 @@ namespace NS_SWEETLINE {
 		void parseBlockPairs(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void compileStatePattern(StateRule& state_rule);
     void processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule);
-    static void importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,
+    void importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,
       const SharedPtr<SyntaxRule>& source_rule);
     static void replaceVariable(U8String& text, HashMap<U8String, U8String>& variables_map);
 

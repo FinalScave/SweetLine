@@ -1,0 +1,262 @@
+{
+  "name": "java",
+  "fileExtensions": [".java"],
+  "styles": [
+    {
+      "name": "keyword",
+      "foreground": "#FF569CD6",
+      "tags": ["bold", "italic"]
+    },
+    {
+      "name": "string",
+      "foreground": "#FFBD63C5"
+    },
+    {
+      "name": "number",
+      "foreground": "#FFE4FAD5"
+    },
+    {
+      "name": "comment",
+      "foreground": "#FF60AE6F"
+    },
+    {
+      "name": "class",
+      "foreground": "#FF4EC9B0"
+    },
+    {
+      "name": "method",
+      "foreground": "#FF9CDCFE"
+    },
+    {
+      "name": "variable",
+      "foreground": "#FF9B9BC8"
+    },
+    {
+      "name": "punctuation",
+      "foreground": "#FFD69D85"
+    },
+    {
+      "name": "annotation",
+      "foreground": "#FFFFFD9B"
+    }
+  ],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "primitiveType": "void|boolean|byte|char|short|int|long|float|double"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(class|interface|enum|record)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "classHeader"
+      },
+      {
+        "pattern": "\\b(new)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "\\b(new)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}*(\\[)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "\\b(new)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(new)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(package|import)\\b${whiteSpace}+(${identifier}(?:\\.${identifier})*)(?:(\\.)\\*)?",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(public|private|protected|static|final|abstract|synchronized|transient|native|volatile|strictfp|sealed|non-sealed|permits|default)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(extends|implements|new|this|super|instanceof|throw|throws|switch|case|if|else|for|while|do|break|continue|return|try|catch|finally|assert|yield|var)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(@${identifier})(?:${whiteSpace}*(\\())?",
+        "styles": [1, "annotation", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${primitiveType})\\b(\\[\\])*${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${primitiveType})\\b(\\[\\])*${whiteSpace}+(${identifier})${whiteSpace}*([;=,)])",
+        "styles": [1, "keyword", 2, "punctuation", 3, "variable", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${primitiveType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "\\b(${identifier})${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${identifier})${whiteSpace}*(<)(.*)(>)(?:${whiteSpace}*(\\[\\]))*${whiteSpace}+(${identifier})${whiteSpace}*([;=,)])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation", 5, "punctuation", 6, "variable", 7, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "\\b(${identifier})(?:${whiteSpace}*(\\[\\]))*${whiteSpace}+(${identifier})${whiteSpace}*([;=,)])",
+        "styles": [1, "class", 2, "punctuation", 3, "variable", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "textBlock"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+[lL]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+[lL]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFdDlL]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "->",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "classHeader": [
+      {
+        "pattern": "(<)(.*)(>)",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "genericType"]
+      },
+      {
+        "pattern": "\\b(extends|implements|permits)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "onLineEndState": "classHeader"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "\\b(extends|super)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(\\?)(?:\\b|(?=[>,\\s]))",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "[,\\[\\]]",
+        "style": "punctuation"
+      }
+    ],
+    "textBlock": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "{",
+      "end": "}",
+      "branches": ["case"]
+    }
+  ]
+}

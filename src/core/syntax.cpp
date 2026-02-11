@@ -572,6 +572,21 @@ namespace NS_SWEETLINE {
     }
     int32_t state_id_offset = max_state_id + 1;
 
+    // style 最大id统计
+    int32_t max_style_id = 0;
+    int32_t style_id_offset = 0;
+    if (m_inline_style_) {
+      for (const auto& [id, _] : target_rule->style_mapping->style_id_name_map) {
+        if (id > max_state_id) {
+          max_style_id = id;
+        }
+      }
+      style_id_offset = max_style_id;
+      for (auto& [id, inline_style] : source_rule->inline_styles) {
+        target_rule->inline_styles.emplace(id + style_id_offset, inline_style);
+      }
+    }
+
     // importSyntax中default state的TokenRule合并到当前state
     auto source_default_it = source_rule->state_rules_map.find(SyntaxRule::kDefaultStateId);
     if (source_default_it != source_rule->state_rules_map.end()) {
@@ -595,6 +610,12 @@ namespace NS_SWEETLINE {
             sub_state_id += state_id_offset;
           }
         }
+        // style id偏移
+        if (m_inline_style_) {
+          for (auto& [_, style_id] : new_token.style_ids) {
+            style_id += style_id_offset;
+          }
+        }
         // 清除goto_state_str和sub_state_strs（已经是编译后的id）
         new_token.goto_state_str.clear();
         new_token.sub_state_strs.clear();
@@ -609,8 +630,8 @@ namespace NS_SWEETLINE {
       }
       int32_t new_state_id = source_state_id + state_id_offset;
       StateRule new_state = source_state_rule;
-      // 修正每个TokenRule的goto_state
       for (TokenRule& token_rule : new_state.token_rules) {
+        // 修正每个TokenRule的goto_state
         if (token_rule.goto_state >= 0) {
           if (token_rule.goto_state == SyntaxRule::kDefaultStateId) {
             token_rule.goto_state = target_state_id; // goto default → goto当前state
@@ -624,6 +645,12 @@ namespace NS_SWEETLINE {
             sub_state_id = target_state_id;
           } else {
             sub_state_id += state_id_offset;
+          }
+        }
+        // style id偏移
+        if (m_inline_style_) {
+          for (auto& [_, style_id] : token_rule.style_ids) {
+            style_id += style_id_offset;
           }
         }
         token_rule.goto_state_str.clear();
