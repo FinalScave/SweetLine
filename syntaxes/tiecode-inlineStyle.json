@@ -208,8 +208,12 @@
         "state": "default"
       },
       {
-        "pattern": "[,\\[\\]]",
+        "pattern": "[,\\[\\]=]",
         "style": "punctuation"
+      },
+      {
+        "pattern": "\\b(为|真|假|空|本对象|父对象)\\b",
+        "styles": [1, "keyword"]
       },
       {
         "onLineEndState": "default"
