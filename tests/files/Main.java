@@ -1,4 +1,11 @@
+import java.util.HashMap;
+import java.util.List;
+
 public class Main {
+    private String mStr1;
+    private String[] mStr1;
+    private List<HashMap<String, int[]>> mData;
+
     /**
      * main entry
      */

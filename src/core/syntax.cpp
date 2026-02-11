@@ -3,6 +3,7 @@
 #endif
 
 #include "internal_syntax.h"
+#include "highlight.h"
 #include "util.h"
 
 namespace NS_SWEETLINE {
@@ -46,6 +47,14 @@ namespace NS_SWEETLINE {
     auto it = style_ids.find(group);
     if (it == style_ids.end()) {
       return kDefaultStyleId;
+    }
+    return it->second;
+  }
+
+  int32_t TokenRule::getGroupSubState(const int32_t group) const {
+    auto it = sub_states.find(group);
+    if (it == sub_states.end()) {
+      return -1;
     }
     return it->second;
   }
@@ -152,8 +161,8 @@ namespace NS_SWEETLINE {
   }
 
   // ===================================== SyntaxRuleCompiler ============================================
-  SyntaxRuleCompiler::SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping, bool inline_style)
-    : m_style_mapping_(style_mapping), m_inline_style_(inline_style) {
+  SyntaxRuleCompiler::SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping, bool inline_style, HighlightEngine* engine)
+    : m_style_mapping_(style_mapping), m_inline_style_(inline_style), m_engine_(engine) {
   }
 
   SharedPtr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromJson(const U8String& json) {
@@ -172,6 +181,8 @@ namespace NS_SWEETLINE {
     }
     parseVariables(syntax_rule, root);
     parseStates(syntax_rule, root);
+    // 处理importSyntax请求（在state id解析完成后、编译大表达式之前）
+    processImportSyntaxRequests(syntax_rule);
     // 每个state都编译成一个大表达式
     for (std::pair<const int32_t, StateRule>& pair : syntax_rule->state_rules_map) {
       compileStatePattern(pair.second);
@@ -330,13 +341,21 @@ namespace NS_SWEETLINE {
     for (std::pair<const int32_t, StateRule>& pair : rule->state_rules_map) {
       StateRule& state_rule = pair.second;
       for (TokenRule& token_rule : state_rule.token_rules) {
-        if (token_rule.goto_state_str.empty()) {
-          continue;
+        if (!token_rule.goto_state_str.empty()) {
+          token_rule.goto_state = rule->getOrCreateStateId(token_rule.goto_state_str);
+          if (!rule->containsRule(token_rule.goto_state)) {
+            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+              "state: " + token_rule.goto_state_str);
+          }
         }
-        token_rule.goto_state = rule->getOrCreateStateId(token_rule.goto_state_str);
-        if (!rule->containsRule(token_rule.goto_state)) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
-            "state: " + token_rule.goto_state_str);
+        // sub_state_strs -> sub_states
+        for (const auto& [group, state_name] : token_rule.sub_state_strs) {
+          int32_t sub_state_id = rule->getOrCreateStateId(state_name);
+          if (!rule->containsRule(sub_state_id)) {
+            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+              "subState: " + state_name);
+          }
+          token_rule.sub_states.insert_or_assign(group, sub_state_id);
         }
       }
       if (!state_rule.line_end_state_str.empty()) {
@@ -360,6 +379,16 @@ namespace NS_SWEETLINE {
           throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "onLineEndState");
         }
         state_rule.line_end_state_str = token_json["onLineEndState"];
+        continue;
+      }
+      // importSyntax
+      if (token_json.contains("importSyntax")) {
+        ImportSyntaxRequest request;
+        request.syntax_name = token_json["importSyntax"];
+        if (token_json.contains("#ifdef")) {
+          request.ifdef_macro = token_json["#ifdef"];
+        }
+        state_rule.import_requests.push_back(std::move(request));
         continue;
       }
       if (!token_json.contains("pattern")) {
@@ -402,8 +431,28 @@ namespace NS_SWEETLINE {
           }
           token_rule.style_ids.insert_or_assign(styles_json[i], style_id);
         }
-      } else {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "style/styles");
+      }
+      // subState / subStates
+      if (token_json.contains("subState")) {
+        U8String sub_state_name = token_json["subState"];
+        token_rule.sub_state_strs.insert_or_assign(0, sub_state_name);
+      } else if (token_json.contains("subStates")) {
+        const nlohmann::json& sub_states_json = token_json["subStates"];
+        if (!sub_states_json.is_array()) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "subStates");
+        }
+        size_t sub_size = sub_states_json.size();
+        if (sub_size % 2 != 0) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "subStates elements count % 2 != 0");
+        }
+        for (size_t i = 0; i < sub_size; i += 2) {
+          U8String sub_state_name = sub_states_json[i + 1];
+          token_rule.sub_state_strs.insert_or_assign(static_cast<int32_t>(sub_states_json[i].get<int>()), sub_state_name);
+        }
+      }
+      // 至少要有 style 或 subState 其中之一
+      if (token_rule.style_ids.empty() && token_rule.sub_state_strs.empty()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "must have style/styles or subState/subStates");
       }
       state_rule.token_rules.push_back(std::move(token_rule));
     }
@@ -477,6 +526,123 @@ namespace NS_SWEETLINE {
     }
     onig_region_free(region, 1);
     state_rule.merged_pattern = std::move(merged_pattern);
+  }
+
+  void SyntaxRuleCompiler::processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule) {
+    for (auto& [state_id, state_rule] : rule->state_rules_map) {
+      if (state_rule.import_requests.empty()) {
+        continue;
+      }
+      for (const ImportSyntaxRequest& request : state_rule.import_requests) {
+        // #ifdef
+        if (!request.ifdef_macro.empty()) {
+          if (m_engine_ == nullptr || !m_engine_->isMacroDefined(request.ifdef_macro)) {
+            continue;
+          }
+        }
+        if (m_engine_ == nullptr) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_STATE_INVALID,
+            "importSyntax requires HighlightEngine, syntax: " + request.syntax_name);
+        }
+        SharedPtr<SyntaxRule> source_rule = m_engine_->getSyntaxRuleByName(request.syntax_name);
+        if (source_rule == nullptr) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_STATE_INVALID,
+            "importSyntax not found: " + request.syntax_name);
+        }
+        importSyntaxRule(rule, state_id, source_rule);
+      }
+      state_rule.import_requests.clear();
+    }
+  }
+
+  void SyntaxRuleCompiler::importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,
+    const SharedPtr<SyntaxRule>& source_rule) {
+    // offset为当前target_rule中最大的state id + 1
+    int32_t max_state_id = 0;
+    for (const auto& [id, _] : target_rule->state_rules_map) {
+      if (id > max_state_id) {
+        max_state_id = id;
+      }
+    }
+    // 也检查state_id_map中预分配的id
+    for (const auto& [_, id] : target_rule->state_id_map) {
+      if (id > max_state_id) {
+        max_state_id = id;
+      }
+    }
+    int32_t state_id_offset = max_state_id + 1;
+
+    // importSyntax中default state的TokenRule合并到当前state
+    auto source_default_it = source_rule->state_rules_map.find(SyntaxRule::kDefaultStateId);
+    if (source_default_it != source_rule->state_rules_map.end()) {
+      const StateRule& source_default = source_default_it->second;
+      StateRule& target_state = target_rule->getStateRule(target_state_id);
+      for (const TokenRule& src_token : source_default.token_rules) {
+        TokenRule new_token = src_token;
+        // goto_state偏移
+        if (new_token.goto_state >= 0) {
+          if (new_token.goto_state == SyntaxRule::kDefaultStateId) {
+            new_token.goto_state = target_state_id;
+          } else {
+            new_token.goto_state += state_id_offset;
+          }
+        }
+        // sub_states偏移
+        for (auto& [group, sub_state_id] : new_token.sub_states) {
+          if (sub_state_id == SyntaxRule::kDefaultStateId) {
+            sub_state_id = target_state_id;
+          } else {
+            sub_state_id += state_id_offset;
+          }
+        }
+        // 清除goto_state_str和sub_state_strs（已经是编译后的id）
+        new_token.goto_state_str.clear();
+        new_token.sub_state_strs.clear();
+        target_state.token_rules.push_back(std::move(new_token));
+      }
+    }
+
+    // importSyntax其他state搬到target_rule，state_id加偏移
+    for (const auto& [source_state_id, source_state_rule] : source_rule->state_rules_map) {
+      if (source_state_id == SyntaxRule::kDefaultStateId) {
+        continue;
+      }
+      int32_t new_state_id = source_state_id + state_id_offset;
+      StateRule new_state = source_state_rule;
+      // 修正每个TokenRule的goto_state
+      for (TokenRule& token_rule : new_state.token_rules) {
+        if (token_rule.goto_state >= 0) {
+          if (token_rule.goto_state == SyntaxRule::kDefaultStateId) {
+            token_rule.goto_state = target_state_id; // goto default → goto当前state
+          } else {
+            token_rule.goto_state += state_id_offset;
+          }
+        }
+        // sub_states偏移
+        for (auto& [group, sub_state_id] : token_rule.sub_states) {
+          if (sub_state_id == SyntaxRule::kDefaultStateId) {
+            sub_state_id = target_state_id;
+          } else {
+            sub_state_id += state_id_offset;
+          }
+        }
+        token_rule.goto_state_str.clear();
+        token_rule.sub_state_strs.clear();
+      }
+      // 修正line_end_state
+      if (new_state.line_end_state >= 0) {
+        if (new_state.line_end_state == SyntaxRule::kDefaultStateId) {
+          new_state.line_end_state = target_state_id;
+        } else {
+          new_state.line_end_state += state_id_offset;
+        }
+      }
+      new_state.line_end_state_str.clear();
+
+      U8String new_state_name = "__imported_" + source_rule->name + "_" + source_state_rule.name;
+      target_rule->state_id_map.insert_or_assign(new_state_name, new_state_id);
+      target_rule->state_rules_map.insert_or_assign(new_state_id, std::move(new_state));
+    }
   }
 
   void SyntaxRuleCompiler::replaceVariable(U8String& text, HashMap<U8String, U8String>& variables_map) {

@@ -115,13 +115,15 @@ namespace NS_SWEETLINE {
     /// @return 对应的换行符宽度
     static uint8_t getLineEndingWidth(LineEnding ending);
   private:
+    friend class TextAnalyzer;
     U8String m_uri_;
-    std::vector<DocumentLine> m_lines_;
+    List<DocumentLine> m_lines_;
     bool isValidPosition(const TextPosition& pos) const;
     size_t positionToCharIndex(const TextPosition& pos) const;
-    void splitTextIntoLines(const U8String& text, std::vector<DocumentLine>& result);
-    int32_t patchSingleLine(const TextRange& range, const std::vector<DocumentLine>& new_lines);
-    int32_t patchMultipleLines(const TextRange& range, const std::vector<DocumentLine>& new_lines);
+
+    static void splitTextIntoLines(const U8String& text, List<DocumentLine>& result);
+    int32_t patchSingleLine(const TextRange& range, const List<DocumentLine>& new_lines);
+    int32_t patchMultipleLines(const TextRange& range, const List<DocumentLine>& new_lines);
     static void appendLineEnding(U8String& text, LineEnding ending);
   };
 }

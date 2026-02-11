@@ -61,8 +61,14 @@ namespace NS_SWEETLINE {
 
     MatchResult matchAtPosition(const U8String& text, size_t start_char_pos, int32_t syntax_state) const;
 
-    static void findMatchedRuleAndGroup(const StateRule& state_rule, const OnigRegion* region,
-      const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result);
+    void findMatchedRuleAndGroup(const StateRule& state_rule, const OnigRegion* region,
+      const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) const;
+
+    void buildCaptureGroups(const TokenRule& token_rule, const OnigRegion* region,
+      const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) const;
+
+    void expandSubStateMatches(const U8String& sub_text, int32_t sub_state,
+      size_t base_char_offset, int32_t group, List<CaptureGroupMatch>& capture_groups) const;
 
     void addLineHighlightResult(LineHighlight& highlight, const TextLineInfo& info,
       int32_t syntax_state, const MatchResult& match_result) const;

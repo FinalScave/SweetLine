@@ -117,6 +117,23 @@ namespace NS_SWEETLINE {
   }
 
   SharedPtr<DocumentHighlight> TextAnalyzer::analyzeText(const U8String& text) {
+    SharedPtr<DocumentHighlight> highlight = makeSharedPtr<DocumentHighlight>();
+    List<DocumentLine> lines;
+    Document::splitTextIntoLines(text, lines);
+    if (lines.empty()) {
+      return highlight;
+    }
+    int32_t current_state = SyntaxRule::kDefaultStateId;
+    size_t line_start_index = 0;
+    for (size_t line_num = 0; line_num < lines.size(); ++line_num) {
+      TextLineInfo info = {line_num, current_state, line_start_index};
+      LineAnalyzeResult result;
+      m_line_highlight_analyzer_->analyzeLine(lines[line_num].text, info, result);
+      current_state = result.end_state;
+      highlight->addLine(std::move(result.highlight));
+      line_start_index += result.char_count + Document::getLineEndingWidth(lines[line_num].ending);
+    }
+    return highlight;
   }
 
   void TextAnalyzer::analyzeLine(const U8String& text, const TextLineInfo& line_info, LineAnalyzeResult& result) const {
@@ -207,36 +224,101 @@ namespace NS_SWEETLINE {
   }
 
   void LineHighlightAnalyzer::findMatchedRuleAndGroup(const StateRule& state_rule, const OnigRegion* region,
-    const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) {
+    const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) const {
     for (int32_t rule_idx = 0; rule_idx < static_cast<int32_t>(state_rule.token_rules.size()); ++rule_idx) {
       const TokenRule& token_rule = state_rule.token_rules[rule_idx];
       int32_t token_group_start = token_rule.group_offset_start;
+      if (region->beg[token_group_start] != static_cast<int>(match_start_byte)
+        || region->end[token_group_start] != static_cast<int>(match_end_byte)) {
+        continue;
+      }
 
-      if (region->beg[token_group_start] == static_cast<int>(match_start_byte)
-        && region->end[token_group_start] == static_cast<int>(match_end_byte)) {
-        result.token_rule_idx = rule_idx;
-        result.goto_state = token_rule.goto_state;
-        result.style = token_rule.getGroupStyleId(0);
-        result.matched_group = token_group_start;
+      result.token_rule_idx = rule_idx;
+      result.goto_state = token_rule.goto_state;
+      result.style = token_rule.getGroupStyleId(0);
+      result.matched_group = token_group_start;
 
-        for (int32_t group = 1; group <= token_rule.group_count; ++group) {
-          int32_t absolute_group = group + token_group_start;
-          int group_start_byte = region->beg[absolute_group];
-          int group_end_byte = region->end[absolute_group];
-          if (group_start_byte >= static_cast<int>(match_start_byte)
-            && group_end_byte <= static_cast<int>(match_end_byte)) {
-            CaptureGroupMatch group_match;
-            group_match.group = group;
-            group_match.style = token_rule.getGroupStyleId(group);
-            size_t match_start_char = Utf8Util::bytePosToCharPos(text, group_start_byte);
-            size_t match_end_char = Utf8Util::bytePosToCharPos(text, group_end_byte);
-            size_t match_length_chars = match_end_char - match_start_char;
-            group_match.start = match_start_char;
-            group_match.length = match_length_chars;
-            result.capture_groups.push_back(group_match);
+      // group 0 有subState
+      int32_t whole_sub_state = token_rule.getGroupSubState(0);
+      if (whole_sub_state >= 0) {
+        expandSubStateMatches(result.matched_text, whole_sub_state,
+          result.start, 0, result.capture_groups);
+        return;
+      }
+      buildCaptureGroups(token_rule, region, text, match_start_byte, match_end_byte, result);
+      return;
+    }
+  }
+
+  void LineHighlightAnalyzer::buildCaptureGroups(const TokenRule& token_rule, const OnigRegion* region,
+    const U8String& text, size_t match_start_byte, size_t match_end_byte, MatchResult& result) const {
+    int32_t token_group_start = token_rule.group_offset_start;
+    for (int32_t group = 1; group <= token_rule.group_count; ++group) {
+      int32_t absolute_group = group + token_group_start;
+      int group_start_byte = region->beg[absolute_group];
+      int group_end_byte = region->end[absolute_group];
+      if (group_start_byte < static_cast<int>(match_start_byte)
+        || group_end_byte > static_cast<int>(match_end_byte)) {
+        continue;
+      }
+      size_t group_start_char = Utf8Util::bytePosToCharPos(text, group_start_byte);
+      size_t group_end_char = Utf8Util::bytePosToCharPos(text, group_end_byte);
+      size_t group_length_chars = group_end_char - group_start_char;
+
+      int32_t sub_state = token_rule.getGroupSubState(group);
+      if (sub_state >= 0) {
+        // 有subState，递归匹配并展平
+        U8String group_text = Utf8Util::utf8Substr(text, group_start_char, group_length_chars);
+        expandSubStateMatches(group_text, sub_state, group_start_char, group, result.capture_groups);
+      } else {
+        // 无subState, 正常生成CaptureGroupMatch
+        CaptureGroupMatch group_match;
+        group_match.group = group;
+        group_match.style = token_rule.getGroupStyleId(group);
+        group_match.start = group_start_char;
+        group_match.length = group_length_chars;
+        result.capture_groups.push_back(group_match);
+      }
+    }
+  }
+
+  void LineHighlightAnalyzer::expandSubStateMatches(const U8String& sub_text, int32_t sub_state,
+    size_t base_char_offset, int32_t group, List<CaptureGroupMatch>& capture_groups) const {
+    size_t sub_text_len = Utf8Util::countChars(sub_text);
+    size_t sub_pos = 0;
+    int32_t current_state = sub_state;
+    while (sub_pos < sub_text_len) {
+      MatchResult sub_result = matchAtPosition(sub_text, sub_pos, current_state);
+      if (!sub_result.matched) {
+        sub_pos++;
+        continue;
+      }
+      if (sub_result.capture_groups.empty()) {
+        // 子匹配无捕获组，整体作为一个CaptureGroupMatch
+        if (sub_result.style > 0) {
+          CaptureGroupMatch gm;
+          gm.group = group;
+          gm.style = sub_result.style;
+          gm.start = base_char_offset + sub_result.start;
+          gm.length = sub_result.length;
+          capture_groups.push_back(gm);
+        }
+      } else {
+        // 子匹配有捕获组，逐个展平
+        for (const CaptureGroupMatch& sub_gm : sub_result.capture_groups) {
+          if (sub_gm.style > 0) {
+            CaptureGroupMatch gm;
+            gm.group = group;
+            gm.style = sub_gm.style;
+            gm.start = base_char_offset + sub_gm.start;
+            gm.length = sub_gm.length;
+            capture_groups.push_back(gm);
           }
         }
-        return;
+      }
+      sub_pos = sub_result.start + sub_result.length;
+      if (sub_result.goto_state >= 0) {
+        current_state = sub_result.goto_state;
       }
     }
   }
@@ -429,15 +511,27 @@ namespace NS_SWEETLINE {
     m_style_mapping_ = makeSharedPtr<StyleMapping>();
   }
 
+  void HighlightEngine::defineMacro(const U8String& macro_name) {
+    m_macros_.emplace(macro_name);
+  }
+
+  void HighlightEngine::undefineMacro(const U8String& macro_name) {
+    m_macros_.erase(macro_name);
+  }
+
+  bool HighlightEngine::isMacroDefined(const U8String& macro_name) const {
+    return m_macros_.find(macro_name) != m_macros_.end();
+  }
+
   SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromJson(const U8String& json) {
-    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style);
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style, this);
     SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromJson(json);
     m_syntax_rules_.emplace(rule);
     return rule;
   }
 
   SharedPtr<SyntaxRule> HighlightEngine::compileSyntaxFromFile(const U8String& file) {
-    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style);
+    UniquePtr<SyntaxRuleCompiler> compiler = makeUniquePtr<SyntaxRuleCompiler>(m_style_mapping_, m_config_.inline_style, this);
     SharedPtr<SyntaxRule> rule = compiler->compileSyntaxFromFile(file);
     m_syntax_rules_.emplace(rule);
     return rule;

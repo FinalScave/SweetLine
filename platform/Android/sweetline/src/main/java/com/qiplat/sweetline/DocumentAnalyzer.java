@@ -26,8 +26,7 @@ public class DocumentAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyze(nativeHandle);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readDocumentHighlight(buffer, stride);
+        return NativeBufferPack.readDocumentHighlight(buffer);
     }
 
     /**
@@ -43,8 +42,7 @@ public class DocumentAnalyzer {
         long startRange = NativeBufferPack.packTextPosition(range.start);
         long endRange = NativeBufferPack.packTextPosition(range.end);
         int[] buffer = nativeAnalyzeChanges(nativeHandle, startRange, endRange, newText);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readDocumentHighlight(buffer, stride);
+        return NativeBufferPack.readDocumentHighlight(buffer);
     }
 
     /**
@@ -59,8 +57,7 @@ public class DocumentAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyzeChanges2(nativeHandle, startIndex, endIndex, newText);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readDocumentHighlight(buffer, stride);
+        return NativeBufferPack.readDocumentHighlight(buffer);
     }
 
     /**
@@ -73,8 +70,7 @@ public class DocumentAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyze(nativeHandle);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, stride, styleFactory);
+        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, styleFactory);
     }
 
     /**
@@ -91,8 +87,7 @@ public class DocumentAnalyzer {
         long startRange = NativeBufferPack.packTextPosition(range.start);
         long endRange = NativeBufferPack.packTextPosition(range.end);
         int[] buffer = nativeAnalyzeChanges(nativeHandle, startRange, endRange, newText);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, stride, styleFactory);
+        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, styleFactory);
     }
 
     /**
@@ -108,8 +103,7 @@ public class DocumentAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyzeChanges2(nativeHandle, startIndex, endIndex, newText);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, stride, styleFactory);
+        return NativeBufferPack.readSpannable(getDocument().getText(), buffer, styleFactory);
     }
 
     /**
@@ -142,6 +136,4 @@ public class DocumentAnalyzer {
     private static native int[] nativeAnalyzeChanges2(long handle, int startIndex, int endIndex, String newText);
     @CriticalNative
     private static native long nativeGetDocument(long handle);
-    @CriticalNative
-    private static native int nativeGetSpanBufferStride(long handle);
 }

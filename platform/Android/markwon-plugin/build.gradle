@@ -6,7 +6,7 @@ apply plugin: "signing"
 
 description = "Markwon highlight plugin"
 group = "com.qiplat"
-version = "0.0.2"
+version = "0.1.0"
 
 android {
     namespace 'com.qiplat.sweetline.markwon'
@@ -34,7 +34,8 @@ android {
 dependencies {
     implementation "io.noties.markwon:core:4.6.2"
     implementation "io.noties.markwon:syntax-highlight:4.6.2"
-    implementation 'com.qiplat:sweetline:0.0.2'
+    implementation 'com.qiplat:sweetline:0.1.0'
+    //implementation project(':sweetline')
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

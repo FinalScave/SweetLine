@@ -98,7 +98,7 @@ namespace NS_SWEETLINE {
       return appendText(new_text);
     }
     // 将patch的文本按行分割
-    std::vector<DocumentLine> new_lines;
+    List<DocumentLine> new_lines;
     splitTextIntoLines(new_text, new_lines);
 
     if (range.start.line == range.end.line) {
@@ -111,7 +111,7 @@ namespace NS_SWEETLINE {
   }
 
   int32_t Document::appendText(const U8String& text) {
-    std::vector<DocumentLine> new_lines;
+    List<DocumentLine> new_lines;
     splitTextIntoLines(text, new_lines);
 
     if (m_lines_.empty()) {
@@ -183,7 +183,7 @@ namespace NS_SWEETLINE {
     return index;
   }
 
-  void Document::splitTextIntoLines(const U8String& text, std::vector<DocumentLine>& result) {
+  void Document::splitTextIntoLines(const U8String& text, List<DocumentLine>& result) {
     result.clear();
     if (text.empty()) {
       return;
@@ -204,7 +204,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  int32_t Document::patchSingleLine(const TextRange& range, const std::vector<DocumentLine>& new_lines) {
+  int32_t Document::patchSingleLine(const TextRange& range, const List<DocumentLine>& new_lines) {
     DocumentLine& line = m_lines_[range.start.line];
     // 转换为字节位置进行操作
     size_t start_byte = Utf8Util::charPosToBytePos(line.text, range.start.column);
@@ -238,7 +238,7 @@ namespace NS_SWEETLINE {
     }
   }
 
-  int32_t Document::patchMultipleLines(const TextRange& range, const std::vector<DocumentLine>& new_lines) {
+  int32_t Document::patchMultipleLines(const TextRange& range, const List<DocumentLine>& new_lines) {
     // 第一行
     DocumentLine& first_line = m_lines_[range.start.line];
     size_t start_byte = Utf8Util::charPosToBytePos(first_line.text, range.start.column);

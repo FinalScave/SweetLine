@@ -5,7 +5,7 @@
 
 using namespace NS_SWEETLINE;
 
-static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const SharedPtr<DocumentHighlight>& highlight) {
+static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const HighlightConfig& config, const SharedPtr<DocumentHighlight>& highlight) {
   if (!highlight) {
     napi_throw_error(env, nullptr, "Highlight pointer is null");
     return nullptr;
@@ -18,7 +18,8 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const SharedP
     return empty_array;
   }
   
-  const size_t buffer_count = span_count * 7;
+  int32_t stride = computeSpanBufferStride(config);
+  const size_t buffer_count = 2 + span_count * stride;
   const size_t buffer_size = buffer_count * sizeof(int32_t);
 
   napi_value array_buffer;
@@ -27,19 +28,7 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const SharedP
     napi_throw_error(env, nullptr, "Failed to allocate buffer memory");
     return nullptr;
   }
-
-  size_t index = 0;
-  for (const LineHighlight &line : highlight->lines) {
-    for (const TokenSpan &span : line.spans) {
-      buffer[index++] = static_cast<int32_t>(span.range.start.line);
-      buffer[index++] = static_cast<int32_t>(span.range.start.column);
-      buffer[index++] = static_cast<int32_t>(span.range.start.index);
-      buffer[index++] = static_cast<int32_t>(span.range.end.line);
-      buffer[index++] = static_cast<int32_t>(span.range.end.column);
-      buffer[index++] = static_cast<int32_t>(span.range.end.index);
-      buffer[index++] = static_cast<int32_t>(span.style);
-    }
-  }
+  writeDocumentHighlight(highlight, buffer.get() + 2, config);
 
   napi_status status = napi_create_external_arraybuffer(
       env,
@@ -67,7 +56,7 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const SharedP
   return typed_array;
 }
 
-static napi_value ConvertLineHighlightAsIntArray(napi_env env, const LineHighlight& line_highlight) {
+static napi_value ConvertLineHighlightAsIntArray(napi_env env, const HighlightConfig& config, const LineHighlight& line_highlight) {
   size_t span_count = line_highlight.spans.size();
   if (span_count == 0) {
     napi_value empty_array;
@@ -128,17 +117,17 @@ static napi_value Document_Create(napi_env env, napi_callback_info info) {
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  String uri;
+  U8String uri;
   bool status = getStdStringFromNapiValue(env, args[0], uri);
   if (!status) {
     return createNapiInt32(env, 0);
   }
-  String text;
+  U8String text;
   status = getStdStringFromNapiValue(env, args[1], text);
   if (!status) {
     return createNapiInt32(env, 0);
   }
-  intptr_t handle = makeCPtrHolderToIntPtr<Document>(uri, text);
+  int64_t handle = makeCPtrHolderToHandle<int64_t, Document>(uri, text);
   return createNapiInt64(env, handle);
 }
 
@@ -445,6 +434,40 @@ static napi_value HighlightEngine_GetStyleName(napi_env env, napi_callback_info 
   return createNapiString(env, name);
 }
 
+static napi_value HighlightEngine_DefineMacro(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
+  if (engine == nullptr) {
+    return getNapiBoolean(env, false);
+  }
+  String macro_name;
+  if (!getStdStringFromNapiValue(env, args[1], macro_name)) {
+    return getNapiBoolean(env, false);
+  }
+  engine->defineMacro(macro_name);
+  return getNapiBoolean(env, true);
+}
+
+static napi_value HighlightEngine_UndefineMacro(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  
+  SharedPtr<HighlightEngine> engine = getNapiCPtrHolderValue<HighlightEngine>(env, args[0]);
+  if (engine == nullptr) {
+    return getNapiBoolean(env, false);
+  }
+  String macro_name;
+  if (!getStdStringFromNapiValue(env, args[1], macro_name)) {
+    return getNapiBoolean(env, false);
+  }
+  engine->undefineMacro(macro_name);
+  return getNapiBoolean(env, true);
+}
+
 static napi_value HighlightEngine_CompileSyntaxFromJson(napi_env env, napi_callback_info info) {
   size_t argc = 2;
   napi_value args[2] = {nullptr};
@@ -540,6 +563,8 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"HighlightEngine_Delete", nullptr, HighlightEngine_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_RegisterStyleName", nullptr, HighlightEngine_RegisterStyleName, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_GetStyleName", nullptr, HighlightEngine_GetStyleName, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"HighlightEngine_DefineMacro", nullptr, HighlightEngine_DefineMacro, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"HighlightEngine_UndefineMacro", nullptr, HighlightEngine_UndefineMacro, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_CompileSyntaxFromJson", nullptr, HighlightEngine_CompileSyntaxFromJson, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_CompileSyntaxFromFile", nullptr, HighlightEngine_CompileSyntaxFromFile, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_LoadDocument", nullptr, HighlightEngine_LoadDocument, nullptr, nullptr, nullptr, napi_default, nullptr},

@@ -38,6 +38,28 @@ public class HighlightEngine {
     }
 
     /**
+     * 定义一个宏，用于控制importSyntax的#ifdef条件编译
+     * @param macroName 宏名称
+     */
+    public void defineMacro(String macroName) {
+        if (nativeHandle == 0) {
+            return;
+        }
+        nativeDefineMacro(nativeHandle, macroName);
+    }
+
+    /**
+     * 取消定义宏
+     * @param macroName 宏名称
+     */
+    public void undefineMacro(String macroName) {
+        if (nativeHandle == 0) {
+            return;
+        }
+        nativeUndefineMacro(nativeHandle, macroName);
+    }
+
+    /**
      * 通过json编译语法规则
      * @param syntaxJson 语法规则文件的json
      * @throws SyntaxCompileError 编译错误时会抛出 SyntaxRuleParseError
@@ -136,6 +158,10 @@ public class HighlightEngine {
     private static native void nativeRegisterStyle(long handle, String styleName, int styleId);
     @FastNative
     private static native String nativeGetStyleName(long handle, int styleId);
+    @FastNative
+    private static native void nativeDefineMacro(long handle, String macroName);
+    @FastNative
+    private static native void nativeUndefineMacro(long handle, String macroName);
     @FastNative
     private static native long nativeCompileSyntaxFromJson(long handle, String json) throws SyntaxCompileError;
     @FastNative

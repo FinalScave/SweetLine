@@ -142,6 +142,8 @@ EMSCRIPTEN_BINDINGS(highlight) {
     )
     .function("registerStyleName", &HighlightEngine::registerStyleName)
     .function("getStyleName", &HighlightEngine::getStyleName)
+    .function("defineMacro", &HighlightEngine::defineMacro)
+    .function("undefineMacro", &HighlightEngine::undefineMacro)
     .function("compileSyntaxFromJson", &HighlightEngine::compileSyntaxFromJson)
     .function("compileSyntaxFromFile", &HighlightEngine::compileSyntaxFromFile)
     .function("getSyntaxRuleByName", &HighlightEngine::getSyntaxRuleByName)

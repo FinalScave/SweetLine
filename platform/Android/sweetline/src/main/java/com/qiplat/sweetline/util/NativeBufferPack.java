@@ -46,13 +46,14 @@ public final class NativeBufferPack {
         }
     }
 
-    public static DocumentHighlight readDocumentHighlight(int[] buffer, int stride) {
+    public static DocumentHighlight readDocumentHighlight(int[] buffer) {
         DocumentHighlight highlight = new DocumentHighlight();
         LineHighlight lineHighlight = new LineHighlight();
-        int spanCount = buffer.length / stride;
+        int spanCount = buffer[0];
+        int stride = buffer[1];
         int line = -1;
         for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride;
+            int baseIndex = i * stride + 2;
             int startLine = buffer[baseIndex];
             int startColumn = buffer[baseIndex + 1];
             int startIndex = buffer[baseIndex + 2];
@@ -90,11 +91,12 @@ public final class NativeBufferPack {
         return highlight;
     }
 
-    public static Spannable readSpannable(String text, int[] buffer, int stride, SpannableStyleFactory styleFactory) {
+    public static Spannable readSpannable(String text, int[] buffer, SpannableStyleFactory styleFactory) {
         SpannableString result = new SpannableString(text);
-        int spanCount = buffer.length / stride;
+        int spanCount = buffer[0];
+        int stride = buffer[1];
         for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride;
+            int baseIndex = i * stride + 2;
             int startIndex = buffer[baseIndex + 2];
             int endIndex = buffer[baseIndex + 5];
 
@@ -120,12 +122,15 @@ public final class NativeBufferPack {
         return result;
     }
 
-    public static LineAnalyzeResult readLineAnalyzeResult(int[] buffer, int spanStride) {
+    public static LineAnalyzeResult readLineAnalyzeResult(int[] buffer) {
         LineAnalyzeResult result = new LineAnalyzeResult();
         int spanCount = buffer[0];
+        int stride = buffer[1];
+        result.endState = buffer[2];
+        result.charCount = buffer[3];
         LineHighlight lineHighlight = new LineHighlight();
         for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * spanStride + 1;
+            int baseIndex = i * stride + 4;
             int startLine = buffer[baseIndex];
             int startColumn = buffer[baseIndex + 1];
             int startIndex = buffer[baseIndex + 2];
@@ -135,7 +140,7 @@ public final class NativeBufferPack {
 
             int styleId = 0;
             InlineStyle inlineStyle = null;
-            if (spanStride > 7) {
+            if (stride > 7) {
                 inlineStyle = new InlineStyle();
                 inlineStyle.foreground = buffer[baseIndex + 6];
                 inlineStyle.background = buffer[baseIndex + 7];
@@ -156,9 +161,6 @@ public final class NativeBufferPack {
             }
         }
         result.highlight = lineHighlight;
-        int baseIndex = spanCount * spanStride + 1;
-        result.endState = buffer[baseIndex++];
-        result.charCount = buffer[baseIndex];
         return result;
     }
 }

@@ -47,13 +47,13 @@ static int64_t getNapiInt64(napi_env env, napi_value value) {
 template<typename T>
 std::shared_ptr<T> getNapiCPtrHolderValue(napi_env env, napi_value handle_value) {
   int64_t handle = getNapiInt64(env, handle_value);
-  return getCPtrHolderValue<T>(handle);
+  return getCPtrHolderValue<int64_t, T>(handle);
 }
 
 template<typename T>
 void deleteNapiCPtrHolder(napi_env env, napi_value handle_value) {
   int64_t handle = getNapiInt64(env, handle_value);
-  return deleteCPtrHolder<T>(handle);
+  return deleteCPtrHolder<int64_t, T>(handle);
 }
 
 static bool getStdStringFromNapiValue(napi_env env, napi_value value, std::string& result, size_t max_length = 0) {

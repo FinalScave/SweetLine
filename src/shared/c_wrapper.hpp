@@ -31,41 +31,25 @@ private:
   SharedPtr<T> m_ptr_;
 };
 
-template<typename T, typename... Args>
-intptr_t makeCPtrHolderToIntPtr(Args... args) {
-  SharedPtr<T> ptr = makeSharedPtr<T>((args)...);
-  CPtrHolder<T>* holder = new CPtrHolder<T>(ptr);
-  return reinterpret_cast<intptr_t>(holder);
+template<typename HandleT, typename ClassT, typename... Args>
+HandleT makeCPtrHolderToHandle(Args&&... args) {
+  SharedPtr<ClassT> ptr = makeSharedPtr<ClassT>((std::forward<Args>(args))...);
+  CPtrHolder<ClassT>* holder = new CPtrHolder<ClassT>(ptr);
+  return reinterpret_cast<HandleT>(holder);
 }
 
-template<typename T>
-intptr_t toIntPtr(CPtrHolder<T>* holder) {
-  return reinterpret_cast<intptr_t>(holder);
+template<typename HandleT, typename ClassT>
+HandleT asCHandle(const SharedPtr<ClassT>& ptr_v) {
+  CPtrHolder<ClassT>* holder = new CPtrHolder<ClassT>(ptr_v);
+  return reinterpret_cast<HandleT>(holder);
 }
 
-template<typename T>
-intptr_t toIntPtr(const SharedPtr<T>& ptr) {
-  if (ptr == nullptr) {
-    return 0;
-  }
-  CPtrHolder<T>* holder = new CPtrHolder<T>(ptr);
-  return reinterpret_cast<intptr_t>(holder);
-}
-
-template<typename T>
-CPtrHolder<T>* toCPtrHolder(intptr_t handle) {
+template<typename HandleT, typename ClassT>
+SharedPtr<ClassT> getCPtrHolderValue(HandleT handle) {
   if (handle == 0) {
     return nullptr;
   }
-  return reinterpret_cast<CPtrHolder<T>*>(handle);
-}
-
-template<typename T>
-SharedPtr<T> getCPtrHolderValue(intptr_t handle) {
-  if (handle == 0) {
-    return nullptr;
-  }
-  CPtrHolder<T>* holder = reinterpret_cast<CPtrHolder<T>*>(handle);
+  CPtrHolder<ClassT>* holder = reinterpret_cast<CPtrHolder<ClassT>*>(handle);
   if (holder != nullptr) {
     return holder->get();
   } else {
@@ -73,12 +57,12 @@ SharedPtr<T> getCPtrHolderValue(intptr_t handle) {
   }
 }
 
-template<typename T>
-void deleteCPtrHolder(intptr_t handle) {
+template<typename HandleT, typename ClassT>
+void deleteCPtrHolder(HandleT handle) {
   if (handle == 0) {
     return;
   }
-  CPtrHolder<T>* holder = reinterpret_cast<CPtrHolder<T>*>(handle);
+  CPtrHolder<ClassT>* holder = reinterpret_cast<CPtrHolder<ClassT>*>(handle);
   if (holder != nullptr) {
     delete holder;
   }

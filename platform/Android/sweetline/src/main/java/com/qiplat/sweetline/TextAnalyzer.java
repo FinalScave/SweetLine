@@ -26,8 +26,7 @@ public class TextAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyzeText(nativeHandle, text);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readDocumentHighlight(buffer, stride);
+        return NativeBufferPack.readDocumentHighlight(buffer);
     }
 
     /**
@@ -43,8 +42,7 @@ public class TextAnalyzer {
         }
         int[] packedTextLineInfo = NativeBufferPack.packTextLineInfo(info);
         int[] buffer = nativeAnalyzeLine(nativeHandle, text, packedTextLineInfo);
-        int stride = nativeGetSpanBufferStride(nativeHandle);
-        return NativeBufferPack.readLineAnalyzeResult(buffer, stride);
+        return NativeBufferPack.readLineAnalyzeResult(buffer);
     }
 
     @Override
@@ -64,7 +62,4 @@ public class TextAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeLine(long handle, String text, int[] info);
-
-    @CriticalNative
-    private static native int nativeGetSpanBufferStride(long handle);
 }

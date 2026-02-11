@@ -184,6 +184,18 @@ namespace NS_SWEETLINE {
   public:
     explicit HighlightEngine(const HighlightConfig& config = HighlightConfig::kDefault);
 
+    /// 定义一个宏
+    /// @param macro_name 宏名称
+    void defineMacro(const U8String& macro_name);
+
+    /// 取消定义宏
+    /// @param macro_name 宏名称
+    void undefineMacro(const U8String& macro_name);
+
+    /// 判断宏是否已定义
+    /// @param macro_name 宏名称
+    bool isMacroDefined(const U8String& macro_name) const;
+
     /// 通过json编译语法规则
     /// @param json 语法规则文件的json
     /// @throws SyntaxRuleParseError 编译错误时会抛出 SyntaxRuleParseError
@@ -234,6 +246,8 @@ namespace NS_SWEETLINE {
     HashSet<SharedPtr<SyntaxRule>> m_syntax_rules_;
     HashMap<U8String, SharedPtr<DocumentAnalyzer>> m_analyzer_map_;
     SharedPtr<StyleMapping> m_style_mapping_;
+    /// 已定义的宏集合
+    HashSet<U8String> m_macros_;
   };
 }
 

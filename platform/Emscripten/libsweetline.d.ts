@@ -277,6 +277,18 @@ export namespace sweetline {
         getStyleName(styleId: number): string;
 
         /**
+         * 定义一个宏
+         * @param macroName 宏名称
+         */
+        defineMacro(macroName: string): void;
+
+        /**
+         * 取消定义宏
+         * @param macroName 宏名称
+         */
+        undefineMacro(macroName: string): void;
+
+        /**
          * 通过json编译语法规则
          * @param json 语法规则文件的json
          * @throws 编译错误时会抛出 SyntaxRuleParseError

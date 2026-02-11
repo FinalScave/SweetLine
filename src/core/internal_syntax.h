@@ -7,6 +7,10 @@
 #include "syntax.h"
 
 namespace NS_SWEETLINE {
+  class HighlightEngine;
+}
+
+namespace NS_SWEETLINE {
   /// 匹配分析的最小单元(token)的规则
   struct TokenRule {
     /// 正则表达式
@@ -22,13 +26,27 @@ namespace NS_SWEETLINE {
     /// 要跳转的state
     int32_t goto_state {-1};
 
+    /// 按捕获组指定subState名称
+    HashMap<int32_t, U8String> sub_state_strs;
+    /// 按捕获组指定subState ID
+    HashMap<int32_t, int32_t> sub_states;
+
     int32_t getGroupStyleId(int32_t group) const;
+    int32_t getGroupSubState(int32_t group) const;
 
     static int32_t kDefaultStyleId;
     static TokenRule kEmpty;
 #ifdef SWEETLINE_DEBUG
     void dump() const;
 #endif
+  };
+
+  /// importSyntax请求（解析阶段记录，编译完成后处理）
+  struct ImportSyntaxRequest {
+    /// 要导入的语法规则名称
+    U8String syntax_name;
+    /// #ifdef 宏条件（为空表示无条件导入）
+    U8String ifdef_macro;
   };
 
   /// 每个state的规则
@@ -47,6 +65,8 @@ namespace NS_SWEETLINE {
     OnigRegex regex;
     /// 合并后大表达式的总捕获组数量
     int32_t group_count {0};
+    /// importSyntax请求列表
+    List<ImportSyntaxRequest> import_requests;
 
     static StateRule kEmpty;
 #ifdef SWEETLINE_DEBUG
@@ -73,7 +93,7 @@ namespace NS_SWEETLINE {
   /// 语法规则编译器
   class SyntaxRuleCompiler {
   public:
-    explicit SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping, bool inline_style);
+    explicit SyntaxRuleCompiler(const SharedPtr<StyleMapping>& style_mapping, bool inline_style, HighlightEngine* engine = nullptr);
 
     /// 通过json编译语法规则
     /// @param json 语法规则文件的json
@@ -85,6 +105,7 @@ namespace NS_SWEETLINE {
   private:
     SharedPtr<StyleMapping> m_style_mapping_;
     bool m_inline_style_ {false};
+    HighlightEngine* m_engine_ {nullptr};
 
     static void parseSyntaxName(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
@@ -94,6 +115,9 @@ namespace NS_SWEETLINE {
     void parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
 		void parseBlockPairs(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void compileStatePattern(StateRule& state_rule);
+    void processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule);
+    static void importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,
+      const SharedPtr<SyntaxRule>& source_rule);
     static void replaceVariable(U8String& text, HashMap<U8String, U8String>& variables_map);
 
     static int32_t parseColorSafe(const U8String& color_str);

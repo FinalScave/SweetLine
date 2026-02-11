@@ -67,13 +67,15 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         testJsonButton = findViewById(R.id.test_json_btn);
         gotoMarkwonBtn = findViewById(R.id.test_markwon_btn);
         spanText = findViewById(R.id.span_text);
+
+        commonEngine.defineMacro("ANDROID");
         testJavaButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
             highlight("Main.java", "java.json", false);
         });
         testTiecodeButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;
-            highlight("结绳.t", "tiecode-inlineStyle.json", true);
+            highlight("结绳.t", "tiecode.json", false);
         });
         testJsonButton.setOnClickListener(v -> {
             shouldAnalyzeChange = false;

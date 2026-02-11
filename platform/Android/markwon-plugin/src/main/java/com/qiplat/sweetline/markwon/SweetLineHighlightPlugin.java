@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
+import com.qiplat.sweetline.SpannableStyleFactory;
 
 import org.commonmark.node.FencedCodeBlock;
 
@@ -19,9 +20,9 @@ import io.noties.markwon.SpanFactory;
 public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
 
     private final CodeBackground background;
-    private final DocumentAnalyzer.StyleFactory styleFactory;
+    private final SpannableStyleFactory styleFactory;
 
-    public SweetLineHighlightPlugin(CodeBackground background, DocumentAnalyzer.StyleFactory styleFactory) {
+    public SweetLineHighlightPlugin(CodeBackground background, SpannableStyleFactory styleFactory) {
         this.background = background;
         this.styleFactory = styleFactory;
     }
