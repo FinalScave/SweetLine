@@ -1,130 +1,221 @@
 English | [简体中文](./README.md)
-# SweetLine Highlight Engine
+
+# SweetLine Syntax Highlighting Engine
 
 ## Overview
-SweetLine is a cross-platform, high-performance, and extensible syntax highlighting engine designed for modern code editors. It employs advanced regular expression matching technology and incremental update algorithms to process large code files in real-time and provide accurate syntax highlighting.
+
+SweetLine is a cross-platform, high-performance, and extensible syntax highlighting engine designed for modern code editors and code display scenarios. Built on the Oniguruma regex engine and a finite state machine model, it processes large code files in real-time with accurate syntax highlighting.
 
 ## Core Features
-### 🚀 High Performance
-- Based on the Oniguruma regex engine for fast pattern matching
-- Incremental update algorithm that only reanalyzes changed parts
+
+### High Performance
+- Built on [Oniguruma](https://github.com/kkos/oniguruma) regex engine for fast pattern matching
+- Incremental update algorithm that only reanalyzes changed portions, ideal for real-time editor highlighting
 - Multi-line state preservation to avoid full document reanalysis
-### 🎯 High Accuracy
-- Supports complex syntax rule nesting
-- Multi-state automata support (e.g., strings, comments, and other contextual states)
-- Multiple capture group style mapping
-### 🔧 Highly Extensible
-- Supports JSON configuration for syntax rules
-- Supports variable substitution and pattern reuse
-### 📦 Modern Design
-- C++17 standard, type-safe
-- Clear API design
+
+### High Accuracy
+- Finite State Machine (FSM) based model supporting complex syntax rule nesting
+- Multiple capture group style mapping for fine-grained highlighting control
+- SubStates mechanism for handling nested syntax structures (e.g., generics, template parameters)
+- Zero-width match support for context-sensitive state transitions
+
+### Highly Extensible
+- JSON-based syntax rule configuration — add new language support without writing code
+- Variable substitution and pattern reuse to reduce rule redundancy
+- 25+ built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
+
+### Cross-Platform
+- Core engine written in C++17
+- C API wrapper for easy FFI integration
+- Native support for Android (JNI), WebAssembly (Emscripten), HarmonyOS (NAPI)
+- Supports Windows, Linux, macOS and other desktop platforms
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Application Layer                     │
+├──────────┬──────────┬──────────┬────────────┬───────────┤
+│ Android  │   WASM   │   OHOS   │   C API    │   C++     │
+│  (JNI)   │(Emscript)│  (NAPI)  │  (FFI)     │  (Native) │
+├──────────┴──────────┴──────────┴────────────┴───────────┤
+│                 SweetLine Core (C++17)                   │
+│  ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐  │
+│  │HighlightEng │ │ TextAnalyzer │ │DocumentAnalyzer  │  │
+│  │    ine      │ │ (Full Scan)  │ │(Incremental)     │  │
+│  └──────┬──────┘ └──────┬───────┘ └────────┬─────────┘  │
+│         │               │                  │             │
+│  ┌──────▼───────────────▼──────────────────▼─────────┐  │
+│  │           State Machine + Regex Engine             │  │
+│  │              (Oniguruma + FSM)                     │  │
+│  └───────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │           SyntaxRule (JSON Compiled)               │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
-### Basic Usage
-```c++
+
+### C++ Usage
+
+```cpp
 #include "highlight.h"
+using namespace sweetline;
 
-using namespace NS_SWEETLINE;
+// 1. Create highlight engine
+auto engine = std::make_shared<HighlightEngine>();
 
-// Create highlight engine
-Ptr<HighlightEngine> engine = MAKE_PTR<HighlightEngine>();
-// Compile syntax rules
-Ptr<SyntaxRule> syntax_rule = engine->compileSyntaxFromFile("java_syntax.json");
-// Create document object
-Ptr<Document> document = std::make_shared<Document>("file:///example.java", R"(
+// 2. Compile syntax rules
+auto rule = engine->compileSyntaxFromFile("syntaxes/java.json");
+
+// 3. Create document object
+auto document = std::make_shared<Document>("file:///example.java", R"(
 public class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
 }
 )");
-// Load document object and perform analysis
-Ptr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-Ptr<DocumentHighlight> highlight = analyzer->analyze();
+
+// 4. Load document and analyze
+auto analyzer = engine->loadDocument(document);
+auto highlight = analyzer->analyze();
+
+// 5. Iterate highlight results
+for (size_t i = 0; i < highlight->lines.size(); i++) {
+    auto& line = highlight->lines[i];
+    for (auto& span : line.spans) {
+        // span.range  - text range (line/column/index)
+        // span.style_id - style ID (keyword=1, string=2, ...)
+    }
+}
+```
+
+### Incremental Updates
+
+```cpp
+// When the document is edited, only reanalyze the changed portion
+TextRange change_range { {2, 4}, {2, 8} };
+std::string new_text = "modified";
+auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
+```
+
+### Android Usage
+
+```groovy
+// build.gradle
+implementation 'com.qiplat:sweetline:0.0.4'
+```
+
+```java
+// Create engine
+HighlightEngine engine = new HighlightEngine(new HighlightConfig());
+
+// Compile syntax rules
+engine.compileSyntaxFromJson(jsonString);
+
+// Full analysis
+TextAnalyzer analyzer = engine.createAnalyzerByName("java");
+DocumentHighlight result = analyzer.analyzeText(sourceCode);
+
+// Iterate results
+for (LineHighlight line : result.lines) {
+    for (TokenSpan span : line.spans) {
+        // span.range, span.styleId
+    }
+}
+```
+
+### WebAssembly Usage
+
+```javascript
+import { sweetline } from './libsweetline.js';
+
+// Create engine
+const config = new sweetline.HighlightConfig();
+const engine = new sweetline.HighlightEngine(config);
+
+// Compile syntax rules
+engine.compileSyntaxFromJson(jsonString);
+
+// Analyze text
+const analyzer = engine.createAnalyzerByName("javascript");
+const highlight = analyzer.analyzeText(sourceCode);
+
+// Iterate results
+for (let i = 0; i < highlight.lines.size(); i++) {
+    const line = highlight.lines.get(i);
+    for (let j = 0; j < line.spans.size(); j++) {
+        const span = line.spans.get(j);
+        // span.range, span.styleId
+    }
+}
 ```
 
 ### Custom Syntax Rules
-Refer to [Syntax Configuration Specification](docs/syntax_rule.md) for examples
+
+SweetLine uses JSON to define syntax rules. Here is a simple example:
+
 ```json
 {
-  "name": "Java",
-  "file_extensions": [
-    ".java"
-  ],
+  "name": "myLanguage",
+  "fileExtensions": [".mylang"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*"
+  },
   "states": {
     "default": [
       {
-        "pattern": "\\b(public|private|class|static)\\b",
-        "styles": [
-          1,
-          "keyword"
-        ]
+        "pattern": "\\b(if|else|while|return)\\b",
+        "styles": [1, "keyword"]
       },
       {
-        "pattern": "\"",
-        "styles": "string",
-        "state": "quotedString"
-      }
-    ],
-    "quotedString": [
-      {
-        "pattern": "\"",
-        "style": "string",
-        "state": "default"
-      },
-      {
-        "pattern": "[^\"]*",
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
         "style": "string"
+      },
+      {
+        "pattern": "//[^\\n]*",
+        "style": "comment"
       }
     ]
   }
 }
 ```
 
-### Incremental Updates
-```c++
-TextRange change_range { {2, 4}, {2, 8} };
-String new_text = "modified";
-// Only reanalyze the changed parts
-Ptr<DocumentHighlight> new_highlight = analyzer->analyzeChanges(change_range, new_text);
-```
+For complete syntax rule configuration, see the [Syntax Rule Configuration Guide](docs/syntax_rule_en.md).
 
-### Highlight Style Mapping
-```c++
-// Register custom styles
-engine->registerStyleName("keyword", 1);
-engine->registerStyleName("number", 2);
-engine->registerStyleName("string", 3);
-// Get style name
-const String& style_name = engine->getStyleName(1); // Returns "keyword"
-```
+## Documentation
 
-## Advanced Features
-### Multi-syntax Support
-```c++
-// Compile multiple syntax rules
-Ptr<SyntaxRule> java_rule = engine->compileSyntaxFromFile("java.json");
-Ptr<SyntaxRule> cpp_rule = engine->compileSyntaxFromFile("cpp.json");
-Ptr<SyntaxRule> python_rule = engine->compileSyntaxFromFile("python.json");
-// Get syntax rules by file extension
-Ptr<Document> document = MAKE_PTR<Document>("file:///example.py", "print('Hello')");
-Ptr<SyntaxRule> syntax = engine->getSyntaxRuleByExtension(".py");
-// Future support for referencing compiled syntax rules within syntax rule configurations
-// TODO: Reference compiled syntax rules in syntax rule configuration files
-```
-### Performance Recommendations
-- Pre-compile syntax rules: Compile all required syntax rules at application startup
-- Use incremental updates appropriately: For large files, prioritize incremental updates over full analysis
-- Optimize regular expressions: Avoid overly complex patterns, use variables to reuse common patterns
-- Batch updates: Merge consecutive small changes into a single incremental update
+| Document | Description |
+|----------|-------------|
+| [Syntax Rule Configuration Guide](docs/syntax_rule_en.md) | Detailed guide on writing JSON syntax rule files |
+| [API Reference](docs/api_en.md) | API usage for C++, C, Android, and WebAssembly |
+| [Contributing Guide](docs/join_en.md) | How to participate in the project |
 
-## Native Platform Integration
-### Android Integration
-Android provides convenient JNI bindings with class and function names consistent with the C++ side. You can directly depend on the source code or import from maven:
-```groovy
-implementation 'com.qiplat:sweetline:0.0.4'
-```
+## Built-in Language Support
+
+| Language | File | Language | File |
+|----------|------|----------|------|
+| Java | `java.json` | Python | `python.json` |
+| C | `c.json` | C++ | `c++.json` |
+| C# | `csharp.json` | Kotlin | `kotlin.json` |
+| Swift | `swift.json` | Rust | `rust.json` |
+| Go | `go.json` | Dart | `dart.json` |
+| TypeScript | `typescript.json` | JavaScript | `javascript.json` |
+| HTML | `html.json` | XML | `xml.json` |
+| SQL | `sql.json` | Shell | `shell.json` |
+| Lua | `lua.json` | Groovy | `groovy.json` |
+| YAML | `yaml.json` | TOML | `toml.json` |
+| Markdown | `markdown.json` | JSON | `json-sweetline.json` |
+
+## Performance Tips
+
+- **Pre-compile syntax rules**: Compile all required syntax rules at application startup; compiled rules are reusable
+- **Prefer incremental updates**: For editor scenarios, use `DocumentAnalyzer` incremental analysis instead of full analysis
+- **Optimize regular expressions**: Avoid overly complex backtracking-intensive patterns; use `variables` to reuse common patterns
+- **Design state machines carefully**: Control the number of states and ensure every state has a clear exit path
 
 ## Contributing
-We welcome contributions from all developers! If you're interested in participating in the project, feel free to fork the repository, make changes, and submit merge requests. For project collaboration guidelines, please refer to [Project Collaboration Guide](docs/join.md)
+
+We welcome contributions to the SweetLine highlighting engine! If you'd like to participate, feel free to fork the repository, make changes, and submit merge requests. See the [Contributing Guide](docs/join_en.md) for details.

@@ -1,5 +1,5 @@
 {
-  "name": "c++",
+  "name": "cpp",
   "fileExtensions": [".cpp", ".cxx", ".cc", ".hpp", ".hxx", ".hh", ".h++", ".ipp"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",

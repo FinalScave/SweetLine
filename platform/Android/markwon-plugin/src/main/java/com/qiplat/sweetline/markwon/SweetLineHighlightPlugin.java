@@ -11,6 +11,9 @@ import com.qiplat.sweetline.TextAnalyzer;
 
 import org.commonmark.node.FencedCodeBlock;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.noties.markwon.AbstractMarkwonPlugin;
 import io.noties.markwon.MarkwonConfiguration;
 import io.noties.markwon.MarkwonSpansFactory;
@@ -22,6 +25,15 @@ public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
 
     private final CodeBackground background;
     private final SpannableStyleFactory styleFactory;
+    private static final Map<String, String> syntaxNameMapping = new HashMap<>();
+
+    static {
+        syntaxNameMapping.put("py", "python");
+        syntaxNameMapping.put("ts", "typescript");
+        syntaxNameMapping.put("kt", "kotlin");
+        syntaxNameMapping.put("c++", "cpp");
+        syntaxNameMapping.put("c#", "csharp");
+    }
 
     public SweetLineHighlightPlugin(CodeBackground background, SpannableStyleFactory styleFactory) {
         this.background = background;
@@ -48,9 +60,15 @@ public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
             final String literal = fencedCodeBlock.getLiteral();
             final String info = fencedCodeBlock.getInfo();
             if (info != null) {
-                TextAnalyzer textAnalyzer = SweetLineGlobal.getEngineInstance().createAnalyzerByExtension(info);
-                Spannable highlightedCode = textAnalyzer.analyzeTextAsSpannable(literal, styleFactory);
-                visitor.builder().append(highlightedCode);
+                String syntaxName = syntaxNameMapping.get(info);
+                if (syntaxName == null) {
+                    syntaxName = info;
+                }
+                TextAnalyzer textAnalyzer = SweetLineGlobal.getEngineInstance().createAnalyzerByName(syntaxName);
+                if (textAnalyzer != null) {
+                    Spannable highlightedCode = textAnalyzer.analyzeTextAsSpannable(literal, styleFactory);
+                    visitor.builder().append(highlightedCode);
+                }
             } else {
                 visitor.builder().append(literal);
             }
