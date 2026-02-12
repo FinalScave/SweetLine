@@ -7,16 +7,38 @@
 
     <com.qiplat.sweetline.demo.MyEditText
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/file_spinner"
+        app:layout_constraintBottom_toTopOf="@id/bottom_bar"
         android:id="@+id/span_text"
         android:textSize="12sp"
+        android:background="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
-    <Spinner
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:id="@+id/file_spinner"
+    <LinearLayout
+        android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"/>
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Spinner
+            android:id="@+id/file_spinner"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/theme_label"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="12sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="4dp" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

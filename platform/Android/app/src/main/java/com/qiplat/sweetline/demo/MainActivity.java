@@ -1,6 +1,8 @@
 package com.qiplat.sweetline.demo;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Spannable;
@@ -8,18 +10,18 @@ import android.text.TextWatcher;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.AppCompatButton;
 
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
@@ -38,16 +40,22 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements SpannableStyleFactory {
     private static final String TAG = "SampleHighlight";
+    private View rootView;
     private Spinner fileSpinner;
     private MyEditText spanText;
+    private TextView themeLabel;
     private CharSequence previousText;
     private DocumentAnalyzer analyzer;
     private boolean shouldAnalyzeChange = false;
+
     private static HighlightEngine inlineStyleEngine = new HighlightEngine(new HighlightConfig(true, true));
     private static HighlightEngine commonEngine = new HighlightEngine(new HighlightConfig(true, false));
-    private static SparseIntArray colorMap = new SparseIntArray();
     private static final Map<String, String> EXT_SYNTAX_MAP = new HashMap<>();
     private static final List<String> INLINE_STYLE_FILES = new ArrayList<>();
+
+    private List<HighlightTheme> themes;
+    private int currentThemeIndex = 0;
+    private HighlightTheme currentTheme;
 
     static {
         commonEngine.registerStyleName("keyword", 1);
@@ -64,20 +72,6 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         commonEngine.registerStyleName("lifetime", 12);
         commonEngine.registerStyleName("selector", 13);
         commonEngine.registerStyleName("builtin", 14);
-        colorMap.append(1, 0XFF569CD6);
-        colorMap.append(2, 0XFFBD63C5);
-        colorMap.append(3, 0XFFE4FAD5);
-        colorMap.append(4, 0XFF60AE6F);
-        colorMap.append(5, 0XFF4EC9B0);
-        colorMap.append(6, 0XFF9CDCFE);
-        colorMap.append(7, 0XFF9B9BC8);
-        colorMap.append(8, 0XFFD69D85);
-        colorMap.append(9, 0XFFFFFD9B);
-        colorMap.append(10, 0XFF569CD6);
-        colorMap.append(11, 0XFF9B9BC8);
-        colorMap.append(12, 0XFF4EC9B0);
-        colorMap.append(13, 0XFF4EC9B0);
-        colorMap.append(14, 0XFF569CD6);
 
         EXT_SYNTAX_MAP.put(".t", "tiecode.json");
         EXT_SYNTAX_MAP.put(".c", "c.json");
@@ -110,11 +104,17 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        rootView = findViewById(R.id.main);
         fileSpinner = findViewById(R.id.file_spinner);
         spanText = findViewById(R.id.span_text);
+        themeLabel = findViewById(R.id.theme_label);
 
         commonEngine.defineMacro("ANDROID");
         inlineStyleEngine.defineMacro("ANDROID");
+
+        themes = HighlightTheme.builtinThemes();
+        currentTheme = themes.get(currentThemeIndex);
+        applyThemeColors();
 
         List<String> exampleFiles = listExampleFiles();
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
@@ -161,16 +161,79 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 0, 0, "Markdown");
-        return super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == 0) {
+        int id = item.getItemId();
+        if (id == R.id.action_theme) {
+            showThemeDialog();
+            return true;
+        } else if (id == R.id.action_markdown) {
             startActivity(new Intent(this, MarkwonActivity.class));
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showThemeDialog() {
+        String[] names = new String[themes.size()];
+        for (int i = 0; i < themes.size(); i++) {
+            names[i] = themes.get(i).name;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("选择高亮主题")
+                .setSingleChoiceItems(names, currentThemeIndex, (dialog, which) -> {
+                    currentThemeIndex = which;
+                    currentTheme = themes.get(which);
+                    applyThemeColors();
+                    reHighlightCurrentFile();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void applyThemeColors() {
+        rootView.setBackgroundColor(currentTheme.backgroundColor);
+        spanText.setTextColor(currentTheme.textColor);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setSubtitle(currentTheme.name);
+        }
+
+        themeLabel.setText(currentTheme.name);
+        themeLabel.setTextColor(currentTheme.textColor);
+
+        int statusBarColor = darkenColor(currentTheme.backgroundColor, 0.7f);
+        getWindow().setStatusBarColor(statusBarColor);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setBackgroundDrawable(
+                    new ColorDrawable(statusBarColor));
+        }
+    }
+
+    private void reHighlightCurrentFile() {
+        int pos = fileSpinner.getSelectedItemPosition();
+        if (pos >= 0) {
+            Object item = fileSpinner.getItemAtPosition(pos);
+            if (item != null) {
+                shouldAnalyzeChange = false;
+                highlightFile(item.toString());
+            }
+        }
+    }
+
+    private static int darkenColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.round(Color.red(color) * factor);
+        int g = Math.round(Color.green(color) * factor);
+        int b = Math.round(Color.blue(color) * factor);
+        return Color.argb(a, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
     }
 
     private List<String> listExampleFiles() {
@@ -258,21 +321,18 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         long startTime = System.nanoTime();
         Spannable newHighlightedText = null;
         if (before > 0 && count == 0) {
-            // 删除文本
             String deleted = oldText.subSequence(start, start + before).toString();
             Log.d(TAG, "delete: index=" + start +
                     ", length=" + before + ", content='" + deleted + "'");
             newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start + before,
                     "", this);
         } else if (before == 0 && count > 0) {
-            // 插入文本
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "insert: index=" + start +
                     ", length=" + count + ", content='" + inserted + "'");
             newHighlightedText = analyzer.analyzeIncrementalAsSpannable(start, start,
                     inserted, this);
         } else if (before > 0 && count > 0) {
-            // 替换文本
             String deleted = oldText.subSequence(start, start + before).toString();
             String inserted = newText.subSequence(start, start + count).toString();
             Log.d(TAG, "replace: index=" + start +
@@ -290,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
 
     @Override
     public CharacterStyle createCharacterStyle(int styleId) {
-        return new ForegroundColorSpan(colorMap.get(styleId));
+        return new ForegroundColorSpan(currentTheme.colorMap.get(styleId));
     }
 
     @Override
