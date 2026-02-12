@@ -93,6 +93,7 @@ Visit https://github.com/FinalScave/SweetLine for the project.
 
 ## Code Blocks
 
+### Java sample code
 ```java
 public class Hello {
     public static void main(String[] args) {
@@ -101,6 +102,7 @@ public class Hello {
 }
 ```
 
+### Python sample code
 ```python
 def greet(name: str) -> str:
     """Greeting function"""
@@ -109,6 +111,7 @@ def greet(name: str) -> str:
 print(greet("SweetLine"))
 ```
 
+### Go sample code
 ```go
 package main
 
@@ -121,6 +124,7 @@ func main() {
 }
 ```
 
+### Kotlin sample code
 ```kotlin
 fun main() {
     val list = listOf(1, 2, 3)
