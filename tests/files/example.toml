@@ -1,0 +1,73 @@
+# TOML 高亮示例
+
+# 基本键值对
+title = "SweetLine Config"
+version = "1.0.0"
+debug = true
+verbose = false
+
+[owner]
+name = "Scave"
+email = "iscave@163.com"
+
+[database]
+server = "192.168.1.1"
+ports = [8001, 8001, 8002]
+max_connections = 5000
+enabled = true
+
+[database.credentials]
+username = "admin"
+password = "secret"
+
+# 数字类型
+[numbers]
+integer = 42
+negative = -17
+hex = 0xDEADBEEF
+oct = 0o755
+bin = 0b11010110
+float = 3.14
+negative_float = -0.01
+scientific = 5e+22
+infinity = inf
+neg_infinity = -inf
+not_a_number = nan
+underscored = 1_000_000
+
+# 字符串类型
+[strings]
+basic = "Hello, World!\n"
+literal = 'no \escape here'
+multi_basic = """
+    line 1
+    line 2
+    line 3"""
+multi_literal = '''
+    raw content
+    no escapes'''
+
+# 日期和时间
+[datetime]
+full = 2024-01-15T10:30:00Z
+offset = 2024-01-15T10:30:00+08:00
+local_date = 2024-01-15
+local_time = 10:30:00
+
+# 数组表
+[[products]]
+name = "Hammer"
+sku = 738594937
+price = 9.99
+tags = ["tool", "hardware"]
+
+[[products]]
+name = "Nail"
+sku = 284758393
+price = 0.05
+color = "gray"
+
+# 内联表
+[servers]
+alpha = { ip = "10.0.0.1", role = "frontend" }
+beta = { ip = "10.0.0.2", role = "backend" }

@@ -1,0 +1,283 @@
+{
+  "name": "rust",
+  "fileExtensions": [".rs"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(struct|enum|trait|union)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "\\b(impl)\\b${whiteSpace}*(<)(.*)(>)${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}+(for)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "class", 6, "punctuation", 8, "punctuation", 9, "keyword", 10, "class"],
+        "subStates": [3, "genericType", 7, "genericType"]
+      },
+      {
+        "pattern": "\\b(impl)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}+(for)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation", 6, "keyword", 7, "class"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "\\b(impl)\\b${whiteSpace}+(${identifier})${whiteSpace}+(for)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class", 3, "keyword", 4, "class"]
+      },
+      {
+        "pattern": "\\b(impl)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "\\b(struct|enum|trait|impl|union)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(<)(.*)(>)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(let)\\b${whiteSpace}+(mut)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*([*&]*${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable", 4, "punctuation", 5, "class"]
+      },
+      {
+        "pattern": "\\b(let)\\b${whiteSpace}+(mut)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(let)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*([*&]*${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(let)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(const|static)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*([*&]*${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(const|static)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(mod|use|crate|pub)\\b${whiteSpace}+(${identifier}(?:::${identifier})*)",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(as|async|await|break|const|continue|crate|dyn|else|enum|extern|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|type|union|unsafe|use|where|while|yield|abstract|become|box|do|final|macro|override|priv|try|typeof|unsized|virtual)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(bool|char|f32|f64|i8|i16|i32|i64|i128|isize|str|u8|u16|u32|u64|u128|usize|String|Vec|Box|Rc|Arc|Cell|RefCell|Option|Result|HashMap|HashSet|BTreeMap|BTreeSet|VecDeque|LinkedList|BinaryHeap|Cow|Pin|PhantomData)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(None|Some|Ok|Err)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(#)(\\!?\\[)(${identifier})",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})!(\\(|\\{|\\[)",
+        "styles": [1, "macro", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(macro_rules)!${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "macro"]
+      },
+      {
+        "pattern": "(${identifier})(::)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(::)(${identifier})",
+        "styles": [1, "class", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "r#*\"",
+        "style": "string",
+        "state": "rawString"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\x[0-9a-fA-F]{2}'|'\\\\u\\{[0-9a-fA-F]+\\}'",
+        "style": "string"
+      },
+      {
+        "pattern": "'(static)\\b",
+        "styles": [1, "lifetime"]
+      },
+      {
+        "pattern": "'(${identifier})",
+        "styles": [1, "lifetime"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+(?:_?(?:u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize))?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+(?:_?(?:u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize))?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+(?:_?(?:u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize))?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?(?:_?(?:f32|f64|u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize))?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//[!/]${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "=>|->|::|\\.\\.=?|\\?|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[.()\\[\\]!@%^&|+\\-*/<>=,{};:~#]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(\\&${whiteSpace}*mut)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*([&*]*${whiteSpace}*(?:mut${whiteSpace}+)?${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "\\b(mut|self|Self)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(bool|char|f32|f64|i8|i16|i32|i64|i128|isize|str|u8|u16|u32|u64|u128|usize|String|Vec|Box|Option|Result)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "'(${identifier})",
+        "styles": [1, "lifetime"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "[,\\[\\]&*:=<>()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "\\b(where|dyn|impl)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "'(static)\\b",
+        "styles": [1, "lifetime"]
+      },
+      {
+        "pattern": "'(${identifier})",
+        "styles": [1, "lifetime"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "[,\\[\\]&*+:=]",
+        "style": "punctuation"
+      }
+    ],
+    "rawString": [
+      {
+        "pattern": "\"#*",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

@@ -9,7 +9,14 @@ import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.SparseIntArray;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
@@ -22,12 +29,16 @@ import com.qiplat.sweetline.InlineStyle;
 import com.qiplat.sweetline.SpannableStyleFactory;
 import com.qiplat.sweetline.util.AssetUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity implements SpannableStyleFactory {
     private static final String TAG = "SampleHighlight";
-    private AppCompatButton testJavaButton;
-    private AppCompatButton testTiecodeButton;
-    private AppCompatButton testJsonButton;
-    private AppCompatButton gotoMarkwonBtn;
+    private Spinner fileSpinner;
     private MyEditText spanText;
     private CharSequence previousText;
     private DocumentAnalyzer analyzer;
@@ -35,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
     private static HighlightEngine inlineStyleEngine = new HighlightEngine(new HighlightConfig(true, true));
     private static HighlightEngine commonEngine = new HighlightEngine(new HighlightConfig(true, false));
     private static SparseIntArray colorMap = new SparseIntArray();
+    private static final Map<String, String> EXT_SYNTAX_MAP = new HashMap<>();
+    private static final List<String> INLINE_STYLE_FILES = new ArrayList<>();
 
     static {
         commonEngine.registerStyleName("keyword", 1);
@@ -46,6 +59,11 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         commonEngine.registerStyleName("variable", 7);
         commonEngine.registerStyleName("punctuation", 8);
         commonEngine.registerStyleName("annotation", 9);
+        commonEngine.registerStyleName("preprocessor", 10);
+        commonEngine.registerStyleName("macro", 11);
+        commonEngine.registerStyleName("lifetime", 12);
+        commonEngine.registerStyleName("selector", 13);
+        commonEngine.registerStyleName("builtin", 14);
         colorMap.append(1, 0XFF569CD6);
         colorMap.append(2, 0XFFBD63C5);
         colorMap.append(3, 0XFFE4FAD5);
@@ -55,6 +73,37 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         colorMap.append(7, 0XFF9B9BC8);
         colorMap.append(8, 0XFFD69D85);
         colorMap.append(9, 0XFFFFFD9B);
+        colorMap.append(10, 0XFF569CD6);
+        colorMap.append(11, 0XFF9B9BC8);
+        colorMap.append(12, 0XFF4EC9B0);
+        colorMap.append(13, 0XFF4EC9B0);
+        colorMap.append(14, 0XFF569CD6);
+
+        EXT_SYNTAX_MAP.put(".t", "tiecode.json");
+        EXT_SYNTAX_MAP.put(".c", "c.json");
+        EXT_SYNTAX_MAP.put(".cpp", "c++.json");
+        EXT_SYNTAX_MAP.put(".cs", "csharp.json");
+        EXT_SYNTAX_MAP.put(".dart", "dart.json");
+        EXT_SYNTAX_MAP.put(".go", "go.json");
+        EXT_SYNTAX_MAP.put(".groovy", "groovy.json");
+        EXT_SYNTAX_MAP.put(".html", "html.json");
+        EXT_SYNTAX_MAP.put(".java", "java.json");
+        EXT_SYNTAX_MAP.put(".js", "javascript.json");
+        EXT_SYNTAX_MAP.put(".json", "json-sweetline.json");
+        EXT_SYNTAX_MAP.put(".kt", "kotlin.json");
+        EXT_SYNTAX_MAP.put(".lua", "lua.json");
+        EXT_SYNTAX_MAP.put(".py", "python.json");
+        EXT_SYNTAX_MAP.put(".rs", "rust.json");
+        EXT_SYNTAX_MAP.put(".sh", "shell.json");
+        EXT_SYNTAX_MAP.put(".sql", "sql.json");
+        EXT_SYNTAX_MAP.put(".swift", "swift.json");
+        EXT_SYNTAX_MAP.put(".toml", "toml.json");
+        EXT_SYNTAX_MAP.put(".ts", "typescript.json");
+        EXT_SYNTAX_MAP.put(".xml", "xml.json");
+        EXT_SYNTAX_MAP.put(".yaml", "yaml.json");
+        EXT_SYNTAX_MAP.put(".md", "markdown.json");
+        
+        INLINE_STYLE_FILES.add(".t");
     }
 
     @Override
@@ -62,29 +111,31 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        testJavaButton = findViewById(R.id.test_java_btn);
-        testTiecodeButton = findViewById(R.id.test_tiecode_btn);
-        testJsonButton = findViewById(R.id.test_json_btn);
-        gotoMarkwonBtn = findViewById(R.id.test_markwon_btn);
+        fileSpinner = findViewById(R.id.file_spinner);
         spanText = findViewById(R.id.span_text);
 
         commonEngine.defineMacro("ANDROID");
         inlineStyleEngine.defineMacro("ANDROID");
-        testJavaButton.setOnClickListener(v -> {
-            shouldAnalyzeChange = false;
-            highlight("Main.java", "java-inlineStyle.json", true);
+
+        List<String> exampleFiles = listExampleFiles();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, exampleFiles);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        fileSpinner.setAdapter(adapter);
+
+        fileSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String fileName = exampleFiles.get(position);
+                shouldAnalyzeChange = false;
+                highlightFile(fileName);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
-        testTiecodeButton.setOnClickListener(v -> {
-            shouldAnalyzeChange = false;
-            highlight("结绳.t", "tiecode-inlineStyle.json", true);
-        });
-        testJsonButton.setOnClickListener(v -> {
-            shouldAnalyzeChange = false;
-            highlight("java.json", "json-sweetline.json", false);
-        });
-        gotoMarkwonBtn.setOnClickListener(v -> {
-            startActivity(new Intent(this, MarkwonActivity.class));
-        });
+
         spanText.setOnSelectionChangeListener((startIndex, endIndex) -> {
             Log.i(TAG, String.format("start: %d, end: %d", startIndex, endIndex));
         });
@@ -105,9 +156,66 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
 
             @Override
             public void afterTextChanged(Editable s) {
-
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 0, 0, "Markdown");
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == 0) {
+            startActivity(new Intent(this, MarkwonActivity.class));
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private List<String> listExampleFiles() {
+        List<String> files = new ArrayList<>();
+        try {
+            String[] allAssets = getAssets().list("");
+            if (allAssets != null) {
+                Arrays.sort(allAssets);
+                for (String name : allAssets) {
+                    if (name.endsWith(".json") && !name.equals("java.json")) {
+                        continue;
+                    }
+                    if (!name.startsWith("example")) {
+                        continue;
+                    }
+                    String ext = getFileExtension(name);
+                    if (EXT_SYNTAX_MAP.containsKey(ext)) {
+                        files.add(name);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "列出assets文件失败", e);
+        }
+        return files;
+    }
+
+    private void highlightFile(String testFileName) {
+        String ext = getFileExtension(testFileName);
+        String syntaxFileName = EXT_SYNTAX_MAP.get(ext);
+        if (syntaxFileName == null || syntaxFileName.isEmpty()) {
+            Log.w(TAG, "未找到 " + testFileName + " 对应的语法规则文件");
+            return;
+        }
+        boolean inlineStyle = INLINE_STYLE_FILES.contains(ext);
+        highlight(testFileName, syntaxFileName, inlineStyle);
+    }
+
+    private static String getFileExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex >= 0) {
+            return fileName.substring(dotIndex);
+        }
+        return "";
     }
 
     private void highlight(String testFileName, String syntaxFileName, boolean inlineStyle) {

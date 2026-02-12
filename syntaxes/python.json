@@ -1,0 +1,257 @@
+{
+  "name": "python",
+  "fileExtensions": [".py", ".pyi", ".pyw"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(class)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(class)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(async)\\b${whiteSpace}+(def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(True|False|None)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(int|float|str|bool|list|dict|tuple|set|frozenset|bytes|bytearray|memoryview|complex|range|type|object)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(super|print|len|enumerate|zip|map|filter|sorted|reversed|isinstance|issubclass|hasattr|getattr|setattr|delattr|property|staticmethod|classmethod|abs|all|any|bin|hex|oct|chr|ord|format|id|input|iter|next|open|pow|repr|round|slice|vars|dir|help|hash|callable|compile|eval|exec)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(@)(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "tripleDoubleString"
+      },
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "tripleSingleString"
+      },
+      {
+        "pattern": "[fF]\"",
+        "style": "string",
+        "state": "fDoubleString"
+      },
+      {
+        "pattern": "[fF]'",
+        "style": "string",
+        "state": "fSingleString"
+      },
+      {
+        "pattern": "[rRbBuU]{0,2}\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "[rRbBuU]{0,2}'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+[jJ]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[jJ]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "#${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "->|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(\\*\\*|\\*)${whiteSpace}*(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(True|False|None)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[jJ]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()=*]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleSingleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "fDoubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "fSingleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": ":",
+      "end": ""
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "name": "shell",
+  "fileExtensions": [".sh", ".bash", ".zsh", ".ksh", ".csh", ".fish"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^(#!)${any}*",
+        "styles": [1, "comment"]
+      },
+      {
+        "pattern": "\\b(function)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()(\\))",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(function)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()(\\))",
+        "styles": [1, "method", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in|function|select|time|coproc|break|continue|return|exit|exec|eval|source|export|unset|readonly|local|declare|typeset|shift|trap|wait|set|shopt|alias|unalias)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(echo|printf|read|test|cd|pwd|ls|cp|mv|rm|mkdir|rmdir|touch|cat|head|tail|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|xargs|chmod|chown|chgrp|kill|ps|jobs|bg|fg|nohup|which|whereis|type|file|stat|basename|dirname|realpath|mktemp|date|sleep|expr|bc|env|printenv|getopt|getopts)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([@*#?\\-!$0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "commandSubstitution"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleQuoteString"
+      },
+      {
+        "pattern": "'(?:[^']*)'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "#${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "<<-?'?(\\w+)'?",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "pattern": "\\|\\||&&|;;|\\|&|[|&;()\\[\\]{}><!=+\\-]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleQuoteString": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\([^)]*\\)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "commandSubstitution": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in|function)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^']*)'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${any}",
+        "style": "variable"
+      }
+    ],
+    "heredoc": [
+      {
+        "pattern": "^\\w+$",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "do",
+      "end": "done"
+    },
+    {
+      "start": "then",
+      "end": "fi",
+      "branches": ["elif", "else"]
+    },
+    {
+      "start": "case",
+      "end": "esac"
+    }
+  ]
+}

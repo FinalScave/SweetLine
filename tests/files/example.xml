@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XML 高亮示例 -->
+<!DOCTYPE catalog SYSTEM "catalog.dtd">
+
+<catalog xmlns="http://example.com/catalog"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://example.com/catalog catalog.xsd">
+
+    <!-- 书籍列表 -->
+    <book id="001" category="fiction">
+        <title lang="zh">三体</title>
+        <author>刘慈欣</author>
+        <year>2008</year>
+        <price currency="CNY">36.00</price>
+        <description>一部科幻小说</description>
+    </book>
+
+    <book id="002" category="tech">
+        <title lang="en">The Rust Programming Language</title>
+        <author>Steve Klabnik</author>
+        <year>2019</year>
+        <price currency="USD">39.99</price>
+        <available>true</available>
+    </book>
+
+    <!-- CDATA 部分 -->
+    <script>
+        <![CDATA[
+            function test() {
+                return x < 10 && y > 20;
+            }
+        ]]>
+    </script>
+
+    <!-- 实体引用 -->
+    <note>使用 &lt;tag&gt; 和 &amp; 符号</note>
+    <special>&#169; 版权所有 &#x2764; 爱心</special>
+
+    <!-- 自闭合标签 -->
+    <meta name="version" value="1.0" />
+    <separator />
+
+    <!-- 嵌套结构 -->
+    <library>
+        <section name="Science">
+            <shelf row="1" col="A">
+                <item ref="001" />
+                <item ref="002" />
+            </shelf>
+        </section>
+    </library>
+</catalog>

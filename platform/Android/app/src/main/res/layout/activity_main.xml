@@ -7,54 +7,16 @@
 
     <com.qiplat.sweetline.demo.MyEditText
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/test_java_btn"
+        app:layout_constraintBottom_toTopOf="@id/file_spinner"
         android:id="@+id/span_text"
         android:textSize="12sp"
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/test_java_btn"
-        android:text="高亮Java"
-        app:layout_constraintTop_toBottomOf="@id/span_text"
-        app:layout_constraintBottom_toTopOf="@id/test_json_btn"
-        app:layout_constraintRight_toLeftOf="@id/test_tiecode_btn"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/test_tiecode_btn"
-        android:text="高亮结绳"
-        app:layout_constraintTop_toBottomOf="@id/span_text"
-        app:layout_constraintBottom_toTopOf="@id/test_json_btn"
-        app:layout_constraintLeft_toRightOf="@id/test_java_btn"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/test_json_btn"
-        android:text="高亮JSON"
-        app:layout_constraintTop_toBottomOf="@id/test_tiecode_btn"
+    <Spinner
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/test_markwon_btn"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/test_markwon_btn"
-        android:text="Markwon插件"
-        app:layout_constraintTop_toBottomOf="@id/test_tiecode_btn"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/test_json_btn"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content" />
+        android:id="@+id/file_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

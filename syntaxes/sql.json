@@ -1,0 +1,73 @@
+{
+  "name": "sql",
+  "fileExtensions": [".sql", ".ddl", ".dml"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(?i)(SELECT|FROM|WHERE|AND|OR|NOT|IN|EXISTS|BETWEEN|LIKE|IS|NULL|AS|ON|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|NATURAL|USING|UNION|ALL|DISTINCT|INTO|INSERT|UPDATE|DELETE|SET|VALUES|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|DATABASE|SCHEMA|TRIGGER|PROCEDURE|FUNCTION|IF|THEN|ELSE|ELSIF|END|BEGIN|DECLARE|CURSOR|FETCH|OPEN|CLOSE|CASE|WHEN|HAVING|GROUP|BY|ORDER|ASC|DESC|LIMIT|OFFSET|TOP|ROWNUM|EXISTS|ANY|SOME|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT|TRANSACTION|PRIMARY|KEY|FOREIGN|REFERENCES|CONSTRAINT|UNIQUE|CHECK|DEFAULT|AUTO_INCREMENT|IDENTITY|CASCADE|RESTRICT|TRUNCATE|REPLACE|MERGE|EXCEPT|INTERSECT|WITH|RECURSIVE|OVER|PARTITION|WINDOW|ROWS|RANGE|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT|ROW|RETURNING|EXPLAIN|ANALYZE|VACUUM|REINDEX|COMMENT|RENAME|ADD|COLUMN|MODIFY|TEMPORARY|TEMP|LATERAL|PIVOT|UNPIVOT)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(?i)(COUNT|SUM|AVG|MIN|MAX|ABS|CEIL|CEILING|FLOOR|ROUND|TRUNC|MOD|POWER|SQRT|LOG|LN|EXP|SIGN|RAND|RANDOM|COALESCE|NULLIF|NVL|IFNULL|IIF|CAST|CONVERT|TRIM|LTRIM|RTRIM|UPPER|LOWER|LENGTH|LEN|SUBSTR|SUBSTRING|REPLACE|TRANSLATE|CONCAT|LPAD|RPAD|INSTR|POSITION|CHARINDEX|LEFT|RIGHT|REVERSE|REPEAT|SPACE|FORMAT|NOW|CURRENT_TIMESTAMP|CURRENT_DATE|CURRENT_TIME|GETDATE|SYSDATE|DATE|TIME|TIMESTAMP|YEAR|MONTH|DAY|HOUR|MINUTE|SECOND|EXTRACT|DATEADD|DATEDIFF|DATE_TRUNC|TO_DATE|TO_CHAR|TO_NUMBER|STR_TO_DATE|DATE_FORMAT|ROW_NUMBER|RANK|DENSE_RANK|NTILE|LAG|LEAD|FIRST_VALUE|LAST_VALUE|NTH_VALUE|LISTAGG|STRING_AGG|GROUP_CONCAT|ARRAY_AGG|JSON_OBJECT|JSON_ARRAY|JSON_VALUE|JSON_QUERY)\\b${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?i)(INT|INTEGER|SMALLINT|BIGINT|TINYINT|MEDIUMINT|DECIMAL|NUMERIC|FLOAT|REAL|DOUBLE|PRECISION|CHAR|VARCHAR|NCHAR|NVARCHAR|TEXT|NTEXT|CLOB|BLOB|BINARY|VARBINARY|BOOLEAN|BOOL|BIT|DATE|TIME|DATETIME|TIMESTAMP|INTERVAL|UUID|JSON|JSONB|XML|ARRAY|SERIAL|BIGSERIAL|MONEY|BYTEA|ENUM|SET|GEOMETRY|GEOGRAPHY)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "\\b(TRUE|FALSE|NULL)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|''|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "variable"
+      },
+      {
+        "pattern": "`[^`]*`",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "--${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "<=|>=|<>|!=|::|\\|\\||[.()\\[\\]%^+\\-*/<>=,;:@]",
+        "style": "punctuation"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

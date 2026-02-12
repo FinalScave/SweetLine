@@ -1,0 +1,98 @@
+// Go 高亮示例
+package main
+
+import (
+	"fmt"
+	"strings"
+	"sync"
+)
+
+// 结构体和接口
+type Animal interface {
+	Speak() string
+}
+
+type Dog struct {
+	Name string
+	Age  int
+}
+
+func (d *Dog) Speak() string {
+	return fmt.Sprintf("%s says Woof!", d.Name)
+}
+
+type Pair[T comparable] struct {
+	First  T
+	Second T
+}
+
+type Cache[K comparable, V any] struct {
+	data map[K]V
+}
+
+func NewPair[T comparable](a, b T) Pair[T] {
+	return Pair[T]{First: a, Second: b}
+}
+
+// 常量和iota
+const (
+	StatusOK    = iota
+	StatusError
+	StatusPending
+)
+
+func process(items []string, count int) (result int, err error) {
+	total := len(items)
+	if total == 0 {
+		return 0, fmt.Errorf("empty list")
+	}
+
+	result := make([]string, 0, total)
+	for _, item := range items {
+		upper := strings.ToUpper(item)
+		result = append(result, upper)
+	}
+
+	println(total)
+	return cap(result), nil
+}
+
+func main() {
+	dog := &Dog{Name: "Buddy", Age: 3}
+	fmt.Println(dog.Speak())
+
+	// 数字字面量
+	hex := 0xFF
+	bin := 0b1010
+	oct := 0o77
+	pi := 3.14
+	comp := 2.0 + 3i
+
+	ok := true
+	var nothing *int = nil
+
+	// goroutine 和 channel
+	ch := make(chan string, 10)
+	var wg sync.WaitGroup
+
+	go func() {
+		defer wg.Done()
+		ch <- "hello"
+	}()
+
+	// 原始字符串
+	raw := `line 1
+line 2`
+
+	// switch 语句
+	switch {
+	case ok && nothing == nil:
+		fmt.Println(raw)
+	default:
+		close(ch)
+		panic("unexpected")
+	}
+
+	/* 多行注释 */
+	_ = false
+}

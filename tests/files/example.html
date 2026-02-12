@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SweetLine HTML 高亮示例</title>
+    <!-- 注释: 样式部分 -->
+    <style>
+        /* CSS 选择器和属性 */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            padding: 20px;
+            color: #333;
+        }
+        #header {
+            font-size: 24px;
+            line-height: 1.5;
+            border-bottom: 1px solid #ddd;
+        }
+        .btn:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="header" class="container">
+        <h1>Hello, World!</h1>
+        <p data-id="123">段落内容 &amp; 实体引用 &lt;tag&gt;</p>
+        <img src="logo.png" alt="Logo" />
+        <a href="https://example.com">链接</a>
+        <input type="text" value="输入" disabled />
+    </div>
+
+    <!-- 嵌入 JavaScript -->
+    <script>
+        const title = document.getElementById('header');
+        const items = [1, 2, 3];
+        console.log(`Total: ${items.length}`);
+
+        function handleClick(event) {
+            if (event.target !== null) {
+                window.alert("Clicked!");
+            }
+        }
+
+        const flag = true;
+        const empty = undefined;
+    </script>
+</body>
+</html>
