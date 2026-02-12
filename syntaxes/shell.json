@@ -9,8 +9,8 @@
   "states": {
     "default": [
       {
-        "pattern": "^(#!)${any}*",
-        "styles": [1, "comment"]
+        "pattern": "^#!${any}*",
+        "style": "comment"
       },
       {
         "pattern": "\\b(function)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()(\\))",
@@ -25,19 +25,157 @@
         "styles": [1, "method", 2, "punctuation", 3, "punctuation"]
       },
       {
-        "pattern": "(${identifier})(=)",
+        "pattern": "(${identifier})(\\+?=)",
         "styles": [1, "variable", 2, "punctuation"]
       },
       {
-        "pattern": "\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in|function|select|time|coproc|break|continue|return|exit|exec|eval|source|export|unset|readonly|local|declare|typeset|shift|trap|wait|set|shopt|alias|unalias)\\b",
+        "pattern": "(?<![-/.\\w])\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in|function|select|time|coproc)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(true|false)\\b",
+        "pattern": "(?<![-/.\\w])\\b(break|continue|return|exit|exec|eval|source|export|unset|readonly|local|declare|typeset|shift|trap|wait|set|shopt|alias|unalias)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(true|false)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(echo|printf|read|test|cd|pwd|ls|cp|mv|rm|mkdir|rmdir|touch|cat|head|tail|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|xargs|chmod|chown|chgrp|kill|ps|jobs|bg|fg|nohup|which|whereis|type|file|stat|basename|dirname|realpath|mktemp|date|sleep|expr|bc|env|printenv|getopt|getopts)\\b",
+        "pattern": "(?<![-/.\\w])\\b(echo|printf|read|test|cd|pwd|ls|cp|mv|rm|mkdir|rmdir|touch|cat|head|tail|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|xargs|chmod|chown|chgrp|kill|ps|jobs|bg|fg|nohup|which|whereis|type|file|stat|basename|dirname|realpath|mktemp|date|sleep|expr|bc|env|printenv|getopt|getopts|tar|gzip|gunzip|curl|wget|ssh|scp|rsync|diff|make|sudo|su|apt|yum|brew|pip|npm|git|docker|systemctl|mount|umount|df|du|free|top|lsof|ping|man|help)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$\\(\\()([^)]*)(\\)\\))",
+        "styles": [1, "punctuation", 2, "number", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([@*#?\\-!$0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "commandSubstitution"
+      },
+      {
+        "pattern": "`",
+        "style": "punctuation",
+        "state": "backtickCmd"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleQuoteString"
+      },
+      {
+        "pattern": "\\$'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^']*)'",
+        "style": "string"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleQuoteString"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "#${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "<<-?'?(\\w+)'?",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "pattern": "\\|\\||&&|;;|>>|<<|\\|&|[|&;()\\[\\]{}><!=+\\-*/%~^]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleQuoteString": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([@*#?\\-!$0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\([^)]*\\)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "`[^`]*`",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleQuoteString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "commandSubstitution": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(${identifier})(\\+?=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(break|continue|return|exit|exec|eval|source|export|unset|readonly|local|declare|typeset)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(echo|printf|read|test|cd|pwd|ls|cp|mv|rm|mkdir|rmdir|touch|cat|head|tail|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|xargs|chmod|chown|chgrp|kill|ps|basename|dirname|date|sleep|expr|bc|env|stat|which|type|file|realpath|curl|wget|sudo)\\b",
         "styles": [1, "builtin"]
       },
       {
@@ -58,9 +196,8 @@
         "state": "commandSubstitution"
       },
       {
-        "pattern": "\"",
-        "style": "string",
-        "state": "doubleQuoteString"
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
       },
       {
         "pattern": "'(?:[^']*)'",
@@ -71,55 +208,23 @@
         "style": "number"
       },
       {
-        "pattern": "#${any}*",
-        "style": "comment"
-      },
-      {
-        "pattern": "<<-?'?(\\w+)'?",
-        "style": "string",
-        "state": "heredoc"
-      },
-      {
-        "pattern": "\\|\\||&&|;;|\\|&|[|&;()\\[\\]{}><!=+\\-]",
+        "pattern": "\\|\\||&&|[|&;\\[\\]><!=+\\-*/%]",
         "style": "punctuation"
       }
     ],
-    "doubleQuoteString": [
+    "backtickCmd": [
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "\\$\\([^)]*\\)",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "\"",
-        "style": "string",
-        "state": "default"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
-      }
-    ],
-    "commandSubstitution": [
-      {
-        "pattern": "\\)",
+        "pattern": "`",
         "style": "punctuation",
         "state": "default"
       },
       {
-        "pattern": "\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in|function)\\b",
+        "pattern": "(?<![-/.\\w])\\b(if|then|else|elif|fi|for|while|until|do|done|case|esac|in)\\b",
         "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?<![-/.\\w])\\b(echo|printf|read|test|cd|pwd|ls|cp|mv|rm|grep|sed|awk|find|sort|uniq|wc|cut|tr|cat|head|tail|date|basename|dirname|stat|which|type|expr|bc|curl|wget|sudo)\\b",
+        "styles": [1, "builtin"]
       },
       {
         "pattern": "(\\$\\{)([^}]*)(\\})",
@@ -130,8 +235,8 @@
         "styles": [1, "punctuation", 2, "variable"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(\\()",
-        "styles": [1, "method", 2, "punctuation"]
+        "pattern": "(\\$)([@*#?\\-!$0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
       },
       {
         "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
@@ -146,8 +251,8 @@
         "style": "number"
       },
       {
-        "pattern": "${any}",
-        "style": "variable"
+        "pattern": "[|&;><]",
+        "style": "punctuation"
       }
     ],
     "heredoc": [

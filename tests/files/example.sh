@@ -1,17 +1,23 @@
 #!/bin/bash
 # Shell sample
 
-# variable
+# Variable assignment
 NAME="World"
-COUNT=42
-PI=3.14
+ITEMS=()
+APPEND+="extra"
 
-# built-in command (builtin)
+# Built-in commands
 echo "Hello, $NAME!"
 printf "Count: %d\n" "$COUNT"
 cd /tmp && pwd
+read -r -p "Enter: " input
 
-# function definition
+# Path arguments - keywords/builtins should NOT highlight in paths
+ls -la /tmp/test
+cat /var/log/do/done.log
+head -n 5 /etc/hosts
+
+# Function definitions
 greet() {
     local name="$1"
     local upper
@@ -36,24 +42,43 @@ function process_files() {
     return 0
 }
 
-# built-in command demonstration
-ls -la /tmp
-cp source.txt dest.txt
-mkdir -p /tmp/test
-touch /tmp/test/file.txt
-cat /tmp/test/file.txt
-head -n 5 /etc/hosts
-tail -n 3 /etc/hosts
-grep -r "pattern" /tmp
-find /tmp -name "*.txt" -type f
-sort /tmp/data.txt | uniq | wc -l
-chmod 755 /tmp/test
-date +"%Y-%m-%d %H:%M:%S"
-sleep 1
-which bash
-type echo
+# Command substitution $()
+CURRENT=$(date +%s)
+FILES=$(find . -name "*.sh" | wc -l)
+UPPER=$(echo "hello" | tr 'a-z' 'A-Z')
 
-# condition and loop
+# Nested command substitution
+COMPLEX=$(echo "$(date +%Y)-$(hostname)")
+
+# Backtick command substitution
+OLD_STYLE=`date +%s`
+KERNEL=`uname -r`
+LINE_COUNT=`wc -l < /etc/passwd`
+
+# Arithmetic expansion $((...))
+SUM=$((10 + 20))
+PRODUCT=$((COUNT * 3))
+REMAINDER=$((100 % 7))
+INCREMENT=$((COUNT + 1))
+
+# Variable expansion
+echo "HOME is ${HOME}"
+echo "Default: ${UNSET:-fallback}"
+echo "Assign: ${UNSET:=default}"
+
+# Special variables
+echo "Script: $0"
+echo "First arg: $1"
+echo "All args: $@"
+echo "All args: $*"
+
+# String types
+SINGLE='Hello, World! No $expansion here'
+DOUBLE="Hello, $NAME! With ${COUNT} items"
+ANSI=$'Line 1\nLine 2\tTabbed'
+EMPTY=""
+
+# Condition and loop
 if [ -d "/tmp" ] && [ "$COUNT" -gt 0 ]; then
     echo "Directory exists"
 elif [ "$NAME" = "World" ]; then
@@ -62,74 +87,64 @@ else
     echo "Other"
 fi
 
-for i in $(seq 1 5); do
-    echo "Iteration $i"
+# Select menu
+select opt in "Option1" "Option2" "Quit"; do
+    case $opt in
+        Quit) break ;;
+        *) echo "Selected: $opt" ;;
+    esac
 done
-
-while read -r line; do
-    echo "Line: $line"
-done < /etc/hosts
-
-case "$NAME" in
-    World)
-        echo "Global"
-        ;;
-    *)
-        echo "Other: $NAME"
-        ;;
-esac
-
-# variable expansion
-echo "HOME is ${HOME}"
-echo "Default: ${UNSET:-fallback}"
-echo "Length: ${#NAME}"
-echo "Slice: ${NAME:0:3}"
-
-# special variable
-echo "Script: $0"
-echo "Args: $@"
-echo "Count: $#"
-echo "Status: $?"
-echo "PID: $$"
-
-# command substitution
-CURRENT=$(date +%s)
-FILES=$(find . -name "*.sh" | wc -l)
-
-# varibale in double quote string
-echo "Current timestamp: ${CURRENT}"
-echo "Found ${FILES} shell scripts"
 
 # Here Document
 cat <<EOF
 Name: $NAME
 Count: $COUNT
+Home: ${HOME}
 EOF
 
-# array
-arr=(one two three)
+cat <<-'NOEXPAND'
+	No $variable expansion
+	Everything is literal: ${HOME}
+NOEXPAND
+
+# Numeric literals
+DEC=42
+FLOAT=3.14
+
+# Array
+arr=(one two three "four five")
 echo "${arr[0]}"
 echo "${arr[@]}"
+echo "${#arr[@]}"
+arr+=(six)
 
-# pipe and redirect
+declare -A map
+map[key1]="value1"
+map[key2]="value2"
+
+# Pipe and redirect
 echo "test" | grep "t" > /dev/null 2>&1
+cat < input.txt >> output.txt
+ls -la 2>/dev/null | sort -k5 -n | head -n 10
 
-# built-in value
-result=true
-failed=false
-
-# background execution
-nohup sleep 10 &
-wait
-
-# environment variable
+# Environment variables
 export PATH="/usr/local/bin:$PATH"
 env | grep HOME
 printenv USER
+readonly CONSTANT="immutable"
 
-# numeric operation
-expr 10 + 20
-echo "Scale: $(echo "scale=2; 22/7" | bc)"
+# Subshell and group
+(cd /tmp && ls)
+{ echo "grouped"; echo "commands"; }
 
-# trap signal handling
-trap 'echo "Caught signal"' EXIT
+# Useful patterns
+# Command chaining
+mkdir -p /tmp/build && cd /tmp/build && make clean
+command1 || echo "command1 failed"
+
+# Process substitution
+diff <(ls /dir1) <(ls /dir2)
+
+# Brace expansion
+echo {1..10}
+mkdir -p /tmp/{src,build,dist}
