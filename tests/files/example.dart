@@ -1,9 +1,9 @@
-// Dart 高亮示例
+// Dart sample
 
 import 'dart:async';
 import 'dart:math';
 
-/// 文档注释
+/// document comment
 abstract class Animal {
   final String name;
   final int age;
@@ -72,7 +72,7 @@ extension StringExt on String {
   bool get isPalindrome => this == split('').reversed.join();
 }
 
-// 异步
+// asynchronous
 Future<String> fetchData() async {
   await Future.delayed(Duration(seconds: 1));
   return "data";
@@ -88,17 +88,17 @@ void main() async {
   final dog = Dog("Buddy", 3);
   print(dog.speak());
 
-  // 数字字面量
+  // numeric literal
   int hex = 0xFF;
   double pi = 3.14159;
   num sci = 1.5e10;
 
-  // 内置常量
+  // built-in constant
   bool flag = true;
   bool off = false;
   var empty = null;
 
-  // 字符串
+  // string
   String single = 'single quotes';
   String double_ = "double quotes";
   String interpolated = "Name: ${dog.name}, Age: ${dog.age}";
@@ -108,12 +108,12 @@ void main() async {
     string literal
   ''';
 
-  // 集合
+  // collection
   var list = <int>[1, 2, 3];
   var map = <String, int>{'a': 1, 'b': 2};
   var set = <String>{'x', 'y', 'z'};
 
-  // 控制流
+  // control flow
   for (var item in list) {
     if (item > 1) {
       print(item);
@@ -127,17 +127,17 @@ void main() async {
       print("adult");
   }
 
-  // 空安全
+  // null safety
   String? nullable;
   var safe = nullable?.length ?? 0;
   var forced = nullable!;
 
-  // 级联操作
+  // cascade operation
   dog
     ..speak()
     ..toString();
 
-  /* 多行注释
-     跨越多行 */
+  /* multi-line comment
+     can span multiple lines */
   final data = await fetchData();
 }

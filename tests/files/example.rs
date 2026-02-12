@@ -1,10 +1,10 @@
-// Rust 高亮示例
+// Rust sample
 
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-/// 文档注释
+/// document comment
 #[derive(Debug, Clone)]
 struct Point {
     x: f64,
@@ -49,22 +49,39 @@ impl fmt::Display for Point {
     }
 }
 
-// 生命周期标注
+// lifetime annotation
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() { x } else { y }
+}
+
+// struct member field highlight test
+struct Config {
+    pub name: String,
+    timeout: u64,
+    data: &'static str,
 }
 
 struct Wrapper<'a, T: 'a> {
     data: &'a T,
 }
 
+// impl namespace + for type + generic test
 impl<'a, T: fmt::Display + 'static> Wrapper<'a, T> {
     fn show(&self) {
         println!("{}", self.data);
     }
 }
 
-// 宏定义
+// function return type highlight test
+fn create_map(size: usize) -> HashMap<String, Vec<i32>> {
+    HashMap::new()
+}
+
+fn get_name<'a>(input: &'a str) -> &'a str {
+    input
+}
+
+// macro definition
 macro_rules! create_map {
     ($($key:expr => $val:expr),* $(,)?) => {
         {
@@ -75,11 +92,11 @@ macro_rules! create_map {
     };
 }
 
-// 属性宏
+// attribute macro
 #![allow(unused)]
 
 fn main() {
-    // 宏调用
+    // macro call
     let map = create_map! {
         "one" => 1,
         "two" => 2,
@@ -88,21 +105,21 @@ fn main() {
     eprintln!("error message");
     assert_eq!(map.len(), 2);
 
-    // Vec 宏
+    // Vec macro
     let nums = vec![1, 2, 3, 4, 5];
     let formatted = format!("nums: {:?}", nums);
 
-    // 内置枚举变体
+    // built-in enum variant
     let opt: Option<i32> = Some(42);
     let none: Option<i32> = None;
     let ok: Result<i32, String> = Ok(100);
     let err: Result<i32, String> = Err("failed".to_string());
 
-    // 布尔值
+    // boolean value
     let flag = true;
     let off = false;
 
-    // 数字字面量
+    // numeric literal
     let hex = 0xFF_u32;
     let bin = 0b1010_i8;
     let oct = 0o77_u64;
@@ -110,38 +127,38 @@ fn main() {
     let sci = 1.5e10;
     let big = 1_000_000_usize;
 
-    // 字符串
+    // string
     let s = "Hello, World!";
     let ch = 'A';
     let escape = "tab:\t newline:\n";
     let raw = r#"raw string with "quotes""#;
     let byte = b"bytes";
 
-    // 生命周期使用
+    // lifetime usage
     let result = longest("hello", "world!");
     let wrapper = Wrapper { data: &42 };
     wrapper.show();
 
-    // 闭包和迭代器
+    // closure and iterator
     let doubled: Vec<i32> = nums.iter().map(|&x| x * 2).collect();
     let sum: i32 = doubled.iter().sum();
 
-    // 模式匹配
+    // pattern matching
     match opt {
         Some(val) if val > 0 => println!("Positive: {}", val),
         Some(_) => println!("Non-positive"),
         None => println!("Nothing"),
     }
 
-    // 错误处理
+    // error handling
     if let Ok(val) = ok {
         println!("Value: {}", val);
     }
 
-    // 智能指针
+    // smart pointer
     let shared: Arc<Vec<i32>> = Arc::new(vec![1, 2, 3]);
     let boxed: Box<dyn Drawable> = Box::new(Shape::Circle(5.0));
 
-    /* 多行注释
-       跨越多行 */
+    /* multi-line comment
+       can span multiple lines */
 }

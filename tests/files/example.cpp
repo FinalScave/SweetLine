@@ -1,4 +1,4 @@
-// C++ 高亮示例
+// C++ sample code
 #include <vector>
 #include <map>
 
@@ -35,13 +35,13 @@ public:
     std::vector<int> getIndices() const;
 };
 
-// 命名空间限定的类型使用
+// namespace-qualified type usage
 std::vector<int> indices = {1, 2, 3};
 std::map<std::string, int> lookup;
 std::shared_ptr<Renderer> renderer;
 std::unique_ptr<Graphics::Vertex> vertex;
 
-// 智能指针与模板
+// smart pointer and template
 auto createMatrix() -> std::shared_ptr<Graphics::Matrix<double, 4>> {
     return std::make_shared<Graphics::Matrix<double, 4>>(1.0);
 }
@@ -52,7 +52,7 @@ void processData(std::vector<double> &data, const std::string &name) {
     }
 }
 
-// 函数参数默认值
+// function parameter default value
 void render(int width = 800, int height = 600, bool fullscreen = false);
 void log(const std::string &msg, Graphics::LogLevel level = Graphics::LogLevel::Info);
 void initBuffer(size_t size = 1024, unsigned char fill = 0xFF);
@@ -79,7 +79,7 @@ int main() {
         }
     }
 
-    /* 多行注释
-       跨越多行 */
+    /* multi-line comment
+       can span multiple lines */
     return false ? 1 : 0;
 }

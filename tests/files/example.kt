@@ -1,4 +1,4 @@
-// Kotlin 高亮示例
+// Kotlin sample
 package com.example.demo
 
 import kotlin.collections.mutableListOf
@@ -15,6 +15,12 @@ sealed class Result<out T> {
     data class Success<T>(val data: T) : Result<T>()
     data class Error(val message: String) : Result<Nothing>()
 }
+
+// generic type
+data class DataA<T>(val a: Int) : Result<T>()
+open class Container<K, V>(val key: K, val value: V) : Map<K, V>
+abstract class Mapper<T : Comparable<T>>(val items: List<T>) : Iterable<T>
+class Registry<T>(name: String) : Repository<T> where T : Any
 
 interface Repository<T> {
     suspend fun findById(id: Int): T?
@@ -37,7 +43,7 @@ class UserService : Repository<User> {
     }
 }
 
-// 扩展函数
+// ext fun
 fun String.isPalindrome(): Boolean =
     this == this.reversed()
 
@@ -46,7 +52,7 @@ fun main() {
     val user = User("Alice", 30)
     service.add(user)
 
-    // 数字字面量
+    // number
     val hex = 0xFF_AB
     val bin = 0b1100_0011
     val long = 100_000L
@@ -56,14 +62,14 @@ fun main() {
     val isValid = true
     val nothing: String? = null
 
-    // 字符串模板
+    // string template
     val msg = "User: ${user.name}, Age: ${user.age}"
     val raw = """
         |multi-line
         |raw string
     """.trimMargin()
 
-    // 控制流
+    // control flow
     val result = when (user.age) {
         in 0..17 -> "minor"
         in 18..64 -> "adult"
@@ -77,10 +83,10 @@ fun main() {
         }
     }
 
-    // lambda 和高阶函数
+    // lambda
     val squares = items.map { it.length }.filter { it > 1 }
     val owner = false
 
-    /* 多行注释
-       跨越多行 */
+    /* comment
+       multi-line */
 }

@@ -5,34 +5,42 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.io.*;
 
-/* 多行注释
- * 展示 Java 高亮特性
+/* multi-line comment
+ * show Java highlight features
  */
 
-// 注解定义
+// annotation definition
 @interface MyAnnotation {
     String value() default "default";
+    int count() default 0;
+    boolean enabled() default true;
 }
 
-// 枚举类型
+// annotation with target
+@interface Validate {
+    String message() default "";
+    Class<?>[] groups() default {};
+}
+
+// enum type
 enum Color {
     RED, GREEN, BLUE
 }
 
-// record 类型
+// record type
 record Point(double x, double y) {}
 
-// 接口 + 泛型
+// interface + generic
 interface Comparable<T> {
     int compareTo(T other);
 }
 
-// sealed 类 + permits
+// sealed class + permits
 sealed class Shape permits Circle, Rectangle {
     abstract double area();
 }
 
-// 泛型类 + extends + implements
+// generic class + extends + implements
 public final class Circle extends Shape implements Comparable<Circle> {
     private final double radius;
 
@@ -51,7 +59,7 @@ public final class Circle extends Shape implements Comparable<Circle> {
     }
 }
 
-// 非密封类
+// non-sealed class
 non-sealed class Rectangle extends Shape {
     protected int width;
     protected int height;
@@ -67,12 +75,12 @@ non-sealed class Rectangle extends Shape {
     }
 }
 
-// 泛型方法、通配符、变量、控制流
+// generic method, wildcard, variable, control flow
 @SuppressWarnings("unchecked")
-@MyAnnotation(value = "示例")
+@MyAnnotation(value = "示例", count = 5, enabled = true)
 public class Example<T extends Comparable<T>> {
 
-    // 原始类型变量
+    // primitive type variable
     private static final int MAX_SIZE = 100;
     private boolean enabled = true;
     private char letter = 'A';
@@ -81,17 +89,32 @@ public class Example<T extends Comparable<T>> {
     private double pi = 3.14159d;
     private float ratio = 2.5f;
 
-    // 泛型字段
+    // generic field
     private List<String> names;
     private Map<String, List<Integer>> dataMap;
 
-    // 构造方法
+    // constructor
     public Example(List<String> names) {
         this.names = names;
         this.dataMap = Map.of();
     }
 
-    // 泛型方法 + 通配符
+    // generic method + wildcard (simple generic params)
+    public static <T> T identity(T item) {
+        return item;
+    }
+
+    // generic method with primitive return
+    public static <T> void process(T item) {
+        System.out.println(item);
+    }
+
+    // generic method with generic return type
+    public static <T> List<T> wrap(T item) {
+        return List.of(item);
+    }
+
+    // generic method + nested generic params (>> ending)
     public static <E extends Comparable<? super E>> E findMax(List<? extends E> list) {
         E max = null;
         for (E item : list) {
@@ -102,8 +125,18 @@ public class Example<T extends Comparable<T>> {
         return max;
     }
 
-    // lambda + 方法引用 + 流式API
-    public List<String> process() {
+    // generic method with nested params + generic return
+    public static <E extends Comparable<? super E>> List<E> sorted(List<E> input) {
+        return input.stream().sorted().collect(Collectors.toList());
+    }
+
+    // multiple type params
+    public static <K, V> Map<K, V> combine(List<K> keys, List<V> values) {
+        return Map.of();
+    }
+
+    // lambda + method reference + stream API
+    public List<String> transform() {
         return names.stream()
             .filter(name -> name.length() > 3)
             .map(String::toUpperCase)
@@ -111,7 +144,7 @@ public class Example<T extends Comparable<T>> {
             .collect(Collectors.toList());
     }
 
-    // switch表达式 + yield
+    // switch expression + yield
     public String describe(Color color) {
         return switch (color) {
             case RED -> "红色";
@@ -138,7 +171,7 @@ public class Example<T extends Comparable<T>> {
         }
     }
 
-    // 数组 + 循环
+    // array + loop
     public int[] createArray() {
         int[] arr = new int[MAX_SIZE];
         int i = 0;
@@ -152,7 +185,7 @@ public class Example<T extends Comparable<T>> {
         return arr;
     }
 
-    // 泛型 new + 断言
+    // generic new + assertion
     public void demo() {
         List<String> list = new ArrayList<String>();
         Map<String, List<Integer>> map = new ArrayList<>();
@@ -160,7 +193,7 @@ public class Example<T extends Comparable<T>> {
         assert value != null : "值不能为空";
     }
 
-    // 文本块
+    // text block
     public String getJson() {
         return """
             {
@@ -170,7 +203,7 @@ public class Example<T extends Comparable<T>> {
             """;
     }
 
-    // main方法
+    // main method
     public static void main(String[] args) {
         Example<Circle> example = new Example<>(List.of());
         Circle c1 = new Circle(5.0);

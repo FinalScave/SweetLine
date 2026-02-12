@@ -1,6 +1,6 @@
--- SQL 高亮示例
+-- SQL sample
 
--- 创建表
+-- create table
 CREATE TABLE users (
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
@@ -13,12 +13,12 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_email ON users(email);
 
--- 插入数据
+-- insert data
 INSERT INTO users (name, email, age, salary, is_active)
 VALUES ('Alice', 'alice@example.com', 30, 75000.50, TRUE),
        ('Bob', 'bob@example.com', 25, 60000.00, FALSE);
 
--- 基本查询
+-- basic query
 SELECT u.id, u.name, u.email
 FROM users u
 WHERE u.is_active = TRUE
@@ -28,7 +28,7 @@ WHERE u.is_active = TRUE
 ORDER BY u.name ASC
 LIMIT 10 OFFSET 0;
 
--- 聚合函数 (builtin)
+-- aggregate function (builtin)
 SELECT COUNT(*) AS total,
        AVG(salary) AS avg_salary,
        MAX(salary) AS max_salary,
@@ -40,7 +40,7 @@ WHERE is_active = TRUE
 GROUP BY is_active
 HAVING COUNT(*) > 1;
 
--- 窗口函数 (builtin)
+-- window function (builtin)
 SELECT name,
        salary,
        ROW_NUMBER() OVER (ORDER BY salary DESC) AS rank,
@@ -49,7 +49,7 @@ SELECT name,
        LEAD(salary) OVER (ORDER BY salary) AS next_salary
 FROM users;
 
--- 字符串函数 (builtin)
+-- string function (builtin)
 SELECT UPPER(name) AS upper_name,
        LOWER(email) AS lower_email,
        LENGTH(name) AS name_len,
@@ -60,18 +60,18 @@ SELECT UPPER(name) AS upper_name,
        COALESCE(email, 'N/A') AS safe_email
 FROM users;
 
--- 日期函数 (builtin)
+-- date function (builtin)
 SELECT NOW() AS current_time,
        EXTRACT(YEAR FROM created_at) AS year,
        DATE_TRUNC('month', created_at) AS month_start
 FROM users;
 
--- JSON 函数 (builtin)
+-- JSON function (builtin)
 SELECT JSON_OBJECT('name', name, 'age', age) AS user_json,
        JSON_ARRAY(name, email) AS user_array
 FROM users;
 
--- JOIN 查询
+-- JOIN query
 SELECT u.name, o.amount
 FROM users u
 INNER JOIN orders o ON u.id = o.user_id
@@ -79,7 +79,7 @@ LEFT JOIN payments p ON o.id = p.order_id
 WHERE o.amount > 100.00
   AND p.id IS NULL;
 
--- 子查询和 CTE
+-- sub query and CTE
 WITH active_users AS (
     SELECT id, name, salary
     FROM users
@@ -89,7 +89,7 @@ SELECT name, salary
 FROM active_users
 WHERE salary > (SELECT AVG(salary) FROM active_users);
 
--- CASE 表达式
+-- CASE expression
 SELECT name,
        CASE
            WHEN age < 18 THEN 'minor'
@@ -100,14 +100,14 @@ SELECT name,
        CAST(age AS VARCHAR) AS age_str
 FROM users;
 
--- 更新和删除
+-- update and delete
 UPDATE users SET salary = salary * 1.1 WHERE is_active = TRUE;
 DELETE FROM users WHERE is_active = FALSE AND age < 18;
 
--- 事务
+-- transaction
 BEGIN TRANSACTION;
     UPDATE users SET salary = 80000 WHERE name = 'Alice';
     COMMIT;
 
-/* 多行注释
-   跨越多行 */
+/* multi-line comment
+   can span multiple lines */

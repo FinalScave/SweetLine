@@ -1,6 +1,6 @@
-# Python 高亮示例
+# Python sample
 
-"""模块文档字符串"""
+"""module docstring"""
 
 import os
 from typing import List, Optional
@@ -10,7 +10,7 @@ def greet(name: str) -> str:
     return f"Hello, {name}!"
 
 class Animal:
-    """动物基类"""
+    """animal base class"""
 
     def __init__(self, name: str, age: int):
         self.name = name
@@ -28,13 +28,13 @@ class Dog(Animal):
     def speak(self) -> str:
         return "Woof!"
 
-# 内置函数和类型
+# built-in function and type
 nums = list(range(10))
 total = sum(nums)
 length = len(nums)
 result = sorted(nums, reverse=True)
 
-# 字面量和数字
+# literal and numeric
 flag = True
 empty = None
 pi = 3.14159
@@ -43,7 +43,7 @@ bin_val = 0b1010
 oct_val = 0o77
 complex_val = 3+4j
 
-# 控制流
+# control flow
 for i, val in enumerate(nums):
     if val > 5 and not flag:
         print(f"Value: {val}")
@@ -51,7 +51,7 @@ for i, val in enumerate(nums):
     elif val == 0:
         continue
 
-# 异常处理
+# exception handling
 try:
     data = open("file.txt").read()
 except FileNotFoundError as e:
@@ -59,7 +59,7 @@ except FileNotFoundError as e:
 finally:
     pass
 
-# lambda 和推导式
+# lambda and comprehension
 square = lambda x: x ** 2
 evens = [x for x in range(20) if x % 2 == 0]
 mapping = {str(k): bool(v) for k, v in zip(nums, evens)}

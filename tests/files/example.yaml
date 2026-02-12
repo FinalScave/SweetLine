@@ -1,6 +1,6 @@
-# YAML 高亮示例
+# YAML Highlight Example
 ---
-# 基本键值对
+# Basic key-value pairs
 name: SweetLine
 version: "1.0.0"
 description: 'A lightweight syntax highlighter'
@@ -9,7 +9,7 @@ debug: false
 empty: null
 nothing: ~
 
-# 数字
+# Numbers
 count: 42
 negative: -17
 hex: 0xFF
@@ -17,10 +17,12 @@ octal: 0o755
 float: 3.14
 scientific: 1.5e+10
 infinity: .inf
+pos_infinity: +.inf
 neg_infinity: -.inf
 not_a_number: .nan
+nan_upper: .NaN
 
-# 嵌套结构
+# Nested structure
 database:
   host: "192.168.1.1"
   port: 5432
@@ -32,7 +34,7 @@ database:
     retries: 3
     ssl: true
 
-# 列表
+# Lists
 languages:
   - name: Rust
     type: compiled
@@ -44,15 +46,16 @@ languages:
     type: compiled
     year: 2009
 
-# 流式列表和映射
+# Flow sequences and mappings
 colors: [red, green, blue]
 point: {x: 10, y: 20, z: 30}
 
-# 类型标签
+# Type tags
 binary: !!binary aGVsbG8=
 timestamp: !!timestamp 2024-01-15T10:30:00Z
+custom: !custom_tag value
 
-# 锚点和引用
+# Anchors and aliases
 defaults: &defaults
   adapter: postgres
   pool: 5
@@ -66,7 +69,7 @@ production:
   database: prod_db
   pool: 25
 
-# 多行字符串
+# Block scalars
 literal_block: |
   This is line 1.
   This is line 2.
@@ -81,13 +84,17 @@ stripped: |-
   No trailing
   newline here
 
-# 日期
+# Dates
 created: 2024-01-15
 updated: 2024-06-20T15:30:00+08:00
 
-# 布尔值的各种写法
+# Boolean variants
 yes_val: yes
 no_val: no
 on_val: on
 off_val: off
+
+# Inline comments
+key: value # this is an inline comment
+url: "https://example.com#not-a-comment"
 ...

@@ -1,17 +1,17 @@
-// JavaScript 高亮示例
+// JavaScript sample
 
 import { readFile } from 'fs/promises';
 export default class App {};
 
 /**
- * JSDoc 注释
- * @param {string} name - 名称
+ * JSDoc comment
+ * @param {string} name - name
  */
 function greet(name) {
     return `Hello, ${name}!`;
 }
 
-// 类定义
+// class definition
 class Animal {
     constructor(name, type) {
         this.name = name;
@@ -35,7 +35,7 @@ class Dog extends Animal {
     }
 }
 
-// 内置对象和方法
+// built-in object and method
 const arr = Array.from({ length: 5 }, (_, i) => i);
 const now = Date.now();
 const str = String.fromCharCode(65);
@@ -44,7 +44,7 @@ const parsed = JSON.parse('{"a": 1}');
 const promise = Promise.resolve(42);
 console.log(Math.PI);
 
-// 内置常量
+// built-in constant
 const a = true;
 const b = false;
 const c = null;
@@ -52,31 +52,31 @@ const d = undefined;
 const e = NaN;
 const f = Infinity;
 
-// 全局函数
+// global function
 const num = parseInt("42", 10);
 const flt = parseFloat("3.14");
 const valid = isNaN(NaN);
 const finite = isFinite(100);
 const encoded = encodeURIComponent("hello world");
 
-// 数字字面量
+// numeric literal
 let hex = 0xFF;
 let bin = 0b1010;
 let oct = 0o77;
 let big = 100_000n;
 let sci = 1.5e10;
 
-// 正则表达式
+// regular expression
 const regex = /^[a-z]+$/gi;
 
-// 模板字符串
+// template string
 const tpl = `Count: ${arr.length}, Time: ${now}`;
 
-// 解构和展开
+// destructuring and spreading
 const { key: val } = parsed;
 const [first, ...rest] = arr;
 
-// async/await
+// asynchronous/await
 async function fetchData() {
     try {
         const data = await readFile("test.txt");
@@ -88,9 +88,9 @@ async function fetchData() {
     }
 }
 
-// 可选链和空值合并
+// optional chaining and nullish coalescing
 const obj = { nested: { value: 10 } };
 const safe = obj?.nested?.value ?? 0;
 
-/* 多行注释
-   跨越多行 */
+/* multi-line comment
+   can span multiple lines */

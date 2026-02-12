@@ -1,17 +1,17 @@
 #!/bin/bash
-# Shell 高亮示例
+# Shell sample
 
-# 变量
+# variable
 NAME="World"
 COUNT=42
 PI=3.14
 
-# 内置命令 (builtin)
+# built-in command (builtin)
 echo "Hello, $NAME!"
 printf "Count: %d\n" "$COUNT"
 cd /tmp && pwd
 
-# 函数定义
+# function definition
 greet() {
     local name="$1"
     local upper
@@ -36,7 +36,7 @@ function process_files() {
     return 0
 }
 
-# 内置命令演示
+# built-in command demonstration
 ls -la /tmp
 cp source.txt dest.txt
 mkdir -p /tmp/test
@@ -53,7 +53,7 @@ sleep 1
 which bash
 type echo
 
-# 条件和循环
+# condition and loop
 if [ -d "/tmp" ] && [ "$COUNT" -gt 0 ]; then
     echo "Directory exists"
 elif [ "$NAME" = "World" ]; then
@@ -79,24 +79,24 @@ case "$NAME" in
         ;;
 esac
 
-# 变量展开
+# variable expansion
 echo "HOME is ${HOME}"
 echo "Default: ${UNSET:-fallback}"
 echo "Length: ${#NAME}"
 echo "Slice: ${NAME:0:3}"
 
-# 特殊变量
+# special variable
 echo "Script: $0"
 echo "Args: $@"
 echo "Count: $#"
 echo "Status: $?"
 echo "PID: $$"
 
-# 命令替换
+# command substitution
 CURRENT=$(date +%s)
 FILES=$(find . -name "*.sh" | wc -l)
 
-# 双引号中的变量
+# varibale in double quote string
 echo "Current timestamp: ${CURRENT}"
 echo "Found ${FILES} shell scripts"
 
@@ -106,30 +106,30 @@ Name: $NAME
 Count: $COUNT
 EOF
 
-# 数组
+# array
 arr=(one two three)
 echo "${arr[0]}"
 echo "${arr[@]}"
 
-# 管道和重定向
+# pipe and redirect
 echo "test" | grep "t" > /dev/null 2>&1
 
-# 内置值
+# built-in value
 result=true
 failed=false
 
-# 后台执行
+# background execution
 nohup sleep 10 &
 wait
 
-# 环境变量
+# environment variable
 export PATH="/usr/local/bin:$PATH"
 env | grep HOME
 printenv USER
 
-# 数值运算
+# numeric operation
 expr 10 + 20
 echo "Scale: $(echo "scale=2; 22/7" | bc)"
 
-# trap 信号处理
+# trap signal handling
 trap 'echo "Caught signal"' EXIT

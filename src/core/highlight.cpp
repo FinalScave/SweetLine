@@ -159,14 +159,29 @@ namespace NS_SWEETLINE {
     size_t current_char_pos = 0;
     int32_t current_state = info.start_state;
     size_t line_char_count = Utf8Util::countChars(text);
+    bool had_zero_width = false;
     // 一直匹配到当前行最后一个字符
     while (current_char_pos < line_char_count) {
       MatchResult match_result = matchAtPosition(text, current_char_pos, current_state);
       if (!match_result.matched) {
         current_char_pos++;
+        had_zero_width = false;
         continue;
       }
-      addLineHighlightResult(result.highlight, info, current_state, match_result);
+      // 同一位置最多允许一次零宽匹配，防止死循环
+      if (match_result.length == 0) {
+        if (had_zero_width) {
+          current_char_pos++;
+          had_zero_width = false;
+          continue;
+        }
+        had_zero_width = true;
+      } else {
+        had_zero_width = false;
+      }
+      if (match_result.length > 0) {
+        addLineHighlightResult(result.highlight, info, current_state, match_result);
+      }
       current_char_pos = match_result.start + match_result.length;
       if (match_result.goto_state >= 0) {
         current_state = match_result.goto_state;
@@ -202,7 +217,7 @@ namespace NS_SWEETLINE {
     if (match_byte_pos >= 0) {
       size_t match_start_byte = match_byte_pos;
       size_t match_end_byte = region->end[0];
-      if (match_end_byte <= match_start_byte) {
+      if (match_end_byte < match_start_byte) {
         return result;
       }
       size_t match_length_bytes = match_end_byte - match_start_byte;
@@ -287,32 +302,47 @@ namespace NS_SWEETLINE {
     size_t sub_text_len = Utf8Util::countChars(sub_text);
     size_t sub_pos = 0;
     int32_t current_state = sub_state;
+    bool had_zero_width = false;
     while (sub_pos < sub_text_len) {
       MatchResult sub_result = matchAtPosition(sub_text, sub_pos, current_state);
       if (!sub_result.matched) {
         sub_pos++;
+        had_zero_width = false;
         continue;
       }
-      if (sub_result.capture_groups.empty()) {
-        // 子匹配无捕获组，整体作为一个CaptureGroupMatch
-        if (sub_result.style > 0) {
-          CaptureGroupMatch gm;
-          gm.group = group;
-          gm.style = sub_result.style;
-          gm.start = base_char_offset + sub_result.start;
-          gm.length = sub_result.length;
-          capture_groups.push_back(gm);
+      // 同一位置最多允许一次零宽匹配，防止死循环
+      if (sub_result.length == 0) {
+        if (had_zero_width) {
+          sub_pos++;
+          had_zero_width = false;
+          continue;
         }
+        had_zero_width = true;
       } else {
-        // 子匹配有捕获组，逐个展平
-        for (const CaptureGroupMatch& sub_gm : sub_result.capture_groups) {
-          if (sub_gm.style > 0) {
+        had_zero_width = false;
+      }
+      if (sub_result.length > 0) {
+        if (sub_result.capture_groups.empty()) {
+          // 子匹配无捕获组，整体作为一个CaptureGroupMatch
+          if (sub_result.style > 0) {
             CaptureGroupMatch gm;
             gm.group = group;
-            gm.style = sub_gm.style;
-            gm.start = base_char_offset + sub_gm.start;
-            gm.length = sub_gm.length;
+            gm.style = sub_result.style;
+            gm.start = base_char_offset + sub_result.start;
+            gm.length = sub_result.length;
             capture_groups.push_back(gm);
+          }
+        } else {
+          // 子匹配有捕获组，逐个展平
+          for (const CaptureGroupMatch& sub_gm : sub_result.capture_groups) {
+            if (sub_gm.style > 0) {
+              CaptureGroupMatch gm;
+              gm.group = group;
+              gm.style = sub_gm.style;
+              gm.start = base_char_offset + sub_gm.start;
+              gm.length = sub_gm.length;
+              capture_groups.push_back(gm);
+            }
           }
         }
       }

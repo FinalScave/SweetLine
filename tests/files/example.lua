@@ -1,13 +1,13 @@
--- Lua 高亮示例
+-- Lua sample
 
---[[ 多行注释
-     跨越多行 ]]
+--[[ multi-line comment
+      can span multiple lines ]]
 
 local function greet(name)
     print("Hello, " .. name .. "!")
 end
 
--- 面向对象
+-- object-oriented
 local Animal = {}
 Animal.__index = Animal
 
@@ -22,7 +22,7 @@ function Animal:speak()
     return self.name .. " says " .. self.sound
 end
 
--- 内置函数
+-- built-in function
 local nums = {3, 1, 4, 1, 5}
 local len = #nums
 local str = tostring(42)
@@ -39,45 +39,45 @@ for k, v in pairs({a = 1, b = 2}) do
     assert(v > 0)
 end
 
--- 数字字面量
+-- numeric literal
 local hex = 0xFF
 local float = 3.14
 local sci = 1e10
 local zero = 0
 
--- 字面量
+-- literal
 local flag = true
 local off = false
 local empty = nil
 
--- 长字符串
+-- long string
 local longStr = [[
 this is a
 multi-line string
 ]]
 
--- 字符串库
+-- string library
 local upper = string.upper("hello")
 local result = string.format("PI = %.2f", 3.14)
 local found = string.find("hello world", "world")
 
--- 数学库
+-- math library
 local abs = math.abs(-42)
 local sqrt = math.sqrt(144)
 
--- 表操作
+-- table operation
 local t = {10, 20, 30}
 table.insert(t, 40)
 table.sort(t)
 
--- pcall 错误处理
+-- pcall error handling
 local ok, err = pcall(function()
     error("something went wrong")
 end)
 
--- require 模块
+-- require module
 local json = require("json")
 
--- select 和 unpack
+-- select and unpack
 local first = select(1, "a", "b", "c")
 local a, b = unpack({10, 20})

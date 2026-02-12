@@ -92,13 +92,51 @@
     ],
     "blockScalar": [
       {
-        "pattern": "^(?=[^ \\t])",
-        "style": "string",
-        "state": "default"
+        "onLineEndState": "blockScalarLine"
       },
       {
         "pattern": "${any}",
         "style": "string"
+      }
+    ],
+    "blockScalarLine": [
+      {
+        "onLineEndState": "default"
+      },
+      {
+        "pattern": "^[ \\t]${any}*",
+        "style": "string",
+        "state": "blockScalar"
+      },
+      {
+        "pattern": "^---",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "^\\.\\.\\.",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "^#${any}*",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "(['\"]?[^'\":#\\[\\]{},]+['\"]?)${whiteSpace}*(:)(?=${whiteSpace}|$)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(-)${whiteSpace}+",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "keyword",
+        "state": "default"
       }
     ]
   }

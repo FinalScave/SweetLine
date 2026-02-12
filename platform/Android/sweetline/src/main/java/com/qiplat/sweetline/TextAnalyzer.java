@@ -1,5 +1,7 @@
 package com.qiplat.sweetline;
 
+import android.text.Spannable;
+
 import com.qiplat.sweetline.util.NativeBufferPack;
 
 import dalvik.annotation.optimization.CriticalNative;
@@ -27,6 +29,20 @@ public class TextAnalyzer {
         }
         int[] buffer = nativeAnalyzeText(nativeHandle, text);
         return NativeBufferPack.readDocumentHighlight(buffer);
+    }
+
+    /**
+     * 分析一段文本内容，并将高亮结果转换为 {@link Spannable}
+     * @param text 整段文本内容
+     * @param styleFactory Span样式函数，通过styleId创建对应Span样式
+     * @return {@link Spannable}
+     */
+    public Spannable analyzeTextAsSpannable(String text, SpannableStyleFactory styleFactory) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeText(nativeHandle, text);
+        return NativeBufferPack.readSpannable(text, buffer, styleFactory);
     }
 
     /**

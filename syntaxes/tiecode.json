@@ -32,6 +32,11 @@
         "state": "methodParams"
       },
       {
+        "pattern": "(方法)${whiteSpace}+([+\\-*/%^?!=><\\[\\]]*)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 3, "punctuation"],
+        "state": "methodParams"
+      },
+      {
         "pattern": "(变量)${whiteSpace}+(${identifier})(?:${whiteSpace}*(:)${whiteSpace}*)?",
         "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
         "state": "typeDeclare"

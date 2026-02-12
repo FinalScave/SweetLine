@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.SpannableStyleFactory;
+import com.qiplat.sweetline.TextAnalyzer;
 
 import org.commonmark.node.FencedCodeBlock;
 
@@ -47,9 +48,8 @@ public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
             final String literal = fencedCodeBlock.getLiteral();
             final String info = fencedCodeBlock.getInfo();
             if (info != null) {
-                Document document = new Document("markwon." + info, literal);
-                DocumentAnalyzer documentAnalyzer = SweetLineGlobal.getEngineInstance().loadDocument(document);
-                Spannable highlightedCode = documentAnalyzer.analyzeAsSpannable(styleFactory);
+                TextAnalyzer textAnalyzer = SweetLineGlobal.getEngineInstance().createAnalyzerByExtension(info);
+                Spannable highlightedCode = textAnalyzer.analyzeTextAsSpannable(literal, styleFactory);
                 visitor.builder().append(highlightedCode);
             } else {
                 visitor.builder().append(literal);

@@ -1,4 +1,4 @@
-/* C 语言高亮示例 */
+/* C sample code */
 #include <stdio.h>
 #include <stdlib.h>
 #include "utils.h"
@@ -10,7 +10,7 @@
 #pragma message("Debug mode")
 #endif
 
-// 结构体定义
+// struct definition
 struct Point {
     double x;
     double y;
@@ -27,7 +27,7 @@ union Data {
 typedef unsigned long size_t;
 typedef struct Point Point;
 
-// 多参数函数声明
+// multi-parameter function declaration
 double distance(double x1, double y1, double x2, double y2);
 
 static int factorial(int n) {
@@ -61,12 +61,12 @@ int main(void) {
     union Data data;
     int result = SQUARE(5);
 
-    // 结构体成员访问
+    // struct member access
     p.x = 3.0;
     p.y = 4.0;
     double dist = distance(0.0, 0.0, p.x, p.y);
 
-    // 指针与数组
+    // pointer and array
     int *ptr = &result;
     arr[0] = *ptr;
 
@@ -87,7 +87,7 @@ int main(void) {
             break;
     }
 
-    /* 多行注释
-       可以跨多行 */
+    /* multi-line comment
+       can span multiple lines */
     return NULL == false ? 0 : 1;
 }

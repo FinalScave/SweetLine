@@ -1,6 +1,6 @@
-# TOML 高亮示例
+# TOML sample
 
-# 基本键值对
+# basic key-value
 title = "SweetLine Config"
 version = "1.0.0"
 debug = true
@@ -20,7 +20,7 @@ enabled = true
 username = "admin"
 password = "secret"
 
-# 数字类型
+# number
 [numbers]
 integer = 42
 negative = -17
@@ -35,7 +35,7 @@ neg_infinity = -inf
 not_a_number = nan
 underscored = 1_000_000
 
-# 字符串类型
+# string
 [strings]
 basic = "Hello, World!\n"
 literal = 'no \escape here'
@@ -47,14 +47,14 @@ multi_literal = '''
     raw content
     no escapes'''
 
-# 日期和时间
+# date & time
 [datetime]
 full = 2024-01-15T10:30:00Z
 offset = 2024-01-15T10:30:00+08:00
 local_date = 2024-01-15
 local_time = 10:30:00
 
-# 数组表
+# array
 [[products]]
 name = "Hammer"
 sku = 738594937
@@ -67,7 +67,7 @@ sku = 284758393
 price = 0.05
 color = "gray"
 
-# 内联表
+# inline table
 [servers]
 alpha = { ip = "10.0.0.1", role = "frontend" }
 beta = { ip = "10.0.0.2", role = "backend" }

@@ -151,12 +151,37 @@
         "styles": [2, "number", 3, "punctuation"]
       },
       {
+        "pattern": "<!--.*?-->",
+        "style": "comment"
+      },
+      {
+        "pattern": "<!--",
+        "style": "comment",
+        "state": "htmlComment"
+      },
+      {
+        "pattern": "(</?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "annotation", 4, "punctuation"]
+      },
+      {
+        "pattern": "^(\\[)([^\\]]+)(\\]:)${whiteSpace}+(.+)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation", 4, "string"]
+      },
+      {
         "pattern": "(!)?(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))",
         "styles": [1, "keyword", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation", 6, "string", 7, "punctuation"]
       },
       {
+        "pattern": "(\\[\\^)([^\\]]+)(\\])",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
         "pattern": "(\\[)([^\\]]*)(\\])(\\[)([^\\]]*)(\\])",
         "styles": [1, "punctuation", 2, "annotation", 3, "punctuation", 4, "punctuation", 5, "variable", 6, "punctuation"]
+      },
+      {
+        "pattern": "\\\\[\\\\`*_{}\\[\\]()#+.!|~>-]",
+        "style": "string"
       },
       {
         "pattern": "(\\*\\*|__)(.*?)(\\*\\*|__)",
@@ -171,7 +196,11 @@
         "styles": [1, "punctuation", 2, "comment", 3, "punctuation"]
       },
       {
-        "pattern": "^(\\|.*\\|)${whiteSpace}*$",
+        "pattern": "https?://[^\\s<>)\\]]+",
+        "style": "string"
+      },
+      {
+        "pattern": "^\\|.*\\|${whiteSpace}*$",
         "style": "variable",
         "state": "table"
       }
@@ -190,6 +219,14 @@
         "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"]
       },
       {
+        "pattern": "(\\*|_)(.*?)(\\*|_)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(~~)(.*?)(~~)",
+        "styles": [1, "punctuation", 2, "comment", 3, "punctuation"]
+      },
+      {
         "pattern": "(`)([^`]+)(`)",
         "styles": [1, "punctuation", 2, "string", 3, "punctuation"]
       },
@@ -200,6 +237,17 @@
       },
       {
         "onLineEndState": "table"
+      }
+    ],
+    "htmlComment": [
+      {
+        "pattern": "-->",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "codeBlockJava": [
@@ -379,7 +427,7 @@
         "state": "default"
       },
       {
-        "importSyntax": "json-sweetline"
+        "importSyntax": "json"
       }
     ],
     "codeBlockYaml": [

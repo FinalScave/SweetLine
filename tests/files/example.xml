@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- XML 高亮示例 -->
+<!-- XML sample -->
 <!DOCTYPE catalog SYSTEM "catalog.dtd">
 
 <catalog xmlns="http://example.com/catalog"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://example.com/catalog catalog.xsd">
 
-    <!-- 书籍列表 -->
+    <!-- book list -->
     <book id="001" category="fiction">
-        <title lang="zh">三体</title>
-        <author>刘慈欣</author>
+        <title lang="zh">Three Body</title>
+        <author>Liu Cixin</author>
         <year>2008</year>
         <price currency="CNY">36.00</price>
-        <description>一部科幻小说</description>
+        <description>a science fiction novel</description>
     </book>
 
     <book id="002" category="tech">
@@ -23,7 +23,7 @@
         <available>true</available>
     </book>
 
-    <!-- CDATA 部分 -->
+    <!-- CDATA section -->
     <script>
         <![CDATA[
             function test() {
@@ -32,15 +32,15 @@
         ]]>
     </script>
 
-    <!-- 实体引用 -->
-    <note>使用 &lt;tag&gt; 和 &amp; 符号</note>
-    <special>&#169; 版权所有 &#x2764; 爱心</special>
+    <!-- entity reference -->
+    <note>use &lt;tag&gt; and &amp; symbol</note>
+    <special>&#169; copyright &#x2764; love</special>
 
-    <!-- 自闭合标签 -->
+    <!-- self-closing tag -->
     <meta name="version" value="1.0" />
     <separator />
 
-    <!-- 嵌套结构 -->
+    <!-- nested structure -->
     <library>
         <section name="Science">
             <shelf row="1" col="A">

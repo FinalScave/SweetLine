@@ -32,6 +32,11 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         SweetLineGlobal.getEngineInstance().registerStyleName("variable", 7);
         SweetLineGlobal.getEngineInstance().registerStyleName("punctuation", 8);
         SweetLineGlobal.getEngineInstance().registerStyleName("annotation", 9);
+        SweetLineGlobal.getEngineInstance().registerStyleName("preprocessor", 10);
+        SweetLineGlobal.getEngineInstance().registerStyleName("macro", 11);
+        SweetLineGlobal.getEngineInstance().registerStyleName("lifetime", 12);
+        SweetLineGlobal.getEngineInstance().registerStyleName("selector", 13);
+        SweetLineGlobal.getEngineInstance().registerStyleName("builtin", 14);
         colorMap.append(1, 0XFF569CD6);
         colorMap.append(2, 0XFFBD63C5);
         colorMap.append(3, 0XFFE4FAD5);
@@ -41,6 +46,11 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         colorMap.append(7, 0XFF9B9BC8);
         colorMap.append(8, 0XFFD69D85);
         colorMap.append(9, 0XFFFFFD9B);
+        colorMap.append(10, 0XFF569CD6);
+        colorMap.append(11, 0XFF9B9BC8);
+        colorMap.append(12, 0XFF4EC9B0);
+        colorMap.append(13, 0XFF4EC9B0);
+        colorMap.append(14, 0XFF569CD6);
     }
 
     @Override
@@ -55,7 +65,7 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         Markwon markwon = Markwon.builder(this).usePlugin(plugin).build();
 
         try {
-            String testMd = AssetUtils.readAsset(this, "Test.md");
+            String testMd = AssetUtils.readAsset(this, "example.md");
             markwon.setMarkdown(mainTextView, testMd);
         } catch (Exception e) {
             e.printStackTrace();
@@ -64,10 +74,16 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
 
     private void preCompileSyntax() {
         try {
-            String javaSyntaxJson = AssetUtils.readAsset(this, "java.json");
-            String tiecodeSyntaxJson = AssetUtils.readAsset(this, "tiecode.json");
-            SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(javaSyntaxJson);
-            SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(tiecodeSyntaxJson);
+            String[] syntaxFiles = {
+                    "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json",
+                    "javascript.json", "html.json", "java.json", "json-sweetline.json", "kotlin.json", "lua.json",
+                    "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "toml.json",
+                    "typescript.json", "xml.json", "yaml.json", "tiecode.json", "markdown.json"
+            };
+            for (String syntaxFile : syntaxFiles) {
+                String syntaxJson = AssetUtils.readAsset(this, syntaxFile);
+                SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(syntaxJson);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

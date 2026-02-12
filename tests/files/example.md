@@ -1,57 +1,97 @@
-# 一级标题
-## 二级标题
-### 三级标题
-#### 四级标题
-##### 五级标题
-###### 六级标题
+# H1 Heading
+## H2 Heading
+### H3 Heading
+#### H4 Heading
+##### H5 Heading
+###### H6 Heading
 
-这是普通文本，包含**加粗文本**和*斜体文本*以及~~删除线文本~~。
+This is plain text with **bold text** and *italic text* and ~~strikethrough text~~.
 
-还可以使用__下划线加粗__和_下划线斜体_。
+You can also use __underline bold__ and _underline italic_.
 
-行内代码：`println("Hello")` 和 `int x = 42`。
+Inline code: `println("Hello")` and `int x = 42`.
 
 ---
 
-> 这是一段引用文本
-> 引用可以有多行
+> This is a blockquote
+> Blockquotes can span multiple lines
 
 ***
 
-## 链接与图片
+## Links
 
-[SweetLine项目](https://github.com/example/sweetline)
+[SweetLine Project](https://github.com/FinalScave/SweetLine)
 
-![Logo图片](https://example.com/logo.png)
+[Reference link text][ref-id]
 
-[引用链接文本][ref-id]
+[ref-id]: https://example.com "Reference Link Definition"
 
 ___
 
-## 列表
+## Footnotes
 
-- 无序列表项一
-- 无序列表项二
-* 星号列表项
-+ 加号列表项
+This text has a footnote[^1] and another one[^note].
 
-1. 有序列表项一
-2. 有序列表项二
-3. 有序列表项三
+[^1]: This is the first footnote definition.
+[^note]: This is a named footnote definition.
 
-- [x] 已完成任务
-- [ ] 未完成任务
-- [X] 大写X也表示完成
+## Lists
 
-## 表格
+- Unordered list item one
+- Unordered list item two
+* Asterisk list item
++ Plus list item
 
-| 语言 | 类型 | 特点 |
-|:-----|:----:|-----:|
-| Java | 编译型 | **跨平台** |
-| Python | 解释型 | `简洁易读` |
-| Rust | 编译型 | **内存安全** |
+1. Ordered list item one
+2. Ordered list item two
+3. Ordered list item three
 
-## 代码块
+- [x] Completed task
+- [ ] Incomplete task
+- [X] Uppercase X also means completed
+
+## Escape Characters
+
+Use \* to show a literal asterisk without triggering italic.
+
+Use \# to show a literal hash symbol.
+
+Escaped brackets: \[ and \] and backslash: \\
+
+## HTML Support
+
+<!-- This is an HTML comment -->
+
+<!--
+This is a multi-line
+HTML comment
+-->
+
+<div class="container">
+  <p>HTML paragraph tag</p>
+  <br/>
+  <a href="https://example.com">HTML link</a>
+</div>
+
+## Bare URLs
+
+Visit https://github.com/FinalScave/SweetLine for the project.
+
+## Images
+
+![Alt text](https://example.com/image.png)
+
+## Table
+
+| Language | Type | Feature |
+|:---------|:----:|--------:|
+| Java | Compiled | **Cross-platform** |
+| Python | Interpreted | `Concise & readable` |
+| Rust | Compiled | **Memory safe** |
+| Swift | Compiled | *Modern syntax* |
+| Go | Compiled | ~~Complex generics~~ |
+
+## Code Blocks
 
 ```java
 public class Hello {
@@ -63,7 +103,7 @@ public class Hello {
 
 ```python
 def greet(name: str) -> str:
-    """问候函数"""
+    """Greeting function"""
     return f"Hello, {name}!"
 
 print(greet("SweetLine"))
@@ -87,6 +127,7 @@ fun main() {
     list.forEach { println("Item: $it") }
 }
 ```
-## 混合内联样式
 
-这段文字包含**加粗**、*斜体*、~~删除线~~、`行内代码`和[链接](https://example.com)。
+## Mixed Inline Styles
+
+This text contains **bold**, *italic*, ~~strikethrough~~, `inline code` and [link](https://example.com).

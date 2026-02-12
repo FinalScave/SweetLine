@@ -34,8 +34,8 @@ android {
 dependencies {
     implementation "io.noties.markwon:core:4.6.2"
     implementation "io.noties.markwon:syntax-highlight:4.6.2"
-    implementation 'com.qiplat:sweetline:0.1.0'
-    //implementation project(':sweetline')
+    //implementation 'com.qiplat:sweetline:0.1.0'
+    implementation project(':sweetline')
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

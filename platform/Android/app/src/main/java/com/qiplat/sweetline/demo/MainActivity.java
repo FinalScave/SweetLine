@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
 
         EXT_SYNTAX_MAP.put(".t", "tiecode.json");
         EXT_SYNTAX_MAP.put(".c", "c.json");
-        EXT_SYNTAX_MAP.put(".cpp", "c++.json");
+        EXT_SYNTAX_MAP.put(".cpp", "cpp.json");
         EXT_SYNTAX_MAP.put(".cs", "csharp.json");
         EXT_SYNTAX_MAP.put(".dart", "dart.json");
         EXT_SYNTAX_MAP.put(".go", "go.json");
@@ -102,8 +102,6 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         EXT_SYNTAX_MAP.put(".xml", "xml.json");
         EXT_SYNTAX_MAP.put(".yaml", "yaml.json");
         EXT_SYNTAX_MAP.put(".md", "markdown.json");
-        
-        INLINE_STYLE_FILES.add(".t");
     }
 
     @Override
@@ -181,10 +179,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
             if (allAssets != null) {
                 Arrays.sort(allAssets);
                 for (String name : allAssets) {
-                    if (name.endsWith(".json") && !name.equals("java.json")) {
-                        continue;
-                    }
-                    if (!name.startsWith("example")) {
+                    if (!name.startsWith("example") && !name.equals("json-sweetline.json")) {
                         continue;
                     }
                     String ext = getFileExtension(name);

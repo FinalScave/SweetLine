@@ -1,4 +1,4 @@
-// Go 高亮示例
+// Go sample
 package main
 
 import (
@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// 结构体和接口
+// struct and interface
 type Animal interface {
 	Speak() string
 }
@@ -34,7 +34,7 @@ func NewPair[T comparable](a, b T) Pair[T] {
 	return Pair[T]{First: a, Second: b}
 }
 
-// 常量和iota
+// constant and iota
 const (
 	StatusOK    = iota
 	StatusError
@@ -61,7 +61,7 @@ func main() {
 	dog := &Dog{Name: "Buddy", Age: 3}
 	fmt.Println(dog.Speak())
 
-	// 数字字面量
+	// numeric literal
 	hex := 0xFF
 	bin := 0b1010
 	oct := 0o77
@@ -71,7 +71,7 @@ func main() {
 	ok := true
 	var nothing *int = nil
 
-	// goroutine 和 channel
+	// goroutine and channel
 	ch := make(chan string, 10)
 	var wg sync.WaitGroup
 
@@ -80,11 +80,11 @@ func main() {
 		ch <- "hello"
 	}()
 
-	// 原始字符串
+	// raw string
 	raw := `line 1
 line 2`
 
-	// switch 语句
+	// switch statement
 	switch {
 	case ok && nothing == nil:
 		fmt.Println(raw)
@@ -93,6 +93,7 @@ line 2`
 		panic("unexpected")
 	}
 
-	/* 多行注释 */
+	/* multi-line comment
+	   can span multiple lines */
 	_ = false
 }
