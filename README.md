@@ -6,6 +6,17 @@
 
 SweetLine 是一款跨平台、高性能、可扩展的语法高亮引擎，专为现代代码编辑器和代码展示场景设计。基于 Oniguruma 正则引擎和有限状态机模型，能够实时处理大型代码文件并提供精准的语法高亮。
 
+## 效果展示
+
+<p align="center">
+  <img src="docs/snapshot/java.png" width="45%" alt="Java" />
+  <img src="docs/snapshot/cpp.png" width="45%" alt="C++" />
+</p>
+<p align="center">
+  <img src="docs/snapshot/shell.png" width="45%" alt="Shell" />
+  <img src="docs/snapshot/toml.png" width="45%" alt="TOML" />
+</p>
+
 ## 核心特性
 
 ### 高性能

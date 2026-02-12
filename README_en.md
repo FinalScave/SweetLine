@@ -6,6 +6,17 @@ English | [简体中文](./README.md)
 
 SweetLine is a cross-platform, high-performance, and extensible syntax highlighting engine designed for modern code editors and code display scenarios. Built on the Oniguruma regex engine and a finite state machine model, it processes large code files in real-time with accurate syntax highlighting.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/snapshot/java.png" width="45%" alt="Java" />
+  <img src="docs/snapshot/cpp.png" width="45%" alt="C++" />
+</p>
+<p align="center">
+  <img src="docs/snapshot/shell.png" width="45%" alt="Shell" />
+  <img src="docs/snapshot/toml.png" width="45%" alt="TOML" />
+</p>
+
 ## Core Features
 
 ### High Performance
