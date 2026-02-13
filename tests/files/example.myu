@@ -1,0 +1,130 @@
+// iApp 示例
+
+s noteFile = "mynotes.txt"
+s separator = "|||"
+s welcomeMsg = "欢迎使用个人记事本"
+tw(welcomeMsg)
+
+time(0, startTime)
+ss("启动时间: " + startTime, timeInfo)
+us(1, "text", timeInfo)
+
+s wp = "w"
+swh(wp, screenW)
+s hp = "h"
+swh(hp, screenH)
+ss("屏幕: " + screenW + "x" + screenH, screenInfo)
+syso(screenInfo)
+
+// 检查笔记文件是否存在，不存在则创建
+fe(noteFile, fileExists)
+f(fileExists == "false")
+{
+  s defaultContent = "欢迎使用记事本|||这是第一条示例笔记"
+  fw(noteFile, defaultContent)
+  tw("已创建笔记文件")
+}
+
+// 获取编辑框内容（控件ID=2为输入框）
+ug(2, "text", inputText)
+
+// 判断输入是否为空
+f(inputText == null)
+{
+  tw("请输入笔记内容")
+  endcode
+}
+strim(inputText, inputText)
+slg(inputText, inputLen)
+f(inputLen <= 0)
+{
+  tw("笔记内容不能为空")
+  endcode
+}
+
+// 获取当前时间戳拼接到笔记
+time(0, nowTime)
+ss("[" + nowTime + "] " + inputText, newNote)
+
+// 读取已有内容并追加
+fr(noteFile, oldContent)
+f(oldContent == null)
+{
+  s oldContent = ""
+}
+ss(oldContent + separator + newNote, allContent)
+fw(noteFile, allContent)
+tw("笔记已保存")
+// 清空输入框
+us(2, "text", "")
+
+fr(noteFile, readData)
+f(readData == null)
+{
+  tw("暂无笔记")
+  endcode
+}
+
+// 按分隔符切割成数组
+sl(readData, separator, noteArr)
+sgszl(noteArr, noteCount)
+ss("共有 " + noteCount + " 条笔记", countMsg)
+tw(countMsg)
+
+// 构建列表显示
+s listStyle = "t"
+s idx = 0
+for(item; noteArr)
+{
+  s+(1, idx)
+  ss("【" + idx + "】" + item, displayItem)
+  ula(listStyle, idx; displayItem, listData)
+}
+// 设置到列表控件（控件ID=4）
+s listId = 4
+uls(listId, listStyle, listData, clickResult)
+
+ug(3, "text", keyword)
+f(keyword == null)
+{
+  tw("请输入搜索关键词")
+  endcode
+}
+
+fr(noteFile, searchData)
+sl(searchData, separator, searchArr)
+s found = 0
+for(note; searchArr)
+{
+  f(note ? keyword)
+  {
+    s+(1, found)
+    syso(note)
+    tw(note)
+  }
+}
+f(found == 0)
+{
+  tw("未找到相关笔记")
+}
+
+s title = "确认删除"
+s msg = "确定要删除所有笔记吗？"
+s yes = "确定"
+s no = "取消"
+utw(title, msg, yes, no)
+{
+  fd(noteFile, delResult)
+  f(delResult == "true")
+  {
+    tw("笔记已全部删除")
+  }
+  else
+  {
+    tw("删除失败")
+  }
+}
+else
+{
+  tw("已取消删除")
+}

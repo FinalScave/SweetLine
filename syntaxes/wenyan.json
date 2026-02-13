@@ -1,0 +1,48 @@
+{
+  "name": "wenyan",
+  "fileExtensions": [".wenyan", ".wy", ".文言"],
+  "variables": {
+    "identifierStart": "[\\p{Han}\\w_$]+",
+    "identifierPart": "[\\p{Han}\\w_$0-9]*",
+    "identifier": "${identifierStart}${identifierPart}",
+    "quantifier": "[]",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(欲行是術|乃行是術曰|恆為是|若|若非|者乃止也|乃止也|之|者|凡|之長|之物也|云云|充|是謂|之術也|其物如是|之物也|必先得|乃得|銜|為是|遍|或云|蓋謂|也)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?<![一二三四五六七八九十])((?:[一二三四五六七八九十])+)(數|物|列|術|言)",
+        "styles": [1, "class", 2, "class"]
+      },
+      {
+        "pattern": "(「+)(${identifier})(」+)",
+        "styles": [1, "variable", 2, "variable", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(曰)\\b($identifier)(?:。)",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(元數|數〇|數一)\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "\\b(〇)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(於|變|不大於|減|等於|加|除|所餘幾何|乘)\\b",
+        "styles": [1, "punctuation"]
+      },
+      {
+        "pattern": "注曰${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

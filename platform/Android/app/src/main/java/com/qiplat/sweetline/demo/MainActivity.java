@@ -97,6 +97,8 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         EXT_SYNTAX_MAP.put(".xml", "xml.json");
         EXT_SYNTAX_MAP.put(".yaml", "yaml.json");
         EXT_SYNTAX_MAP.put(".md", "markdown.json");
+        EXT_SYNTAX_MAP.put(".wenyan", "wenyan.json");
+        EXT_SYNTAX_MAP.put(".myu", "iapp.json");
     }
 
     @Override
