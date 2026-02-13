@@ -1,0 +1,348 @@
+{
+  "name": "powershell",
+  "fileExtensions": [".ps1", ".psm1", ".psd1"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "<#",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "#${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "@\"",
+        "style": "string",
+        "state": "hereStringDouble"
+      },
+      {
+        "pattern": "@'",
+        "style": "string",
+        "state": "hereStringSingle"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'(?:[^']|'')*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(using)${whiteSpace}+(namespace|module|assembly|type)${whiteSpace}+([\\w.]+)",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(function|filter)${whiteSpace}+([a-zA-Z_]\\w*(?:-\\w+)*)",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(class|enum)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:if|else|elseif|foreach|for|while|do|until|switch|default|break|continue|return|exit|throw|trap|try|catch|finally)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:param|begin|process|end|clean|dynamicparam|data|hidden|static)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:in|class|enum|using|workflow|configuration|parallel|sequence|inlinescript)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\$(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\$(?:\\?|\\^|\\$)",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\$(?:_|args|input|PSItem|Error|Host|PWD|HOME|Profile|PSVersionTable|PSCmdlet|PSBoundParameters|MyInvocation|PSScriptRoot|PSCommandPath|LastExitCode|Matches|ForEach|switch|this|ErrorActionPreference|WarningPreference|VerbosePreference)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\$)(env|global|local|script|private|using|variable|function|alias)(:)(${identifier})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "variable"]
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(@)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([_?$^])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\()([^)]*)(\\))(\\])",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "attrArgs"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*(?:\\[\\])?)(\\])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "-(?:eq|ne|gt|ge|lt|le|like|notlike|match|notmatch|replace|contains|notcontains|in|notin|is|isnot|join|split|f|and|or|not|xor|bnot|band|bor|bxor|shl|shr|ceq|cne|cgt|cge|clt|cle|clike|cnotlike|cmatch|cnotmatch|creplace|ieq|ine|igt|ige|ilt|ile|ilike|inotlike|imatch|inotmatch|ireplace|as)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(-)(${identifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "\\b[A-Za-z]\\w*-[A-Za-z]\\w*\\b",
+        "style": "method"
+      },
+      {
+        "pattern": "(\\.)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(?:\\.[0-9_]+)?(?:[eE][+-]?[0-9]+)?(?:kb|mb|gb|tb|pb|d|l)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\+=|-=|\\*=|/=|%=|\\?\\?=",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\|\\||&&|\\?\\.|\\.\\.|::|=>|\\+\\+|--|[.()\\[\\]{}|;,@!~%^&+\\-*/=<>?:`]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "#>",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "`.",
+        "style": "string"
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "subexpression"
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([_?$^])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "subexpression": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\$)([_?$^])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation", 5, "variable"]
+      },
+      {
+        "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::)(${identifier})(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "subexpression"
+      },
+      {
+        "pattern": "\"(?:`.|[^\"])*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^']|'')*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b[0-9]+\\.?[0-9]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(\\.)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "[.()\\[\\]{}|;,:+\\-*/=<>!@]",
+        "style": "punctuation"
+      }
+    ],
+    "hereStringDouble": [
+      {
+        "pattern": "^\"@",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "hereSubexpr"
+      },
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "hereSubexpr": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "hereStringDouble"
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "variable"
+      }
+    ],
+    "hereStringSingle": [
+      {
+        "pattern": "^'@",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "attrArgs": [
+      {
+        "pattern": "\\$(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "'(?:[^']|'')*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,=]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "{",
+      "end": "}",
+      "branches": ["else", "elseif", "catch", "finally"]
+    }
+  ]
+}
