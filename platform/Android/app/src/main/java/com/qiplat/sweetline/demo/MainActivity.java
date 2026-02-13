@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         EXT_SYNTAX_MAP.put(".swift", "swift.json");
         EXT_SYNTAX_MAP.put(".toml", "toml.json");
         EXT_SYNTAX_MAP.put(".ts", "typescript.json");
+        EXT_SYNTAX_MAP.put(".vb", "vb.json");
         EXT_SYNTAX_MAP.put(".xml", "xml.json");
         EXT_SYNTAX_MAP.put(".yaml", "yaml.json");
         EXT_SYNTAX_MAP.put(".md", "markdown.json");

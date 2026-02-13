@@ -1,0 +1,281 @@
+{
+  "name": "vb",
+  "fileExtensions": [".vb"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "builtinType": "Boolean|Byte|SByte|Char|Date|DateTime|Decimal|Double|Single|Integer|UInteger|Long|ULong|Short|UShort|String|Object"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?i)^${whiteSpace}*(#)${whiteSpace}*(Region|End${whiteSpace}+Region|If|ElseIf|Else|End${whiteSpace}+If|Const|ExternalSource|End${whiteSpace}+ExternalSource|Enable|Disable)\\b",
+        "styles": [1, "preprocessor", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)\\b(Imports)${whiteSpace}+(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(?i)\\b(Option)${whiteSpace}+(Explicit|Strict|Compare|Infer)(?:${whiteSpace}+(On|Off|Text|Binary))?",
+        "styles": [1, "keyword", 2, "keyword", 3, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(End)${whiteSpace}+(Sub|Function|Class|Module|Structure|Interface|Enum|Property|Get|Set|If|Select|While|With|Using|Try|SyncLock|Namespace|Operator|Event|AddHandler|RemoveHandler|RaiseEvent)\\b",
+        "styles": [1, "keyword", 2, "keyword"]
+      },
+      {
+        "pattern": "'''${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "'${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "(?i)\\bREM\\b${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "(<)(?=[A-Za-z_])([^>]+)(>)",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "attrContent"]
+      },
+      {
+        "pattern": "(?i)\\b(Class|Structure|Interface|Module)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "classHeader"
+      },
+      {
+        "pattern": "(?i)\\b(Enum)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Delegate)${whiteSpace}+(Sub|Function)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Inherits)${whiteSpace}+(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Implements)${whiteSpace}+(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Sub|Function)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(?i)\\b(Sub|Function)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "(?i)\\b(Property)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(?i)\\b(Event)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(?i)\\b(Namespace)${whiteSpace}+(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Dim|Const|Static|ReDim)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(?i)\\b(Dim|Const|Static|ReDim)${whiteSpace}+(${identifier})${whiteSpace}+(As)${whiteSpace}+(${builtinType})\\b",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(Dim|Const|Static|ReDim)${whiteSpace}+(${identifier})${whiteSpace}+(As)${whiteSpace}+(New)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "keyword", 5, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Dim|Const|Static|ReDim)${whiteSpace}+(${identifier})${whiteSpace}+(As)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(Dim|Const|Static|ReDim)${whiteSpace}+(${identifier})${whiteSpace}*([=,])",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(?i)\\b(GetType)${whiteSpace}*(\\()(${identifier}(?:\\.${identifier})*)(\\))",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "(?i)\\b(Of)${whiteSpace}+(${builtinType})\\b",
+        "styles": [1, "keyword", 2, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(Of)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+(?i)(As)${whiteSpace}+(${builtinType})\\b",
+        "styles": [1, "variable", 2, "keyword", 3, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+(?i)(As)${whiteSpace}+(New)${whiteSpace}+(${identifier})",
+        "styles": [1, "variable", 2, "keyword", 3, "keyword", 4, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+(?i)(As)${whiteSpace}+(${identifier})",
+        "styles": [1, "variable", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(As)${whiteSpace}+(${builtinType})\\b",
+        "styles": [1, "keyword", 2, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(As)${whiteSpace}+(New)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(As)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(New)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(?i)\\b(New)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(?i)\\b(AddHandler|AddressOf|Aggregate|And|AndAlso|As|Async|Await|ByRef|ByVal|Call|Case|Catch|Class|Const|Continue|Custom|Declare|Default|Delegate|Dim|DirectCast|Distinct|Do|Each|Else|ElseIf|End|Enum|Erase|Error|Event|Exit|Finally|For|Friend|From|Function|Get|GetType|Global|GoTo|Group|Handles|If|Implements|Imports|In|Inherits|Interface|Into|Is|IsNot|Iterator|Join|Let|Lib|Like|Loop|Me|Mod|Module|MustInherit|MustOverride|MyBase|MyClass|NameOf|Namespace|Narrowing|New|Next|Not|NotInheritable|NotOverridable|Of|On|Operator|Option|Optional|Or|OrElse|Order|Overloads|Overridable|Overrides|ParamArray|Partial|Preserve|Private|Property|Protected|Public|RaiseEvent|ReadOnly|ReDim|RemoveHandler|Return|Select|Set|Shadows|Shared|Skip|Static|Step|Stop|Structure|Sub|SyncLock|Take|Then|Throw|To|Try|TryCast|TypeOf|Until|Using|When|Where|While|Widening|With|WithEvents|WriteOnly|Xor|Yield|CBool|CByte|CChar|CDate|CDbl|CDec|CInt|CLng|CObj|CSByte|CShort|CSng|CStr|CType|CUInt|CULng|CUShort|By)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(True|False|Nothing|Me|MyBase|MyClass)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()${whiteSpace}*(?i)(Of)\\b",
+        "styles": [1, "class", 2, "punctuation", 3, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\$\"",
+        "style": "string",
+        "state": "interpolatedString"
+      },
+      {
+        "pattern": "\"(?:[^\"]|\"\")*\"[cC]",
+        "style": "string"
+      },
+      {
+        "pattern": "\"(?:[^\"]|\"\")*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "(?i)&H[0-9a-f_]+[uUlLsS]*",
+        "style": "number"
+      },
+      {
+        "pattern": "(?i)&B[01_]+[uUlLsS]*",
+        "style": "number"
+      },
+      {
+        "pattern": "(?i)&O[0-7_]+[uUlLsS]*",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFdDmMrRuUlLsS!@#%&]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "<<=|>>=|<>|<=|>=|<<|>>|\\+=|-=|\\*=|/=|\\\\=|\\^=|&=|:=|[.()\\[\\]?!@%^&|+\\-*/\\\\<>=,{};:]",
+        "style": "punctuation"
+      }
+    ],
+    "classHeader": [
+      {
+        "pattern": "(?i)\\b(Of|In|Out|As|New|Class|Structure|Inherits|Implements)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "[,(){}]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "'${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "attrContent": [
+      {
+        "pattern": "(?i)\\b(True|False|Nothing)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"(?:[^\"]|\"\")*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[.,()=:]",
+        "style": "punctuation"
+      }
+    ],
+    "interpolatedString": [
+      {
+        "pattern": "\\{\\{",
+        "style": "string"
+      },
+      {
+        "pattern": "\\}\\}",
+        "style": "string"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"\"",
+        "style": "string"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}
