@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         EXT_SYNTAX_MAP.put(".json", "json-sweetline.json");
         EXT_SYNTAX_MAP.put(".kt", "kotlin.json");
         EXT_SYNTAX_MAP.put(".lua", "lua.json");
+        EXT_SYNTAX_MAP.put(".m", "objc.json");
         EXT_SYNTAX_MAP.put(".php", "php.json");
         EXT_SYNTAX_MAP.put(".py", "python.json");
         EXT_SYNTAX_MAP.put(".rs", "rust.json");

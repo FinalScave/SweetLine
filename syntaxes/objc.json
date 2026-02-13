@@ -1,0 +1,488 @@
+{
+  "name": "objc",
+  "fileExtensions": [".m", ".mm"],
+  "variables": {
+    "identifier": "[a-zA-Z_]\\w*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "builtinType": "void|char|short|int|long|float|double|signed|unsigned|bool|BOOL|size_t|ssize_t|id|instancetype|SEL|IMP|Class|NSInteger|NSUInteger|CGFloat|NSTimeInterval|dispatch_queue_t|dispatch_block_t|dispatch_group_t|dispatch_semaphore_t"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(#import|#include)${whiteSpace}+(<)([^>]*)(>)",
+        "styles": [1, "preprocessor", 2, "string", 3, "string", 4, "string"]
+      },
+      {
+        "pattern": "(#import|#include)${whiteSpace}+(\"[^\"]*\")",
+        "styles": [1, "preprocessor", 2, "string"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(#)${whiteSpace}*(define|undef|ifdef|ifndef|if|elif|else|endif|pragma|error|warning|line)",
+        "styles": [1, "preprocessor", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(#define)${whiteSpace}+(${identifier})(\\()",
+        "styles": [1, "preprocessor", 2, "macro", 3, "punctuation"]
+      },
+      {
+        "pattern": "(#define)${whiteSpace}+(${identifier})",
+        "styles": [1, "preprocessor", 2, "macro"]
+      },
+      {
+        "pattern": "(@interface|@implementation)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "class"],
+        "state": "classHeader"
+      },
+      {
+        "pattern": "(@protocol)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "class"],
+        "state": "classHeader"
+      },
+      {
+        "pattern": "(@property)${whiteSpace}*(\\()([^)]*)(\\))",
+        "styles": [1, "annotation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "propertyAttr"]
+      },
+      {
+        "pattern": "(@property)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(@selector)(\\()([^)]*)(\\))",
+        "styles": [1, "annotation", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(@encode)(\\()([^)]*)(\\))",
+        "styles": [1, "annotation", 2, "punctuation", 3, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "(@class)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "class"]
+      },
+      {
+        "pattern": "(@catch)${whiteSpace}*(\\()",
+        "styles": [1, "annotation", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "@(?:end|synthesize|dynamic|autoreleasepool|try|finally|throw|synchronized|optional|required|public|protected|private|package|compatibility_alias)\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "([+-])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "methodRetType"
+      },
+      {
+        "pattern": "@\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "(@)(YES|NO|true|false)\\b",
+        "styles": [1, "punctuation", 2, "builtin"]
+      },
+      {
+        "pattern": "(@)(\\d+\\.?\\d*)",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\})${whiteSpace}*(${identifier})${whiteSpace}*([;,])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\()${whiteSpace}*(\\^)${whiteSpace}*(${identifier})${whiteSpace}*(\\))",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(struct|enum|union)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(struct|enum|union)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(id)(<)(.*?)(>)${whiteSpace}+([*]*${identifier})${whiteSpace}*([;=,])",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "variable", 6, "punctuation"],
+        "subStates": [3, "protocolList"]
+      },
+      {
+        "pattern": "\\b(id)(<)(.*?)(>)",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "protocolList"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b${whiteSpace}*([*]*)${whiteSpace}*(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b${whiteSpace}*([*]*)${whiteSpace}*(${identifier})${whiteSpace}*([;=,)\\[\\]])",
+        "styles": [1, "keyword", 2, "punctuation", 3, "variable", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(auto|break|case|const|continue|default|do|else|extern|for|goto|if|inline|register|restrict|return|sizeof|static|switch|typedef|volatile|while|struct|enum|union|typeof|__block|__weak|__strong|__unsafe_unretained|__autoreleasing|__bridge|__bridge_transfer|__bridge_retained|in|nullable|nonnull|_Nullable|_Nonnull|_Null_unspecified|__kindof)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(YES|NO|true|false|nil|Nil|NULL)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(self|super)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+([*]*${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+([*]*${identifier})${whiteSpace}*([;=,)\\[\\]])",
+        "styles": [1, "class", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(NS[A-Z]\\w*|UI[A-Z]\\w*|CF[A-Z]\\w*|CG[A-Z]\\w*|CI[A-Z]\\w*|CA[A-Z]\\w*|CL[A-Z]\\w*|MK[A-Z]\\w*|AV[A-Z]\\w*|WK[A-Z]\\w*|SK[A-Z]\\w*)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "macro"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+[uUlL]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+[uUlL]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?[fFlLuU]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "->|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "classHeader": [
+      {
+        "pattern": "(\\()${whiteSpace}*(${identifier})${whiteSpace}*(\\))",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\()(\\))",
+        "styles": [1, "punctuation", 2, "punctuation"]
+      },
+      {
+        "pattern": "(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "<",
+        "style": "punctuation",
+        "state": "protocolState"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "[{;]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "protocolState": [
+      {
+        "pattern": ">",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "protocolState"
+      }
+    ],
+    "protocolList": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "[,*]",
+        "style": "punctuation"
+      }
+    ],
+    "propertyAttr": [
+      {
+        "pattern": "\\b(nonatomic|atomic|strong|weak|copy|assign|retain|readonly|readwrite|class|nullable|nonnull|null_resettable|null_unspecified|unsafe_unretained)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(getter|setter)${whiteSpace}*(=)${whiteSpace}*(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      }
+    ],
+    "methodRetType": [
+      {
+        "pattern": "\\b(nullable|nonnull|_Nullable|_Nonnull|__kindof)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\*)",
+        "styles": [1, "class", 2, "punctuation"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "\\*",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "methodSel"
+      },
+      {
+        "pattern": "[,<>]",
+        "style": "punctuation"
+      }
+    ],
+    "methodSel": [
+      {
+        "pattern": "(${identifier})(:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([;{])",
+        "styles": [1, "method", 2, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "method"
+      },
+      {
+        "pattern": "\\(",
+        "style": "punctuation",
+        "state": "methodParamType"
+      },
+      {
+        "pattern": "[;{]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "methodSel"
+      }
+    ],
+    "methodParamType": [
+      {
+        "pattern": "\\b(nullable|nonnull|_Nullable|_Nonnull|__kindof)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\*)",
+        "styles": [1, "class", 2, "punctuation"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "\\*",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "(\\()${whiteSpace}*(\\^)${whiteSpace}*(\\))${whiteSpace}*(\\()([^)]*)(\\))",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation"],
+        "subStates": [5, "funcParams"]
+      },
+      {
+        "pattern": "(\\()${whiteSpace}*(\\^)${whiteSpace}*(\\))",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "methodParamName"
+      },
+      {
+        "pattern": "[,<>]",
+        "style": "punctuation"
+      }
+    ],
+    "methodParamName": [
+      {
+        "pattern": "(${identifier})${whiteSpace}+(${identifier})(:)",
+        "styles": [1, "variable", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([;{])",
+        "styles": [1, "variable", 2, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\(",
+        "style": "punctuation",
+        "state": "methodParamType"
+      },
+      {
+        "pattern": "[;{]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "methodSel"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "(\\()\\b(${builtinType})\\b${whiteSpace}*(\\**)(\\))",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\()(${identifier})${whiteSpace}*(\\*+)(\\))",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b${whiteSpace}*([*]*)${whiteSpace}*(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(struct|enum|union)\\b${whiteSpace}+(${identifier})${whiteSpace}*([*]*)${whiteSpace}*(${identifier})",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "variable"]
+      },
+      {
+        "pattern": "\\b(const|restrict|volatile|static|extern|inline|unsigned|signed|__block|__weak|__strong|nullable|nonnull|_Nullable|_Nonnull)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(YES|NO|true|false|nil|Nil|NULL|self)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}+([*]*${identifier})",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "@\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?[fFlLuU]*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "[,\\[\\]*&^{}()@;:]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "blockPairs": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}
