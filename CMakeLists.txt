@@ -13,8 +13,8 @@ endif ()
 
 # options
 option(BUILD_TESTING "Includes testing source for unit tests" ON)
-option(STATIC_LIB "Build static library" ON)
 option(SHARED_LIB "Build dynamic library" ON)
+option(STATIC_LIB "Build static library" ON)
 add_definitions(-DTESTS_DIR="${CMAKE_SOURCE_DIR}/tests")
 add_definitions(-DSYNTAX_DIR="${CMAKE_SOURCE_DIR}/syntaxes")
 add_definitions(-DSWEETLINE_EXPORT=1)
@@ -69,17 +69,17 @@ elseif (EMSCRIPTEN)
     )
 endif ()
 
-# project shared/dynamic lib
-if (STATIC_LIB)
-    add_definitions(-DONIG_STATIC=ON)
-    message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
-    add_library(${STATIC_LIB_NAME} STATIC ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
-endif ()
+# project shared/static lib
 if (SHARED_LIB)
     include_directories(${SRC_DIR}/shared)
     file(GLOB_RECURSE C_FILES ${SRC_DIR}/shared/*.*)
     message(STATUS "add target: ${SHARED_LIB_NAME} as dynamic lib")
     add_library(${SHARED_LIB_NAME} SHARED ${CORE_SOURCE_FILES} ${PLATFORM_FILES} ${C_FILES})
+endif ()
+if (STATIC_LIB)
+    add_definitions(-DONIG_STATIC=ON)
+    message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
+    add_library(${STATIC_LIB_NAME} STATIC ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
 endif ()
 
 # add library functions
@@ -134,15 +134,15 @@ elseif (EMSCRIPTEN)
     add_platform_library(oniguruma libonig.a STATIC)
 endif ()
 
+if (SHARED_LIB)
+    target_link_libraries(${SHARED_LIB_NAME} PRIVATE ${LINK_LIB})
+endif ()
 # merge static libs
 if (STATIC_LIB AND NOT APPLE)
     target_link_libraries(${STATIC_LIB_NAME} PRIVATE ${LINK_LIB})
     include(cmake/MergeStaticLib.cmake)
     get_target_property(ONIG_PATH oniguruma IMPORTED_LOCATION)
     merge_static_libs(${STATIC_LIB_NAME} ${ONIG_PATH})
-endif ()
-if (SHARED_LIB)
-    target_link_libraries(${SHARED_LIB_NAME} PRIVATE ${LINK_LIB})
 endif ()
 
 # Unit tests
