@@ -275,7 +275,7 @@
       }
     ]
   },
-  "blockPairs": [
+  "scopeRules": [
     {
       "start": "do",
       "end": "done"

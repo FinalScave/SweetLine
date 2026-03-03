@@ -318,7 +318,7 @@
       }
     ]
   },
-  "blockPairs": [
+  "scopeRules": [
     {
       "start": "{",
       "end": "}"
