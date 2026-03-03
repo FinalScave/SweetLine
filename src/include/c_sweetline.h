@@ -174,6 +174,13 @@ SL_API int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer_handle, const char
 /// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
 SL_API int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer_handle, const char* text, int32_t* line_info);
 
+/// 对纯文本进行缩进划线分析（需先调用 sl_text_analyze 获取高亮结果后再调用）
+/// @param analyzer_handle 纯文本高亮分析器句柄
+/// @param text 文本内容
+/// @return 分析结果，格式同 sl_document_analyze_indent_guides
+/// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
+SL_API int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle, const char* text);
+
 /// 加载托管文档并获得文档高亮分析器句柄(支持增量分析)
 /// @param engine_handle 高亮引擎句柄
 /// @param document_handle 托管文档句柄
@@ -226,10 +233,29 @@ SL_API int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle);
 /// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
 SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text);
 
+/// 对托管文档进行缩进划线分析（需先调用 sl_document_analyze 或 sl_document_analyze_incremental）
+/// @param analyzer_handle 文档高亮分析器句柄
+/// @return 分析结果，按字节顺序紧密排列，结构如下:
+/// @code
+/// result[0] = 缩进划线数量 (guide_count)
+/// result[1] = 每条划线的固定字段数 (stride=6)
+/// result[2] = 行状态数量 (line_count)
+/// result[3] = 每行状态的字段数 (4)
+/// 之后紧跟 guide_count 条划线数据，每条结构为:
+/// [column, start_line, end_line, nesting_level, scope_rule_id, branch_count, branch_line_0, branch_column_0, ...]
+/// 注意: 每条划线的实际长度 = stride + branch_count * 2
+/// 之后紧跟 line_count 条行状态数据，每条结构为:
+/// [nesting_level, scope_state, scope_column, indent_level]
+/// 其中 scope_state: 0=START, 1=END, 2=CONTENT
+/// @endcode
+/// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
+SL_API int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle);
+
 /// 释放分析结果的内存，所有返回 int32_t* 的分析函数
 /// sl_text_analyze、sl_text_analyze_line、sl_document_analyze、sl_document_analyze_incremental 的返回值都必须通过此函数释放
 /// @param result 高亮分析结果
 SL_API void sl_free_buffer(int32_t* result);
+
 #ifdef __cplusplus
 }
 #endif

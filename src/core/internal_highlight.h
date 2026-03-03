@@ -85,6 +85,8 @@ namespace NS_SWEETLINE {
 
     SharedPtr<DocumentHighlight> analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text);
 
+    SharedPtr<IndentGuideResult> analyzeIndentGuides();
+
     SharedPtr<Document> getDocument() const;
 
     const HighlightConfig& getHighlightConfig() const;
@@ -95,7 +97,39 @@ namespace NS_SWEETLINE {
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     HighlightConfig m_config_;
     List<int32_t> m_line_syntax_states_;
-    List<LineBlockState> m_line_block_states_;
+    List<LineScopeState> m_line_scope_states_;
+  };
+
+  /// 缩进划线分析器（独立于高亮分析的后置阶段）
+  class IndentGuideAnalyzer {
+  public:
+    /// 基于匹配对的块分析（策略A）
+    static void analyzeByBlockPairs(
+      const SharedPtr<SyntaxRule>& rule,
+      const SharedPtr<Document>& document,
+      const SharedPtr<DocumentHighlight>& highlight,
+      SharedPtr<IndentGuideResult>& result);
+
+    /// 基于缩进的块分析（策略B）
+    static void analyzeByIndentation(
+      const SharedPtr<Document>& document,
+      int32_t tab_size,
+      SharedPtr<IndentGuideResult>& result);
+
+    /// 基于缩进的块分析，带起始标记（Python 混合模式）
+    static void analyzeByIndentationWithStart(
+      const SharedPtr<SyntaxRule>& rule,
+      const SharedPtr<Document>& document,
+      const SharedPtr<DocumentHighlight>& highlight,
+      int32_t tab_size,
+      SharedPtr<IndentGuideResult>& result);
+
+  private:
+    /// 计算一行文本的前导空白列数（tab 展开）
+    static int32_t computeLeadingWhitespace(const U8String& text, int32_t tab_size);
+
+    /// 判断 style 是否为字符串或注释类型（需要跳过这些 token 中的匹配对标记）
+    static bool isStringOrCommentStyle(const U8String& style_name);
   };
 
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
@@ -104,7 +138,9 @@ namespace NS_SWEETLINE {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TokenSpan, range, style_id, inline_style, state, goto_state);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LineHighlight, spans);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentHighlight, lines)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CodeBlock, start, end, branches)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ScopeBlock, start, end, branches)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine::BranchPoint, line, column)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine, column, start_line, end_line, nesting_level, scope_rule_id, branches)
 }
 
 #endif //SWEETLINE_INTERNAL_HIGHLIGHT_H

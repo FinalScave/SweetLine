@@ -125,6 +125,101 @@ export namespace sweetline {
   }
 
   /**
+   * 行作用域划线分析状态
+   */
+  export class LineScopeState {
+    /**
+     * 行所处嵌套层级
+     */
+    public nestingLevel: number = -1;
+    /**
+     * 行所处作用域划线状态: 0=START, 1=END, 2=CONTENT
+     */
+    public scopeState: number = 2;
+    /**
+     * 作用域划线所处列
+     */
+    public scopeColumn: number = 0;
+    /**
+     * 该行缩进等级
+     */
+    public indentLevel: number = 0;
+
+    public constructor(nestingLevel: number = -1, scopeState: number = 2, scopeColumn: number = 0, indentLevel: number = 0) {
+      this.nestingLevel = nestingLevel;
+      this.scopeState = scopeState;
+      this.scopeColumn = scopeColumn;
+      this.indentLevel = indentLevel;
+    }
+  }
+
+  /**
+   * 分支点（如 else/case 的位置）
+   */
+  export class BranchPoint {
+    public line: number = 0;
+    public column: number = 0;
+
+    public constructor(line: number = 0, column: number = 0) {
+      this.line = line;
+      this.column = column;
+    }
+  }
+
+  /**
+   * 单条缩进划线（纵向线段）
+   */
+  export class IndentGuideLine {
+    /**
+     * 划线所在列（字符列）
+     */
+    public column: number = 0;
+    /**
+     * 起始行号
+     */
+    public startLine: number = 0;
+    /**
+     * 结束行号
+     */
+    public endLine: number = 0;
+    /**
+     * 嵌套层级（0-based）
+     */
+    public nestingLevel: number = 0;
+    /**
+     * 关联的 ScopeRule id（匹配对模式），-1=缩进模式
+     */
+    public scopeRuleId: number = -1;
+    /**
+     * 分支点列表（如 else/case 的行列位置）
+     */
+    public branches: Array<BranchPoint> = [];
+
+    public constructor(column: number = 0, startLine: number = 0, endLine: number = 0,
+                       nestingLevel: number = 0, scopeRuleId: number = -1) {
+      this.column = column;
+      this.startLine = startLine;
+      this.endLine = endLine;
+      this.nestingLevel = nestingLevel;
+      this.scopeRuleId = scopeRuleId;
+    }
+  }
+
+  /**
+   * 缩进划线分析结果
+   */
+  export class IndentGuideResult {
+    /**
+     * 所有纵向划线
+     */
+    public guideLines: Array<IndentGuideLine> = [];
+    /**
+     * 每行的块状态
+     */
+    public lineStates: Array<LineScopeState> = [];
+  }
+
+  /**
    * 文本行元数据信息
    */
   export class TextLineInfo {
@@ -178,10 +273,15 @@ export namespace sweetline {
      * 是否支持内联样式，即不需要外部注册高亮样式，直接在语法规则json中定义高亮样式，高亮分析结果中直接包含高亮样式(前景色、加粗等），而不是返回样式ID
      */
     public inlineStyle: boolean = false;
+    /**
+     * Tab宽度，用于缩进划线的缩进等级计算 (1 tab = tabSize 个空格)
+     */
+    public tabSize: number = 4;
 
-    public constructor(showIndex: boolean = false, inlineStyle: boolean = false) {
+    public constructor(showIndex: boolean = false, inlineStyle: boolean = false, tabSize: number = 4) {
       this.showIndex = showIndex;
       this.inlineStyle = inlineStyle;
+      this.tabSize = tabSize;
     }
 
     protected toNativeBits(): number {
@@ -192,6 +292,8 @@ export namespace sweetline {
       if (this.inlineStyle) {
         bits |= 1 << 1;
       }
+      // tabSize 编码到 bit8~bit15
+      bits |= (this.tabSize & 0xFF) << 8;
       return bits;
     }
   }
@@ -348,6 +450,19 @@ export namespace sweetline {
       return NativeBufferPack.readLineAnalyzeResult(buffer);
     }
 
+    /**
+     * 对一段文本进行缩进划线分析（内部会先进行高亮分析）
+     * @param text 整段文本内容
+     * @returns 缩进划线分析结果
+     */
+    public analyzeIndentGuides(text: string): IndentGuideResult {
+      if (this.nativeHandle == 0) {
+        return new IndentGuideResult();
+      }
+      let buffer: Int32Array = lib.TextAnalyzer_AnalyzeIndentGuides(this.nativeHandle, text);
+      return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
     public static __createNative(nativeHandle: number): TextAnalyzer {
       return new TextAnalyzer(nativeHandle);
     }
@@ -408,6 +523,18 @@ export namespace sweetline {
       }
       let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeChanges2(this.nativeHandle, startIndex, endIndex, newText);
       return NativeBufferPack.readDocumentHighlight(buffer);
+    }
+
+    /**
+     * 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）
+     * @returns 缩进划线分析结果
+     */
+    public analyzeIndentGuides(): IndentGuideResult {
+      if (this.nativeHandle == 0) {
+        return new IndentGuideResult();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeIndentGuides(this.nativeHandle);
+      return NativeBufferPack.readIndentGuideResult(buffer);
     }
 
     /**
@@ -667,6 +794,44 @@ export namespace sweetline {
         lineHighlight.spans.push(span);
       }
       result.highlight = lineHighlight;
+      return result;
+    }
+
+    static readIndentGuideResult(buffer: Int32Array): IndentGuideResult {
+      const result = new IndentGuideResult();
+      if (!buffer || buffer.length < 4) {
+        return result;
+      }
+      const guideCount = buffer[0];
+      // buffer[1] = stride (unused, we read dynamically)
+      const lineStateCount = buffer[2];
+      // buffer[3] = lineStateStride (4)
+
+      let idx = 4;
+      for (let i = 0; i < guideCount; i++) {
+        let guide = new IndentGuideLine();
+        guide.column = buffer[idx++];
+        guide.startLine = buffer[idx++];
+        guide.endLine = buffer[idx++];
+        guide.nestingLevel = buffer[idx++];
+        guide.scopeRuleId = buffer[idx++];
+        let branchCount = buffer[idx++];
+        for (let j = 0; j < branchCount; j++) {
+          let bp = new BranchPoint();
+          bp.line = buffer[idx++];
+          bp.column = buffer[idx++];
+          guide.branches.push(bp);
+        }
+        result.guideLines.push(guide);
+      }
+      for (let i = 0; i < lineStateCount; i++) {
+        let state = new LineScopeState();
+        state.nestingLevel = buffer[idx++];
+        state.scopeState = buffer[idx++];
+        state.scopeColumn = buffer[idx++];
+        state.indentLevel = buffer[idx++];
+        result.lineStates.push(state);
+      }
       return result;
     }
   }

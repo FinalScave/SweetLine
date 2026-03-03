@@ -18,12 +18,14 @@ export const SyntaxRule_GetFileExtensions: (handle: number) => string[];
 export const TextAnalyzer_Delete: (handle: number) => void;
 export const TextAnalyzer_AnalyzeText: (handle: number, text: string) => Int32Array;
 export const TextAnalyzer_AnalyzeLine: (handle: number, text: string, line: number, startState: number, startCharOffset: number) => Int32Array;
+export const TextAnalyzer_AnalyzeIndentGuides: (handle: number, text: string) => Int32Array;
 
 // DocumentAnalyzer
 export const DocumentAnalyzer_Delete: (handle: number) => void;
 export const DocumentAnalyzer_Analyze: (handle: number) => Int32Array;
 export const DocumentAnalyzer_AnalyzeChanges: (handle: number, startLine: number, startColumn: number, endLine: number, endColumn: number, newText: string) => Int32Array;
 export const DocumentAnalyzer_AnalyzeChanges2: (handle: number, startIndex: number, endIndex: number, newText: string) => Int32Array;
+export const DocumentAnalyzer_AnalyzeIndentGuides: (handle: number) => Int32Array;
 export const DocumentAnalyzer_GetDocument: (handle: number) => number;
 
 // HighlightEngine

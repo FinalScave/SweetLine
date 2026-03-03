@@ -78,6 +78,8 @@ inline int32_t packHighlightConfig(const HighlightConfig& config) {
   if (config.inline_style) {
     bits |= 1 << 1;
   }
+  // tab_size 编码到 bit8~bit15 (8位，支持0~255)
+  bits |= (config.tab_size & 0xFF) << 8;
   return bits;
 }
 
@@ -88,6 +90,10 @@ inline HighlightConfig unpackHighlightConfig(int32_t bits) {
   }
   if ((bits & (1 << 1)) != 0) {
     config.inline_style = true;
+  }
+  int32_t tab_size = (bits >> 8) & 0xFF;
+  if (tab_size > 0) {
+    config.tab_size = tab_size;
   }
   return config;
 }
@@ -170,6 +176,56 @@ inline void writeLineHighlight(const LineHighlight& highlight, int32_t* buffer, 
       buffer[index++] = static_cast<int32_t>(span.style_id);
     }
   }
+}
+
+/// 将 IndentGuideResult 序列化为 int32_t 缓冲区
+/// 布局:
+/// buffer[0] = guide_lines 数量
+/// buffer[1] = 每条 guide_line 的固定字段数 (stride, 不含 branches)
+/// buffer[2] = line_states 数量（即行数）
+/// buffer[3] = 每行 line_state 的字段数 (4)
+/// 之后依次写入:
+///   guide_lines: [column, start_line, end_line, nesting_level, scope_rule_id, branch_count, branch_line_0, branch_column_0, ...]
+///   line_states: [nesting_level, scope_state, scope_column, indent_level] * line_count
+inline int32_t* writeIndentGuideResult(const SharedPtr<IndentGuideResult>& result) {
+  if (result == nullptr) {
+    return nullptr;
+  }
+  // 计算 guide_lines 部分的总 int 数
+  size_t guide_data_size = 0;
+  for (const IndentGuideLine& g : result->guide_lines) {
+    guide_data_size += 6 + g.branches.size() * 2; // 5 fixed fields + branch_count + (line, column) per branch
+  }
+  size_t line_state_count = result->line_states.size();
+  constexpr int32_t line_state_stride = 4;
+  size_t total_size = 4 + guide_data_size + line_state_count * line_state_stride;
+  int32_t* buffer = new int32_t[total_size];
+
+  buffer[0] = static_cast<int32_t>(result->guide_lines.size());
+  buffer[1] = 6; // stride (fixed fields per guide_line, excluding variable branches)
+  buffer[2] = static_cast<int32_t>(line_state_count);
+  buffer[3] = line_state_stride;
+
+  size_t idx = 4;
+  for (const IndentGuideLine& g : result->guide_lines) {
+    buffer[idx++] = g.column;
+    buffer[idx++] = g.start_line;
+    buffer[idx++] = g.end_line;
+    buffer[idx++] = g.nesting_level;
+    buffer[idx++] = g.scope_rule_id;
+    buffer[idx++] = static_cast<int32_t>(g.branches.size());
+    for (const auto& bp : g.branches) {
+      buffer[idx++] = bp.line;
+      buffer[idx++] = bp.column;
+    }
+  }
+  for (const LineScopeState& ls : result->line_states) {
+    buffer[idx++] = ls.nesting_level;
+    buffer[idx++] = static_cast<int32_t>(ls.scope_state);
+    buffer[idx++] = ls.scope_column;
+    buffer[idx++] = ls.indent_level;
+  }
+  return buffer;
 }
 
 #endif //SWEETLINE_C_WRAPPER_HPP

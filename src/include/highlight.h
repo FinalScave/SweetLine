@@ -55,8 +55,8 @@ namespace NS_SWEETLINE {
 #endif
   };
 
-  /// 作用域划线区域
-  struct CodeBlock {
+  /// 作用域划线区域（由匹配对如 {}/begin-end 界定的作用域块）
+  struct ScopeBlock {
     /// 划线起始位置
     TextPosition start;
     /// 划线结束位置
@@ -69,8 +69,8 @@ namespace NS_SWEETLINE {
 #endif
   };
 
-  /// 代码块作用域状态
-  enum struct BlockState : int8_t {
+  /// 作用域状态
+  enum struct ScopeState : int8_t {
     /// 作用域划线开始
     START = 0,
     /// 作用域划线结束
@@ -80,15 +80,47 @@ namespace NS_SWEETLINE {
   };
 
   /// 行作用域划线分析状态
-  struct LineBlockState {
+  struct LineScopeState {
     /// 行所处嵌套层级
     int32_t nesting_level {-1};
     /// 行所处作用域划线状态
-    BlockState block_state {BlockState::CONTENT};
-    /// 代码块划线所处列 (仅当 block_state 为 START 或 END 时有该项)
-    int32_t block_column {0};
+    ScopeState scope_state {ScopeState::CONTENT};
+    /// 作用域划线所处列 (仅当 scope_state 为 START 或 END 时有该项)
+    int32_t scope_column {0};
+    /// 该行缩进等级
+    int32_t indent_level {0};
 
-    bool operator==(const LineBlockState& other) const;
+    bool operator==(const LineScopeState& other) const;
+  };
+
+  /// 单条缩进划线（纵向线段）
+  struct IndentGuideLine {
+    /// 分支点（如 else/case 的位置）
+    struct BranchPoint {
+      int32_t line {0};
+      int32_t column {0};
+    };
+
+    /// 划线所在列（字符列）
+    int32_t column {0};
+    /// 起始行号
+    int32_t start_line {0};
+    /// 结束行号
+    int32_t end_line {0};
+    /// 嵌套层级（0-based）
+    int32_t nesting_level {0};
+    /// 关联的 ScopeRule id（匹配对模式），-1=缩进模式
+    int32_t scope_rule_id {-1};
+    /// 分支点列表（如 else/case 的行列位置）
+    List<BranchPoint> branches;
+  };
+
+  /// 缩进划线分析结果
+  struct IndentGuideResult {
+    /// 所有纵向划线
+    List<IndentGuideLine> guide_lines;
+    /// 每行的作用域状态
+    List<LineScopeState> line_states;
   };
 
   /// 文本行元数据信息
@@ -117,6 +149,8 @@ namespace NS_SWEETLINE {
     bool show_index {false};
     /// 是否支持内联样式，即不需要外部注册高亮样式，直接在语法规则json中定义高亮样式，高亮分析结果中直接包含高亮样式(前景色、加粗等），而不是返回样式ID
     bool inline_style {false};
+    /// Tab宽度，用于缩进划线的缩进等级计算 (1 tab = tab_size 个空格)
+    int32_t tab_size {4};
 
     static HighlightConfig kDefault;
   };
@@ -138,10 +172,18 @@ namespace NS_SWEETLINE {
     /// @param result 用于接收单行高亮分析结果
     void analyzeLine(const U8String& text, const TextLineInfo& line_info, LineAnalyzeResult& result) const;
 
+    /// 对一段文本进行缩进划线分析（需先调用 analyzeText 获取高亮结果）
+    /// @param text 整段文本内容
+    /// @param highlight 高亮分析结果
+    /// @return 缩进划线分析结果
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
+
     /// 获取当前高亮配置
     const HighlightConfig& getHighlightConfig() const;
   private:
+    SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
+    HighlightConfig m_config_;
   };
 
   class InternalDocumentAnalyzer;
@@ -172,6 +214,10 @@ namespace NS_SWEETLINE {
     /// 获取当前的高亮配置
     /// @return HighlightConfig
     const HighlightConfig& getHighlightConfig() const;
+
+    /// 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）
+    /// @return 缩进划线分析结果
+    SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
   private:
     friend class HighlightEngine;
     DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,

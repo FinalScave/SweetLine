@@ -160,6 +160,28 @@ static jintArray convertDocumentHighlightAsIntArray(JNIEnv* env, const SharedPtr
   return result;
 }
 
+static jintArray convertIndentGuideResultAsIntArray(JNIEnv* env, const SharedPtr<IndentGuideResult>& result) {
+  if (result == nullptr) {
+    return nullptr;
+  }
+  int32_t* raw_buffer = writeIndentGuideResult(result);
+  if (raw_buffer == nullptr) {
+    return nullptr;
+  }
+  // 计算缓冲区总大小
+  size_t guide_data_size = 0;
+  for (const IndentGuideLine& g : result->guide_lines) {
+    guide_data_size += 6 + g.branches.size() * 2;
+  }
+  size_t total_size = 4 + guide_data_size + result->line_states.size() * 4;
+  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
+  if (jresult != nullptr) {
+    env->SetIntArrayRegion(jresult, 0, static_cast<jsize>(total_size), raw_buffer);
+  }
+  delete[] raw_buffer;
+  return jresult;
+}
+
 // ====================================== TextAnalyzerJni ===========================================
 class TextAnalyzerJni {
 public:
@@ -206,11 +228,24 @@ public:
     return result;
   }
 
+  static jintArray analyzeIndentGuides(JNIEnv* env, jclass clazz, jlong handle, jstring text) {
+    SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<jlong, TextAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    const char* c_text = env->GetStringUTFChars(text, nullptr);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(c_text);
+    SharedPtr<IndentGuideResult> guide_result = analyzer->analyzeIndentGuides(c_text, highlight);
+    env->ReleaseStringUTFChars(text, c_text);
+    return convertIndentGuideResultAsIntArray(env, guide_result);
+  }
+
   constexpr static const char *kJClassName = "com/qiplat/sweetline/TextAnalyzer";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeFinalize", "(J)V", (void*) finalizeAnalyzer},
       {"nativeAnalyzeText", "(JLjava/lang/String;)[I", (void*) analyzeText},
-      {"nativeAnalyzeLine", "(JLjava/lang/String;[I)[I", (void*) analyzeLine}
+      {"nativeAnalyzeLine", "(JLjava/lang/String;[I)[I", (void*) analyzeLine},
+      {"nativeAnalyzeIndentGuides", "(JLjava/lang/String;)[I", (void*) analyzeIndentGuides}
   };
 
   static void RegisterMethods(JNIEnv *env) {
@@ -261,6 +296,15 @@ public:
     return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
+  static jintArray analyzeIndentGuides(JNIEnv* env, jclass clazz, jlong handle) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+    return convertIndentGuideResultAsIntArray(env, result);
+  }
+
   static jlong getDocument(jlong handle) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
@@ -275,6 +319,7 @@ public:
       {"nativeAnalyze", "(J)[I", (void*) analyze},
       {"nativeAnalyzeChanges", "(JJJLjava/lang/String;)[I", (void*) analyzeChanges},
       {"nativeAnalyzeChanges2", "(JIILjava/lang/String;)[I", (void*) analyzeChanges2},
+      {"nativeAnalyzeIndentGuides", "(J)[I", (void*) analyzeIndentGuides},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
   };
 

@@ -1,6 +1,7 @@
 #include "napi/native_api.h"
 #include "napi_util.h"
 #include "highlight.h"
+#include "internal_highlight.h"
 #include <cstdint>
 
 using namespace NS_SWEETLINE;
@@ -304,6 +305,55 @@ static napi_value SyntaxRule_GetFileExtensions(napi_env env, napi_callback_info 
 
 // ================================================ TextAnalyzer ====================================================
 
+/// 将 IndentGuideResult 转换为 Int32Array 返回给 ArkTS 层
+static napi_value ConvertIndentGuideResultAsIntArray(napi_env env, const SharedPtr<IndentGuideResult>& result) {
+  if (!result) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  int32_t* raw_buffer = writeIndentGuideResult(result);
+  if (!raw_buffer) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  // 计算缓冲区总大小
+  size_t guide_data_size = 0;
+  for (const IndentGuideLine& g : result->guide_lines) {
+    guide_data_size += 6 + g.branches.size() * 2;
+  }
+  size_t total_count = 4 + guide_data_size + result->line_states.size() * 4;
+  size_t total_size = total_count * sizeof(int32_t);
+
+  napi_value array_buffer;
+  napi_status status = napi_create_external_arraybuffer(
+      env,
+      raw_buffer,
+      total_size,
+      [](napi_env, void* data, void*) {
+        delete[] static_cast<int32_t*>(data);
+      },
+      nullptr,
+      &array_buffer
+  );
+  if (status != napi_ok) {
+    delete[] raw_buffer;
+    napi_throw_error(env, nullptr, "Failed to create external ArrayBuffer for IndentGuideResult");
+    return nullptr;
+  }
+
+  napi_value typed_array;
+  status = napi_create_typedarray(env, napi_int32_array, total_count, array_buffer, 0, &typed_array);
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Failed to create TypedArray for IndentGuideResult");
+    return nullptr;
+  }
+  return typed_array;
+}
+
+// ================================================ TextAnalyzer ====================================================
+
 /// 销毁纯文本高亮分析器
 static napi_value TextAnalyzer_Delete(napi_env env, napi_callback_info info) {
   size_t argc = 1;
@@ -356,6 +406,26 @@ static napi_value TextAnalyzer_AnalyzeLine(napi_env env, napi_callback_info info
   LineAnalyzeResult result;
   analyzer->analyzeLine(text, line_info, result);
   return ConvertLineAnalyzeResultAsIntArray(env, analyzer->getHighlightConfig(), result);
+}
+
+/// 对纯文本进行缩进划线分析（内部会先进行高亮分析）
+/// args: [handle, text]
+static napi_value TextAnalyzer_AnalyzeIndentGuides(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<TextAnalyzer> analyzer = getNapiCPtrHolderValue<TextAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  U8String text;
+  if (!getStdStringFromNapiValue(env, args[1], text)) {
+    return getNapiUndefined(env);
+  }
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text, highlight);
+  return ConvertIndentGuideResultAsIntArray(env, result);
 }
 
 // ================================================ DocumentAnalyzer ====================================================
@@ -431,6 +501,20 @@ static napi_value DocumentAnalyzer_AnalyzeChanges2(napi_env env, napi_callback_i
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeIncremental(
     static_cast<size_t>(start_index), static_cast<size_t>(end_index), new_text);
   return ConvertDocumentHighlightAsIntArray(env, analyzer->getHighlightConfig(), highlight);
+}
+
+/// 对托管文档进行缩进划线分析
+static napi_value DocumentAnalyzer_AnalyzeIndentGuides(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+  
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  return ConvertIndentGuideResultAsIntArray(env, result);
 }
 
 /// 获取托管文档对象
@@ -691,11 +775,13 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"TextAnalyzer_Delete", nullptr, TextAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"TextAnalyzer_AnalyzeText", nullptr, TextAnalyzer_AnalyzeText, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"TextAnalyzer_AnalyzeLine", nullptr, TextAnalyzer_AnalyzeLine, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"TextAnalyzer_AnalyzeIndentGuides", nullptr, TextAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
     // DocumentAnalyzer
     {"DocumentAnalyzer_Delete", nullptr, DocumentAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Analyze", nullptr, DocumentAnalyzer_Analyze, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges", nullptr, DocumentAnalyzer_AnalyzeChanges, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges2", nullptr, DocumentAnalyzer_AnalyzeChanges2, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeIndentGuides", nullptr, DocumentAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_GetDocument", nullptr, DocumentAnalyzer_GetDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
     // HighlightEngine
     {"HighlightEngine_Create", nullptr, HighlightEngine_Create, nullptr, nullptr, nullptr, napi_default, nullptr},

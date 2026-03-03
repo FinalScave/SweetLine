@@ -74,8 +74,8 @@ namespace NS_SWEETLINE {
 #endif
   };
 
-  /// 每个block匹配对的规则
-  struct BlockRule {
+  /// 作用域划线规则（定义作用域的起止标记和分支关键字）
+  struct ScopeRule {
     /// 符号对开始文本(如 {, @begin)
     U8String start;
     /// 符号对结束文本(如 }, @end)
@@ -113,7 +113,7 @@ namespace NS_SWEETLINE {
     static void parseInlineStyles(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     void parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     void parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
-		void parseBlockPairs(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+		void parseScopeRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void compileStatePattern(StateRule& state_rule);
     void processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule);
     void importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,

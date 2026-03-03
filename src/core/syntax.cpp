@@ -188,7 +188,7 @@ namespace NS_SWEETLINE {
       compileStatePattern(pair.second);
     }
     // 解析作用域划线规则
-    parseBlockPairs(syntax_rule, root);
+    parseScopeRules(syntax_rule, root);
 #ifdef SWEETLINE_DEBUG
     //syntax_rule->dump();
 #endif
@@ -458,32 +458,34 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseBlockPairs(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
-    if (!root.contains("blockPairs")) {
+  void SyntaxRuleCompiler::parseScopeRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    if (!root.contains("scopeRules")) {
       return;
     }
-    const nlohmann::json& block_pairs_json = root["blockPairs"];
-    if (!block_pairs_json.is_array()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "blockPairs");
+    const nlohmann::json& scope_rules_json = root["scopeRules"];
+    if (!scope_rules_json.is_array()) {
+      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules");
     }
-    BlockRule block_rule;
-    for (const nlohmann::json& block_pair_json : block_pairs_json) {
-      if (!block_pair_json.contains("start")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "start");
+    int32_t rule_id_counter = 0;
+    for (const nlohmann::json& scope_rule_json : scope_rules_json) {
+      ScopeRule scope_rule;
+      if (!scope_rule_json.contains("start")) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].start");
       }
-      block_rule.start = block_pair_json["start"];
-      if (!block_pair_json.contains("end")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "end");
+      scope_rule.start = scope_rule_json["start"];
+      if (!scope_rule_json.contains("end")) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].end");
       }
-      block_rule.end = block_pair_json["end"];
-      if (block_pair_json.contains("branches")) {
-        for (const nlohmann::json& branch_json : block_pair_json["branches"]) {
-          block_rule.branch_keywords.emplace(branch_json);
+      scope_rule.end = scope_rule_json["end"];
+      if (scope_rule_json.contains("branches")) {
+        for (const nlohmann::json& branch_json : scope_rule_json["branches"]) {
+          scope_rule.branch_keywords.emplace(branch_json);
         }
       }
+      scope_rule.rule_id = rule_id_counter;
+      rule->scope_rules_map.insert_or_assign(rule_id_counter, std::move(scope_rule));
+      rule_id_counter++;
     }
-    //rule->first_byte_block_table.insert_or_assign(block_rule.start[0], std::move(block_rule));
-    //rule->first_byte_block_table.insert_or_assign(block_rule.end[0], std::move(block_rule));
   }
 
   void SyntaxRuleCompiler::compileStatePattern(StateRule& state_rule) {

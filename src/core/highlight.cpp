@@ -96,23 +96,25 @@ namespace NS_SWEETLINE {
 
   // ===================================== LineState ============================================
 #ifdef SWEETLINE_DEBUG
-  void CodeBlock::dump() const {
+  void ScopeBlock::dump() const {
     nlohmann::json json = *this;
     std::cout << json.dump(2) << std::endl;
   }
 #endif
 
   // ===================================== LineState ============================================
-  bool LineBlockState::operator==(const LineBlockState& other) const {
+  bool LineScopeState::operator==(const LineScopeState& other) const {
     return nesting_level == other.nesting_level
-      && block_state == other.block_state && block_column == other.block_column;
+      && scope_state == other.scope_state && scope_column == other.scope_column
+      && indent_level == other.indent_level;
   }
 
   // ===================================== HighlightConfig ============================================
   HighlightConfig HighlightConfig::kDefault = {};
 
-  // ===================================== HighlightConfig ============================================
-  TextAnalyzer::TextAnalyzer(const SharedPtr<SyntaxRule>& rule, const HighlightConfig& config) {
+  // ===================================== TextAnalyzer ============================================
+  TextAnalyzer::TextAnalyzer(const SharedPtr<SyntaxRule>& rule, const HighlightConfig& config)
+    : m_rule_(rule), m_config_(config) {
     m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(rule, config);
   }
 
@@ -142,6 +144,35 @@ namespace NS_SWEETLINE {
 
   const HighlightConfig& TextAnalyzer::getHighlightConfig() const {
     return m_line_highlight_analyzer_->getHighlightConfig();
+  }
+
+  SharedPtr<IndentGuideResult> TextAnalyzer::analyzeIndentGuides(const U8String& text, const SharedPtr<DocumentHighlight>& highlight) {
+    auto result = makeSharedPtr<IndentGuideResult>();
+    if (m_rule_ == nullptr || highlight == nullptr) {
+      return result;
+    }
+    // 构建临时 Document
+    auto temp_doc = makeSharedPtr<Document>("", text);
+    if (!m_rule_->scope_rules_map.empty()) {
+      // 检查是否所有 ScopeRule 都是 indent-based (end == "")
+      bool all_indent_based = true;
+      bool has_indent_based = false;
+      for (const auto& [id, br] : m_rule_->scope_rules_map) {
+        if (br.end.empty()) {
+          has_indent_based = true;
+        } else {
+          all_indent_based = false;
+        }
+      }
+      if (all_indent_based && has_indent_based) {
+        IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, temp_doc, highlight, m_config_.tab_size, result);
+      } else {
+        IndentGuideAnalyzer::analyzeByBlockPairs(m_rule_, temp_doc, highlight, result);
+      }
+    } else {
+      IndentGuideAnalyzer::analyzeByIndentation(temp_doc, m_config_.tab_size, result);
+    }
+    return result;
   }
 
   // ===================================== LineHighlightAnalyzer ============================================
@@ -511,6 +542,32 @@ namespace NS_SWEETLINE {
     return m_config_;
   }
 
+  SharedPtr<IndentGuideResult> InternalDocumentAnalyzer::analyzeIndentGuides() {
+    auto result = makeSharedPtr<IndentGuideResult>();
+    if (m_rule_ == nullptr || m_highlight_ == nullptr || m_document_ == nullptr) {
+      return result;
+    }
+    if (!m_rule_->scope_rules_map.empty()) {
+      bool all_indent_based = true;
+      bool has_indent_based = false;
+      for (const auto& [id, br] : m_rule_->scope_rules_map) {
+        if (br.end.empty()) {
+          has_indent_based = true;
+        } else {
+          all_indent_based = false;
+        }
+      }
+      if (all_indent_based && has_indent_based) {
+        IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, m_document_, m_highlight_, m_config_.tab_size, result);
+      } else {
+        IndentGuideAnalyzer::analyzeByBlockPairs(m_rule_, m_document_, m_highlight_, result);
+      }
+    } else {
+      IndentGuideAnalyzer::analyzeByIndentation(m_document_, m_config_.tab_size, result);
+    }
+    return result;
+  }
+
   // ===================================== DocumentAnalyzer ============================================
   DocumentAnalyzer::DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
     const HighlightConfig& config): analyzer_impl_(makeUniquePtr<InternalDocumentAnalyzer>(document, rule, config)) {
@@ -534,6 +591,10 @@ namespace NS_SWEETLINE {
 
   const HighlightConfig& DocumentAnalyzer::getHighlightConfig() const {
     return analyzer_impl_->getHighlightConfig();
+  }
+
+  SharedPtr<IndentGuideResult> DocumentAnalyzer::analyzeIndentGuides() const {
+    return analyzer_impl_->analyzeIndentGuides();
   }
 
   // ===================================== HighlightEngine ============================================

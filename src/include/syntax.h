@@ -75,7 +75,7 @@ namespace NS_SWEETLINE {
   };
 
   struct StateRule;
-  struct BlockRule;
+  struct ScopeRule;
   /// 语法规则
   struct SyntaxRule {
     /// 语法规则的名称
@@ -92,8 +92,8 @@ namespace NS_SWEETLINE {
     HashMap<int32_t, StateRule> state_rules_map;
     /// state名称 到 id 的映射
     HashMap<U8String, int32_t> state_id_map;
-    /// block rule id 到 BlockRule的映射
-    HashMap<int32_t, BlockRule> block_rules_map;
+    /// scope rule id 到 ScopeRule 的映射
+    HashMap<int32_t, ScopeRule> scope_rules_map;
 
     bool containsInlineStyle(int32_t style_id);
     InlineStyle& getInlineStyle(int32_t style_id);

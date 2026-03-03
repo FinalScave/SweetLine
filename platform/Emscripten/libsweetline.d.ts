@@ -141,6 +141,116 @@ export namespace sweetline {
     }
 
     /**
+     * 行作用域划线分析状态
+     */
+    export class LineScopeState {
+        /**
+         * 行所处嵌套层级
+         */
+        nestingLevel: number;
+        /**
+         * 行所处作用域划线状态: 0=START, 1=END, 2=CONTENT
+         */
+        scopeState: number;
+        /**
+         * 作用域划线所处列
+         */
+        scopeColumn: number;
+        /**
+         * 该行缩进等级
+         */
+        indentLevel: number;
+    }
+
+    /**
+     * 单条缩进划线（纵向线段）
+     */
+    export class IndentGuideLine {
+        /**
+         * 划线所在列（字符列）
+         */
+        column: number;
+        /**
+         * 起始行号
+         */
+        startLine: number;
+        /**
+         * 结束行号
+         */
+        endLine: number;
+        /**
+         * 嵌套层级（0-based）
+         */
+        nestingLevel: number;
+        /**
+         * 关联的 ScopeRule id（匹配对模式），-1=缩进模式
+         */
+        scopeRuleId: number;
+        /**
+         * 分支点列表（如 else/case 的行列位置）
+         */
+        branches: BranchPointList;
+    }
+
+    /**
+     * 分支点（如 else/case 的位置）
+     */
+    export class BranchPoint {
+        line: number;
+        column: number;
+    }
+
+    export class BranchPointList {
+        get(index: number): BranchPoint;
+        set(index: number, element: BranchPoint): void;
+        add(element: BranchPoint): void;
+        remove(element: BranchPoint): void;
+        isEmpty(): boolean;
+        size(): number;
+    }
+
+    export class Int32List {
+        get(index: number): number;
+        set(index: number, element: number): void;
+        add(element: number): void;
+        remove(element: number): void;
+        isEmpty(): boolean;
+        size(): number;
+    }
+
+    export class IndentGuideLineList {
+        get(index: number): IndentGuideLine;
+        set(index: number, element: IndentGuideLine): void;
+        add(element: IndentGuideLine): void;
+        remove(element: IndentGuideLine): void;
+        isEmpty(): boolean;
+        size(): number;
+    }
+
+    export class LineScopeStateList {
+        get(index: number): LineScopeState;
+        set(index: number, element: LineScopeState): void;
+        add(element: LineScopeState): void;
+        remove(element: LineScopeState): void;
+        isEmpty(): boolean;
+        size(): number;
+    }
+
+    /**
+     * 缩进划线分析结果
+     */
+    export class IndentGuideResult {
+        /**
+         * 所有纵向划线
+         */
+        guideLines: IndentGuideLineList;
+        /**
+         * 每行的作用域状态
+         */
+        lineStates: LineScopeStateList;
+    }
+
+    /**
      * 文本行元数据信息
      */
     export class TextLineInfo {
@@ -198,6 +308,13 @@ export namespace sweetline {
          * @return 单行高亮分析结果
          */
         analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
+
+        /**
+         * 对一段文本进行缩进划线分析（内部会先进行高亮分析）
+         * @param text 整段文本内容
+         * @return 缩进划线分析结果
+         */
+        analyzeIndentGuides(text: string): IndentGuideResult;
     }
 
     /**
@@ -226,6 +343,12 @@ export namespace sweetline {
          * @return 整个托管文档的高亮结果
          */
         analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
+
+        /**
+         * 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）
+         * @return 缩进划线分析结果
+         */
+        analyzeIndentGuides(): IndentGuideResult;
     }
 
     /**
@@ -240,6 +363,10 @@ export namespace sweetline {
          * 是否支持内联样式，即不需要外部注册高亮样式，直接在语法规则json中定义高亮样式，高亮分析结果中直接包含高亮样式(前景色、加粗等），而不是返回样式ID
          */
         inlineStyle: boolean;
+        /**
+         * Tab宽度，用于缩进划线的缩进等级计算 (1 tab = tabSize 个空格)
+         */
+        tabSize: number;
     }
 
     /**

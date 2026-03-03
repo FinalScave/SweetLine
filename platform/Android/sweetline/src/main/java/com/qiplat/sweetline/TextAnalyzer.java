@@ -61,6 +61,20 @@ public class TextAnalyzer {
         return NativeBufferPack.readLineAnalyzeResult(buffer);
     }
 
+    /**
+     * 对一段文本进行缩进划线分析（内部会先进行高亮分析）
+     *
+     * @param text 整段文本内容
+     * @return 缩进划线分析结果
+     */
+    public IndentGuideResult analyzeIndentGuides(String text) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeIndentGuides(nativeHandle, text);
+        return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -78,4 +92,7 @@ public class TextAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeLine(long handle, String text, int[] info);
+
+    @FastNative
+    private static native int[] nativeAnalyzeIndentGuides(long handle, String text);
 }

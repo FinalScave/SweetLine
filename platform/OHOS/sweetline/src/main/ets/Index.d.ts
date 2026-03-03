@@ -110,6 +110,89 @@ export declare namespace sweetline {
   }
 
   /**
+   * 行作用域划线分析状态
+   */
+  export class LineScopeState {
+    /**
+     * 行所处嵌套层级
+     */
+    public nestingLevel: number;
+    /**
+     * 行所处作用域划线状态: 0=START, 1=END, 2=CONTENT
+     */
+    public scopeState: number;
+    /**
+     * 作用域划线所处列
+     */
+    public scopeColumn: number;
+    /**
+     * 该行缩进等级
+     */
+    public indentLevel: number;
+
+    public constructor();
+    public constructor(nestingLevel: number, scopeState: number, scopeColumn: number, indentLevel: number);
+  }
+
+  /**
+   * 分支点（如 else/case 的位置）
+   */
+  export class BranchPoint {
+    public line: number;
+    public column: number;
+
+    public constructor();
+    public constructor(line: number, column: number);
+  }
+
+  /**
+   * 单条缩进划线（纵向线段）
+   */
+  export class IndentGuideLine {
+    /**
+     * 划线所在列（字符列）
+     */
+    public column: number;
+    /**
+     * 起始行号
+     */
+    public startLine: number;
+    /**
+     * 结束行号
+     */
+    public endLine: number;
+    /**
+     * 嵌套层级（0-based）
+     */
+    public nestingLevel: number;
+    /**
+     * 关联的 ScopeRule id（匹配对模式），-1=缩进模式
+     */
+    public scopeRuleId: number;
+    /**
+     * 分支点列表（如 else/case 的行列位置）
+     */
+    public branches: Array<BranchPoint>;
+
+    public constructor();
+    public constructor(column: number, startLine: number, endLine: number, nestingLevel: number, scopeRuleId: number);
+  }
+
+  /**
+   * 缩进划线分析结果
+   */
+  export class IndentGuideResult {
+    /**
+     * 所有纵向划线
+     */
+    public guideLines: Array<IndentGuideLine>;
+    /**
+     * 每行的块状态
+     */
+    public lineStates: Array<LineScopeState>;
+  }
+
+  /**
    * 文本行元数据信息
    */
   export class TextLineInfo {
@@ -160,8 +243,13 @@ export declare namespace sweetline {
      * 是否支持内联样式，即不需要外部注册高亮样式，直接在语法规则json中定义高亮样式，高亮分析结果中直接包含高亮样式(前景色、加粗等），而不是返回样式ID
      */
     public inlineStyle: boolean;
+    /**
+     * Tab宽度，用于缩进划线的缩进等级计算 (1 tab = tabSize 个空格)
+     */
+    public tabSize: number;
 
     public constructor(showIndex: boolean, inlineStyle: boolean);
+    public constructor(showIndex: boolean, inlineStyle: boolean, tabSize: number);
   }
 
   /**
@@ -235,6 +323,12 @@ export declare namespace sweetline {
      * @returns 单行高亮分析结果
      */
     public analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
+    /**
+     * 对一段文本进行缩进划线分析（内部会先进行高亮分析）
+     * @param text 整段文本内容
+     * @returns 缩进划线分析结果
+     */
+    public analyzeIndentGuides(text: string): IndentGuideResult;
   }
 
   /**
@@ -261,6 +355,13 @@ export declare namespace sweetline {
      * @returns 整个文本的高亮结果
      */
     public analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
+
+    /**
+     * 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）
+     * @returns 缩进划线分析结果
+     */
+    public analyzeIndentGuides(): IndentGuideResult;
+
     /**
      * 获取托管文档对象
      */

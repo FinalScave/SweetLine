@@ -145,6 +145,16 @@ int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer_handle, const char* 
   return buffer;
 }
 
+int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle, const char* text) {
+  SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, TextAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    return nullptr;
+  }
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text, highlight);
+  return writeIndentGuideResult(result);
+}
+
 sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, sl_document_handle_t document_handle) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<sl_engine_handle_t, HighlightEngine>(engine_handle);
   if (engine == nullptr) {
@@ -190,6 +200,15 @@ int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, i
   buffer[1] = stride;
   writeDocumentHighlight(highlight, buffer + 2, config);
   return buffer;
+}
+
+int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    return nullptr;
+  }
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  return writeIndentGuideResult(result);
 }
 
 void sl_free_buffer(int32_t* result) {

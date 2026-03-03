@@ -107,6 +107,18 @@ public class DocumentAnalyzer {
     }
 
     /**
+     * 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）
+     * @return 缩进划线分析结果
+     */
+    public IndentGuideResult analyzeIndentGuides() {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeIndentGuides(nativeHandle);
+        return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
+    /**
      * 获取托管文档对象
      * @return {@link Document}
      */
@@ -128,12 +140,19 @@ public class DocumentAnalyzer {
 
     @CriticalNative
     private static native void nativeFinalizeAnalyzer(long handle);
+
     @FastNative
     private static native int[] nativeAnalyze(long handle);
+
     @FastNative
     private static native int[] nativeAnalyzeChanges(long handle, long startPosition, long endPosition, String newText);
+
     @FastNative
     private static native int[] nativeAnalyzeChanges2(long handle, int startIndex, int endIndex, String newText);
+
+    @FastNative
+    private static native int[] nativeAnalyzeIndentGuides(long handle);
+
     @CriticalNative
     private static native long nativeGetDocument(long handle);
 }

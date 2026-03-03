@@ -6,8 +6,11 @@ import android.text.Spanned;
 import android.text.style.CharacterStyle;
 
 import com.qiplat.sweetline.DocumentHighlight;
+import com.qiplat.sweetline.IndentGuideLine;
+import com.qiplat.sweetline.IndentGuideResult;
 import com.qiplat.sweetline.InlineStyle;
 import com.qiplat.sweetline.LineAnalyzeResult;
+import com.qiplat.sweetline.LineScopeState;
 import com.qiplat.sweetline.LineHighlight;
 import com.qiplat.sweetline.SpannableStyleFactory;
 import com.qiplat.sweetline.TextLineInfo;
@@ -161,6 +164,53 @@ public final class NativeBufferPack {
             }
         }
         result.highlight = lineHighlight;
+        return result;
+    }
+
+    /**
+     * 从 int[] 缓冲区中解析缩进划线分析结果
+     * 布局:
+     * buffer[0] = guide_lines 数量
+     * buffer[1] = 每条 guide_line 的固定字段数 (stride=6)
+     * buffer[2] = line_states 数量
+     * buffer[3] = 每行 line_state 的字段数 (4)
+     * 之后依次: guide_lines 数据, line_states 数据
+     */
+    public static IndentGuideResult readIndentGuideResult(int[] buffer) {
+        IndentGuideResult result = new IndentGuideResult();
+        if (buffer == null || buffer.length < 4) {
+            return result;
+        }
+        int guideCount = buffer[0];
+        // buffer[1] = stride (unused, we read dynamically)
+        int lineStateCount = buffer[2];
+        int lineStateStride = buffer[3];
+
+        int idx = 4;
+        for (int i = 0; i < guideCount; i++) {
+            IndentGuideLine guide = new IndentGuideLine();
+            guide.column = buffer[idx++];
+            guide.startLine = buffer[idx++];
+            guide.endLine = buffer[idx++];
+            guide.nestingLevel = buffer[idx++];
+            guide.scopeRuleId = buffer[idx++];
+            int branchCount = buffer[idx++];
+            for (int j = 0; j < branchCount; j++) {
+                IndentGuideLine.BranchPoint bp = new IndentGuideLine.BranchPoint();
+                bp.line = buffer[idx++];
+                bp.column = buffer[idx++];
+                guide.branches.add(bp);
+            }
+            result.guideLines.add(guide);
+        }
+        for (int i = 0; i < lineStateCount; i++) {
+            LineScopeState state = new LineScopeState();
+            state.nestingLevel = buffer[idx++];
+            state.scopeState = buffer[idx++];
+            state.scopeColumn = buffer[idx++];
+            state.indentLevel = buffer[idx++];
+            result.lineStates.add(state);
+        }
         return result;
     }
 }

@@ -97,6 +97,37 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     );
 
+  BIND_LIST(int32_t, "Int32List")
+
+  emscripten::class_<LineScopeState>("LineScopeState")
+    .constructor<>()
+    .property("nestingLevel", &LineScopeState::nesting_level)
+    .property("scopeState", &LineScopeState::scope_state)
+    .property("scopeColumn", &LineScopeState::scope_column)
+    .property("indentLevel", &LineScopeState::indent_level);
+
+  emscripten::class_<IndentGuideLine::BranchPoint>("BranchPoint")
+    .constructor<>()
+    .property("line", &IndentGuideLine::BranchPoint::line)
+    .property("column", &IndentGuideLine::BranchPoint::column);
+  BIND_LIST(IndentGuideLine::BranchPoint, "BranchPointList")
+
+  emscripten::class_<IndentGuideLine>("IndentGuideLine")
+    .constructor<>()
+    .property("column", &IndentGuideLine::column)
+    .property("startLine", &IndentGuideLine::start_line)
+    .property("endLine", &IndentGuideLine::end_line)
+    .property("nestingLevel", &IndentGuideLine::nesting_level)
+    .property("scopeRuleId", &IndentGuideLine::scope_rule_id)
+    .property("branches", &IndentGuideLine::branches);
+  BIND_LIST(IndentGuideLine, "IndentGuideLineList")
+  BIND_LIST(LineScopeState, "LineScopeStateList")
+
+  emscripten::class_<IndentGuideResult>("IndentGuideResult")
+    .smart_ptr<SharedPtr<IndentGuideResult>>("SharedPtr<IndentGuideResult>")
+    .property("guideLines", &IndentGuideResult::guide_lines)
+    .property("lineStates", &IndentGuideResult::line_states);
+
   emscripten::class_<TextLineInfo>("TextLineInfo")
     .constructor<>()
     .property("line", &TextLineInfo::line)
@@ -118,6 +149,12 @@ EMSCRIPTEN_BINDINGS(highlight) {
         self->analyzeLine(text, info, result);
         return result;
       })
+    )
+    .function("analyzeIndentGuides",
+      emscripten::optional_override([](SharedPtr<TextAnalyzer>& self, const U8String& text) {
+        SharedPtr<DocumentHighlight> highlight = self->analyzeText(text);
+        return self->analyzeIndentGuides(text, highlight);
+      })
     );
 
   emscripten::class_<DocumentAnalyzer>("DocumentAnalyzer")
@@ -125,12 +162,14 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("analyze", &DocumentAnalyzer::analyze)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
-    .function("getDocument", &DocumentAnalyzer::getDocument);
+    .function("getDocument", &DocumentAnalyzer::getDocument)
+    .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides);
 
   emscripten::class_<HighlightConfig>("HighlightConfig")
     .constructor<>()
     .property("showIndex", &HighlightConfig::show_index)
-    .property("inlineStyle", &HighlightConfig::inline_style);
+    .property("inlineStyle", &HighlightConfig::inline_style)
+    .property("tabSize", &HighlightConfig::tab_size);
 
   emscripten::class_<SyntaxRule>("SyntaxRule")
     .smart_ptr<SharedPtr<SyntaxRule>>("SharedPtr<SyntaxRule>")
