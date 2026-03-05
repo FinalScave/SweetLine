@@ -103,8 +103,8 @@ namespace NS_SWEETLINE {
   /// 缩进划线分析器（独立于高亮分析的后置阶段）
   class IndentGuideAnalyzer {
   public:
-    /// 基于匹配对的块分析（策略A）
-    static void analyzeByBlockPairs(
+    /// 基于 scopeRules 的作用域分析（策略A）
+    static void analyzeByScopeRules(
       const SharedPtr<SyntaxRule>& rule,
       const SharedPtr<Document>& document,
       const SharedPtr<DocumentHighlight>& highlight,
@@ -127,9 +127,6 @@ namespace NS_SWEETLINE {
   private:
     /// 计算一行文本的前导空白列数（tab 展开）
     static int32_t computeLeadingWhitespace(const U8String& text, int32_t tab_size);
-
-    /// 判断 style 是否为字符串或注释类型（需要跳过这些 token 中的匹配对标记）
-    static bool isStringOrCommentStyle(const U8String& style_name);
   };
 
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);

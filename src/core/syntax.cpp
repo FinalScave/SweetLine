@@ -7,6 +7,14 @@
 #include "util.h"
 
 namespace NS_SWEETLINE {
+  namespace {
+    bool isScopeSkipStyleName(const U8String& style_name) {
+      return style_name.find("string") != U8String::npos
+        || style_name.find("comment") != U8String::npos
+        || style_name.find("char") != U8String::npos;
+    }
+  }
+
  // ===================================== SyntaxRuleParseError ============================================
   SyntaxRuleParseError::SyntaxRuleParseError(const int err_code): m_err_code_(err_code) {
   }
@@ -412,6 +420,9 @@ namespace NS_SWEETLINE {
           style_id = m_style_mapping_->getOrCreateStyleId(style_name);
         }
         token_rule.style_ids.insert_or_assign(0, style_id);
+        if (isScopeSkipStyleName(style_name)) {
+          rule->scope_skip_style_ids.emplace(style_id);
+        }
       } else if (token_json.contains("styles")) {
         const nlohmann::json& styles_json = token_json["styles"];
         if (!styles_json.is_array()) {
@@ -430,6 +441,9 @@ namespace NS_SWEETLINE {
             style_id = m_style_mapping_->getOrCreateStyleId(style_name);
           }
           token_rule.style_ids.insert_or_assign(styles_json[i], style_id);
+          if (isScopeSkipStyleName(style_name)) {
+            rule->scope_skip_style_ids.emplace(style_id);
+          }
         }
       }
       // subState / subStates
@@ -468,17 +482,32 @@ namespace NS_SWEETLINE {
     }
     int32_t rule_id_counter = 0;
     for (const nlohmann::json& scope_rule_json : scope_rules_json) {
+      if (!scope_rule_json.is_object()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[]");
+      }
       ScopeRule scope_rule;
       if (!scope_rule_json.contains("start")) {
         throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].start");
+      }
+      if (!scope_rule_json["start"].is_string()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].start");
       }
       scope_rule.start = scope_rule_json["start"];
       if (!scope_rule_json.contains("end")) {
         throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].end");
       }
+      if (!scope_rule_json["end"].is_string()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].end");
+      }
       scope_rule.end = scope_rule_json["end"];
       if (scope_rule_json.contains("branches")) {
+        if (!scope_rule_json["branches"].is_array()) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches");
+        }
         for (const nlohmann::json& branch_json : scope_rule_json["branches"]) {
+          if (!branch_json.is_string()) {
+            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches[]");
+          }
           scope_rule.branch_keywords.emplace(branch_json);
         }
       }

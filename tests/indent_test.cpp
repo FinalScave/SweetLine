@@ -7,7 +7,7 @@ using namespace NS_SWEETLINE;
 
 namespace {
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
-  static const char* kJavaExampleFilePath = TESTS_DIR"/files/exampla.java";
+  static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
 
   SharedPtr<HighlightEngine> makeTestHighlightEngine() {
     SharedPtr<HighlightEngine> engine = makeSharedPtr<HighlightEngine>();
@@ -40,4 +40,151 @@ TEST_CASE("Indent example.java") {
   for (const IndentGuideLine& guide_line : res->guide_lines) {
     std::cout << "startLine: " << guide_line.start_line << ", endLine: " << guide_line.end_line << ", column: " << guide_line.column << std::endl;
   }
+}
+
+TEST_CASE("ScopeRules ignores markers in string/comment for style id mode") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "toy",
+  "fileExtensions": [".toy"],
+  "states": {
+    "default": [
+      { "pattern": "//[^\\n]*", "style": "comment" },
+      { "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"", "style": "string" },
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "{", "end": "}" }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.toy", "{\n  \"}\" // comment {\n}");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+
+  const IndentGuideLine& guide = result->guide_lines[0];
+  CHECK(guide.start_line == 0);
+  CHECK(guide.end_line == 2);
+  CHECK(guide.nesting_level == 0);
+  CHECK(guide.scope_rule_id == 0);
+}
+
+TEST_CASE("ScopeRules closes innermost block when end token is shared") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "luaLike",
+  "fileExtensions": [".ll"],
+  "states": {
+    "default": [
+      { "pattern": "\\b(function|then|else|end)\\b", "style": "keyword" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "function", "end": "end" },
+    { "start": "then", "end": "end", "branches": ["else"] }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.ll", "function\n  then\n  else\n  end\nend");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 2);
+
+  const IndentGuideLine* outer = nullptr;
+  const IndentGuideLine* inner = nullptr;
+  for (const IndentGuideLine& line : result->guide_lines) {
+    if (line.start_line == 0) {
+      outer = &line;
+    } else if (line.start_line == 1) {
+      inner = &line;
+    }
+  }
+  REQUIRE(outer != nullptr);
+  REQUIRE(inner != nullptr);
+
+  CHECK(outer->end_line == 4);
+  CHECK(outer->nesting_level == 0);
+  CHECK(inner->end_line == 3);
+  CHECK(inner->nesting_level == 1);
+  REQUIRE(inner->branches.size() == 1);
+  CHECK(inner->branches[0].line == 2);
+}
+
+TEST_CASE("ScopeRules keeps nesting level for unclosed blocks at EOF") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "brace",
+  "fileExtensions": [".br"],
+  "states": {
+    "default": [
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "{", "end": "}" }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.br", "{\n  {");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 2);
+
+  bool has_level0 = false;
+  bool has_level1 = false;
+  for (const IndentGuideLine& line : result->guide_lines) {
+    if (line.nesting_level == 0) {
+      has_level0 = true;
+    }
+    if (line.nesting_level == 1) {
+      has_level1 = true;
+    }
+    CHECK(line.end_line == 1);
+  }
+  CHECK(has_level0);
+  CHECK(has_level1);
+}
+
+TEST_CASE("ScopeRules guide column uses min of start and end columns") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "braceCol",
+  "fileExtensions": [".bc"],
+  "states": {
+    "default": [
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "{", "end": "}" }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.bc", "if (ok) {\n    run();\n}");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
 }

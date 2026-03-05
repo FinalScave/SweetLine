@@ -167,7 +167,7 @@ namespace NS_SWEETLINE {
       if (all_indent_based && has_indent_based) {
         IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, temp_doc, highlight, m_config_.tab_size, result);
       } else {
-        IndentGuideAnalyzer::analyzeByBlockPairs(m_rule_, temp_doc, highlight, result);
+        IndentGuideAnalyzer::analyzeByScopeRules(m_rule_, temp_doc, highlight, result);
       }
     } else {
       IndentGuideAnalyzer::analyzeByIndentation(temp_doc, m_config_.tab_size, result);
@@ -560,7 +560,7 @@ namespace NS_SWEETLINE {
       if (all_indent_based && has_indent_based) {
         IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, m_document_, m_highlight_, m_config_.tab_size, result);
       } else {
-        IndentGuideAnalyzer::analyzeByBlockPairs(m_rule_, m_document_, m_highlight_, result);
+        IndentGuideAnalyzer::analyzeByScopeRules(m_rule_, m_document_, m_highlight_, result);
       }
     } else {
       IndentGuideAnalyzer::analyzeByIndentation(m_document_, m_config_.tab_size, result);

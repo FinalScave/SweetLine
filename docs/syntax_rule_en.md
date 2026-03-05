@@ -13,7 +13,7 @@ SweetLine uses JSON to define syntax highlighting rules. Each JSON file describe
 - [State Transitions](#state-transitions)
 - [SubStates](#substates)
 - [onLineEndState - Line End State](#onlineendstate---line-end-state)
-- [blockPairs - Code Block Pairs](#blockpairs---code-block-pairs)
+- [scopeRules - Scope Rules](#scoperules---scope-rules)
 - [Inline Style Mode](#inline-style-mode)
 - [Complete Example](#complete-example)
 - [Best Practices](#best-practices)
@@ -34,7 +34,7 @@ A complete syntax rule JSON file has the following structure:
     "default": [ ... ],
     "stateName": [ ... ]
   },
-  "blockPairs": [ ... ]
+  "scopeRules": [ ... ]
 }
 ```
 
@@ -49,7 +49,7 @@ A complete syntax rule JSON file has the following structure:
 | `variables` | object | No | Reusable regex pattern variable definitions |
 | `styles` | array | No | Inline style definitions (only for `inline_style` mode) |
 | `states` | object | Yes | State machine definitions containing all states and their matching rules |
-| `blockPairs` | array | No | Code block pair definitions (for folding/indent guides) |
+| `scopeRules` | array | No | Scope rule definitions (for folding/indent guides) |
 
 ---
 
@@ -368,13 +368,13 @@ If `)` is not encountered on the current line, the next line automatically retur
 
 ---
 
-## blockPairs - Code Block Pairs
+## scopeRules - Scope Rules
 
-`blockPairs` defines code block start/end markers, used for editor folding and indent guides.
+`scopeRules` defines scope start/end markers, used for editor folding and indent guides.
 
 ```json
 {
-  "blockPairs": [
+  "scopeRules": [
     {
       "start": "{",
       "end": "}",
@@ -572,7 +572,7 @@ Here is a complete simplified Java syntax rule example:
       }
     ]
   },
-  "blockPairs": [
+  "scopeRules": [
     { "start": "{", "end": "}" }
   ]
 }

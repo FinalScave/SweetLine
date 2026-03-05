@@ -94,6 +94,8 @@ namespace NS_SWEETLINE {
     HashMap<U8String, int32_t> state_id_map;
     /// scope rule id 到 ScopeRule 的映射
     HashMap<int32_t, ScopeRule> scope_rules_map;
+    /// 作用域分析时需要跳过的样式ID（如 string/comment/char）
+    HashSet<int32_t> scope_skip_style_ids;
 
     bool containsInlineStyle(int32_t style_id);
     InlineStyle& getInlineStyle(int32_t style_id);

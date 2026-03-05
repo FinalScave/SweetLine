@@ -1,7 +1,40 @@
+#include <algorithm>
+
 #include "internal_highlight.h"
 #include "util.h"
 
 namespace NS_SWEETLINE {
+  namespace {
+    U8String extractScopeTokenText(const U8String& line_text, const TokenSpan& span) {
+      size_t start_col = span.range.start.column;
+      size_t end_col = span.range.end.column;
+      if (start_col >= end_col) {
+        return {};
+      }
+      return Utf8Util::utf8Substr(line_text, start_col, end_col - start_col);
+    }
+
+    bool shouldSkipScopeToken(const SharedPtr<SyntaxRule>& rule, const TokenSpan& span) {
+      return rule->scope_skip_style_ids.find(span.style_id) != rule->scope_skip_style_ids.end();
+    }
+
+    List<const ScopeRule*> collectScopeRulesOrdered(const SharedPtr<SyntaxRule>& rule, bool indent_only) {
+      List<const ScopeRule*> ordered_rules;
+      ordered_rules.reserve(rule->scope_rules_map.size());
+      for (const auto& pair : rule->scope_rules_map) {
+        const ScopeRule& scope_rule = pair.second;
+        if (indent_only && !scope_rule.end.empty()) {
+          continue;
+        }
+        ordered_rules.push_back(&scope_rule);
+      }
+      std::sort(ordered_rules.begin(), ordered_rules.end(),
+        [](const ScopeRule* lhs, const ScopeRule* rhs) {
+          return lhs->rule_id < rhs->rule_id;
+        });
+      return ordered_rules;
+    }
+  }
 
   // ===================================== IndentGuideAnalyzer ============================================
   int32_t IndentGuideAnalyzer::computeLeadingWhitespace(const U8String& text, int32_t tab_size) {
@@ -19,13 +52,7 @@ namespace NS_SWEETLINE {
     return columns;
   }
 
-  bool IndentGuideAnalyzer::isStringOrCommentStyle(const U8String& style_name) {
-    return style_name.find("string") != U8String::npos
-      || style_name.find("comment") != U8String::npos
-      || style_name.find("char") != U8String::npos;
-  }
-
-  void IndentGuideAnalyzer::analyzeByBlockPairs(
+  void IndentGuideAnalyzer::analyzeByScopeRules(
     const SharedPtr<SyntaxRule>& rule,
     const SharedPtr<Document>& document,
     const SharedPtr<DocumentHighlight>& highlight,
@@ -35,14 +62,15 @@ namespace NS_SWEETLINE {
       return;
     }
 
-    struct BlockStackEntry {
+    struct ScopeStackEntry {
       const ScopeRule* rule;
       int32_t start_line;
       int32_t start_column;
       List<IndentGuideLine::BranchPoint> branches;
     };
 
-    List<BlockStackEntry> block_stack;
+    List<const ScopeRule*> ordered_scope_rules = collectScopeRulesOrdered(rule, false);
+    List<ScopeStackEntry> block_stack;
     size_t line_count = highlight->lines.size();
     result->line_states.resize(line_count);
 
@@ -51,87 +79,83 @@ namespace NS_SWEETLINE {
       const U8String& line_text = document->getLine(line_num).text;
 
       for (const TokenSpan& span : line_highlight.spans) {
-        U8String token_text;
-        if (!span.matched_text.empty()) {
-          token_text = span.matched_text;
-        } else {
-          size_t start_col = span.range.start.column;
-          size_t end_col = span.range.end.column;
-          if (start_col < end_col) {
-            token_text = Utf8Util::utf8Substr(line_text, start_col, end_col - start_col);
-          }
-        }
+        U8String token_text = extractScopeTokenText(line_text, span);
+        int32_t span_start_column = static_cast<int32_t>(span.range.start.column);
         if (token_text.empty()) {
           continue;
         }
-
-        // 检查 style 名称来过滤字符串/注释中的标记
-        // 用 style_id 反查 style_name（通过 inline_styles 或 StyleMapping）
-        // 简化处理：style_id == 0 跳过（default 样式，即无高亮部分）
-        // 对于注释和字符串类型的 style，通常 style 名称中包含 "string"/"comment"
-        // 在 inline_style 模式下检查 rule 的 style_mapping；否则不好直接判断，
-        // 所以这里用一个启发式方法：如果 rule 有 style_mapping 就反查名称
-        bool skip = false;
-        if (rule->style_mapping) {
-          const U8String& name = rule->style_mapping->getStyleName(span.style_id);
-          skip = isStringOrCommentStyle(name);
-        }
-        if (skip) {
+        if (shouldSkipScopeToken(rule, span)) {
           continue;
         }
+        auto handleScopeToken = [&](const U8String& token, int32_t token_column) {
+          bool handled = false;
+          if (!block_stack.empty()) {
+            for (int32_t si = static_cast<int32_t>(block_stack.size()) - 1; si >= 0; --si) {
+              const ScopeRule* active_rule = block_stack[si].rule;
+              if (active_rule->end.empty() || token != active_rule->end) {
+                continue;
+              }
+              ScopeStackEntry entry = std::move(block_stack[si]);
+              block_stack.erase(block_stack.begin() + si);
+              int32_t guide_column = std::min(entry.start_column, token_column);
 
-        // 对每个 ScopeRule 进行匹配
-        for (const auto& [rule_id, scope_rule] : rule->scope_rules_map) {
-          // 检查 start
-          if (token_text == scope_rule.start) {
-            int32_t col = static_cast<int32_t>(span.range.start.column);
-            block_stack.push_back({&scope_rule, static_cast<int32_t>(line_num), col, {}});
-            // 更新行状态
-            result->line_states[line_num].scope_state = ScopeState::START;
-            result->line_states[line_num].nesting_level = static_cast<int32_t>(block_stack.size()) - 1;
-            result->line_states[line_num].scope_column = col;
-            goto next_span;
+              IndentGuideLine guide;
+              guide.column = guide_column;
+              guide.start_line = entry.start_line;
+              guide.end_line = static_cast<int32_t>(line_num);
+              guide.nesting_level = si;
+              guide.scope_rule_id = active_rule->rule_id;
+              guide.branches = std::move(entry.branches);
+              result->guide_lines.push_back(std::move(guide));
+
+              result->line_states[line_num].scope_state = ScopeState::END;
+              result->line_states[line_num].nesting_level = si;
+              result->line_states[line_num].scope_column = guide_column;
+              handled = true;
+              break;
+            }
+          }
+          if (handled) {
+            return true;
           }
 
-          // 检查 end
-          if (!scope_rule.end.empty() && token_text == scope_rule.end && !block_stack.empty()) {
-            // 从栈顶找到匹配的 rule
+          if (!block_stack.empty()) {
             for (int32_t si = static_cast<int32_t>(block_stack.size()) - 1; si >= 0; --si) {
-              if (block_stack[si].rule->rule_id == scope_rule.rule_id) {
-                BlockStackEntry entry = std::move(block_stack[si]);
-                block_stack.erase(block_stack.begin() + si);
-
-                IndentGuideLine guide;
-                guide.column = entry.start_column;
-                guide.start_line = entry.start_line;
-                guide.end_line = static_cast<int32_t>(line_num);
-                guide.nesting_level = si;
-                guide.scope_rule_id = scope_rule.rule_id;
-                guide.branches = std::move(entry.branches);
-                result->guide_lines.push_back(std::move(guide));
-
-                // 更新行状态
-                result->line_states[line_num].scope_state = ScopeState::END;
-                result->line_states[line_num].nesting_level = si;
-                result->line_states[line_num].scope_column = entry.start_column;
-                goto next_span;
+              const ScopeRule* active_rule = block_stack[si].rule;
+              if (active_rule->branch_keywords.find(token) == active_rule->branch_keywords.end()) {
+                continue;
               }
+              block_stack[si].branches.push_back({static_cast<int32_t>(line_num), token_column});
+              return true;
             }
           }
 
-          // 检查 branch
-          if (!block_stack.empty() && scope_rule.branch_keywords.find(token_text) != scope_rule.branch_keywords.end()) {
-            // 从栈顶找到匹配的 rule
-            for (int32_t si = static_cast<int32_t>(block_stack.size()) - 1; si >= 0; --si) {
-              if (block_stack[si].rule->rule_id == scope_rule.rule_id) {
-                block_stack[si].branches.push_back({static_cast<int32_t>(line_num), static_cast<int32_t>(span.range.start.column)});
-                goto next_span;
+          for (const ScopeRule* scope_rule : ordered_scope_rules) {
+            if (token != scope_rule->start) {
+              continue;
+            }
+            block_stack.push_back({scope_rule, static_cast<int32_t>(line_num), token_column, {}});
+            result->line_states[line_num].scope_state = ScopeState::START;
+            result->line_states[line_num].nesting_level = static_cast<int32_t>(block_stack.size()) - 1;
+            result->line_states[line_num].scope_column = token_column;
+            return true;
+          }
+          return false;
+        };
+
+        bool handled = handleScopeToken(token_text, span_start_column);
+        if (!handled) {
+          size_t token_char_count = Utf8Util::countChars(token_text);
+          if (token_char_count > 1) {
+            for (size_t i = 0; i < token_char_count; ++i) {
+              U8String one_char = Utf8Util::utf8Substr(token_text, i, 1);
+              if (one_char.empty()) {
+                continue;
               }
+              handleScopeToken(one_char, span_start_column + static_cast<int32_t>(i));
             }
           }
         }
-
-        next_span:;
       }
 
       // 设置中间行的 nesting_level
@@ -141,12 +165,13 @@ namespace NS_SWEETLINE {
     }
 
     // 处理未闭合的块（文件末尾未关闭的 { ）
-    for (auto& entry : block_stack) {
+    for (size_t i = 0; i < block_stack.size(); ++i) {
+      auto& entry = block_stack[i];
       IndentGuideLine guide;
       guide.column = entry.start_column;
       guide.start_line = entry.start_line;
       guide.end_line = static_cast<int32_t>(line_count) - 1;
-      guide.nesting_level = 0;
+      guide.nesting_level = static_cast<int32_t>(i);
       guide.scope_rule_id = entry.rule->rule_id;
       guide.branches = std::move(entry.branches);
       result->guide_lines.push_back(std::move(guide));
@@ -290,71 +315,78 @@ namespace NS_SWEETLINE {
     result->line_states.resize(line_count);
 
     // 找到 indent-based scope rules (end == "")
-    List<const ScopeRule*> indent_scope_rules;
-    for (const auto& [rule_id, scope_rule] : rule->scope_rules_map) {
-      if (scope_rule.end.empty()) {
-        indent_scope_rules.push_back(&scope_rule);
-      }
-    }
+    List<const ScopeRule*> indent_scope_rules = collectScopeRulesOrdered(rule, true);
 
     // 对每一行，检查是否有 start token (如 ":")
     // 如果有，从下一行开始找到缩进回退的位置作为 block end
     for (size_t line_num = 0; line_num < line_count; ++line_num) {
       const LineHighlight& line_highlight = highlight->lines[line_num];
       const U8String& line_text = document->getLine(line_num).text;
+      bool matched_start = false;
 
       for (const TokenSpan& span : line_highlight.spans) {
-        U8String token_text;
-        if (!span.matched_text.empty()) {
-          token_text = span.matched_text;
-        } else {
-          size_t start_col = span.range.start.column;
-          size_t end_col = span.range.end.column;
-          if (start_col < end_col) {
-            token_text = Utf8Util::utf8Substr(line_text, start_col, end_col - start_col);
+        U8String token_text = extractScopeTokenText(line_text, span);
+        if (token_text.empty()) {
+          continue;
+        }
+        if (shouldSkipScopeToken(rule, span)) {
+          continue;
+        }
+
+        auto handleIndentStartToken = [&](const U8String& token) {
+          for (const ScopeRule* br : indent_scope_rules) {
+            if (token == br->start) {
+              int32_t start_indent = indent_columns[line_num];
+              // 从下一行开始，找到缩进 <= start_indent 的第一个非空行
+              int32_t end_line = static_cast<int32_t>(line_num);
+              for (size_t n = line_num + 1; n < line_count; ++n) {
+                if (is_empty_line[n]) continue;
+                if (indent_columns[n] <= start_indent) {
+                  break;
+                }
+                end_line = static_cast<int32_t>(n);
+              }
+
+              if (end_line > static_cast<int32_t>(line_num)) {
+                IndentGuideLine guide;
+                guide.column = start_indent + tab_size;
+                guide.start_line = static_cast<int32_t>(line_num) + 1;
+                guide.end_line = end_line;
+                guide.nesting_level = start_indent / tab_size;
+                guide.scope_rule_id = br->rule_id;
+                result->guide_lines.push_back(std::move(guide));
+
+                result->line_states[line_num].scope_state = ScopeState::START;
+                result->line_states[line_num].nesting_level = start_indent / tab_size;
+                result->line_states[line_num].scope_column = start_indent;
+              }
+              return true;
+            }
           }
-        }
-        if (token_text.empty()) continue;
+          return false;
+        };
 
-        // 跳过注释/字符串
-        bool skip = false;
-        if (rule->style_mapping) {
-          const U8String& name = rule->style_mapping->getStyleName(span.style_id);
-          skip = isStringOrCommentStyle(name);
-        }
-        if (skip) continue;
-
-        for (const ScopeRule* br : indent_scope_rules) {
-          if (token_text == br->start) {
-            int32_t start_indent = indent_columns[line_num];
-            // 从下一行开始，找到缩进 <= start_indent 的第一个非空行
-            int32_t end_line = static_cast<int32_t>(line_num);
-            for (size_t n = line_num + 1; n < line_count; ++n) {
-              if (is_empty_line[n]) continue;
-              if (indent_columns[n] <= start_indent) {
+        matched_start = handleIndentStartToken(token_text);
+        if (!matched_start) {
+          size_t token_char_count = Utf8Util::countChars(token_text);
+          if (token_char_count > 1) {
+            for (size_t i = 0; i < token_char_count; ++i) {
+              U8String one_char = Utf8Util::utf8Substr(token_text, i, 1);
+              if (one_char.empty()) {
+                continue;
+              }
+              if (handleIndentStartToken(one_char)) {
+                matched_start = true;
                 break;
               }
-              end_line = static_cast<int32_t>(n);
             }
-
-            if (end_line > static_cast<int32_t>(line_num)) {
-              IndentGuideLine guide;
-              guide.column = start_indent + tab_size;
-              guide.start_line = static_cast<int32_t>(line_num) + 1;
-              guide.end_line = end_line;
-              guide.nesting_level = start_indent / tab_size;
-              guide.scope_rule_id = br->rule_id;
-              result->guide_lines.push_back(std::move(guide));
-
-              result->line_states[line_num].scope_state = ScopeState::START;
-              result->line_states[line_num].nesting_level = start_indent / tab_size;
-              result->line_states[line_num].scope_column = start_indent;
-            }
-            goto next_line;
           }
         }
+
+        if (matched_start) {
+          break;
+        }
       }
-      next_line:;
     }
 
     // 补充缩进等级信息
