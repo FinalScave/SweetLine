@@ -1,4 +1,3 @@
-#include <iostream>
 #include <catch2/catch_amalgamated.hpp>
 #include "highlight.h"
 #include "util.h"
@@ -26,20 +25,19 @@ namespace {
 
 TEST_CASE("Indent example.java") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kJavaSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
   U8String code_txt = FileUtil::readString(kJavaExampleFilePath);
+  REQUIRE_FALSE(code_txt.empty());
   SharedPtr<Document> document = makeSharedPtr<Document>("example.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() == document->getLineCount());
   SharedPtr<IndentGuideResult> res = analyzer->analyzeIndentGuides();
-  for (const IndentGuideLine& guide_line : res->guide_lines) {
-    std::cout << "startLine: " << guide_line.start_line << ", endLine: " << guide_line.end_line << ", column: " << guide_line.column << std::endl;
-  }
+  REQUIRE(res != nullptr);
+  REQUIRE_FALSE(res->guide_lines.empty());
+  REQUIRE(res->line_states.size() == document->getLineCount());
 }
 
 TEST_CASE("ScopeRules ignores markers in string/comment for style id mode") {

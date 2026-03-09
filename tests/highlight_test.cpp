@@ -1,4 +1,3 @@
-#include <iostream>
 #include <catch2/catch_amalgamated.hpp>
 #include "highlight.h"
 #include "util.h"
@@ -12,7 +11,7 @@ namespace {
   static const char* kMultiLineTestPath = TESTS_DIR"/multi-line/multi-line.test";
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
   static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
-  static const char* kJavaExampleFilePath = TESTS_DIR"/files/exampla.java";
+  static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
   static const char* kTiecodeExampleFilePath = TESTS_DIR"/files/example.t";
 
   SharedPtr<HighlightEngine> makeTestHighlightEngine() {
@@ -32,62 +31,58 @@ namespace {
 
 TEST_CASE("Highlight multi-group") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kMultiGroupSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kMultiGroupSyntaxPath));
   U8String code_txt = FileUtil::readString(kMultiGroupTestPath);
+  REQUIRE_FALSE(code_txt.empty());
   SharedPtr<Document> document = makeSharedPtr<Document>("multi-group.test", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  highlight->dump();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() == document->getLineCount());
+  REQUIRE(highlight->spanCount() > 0);
 }
 
 TEST_CASE("Highlight multi-line") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kMultiLineSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kMultiLineSyntaxPath));
   U8String code_txt = FileUtil::readString(kMultiLineTestPath);
+  REQUIRE_FALSE(code_txt.empty());
   SharedPtr<Document> document = makeSharedPtr<Document>("multi-line.test", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  highlight->dump();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() == document->getLineCount());
+  REQUIRE(highlight->spanCount() > 0);
 }
 
 TEST_CASE("Highlight example.java") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kJavaSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
   U8String code_txt = FileUtil::readString(kJavaExampleFilePath);
-  SharedPtr<Document> document = makeSharedPtr<Document>("eample.java", code_txt);
+  REQUIRE_FALSE(code_txt.empty());
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  highlight->dump();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() == document->getLineCount());
+  REQUIRE(highlight->spanCount() > 0);
 }
 
 TEST_CASE("Highlight example.t") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kTiecodeSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTiecodeSyntaxPath));
   U8String code_txt = FileUtil::readString(kTiecodeExampleFilePath);
+  REQUIRE_FALSE(code_txt.empty());
   SharedPtr<Document> document = makeSharedPtr<Document>("结绳.t", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  highlight->dump();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() == document->getLineCount());
+  REQUIRE(highlight->spanCount() > 0);
 }
 
 TEST_CASE("Highlight example.java Benchmark") {
@@ -115,16 +110,14 @@ TEST_CASE("Highlight example.t Benchmark") {
 
 TEST_CASE("Analyze example.java Incrementally") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  try {
-    engine->compileSyntaxFromFile(kJavaSyntaxPath);
-  } catch (SyntaxRuleParseError& error) {
-    std::cerr << error.what() << ": " << error.message() << std::endl;
-    return;
-  }
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
   U8String code_txt = FileUtil::readString(kJavaExampleFilePath);
+  REQUIRE_FALSE(code_txt.empty());
   SharedPtr<Document> document = makeSharedPtr<Document>("Main.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
   // 第1行末尾插入'//'注释
   TextRange range = {{0, 19}, {0, 19}};
   SharedPtr<DocumentHighlight> updated_highlight = analyzer->analyzeIncremental(range, "//aaa");
@@ -145,4 +138,3 @@ TEST_CASE("Analyze example.java Incrementally") {
   REQUIRE(updated_highlight->lines[2].spans.back().style_id == 4);
   REQUIRE(updated_highlight->lines[3].spans.front().style_id == 1);
 }
-

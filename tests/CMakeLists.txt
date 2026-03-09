@@ -6,6 +6,7 @@ add_executable(${TEST_PRODUCT_NAME}
         patch_text.cpp
         highlight_test.cpp
         indent_test.cpp
+        syntax_test.cpp
 )
 
 target_include_directories(${TEST_PRODUCT_NAME} PRIVATE
