@@ -1,0 +1,668 @@
+{
+  "name": "scala",
+  "fileExtensions": [".scala", ".sc", ".sbt"],
+  "variables": {
+    "identifier": "(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_$]*)",
+    "typeIdentifier": "(?:`[^`]+`|[A-Z][A-Za-z0-9_$]*)",
+    "qualifiedId": "${identifier}(?:\\.${identifier})*",
+    "qualifiedTypeId": "(?:(?:${identifier})\\.)*${typeIdentifier}(?:\\.${typeIdentifier})*",
+    "methodName": "(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_$]*|[+\\-*/%&|^!~:?<>#=\\\\]+)",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "(package)${whiteSpace}+(object)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(package)${whiteSpace}+(${qualifiedId})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(import|export)${whiteSpace}+(${qualifiedId})(\\.)(\\{)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "punctuation"],
+        "state": "importSelectors"
+      },
+      {
+        "pattern": "(import|export)${whiteSpace}+(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "importSelectors"
+      },
+      {
+        "pattern": "(import|export)${whiteSpace}+(${qualifiedId})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(@)(${qualifiedId})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(opaque)${whiteSpace}+(type)${whiteSpace}+(${identifier})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "punctuation", 6, "punctuation"],
+        "subStates": [5, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(opaque)${whiteSpace}+(type)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(class|object)${whiteSpace}+(${identifier})(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "genericType"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(class|object)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "punctuation"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(class|object)${whiteSpace}+(${identifier})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "punctuation", 6, "punctuation"],
+        "subStates": [5, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(class|object)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(class|trait|object|enum)${whiteSpace}+(${identifier})(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "(class|trait|object|enum)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "(class|trait|object|enum)${whiteSpace}+(${identifier})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(class|trait|object|enum)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(type)${whiteSpace}+(${identifier})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(type)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(extension)${whiteSpace}*(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "genericType"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(extension)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${identifier})${whiteSpace}*(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${qualifiedTypeId})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(given)${whiteSpace}*(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "genericType"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(given)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(${methodName})(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(${methodName})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(${methodName})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "(lazy)${whiteSpace}+(val)${whiteSpace}+(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable", 4, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "(lazy)${whiteSpace}+(val)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "(val|var)${whiteSpace}+(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "(val|var)${whiteSpace}+(${identifier})${whiteSpace}*([=,;)])",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(val|var)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(${typeIdentifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "(case)${whiteSpace}+(${typeIdentifier})${whiteSpace}*([,:=])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(new)${whiteSpace}+(${qualifiedTypeId})(\\[)(.*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(new)${whiteSpace}+(${qualifiedTypeId})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "(new)${whiteSpace}+(${qualifiedTypeId})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(s|f|raw)\"\"\"",
+        "style": "string",
+        "state": "tripleInterpolatedString"
+      },
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "tripleString"
+      },
+      {
+        "pattern": "(s|f|raw)\"",
+        "style": "string",
+        "state": "interpolatedString"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F](?:[0-9a-fA-F_]*)(?:[lL])?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01](?:[01_]*)(?:[lL])?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(Byte|Short|Int|Long|Float|Double|Boolean|Char|Unit|Any|AnyVal|AnyRef|Nothing|Null|String)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(Option|Some|None|Either|Left|Right|Try|Success|Failure|List|Seq|IndexedSeq|Vector|LazyList|Set|Map|Iterable|Iterator|Array|Tuple\\d*|Future|PartialFunction|Ordering|Numeric|BigInt|BigDecimal|CanEqual)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(abstract|case|catch|class|def|do|else|enum|export|extends|extension|final|finally|for|given|if|implicit|import|inline|lazy|match|new|object|opaque|open|override|package|private|protected|return|sealed|super|then|this|throw|trait|transparent|try|type|using|val|var|while|with|yield|derives|end)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(as|erased|infix|inline|lazy|macro|opaque|open|out|transparent)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${qualifiedId})(\\.)((${methodName}))${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${qualifiedId})(\\.)((${identifier}))",
+        "styles": [1, "variable", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${methodName})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(${qualifiedTypeId})${whiteSpace}*(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "\\b(${qualifiedTypeId})\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "<-|=>|\\?=>|<:|>:|=:=|<:<|::|#|\\.\\.\\.|[.()\\[\\]{};,@:+\\-*/%&|^!?=<>~\\\\]",
+        "style": "punctuation"
+      }
+    ],
+    "importSelectors": [
+      {
+        "pattern": "(\\})",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"]
+      },
+      {
+        "pattern": "(given)${whiteSpace}+(${qualifiedTypeId})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(${identifier}|_)${whiteSpace}*(as|=>)${whiteSpace}*(${identifier}|_)",
+        "styles": [1, "variable", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedId}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,{}.\\*]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "importSelectors"
+      }
+    ],
+    "typeHeader": [
+      {
+        "pattern": "(extends|with|derives|using)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      },
+      {
+        "pattern": "\\(",
+        "style": "punctuation",
+        "state": "classParams"
+      },
+      {
+        "pattern": "[{=:]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[\\[\\],.&|?+\\-<>()]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "typeHeader"
+      }
+    ],
+    "classParams": [
+      {
+        "pattern": "(\\))${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "classParams"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(using|implicit|private|protected|override|val|var|inline)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(=>)${whiteSpace}*(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class", 5, "punctuation", 7, "punctuation"],
+        "subStates": [6, "genericType"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(=>)${whiteSpace}*(${qualifiedTypeId})",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "variable", 2, "punctuation", 3, "class", 4, "punctuation", 6, "punctuation"],
+        "subStates": [5, "genericType"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${qualifiedTypeId})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      },
+      {
+        "pattern": "<-|=>|\\?=>|<:|>:|[\\[\\],.=:&|?+\\-*/%<>{}()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "classParams"
+      }
+    ],
+    "methodParams": [
+      {
+        "pattern": "(\\))${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "(\\))${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "methodParams"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(using|implicit|inline|erased)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(=>)${whiteSpace}*(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class", 5, "punctuation", 7, "punctuation"],
+        "subStates": [6, "genericType"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(=>)${whiteSpace}*(${qualifiedTypeId})",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "variable", 2, "punctuation", 3, "class", 4, "punctuation", 6, "punctuation"],
+        "subStates": [5, "genericType"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${qualifiedTypeId})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      },
+      {
+        "pattern": "<-|=>|\\?=>|<:|>:|[\\[\\],.=:&|?+\\-*/%<>{}()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "methodParams"
+      }
+    ],
+    "returnType": [
+      {
+        "pattern": "(with|derives|match|using)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(Byte|Short|Int|Long|Float|Double|Boolean|Char|Unit|Any|AnyVal|AnyRef|Nothing|Null|String)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      },
+      {
+        "pattern": "[={]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "<-|=>|\\?=>|<:|>:|#|[\\[\\],.:&|?+\\-*/%<>!()@]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "(using|with|match|case|forSome)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(Byte|Short|Int|Long|Float|Double|Boolean|Char|Unit|Any|AnyVal|AnyRef|Nothing|Null|String)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      },
+      {
+        "pattern": "<-|=>|\\?=>|<:|>:|#|[\\[\\],.:&|?+\\-*/%<>!=(){}]",
+        "style": "punctuation"
+      }
+    ],
+    "interpolatedString": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "default"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleInterpolatedString": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "default"]
+      },
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

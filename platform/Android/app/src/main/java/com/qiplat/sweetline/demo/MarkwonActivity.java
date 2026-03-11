@@ -77,7 +77,7 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
             String[] syntaxFiles = {
                     "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json",
                     "javascript.json", "html.json", "java.json", "json-sweetline.json", "kotlin.json", "lua.json",
-                    "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "toml.json",
+                    "python.json", "rust.json", "scala.json", "shell.json", "sql.json", "swift.json", "toml.json",
                     "typescript.json", "xml.json", "yaml.json", "tiecode.json", "markdown.json"
             };
             for (String syntaxFile : syntaxFiles) {

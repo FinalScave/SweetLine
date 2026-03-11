@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         EXT_SYNTAX_MAP.put(".ps1", "powershell.json");
         EXT_SYNTAX_MAP.put(".py", "python.json");
         EXT_SYNTAX_MAP.put(".rs", "rust.json");
+        EXT_SYNTAX_MAP.put(".scala", "scala.json");
         EXT_SYNTAX_MAP.put(".sh", "shell.json");
         EXT_SYNTAX_MAP.put(".sql", "sql.json");
         EXT_SYNTAX_MAP.put(".swift", "swift.json");

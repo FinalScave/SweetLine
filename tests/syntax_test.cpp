@@ -39,6 +39,7 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
     "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
+    "scala.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -71,7 +72,8 @@ TEST_CASE("Create analyzers by extension for sample files") {
     "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json", "iapp.json",
     "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
-    "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json"
+    "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
+    "scala.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -103,6 +105,7 @@ TEST_CASE("Create analyzers by extension for sample files") {
     TESTS_DIR"/files/example.ps1",
     TESTS_DIR"/files/example.py",
     TESTS_DIR"/files/example.rs",
+    TESTS_DIR"/files/example.scala",
     TESTS_DIR"/files/example.sh",
     TESTS_DIR"/files/example.sql",
     TESTS_DIR"/files/example.swift",
