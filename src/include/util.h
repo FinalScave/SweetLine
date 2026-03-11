@@ -1,6 +1,7 @@
 #ifndef SWEETLINE_UTIL_H
 #define SWEETLINE_UTIL_H
 
+#include <cstdarg>
 #include <cstdint>
 #include "macro.h"
 

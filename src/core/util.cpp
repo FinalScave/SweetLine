@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <cstdio>
 #include <vector>
 #include <utf8/utf8.h>
 #include <codecvt>
