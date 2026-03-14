@@ -143,6 +143,9 @@ struct HighlightConfig {
     // Whether to use inline style mode, default false (uses style IDs)
     bool inline_style {false};
 
+    // Tab width used to compute indent guide levels (1 tab = tab_size spaces)
+    int32_t tab_size {4};
+
     static HighlightConfig kDefault;
 };
 ```
@@ -197,6 +200,10 @@ public:
     // Analyze single line (can be used to implement custom incremental analysis)
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
+
+    // Analyze indent guides (call analyzeText first to get highlights)
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(
+        const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
 };
 ```
 
@@ -233,6 +240,14 @@ analyzer->analyzeLine("public class Hello {", info, result);
 // result.char_count - character count of the current line
 ```
 
+#### Indent Guide Analysis
+
+```cpp
+auto analyzer = engine->createAnalyzerByName("python");
+auto highlight = analyzer->analyzeText(source_code);
+auto guides = analyzer->analyzeIndentGuides(source_code, highlight);
+```
+
 ---
 
 ### DocumentAnalyzer
@@ -255,6 +270,9 @@ public:
 
     // Get managed document
     SharedPtr<Document> getDocument() const;
+
+    // Analyze indent guides (call analyze or analyzeIncremental first)
+    SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
 };
 ```
 
@@ -270,6 +288,9 @@ auto highlight = analyzer->analyze();
 // User edits: replace line 2, columns 4-8 with "modified"
 TextRange range {{2, 4}, {2, 8}};
 auto new_highlight = analyzer->analyzeIncremental(range, "modified");
+
+// Build indent guides
+auto guides = analyzer->analyzeIndentGuides();
 ```
 
 ---
@@ -397,6 +418,9 @@ int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer, const char* text);
 
 // Single line analysis
 int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, int32_t* line_info);
+
+// Indent guide analysis for plain text (requires sl_text_analyze first)
+int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
 ### Incremental Analysis
@@ -412,6 +436,10 @@ int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer);
 int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer,
                                           int32_t* changes_range,
                                           const char* new_text);
+
+// Indent guide analysis for managed document
+// (requires sl_document_analyze or sl_document_analyze_incremental first)
+int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 ```
 
 ### Memory Management
@@ -451,6 +479,23 @@ Single line analysis `sl_text_analyze_line` additionally includes:
 ```
 result[2] = end state ID (end_state)
 result[3] = line character count (char_count)
+```
+
+Indent guide analysis `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides`
+returns:
+```
+result[0] = number of indent guides (guide_count)
+result[1] = fixed field count per guide (stride = 6)
+result[2] = number of line states (line_count)
+result[3] = field count per line state (line_stride = 4)
+
+Then follow guide_count guide records:
+[column, startLine, endLine, nestingLevel, scopeRuleId, branchCount, branchLine0, branchColumn0, ...]
+Actual length of each guide record = stride + branchCount * 2
+
+Then follow line_count line-state records:
+[nestingLevel, scopeState, scopeColumn, indentLevel]
+scopeState: 0=START, 1=END, 2=CONTENT
 ```
 
 ### Complete C Example

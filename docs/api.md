@@ -143,6 +143,9 @@ struct HighlightConfig {
     // 是否使用内联样式模式, 默认 false (使用样式 ID)
     bool inline_style {false};
 
+    // Tab 宽度, 用于缩进划线的缩进等级计算 (1 tab = tab_size 个空格)
+    int32_t tab_size {4};
+
     static HighlightConfig kDefault;
 };
 ```
@@ -197,6 +200,10 @@ public:
     // 分析单行文本 (可用于自行实现增量分析)
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
+
+    // 缩进划线分析 (需先调用 analyzeText 获取高亮结果)
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(
+        const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
 };
 ```
 
@@ -233,6 +240,14 @@ analyzer->analyzeLine("public class Hello {", info, result);
 // result.char_count - 当前行字符数
 ```
 
+#### 缩进划线分析
+
+```cpp
+auto analyzer = engine->createAnalyzerByName("python");
+auto highlight = analyzer->analyzeText(source_code);
+auto guides = analyzer->analyzeIndentGuides(source_code, highlight);
+```
+
 ---
 
 ### DocumentAnalyzer
@@ -255,6 +270,9 @@ public:
 
     // 获取托管文档
     SharedPtr<Document> getDocument() const;
+
+    // 缩进划线分析 (需先调用 analyze 或 analyzeIncremental)
+    SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
 };
 ```
 
@@ -270,6 +288,9 @@ auto highlight = analyzer->analyze();
 // 用户编辑: 将第 2 行第 4-8 列替换为 "modified"
 TextRange range {{2, 4}, {2, 8}};
 auto new_highlight = analyzer->analyzeIncremental(range, "modified");
+
+// 生成缩进划线
+auto guides = analyzer->analyzeIndentGuides();
 ```
 
 ---
@@ -397,6 +418,9 @@ int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer, const char* text);
 
 // 单行分析
 int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, int32_t* line_info);
+
+// 纯文本缩进划线分析 (需先调用 sl_text_analyze)
+int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
 ### 增量分析
@@ -412,6 +436,9 @@ int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer);
 int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer,
                                           int32_t* changes_range,
                                           const char* new_text);
+
+// 托管文档缩进划线分析 (需先调用 sl_document_analyze 或 sl_document_analyze_incremental)
+int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 ```
 
 ### 内存管理
@@ -451,6 +478,22 @@ result[1] = 每个高亮块的字段数 (fields_per_span)
 ```
 result[2] = 行结束状态 ID (end_state)
 result[3] = 行字符总数 (char_count)
+```
+
+缩进划线分析 `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides` 返回格式：
+```
+result[0] = 缩进划线数量 (guide_count)
+result[1] = 每条划线固定字段数 (stride = 6)
+result[2] = 行状态数量 (line_count)
+result[3] = 每行状态字段数 (line_stride = 4)
+
+之后是 guide_count 条划线数据，每条结构：
+[column, startLine, endLine, nestingLevel, scopeRuleId, branchCount, branchLine0, branchColumn0, ...]
+每条实际长度 = stride + branchCount * 2
+
+之后是 line_count 条行状态数据，每条结构：
+[nestingLevel, scopeState, scopeColumn, indentLevel]
+scopeState: 0=START, 1=END, 2=CONTENT
 ```
 
 ### 完整 C 示例

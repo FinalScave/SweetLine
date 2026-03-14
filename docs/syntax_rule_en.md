@@ -11,6 +11,7 @@ SweetLine uses JSON to define syntax highlighting rules. Each JSON file describe
 - [Pattern Matching Rules](#pattern-matching-rules)
 - [Style System](#style-system)
 - [State Transitions](#state-transitions)
+- [importSyntax - Syntax Import](#importsyntax---syntax-import)
 - [SubStates](#substates)
 - [onLineEndState - Line End State](#onlineendstate---line-end-state)
 - [scopeRules - Scope Rules](#scoperules---scope-rules)
@@ -128,9 +129,11 @@ Each matching rule object contains the following fields:
 | `styles` | array | No | Capture group style mapping (mutually exclusive with `style`) |
 | `state` | string | No | Target state to transition to after a successful match |
 | `subStates` | array | No | Delegate specific capture group content to a sub-state for processing |
+| `importSyntax` | string | No* | Import another syntax rule into the current state |
+| `#ifdef` | string | No | Used with `importSyntax`; import only when the macro is defined |
 | `onLineEndState` | string | No* | Auto-transition state at end of line (special rule, no `pattern`) |
 
-> `*` Note: Regular matching rules must have `pattern`; line-end state rules only have `onLineEndState` without `pattern`.
+> `*` Note: Regular matching rules must have `pattern`; `onLineEndState` and `importSyntax` are special rules without `pattern`.
 
 ### Basic Pattern Example
 
@@ -274,6 +277,35 @@ This rule matches the position at **the start of a line where the next character
 
 ---
 
+## importSyntax - Syntax Import
+
+`importSyntax` imports another syntax rule into the current state. During import, token rules from the imported syntax's `default` state are merged, which is useful for host-language plus embedded-language scenarios (e.g., Markdown code blocks).
+
+### Basic Syntax
+
+```json
+{
+  "importSyntax": "python"
+}
+```
+
+### Conditional Import (`#ifdef`)
+
+```json
+{
+  "importSyntax": "java",
+  "#ifdef": "ANDROID"
+}
+```
+
+The import is applied only when the macro is defined on `HighlightEngine` (for example, `defineMacro("ANDROID")`); otherwise the import rule is skipped.
+
+**Notes:**
+- `importSyntax` is a special rule and does not need `pattern` / `style` / `styles`
+- `#ifdef` is only effective on `importSyntax` rules
+
+---
+
 ## SubStates
 
 `subStates` allows delegating the content of specific capture groups to another state for processing, instead of directly assigning a style. This is very useful for handling **nested structures** such as generic parameters.
@@ -370,7 +402,7 @@ If `)` is not encountered on the current line, the next line automatically retur
 
 ## scopeRules - Scope Rules
 
-`scopeRules` defines scope start/end markers, used for editor folding and indent guides.
+`scopeRules` defines scope markers for editor folding and indent guides. It supports two modes: normal start/end marker mode (`start` + `end`) and indentation start-marker mode (`end` is an empty string).
 
 ```json
 {
@@ -387,8 +419,26 @@ If `)` is not encountered on the current line, the next line automatically retur
 | Field | Type | Description |
 |-------|------|-------------|
 | `start` | string | Code block start marker |
-| `end` | string | Code block end marker |
+| `end` | string | Code block end marker; can be empty string `""` |
 | `branches` | string[] | Optional, branch keywords within the block (e.g., `case` in switch) |
+
+### Indentation Start-Marker Mode (`end: ""`)
+
+When **all** `scopeRules` use `end: ""`, the engine enables indentation start-marker mode: after matching a `start` marker, scope end is determined by indentation fallback from the next line onward.
+
+```json
+{
+  "scopeRules": [
+    { "start": ":", "end": "" }
+  ]
+}
+```
+
+This is a common Python pattern: after `:`, the following indented block is treated as one scope.
+
+**Notes:**
+- Do not mix `end: ""` rules with non-empty `end` rules; mixed rules are processed in normal start/end mode
+- `start` / `end` / `branches` are matched by highlighted token text, not regex patterns
 
 ---
 
