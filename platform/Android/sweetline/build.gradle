@@ -6,7 +6,7 @@ apply plugin: "signing"
 
 description = "Fast code highlight engine"
 group = "com.qiplat"
-version = "0.1.1"
+version = "0.1.2"
 
 android {
     namespace 'com.qiplat.sweetline'
@@ -61,13 +61,51 @@ javadoc {
     }
 }
 
+ext.localPublishProps = new Properties()
+File f = rootProject.file(".gradle/publish.properties")
+if (f.exists()) {
+    f.withInputStream { ext.localPublishProps.load(it) }
+}
+
+static def toNonBlank(String value) {
+    if (value == null) {
+        return null
+    }
+    String trimmed = value.trim()
+    return trimmed.isEmpty() ? null : trimmed
+}
+
+def getPublishConfig(String name) {
+    return toNonBlank(providers.gradleProperty(name).orNull)
+            ?: toNonBlank(providers.environmentVariable(name).orNull)
+            ?: toNonBlank(providers.environmentVariable(name.replace('.', '_').toUpperCase()).orNull)
+            ?: toNonBlank(ext.localPublishProps.getProperty(name))
+}
+
+String defaultGpgExecutable = System.getProperty("os.name")
+        .toLowerCase()
+        .contains("windows") ? "gpg.exe" : "gpg"
+String gpgExecutable = getPublishConfig("signing.gnupg.executable") ?: defaultGpgExecutable
+String gpgKeyName = getPublishConfig("signing.gnupg.keyName")
+String gpgPassphrase = getPublishConfig("signing.gnupg.passphrase")
+project.extensions.extraProperties.set("signing.gnupg.executable", gpgExecutable)
+rootProject.extensions.extraProperties.set("signing.gnupg.executable", gpgExecutable)
+if (gpgKeyName != null && !gpgKeyName.empty) {
+    project.extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
+    rootProject.extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
+}
+if (gpgPassphrase != null && !gpgPassphrase.empty) {
+    project.extensions.extraProperties.set("signing.gnupg.passphrase", gpgPassphrase)
+    rootProject.extensions.extraProperties.set("signing.gnupg.passphrase", gpgPassphrase)
+}
+
 signing {
     useGpgCmd()
 }
 
 centralPortal {
-    username = rootProject.property("sonatype.username")
-    password = rootProject.property("sonatype.password")
+    username = getPublishConfig("sonatype.username")
+    password = getPublishConfig("sonatype.password")
     name = "sweetline"
 
     pom {
