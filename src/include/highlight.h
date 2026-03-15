@@ -172,11 +172,14 @@ namespace NS_SWEETLINE {
     /// @param result 用于接收单行高亮分析结果
     void analyzeLine(const U8String& text, const TextLineInfo& line_info, LineAnalyzeResult& result) const;
 
-    /// 对一段文本进行缩进划线分析（需先调用 analyzeText 获取高亮结果）
+    /// 对一段文本进行缩进划线分析
+    /// 优先使用传入的高亮结果，其次使用 analyzeText 最近一次缓存的高亮结果
+    /// 如果没有可用高亮结果，则回退到纯缩进分析
     /// @param text 整段文本内容
-    /// @param highlight 高亮分析结果
+    /// @param highlight 可选高亮分析结果
     /// @return 缩进划线分析结果
-    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text,
+      const SharedPtr<DocumentHighlight>& highlight = nullptr);
 
     /// 获取当前高亮配置
     const HighlightConfig& getHighlightConfig() const;
@@ -184,6 +187,7 @@ namespace NS_SWEETLINE {
     SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     HighlightConfig m_config_;
+    SharedPtr<DocumentHighlight> m_cached_highlight_;
   };
 
   class InternalDocumentAnalyzer;

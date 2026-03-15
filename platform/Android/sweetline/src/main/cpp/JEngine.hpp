@@ -234,8 +234,7 @@ public:
       return nullptr;
     }
     const char* c_text = env->GetStringUTFChars(text, nullptr);
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(c_text);
-    SharedPtr<IndentGuideResult> guide_result = analyzer->analyzeIndentGuides(c_text, highlight);
+    SharedPtr<IndentGuideResult> guide_result = analyzer->analyzeIndentGuides(c_text);
     env->ReleaseStringUTFChars(text, c_text);
     return convertIndentGuideResultAsIntArray(env, guide_result);
   }

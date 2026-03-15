@@ -201,9 +201,11 @@ public:
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
 
-    // Analyze indent guides (call analyzeText first to get highlights)
+    // Analyze indent guides
+    // Prefer the provided highlight, otherwise reuse the latest analyzeText cache
+    // If no highlight is available, fallback to indentation-only analysis
     SharedPtr<IndentGuideResult> analyzeIndentGuides(
-        const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
+        const U8String& text, const SharedPtr<DocumentHighlight>& highlight = nullptr);
 };
 ```
 
@@ -245,7 +247,16 @@ analyzer->analyzeLine("public class Hello {", info, result);
 ```cpp
 auto analyzer = engine->createAnalyzerByName("python");
 auto highlight = analyzer->analyzeText(source_code);
-auto guides = analyzer->analyzeIndentGuides(source_code, highlight);
+
+// Explicitly pass highlight
+auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
+
+// Omit highlight and reuse the latest analyzeText cache
+auto guides2 = analyzer->analyzeIndentGuides(source_code);
+
+// If no cache is available, it falls back to indentation-only analysis
+auto fresh_analyzer = engine->createAnalyzerByName("python");
+auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
 ```
 
 ---

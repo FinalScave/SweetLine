@@ -201,9 +201,11 @@ public:
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
 
-    // 缩进划线分析 (需先调用 analyzeText 获取高亮结果)
+    // 缩进划线分析
+    // 优先使用传入的高亮结果，其次复用 analyzeText 最近一次缓存
+    // 如果没有可用高亮结果，则回退到纯缩进分析
     SharedPtr<IndentGuideResult> analyzeIndentGuides(
-        const U8String& text, const SharedPtr<DocumentHighlight>& highlight);
+        const U8String& text, const SharedPtr<DocumentHighlight>& highlight = nullptr);
 };
 ```
 
@@ -245,7 +247,16 @@ analyzer->analyzeLine("public class Hello {", info, result);
 ```cpp
 auto analyzer = engine->createAnalyzerByName("python");
 auto highlight = analyzer->analyzeText(source_code);
-auto guides = analyzer->analyzeIndentGuides(source_code, highlight);
+
+// 显式传入高亮结果
+auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
+
+// 省略 highlight 时，自动复用最近一次 analyzeText 的缓存
+auto guides2 = analyzer->analyzeIndentGuides(source_code);
+
+// 如果没有可用缓存，则自动回退到按缩进分析
+auto fresh_analyzer = engine->createAnalyzerByName("python");
+auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
 ```
 
 ---

@@ -186,3 +186,63 @@ TEST_CASE("ScopeRules guide column uses min of start and end columns") {
   REQUIRE(result->guide_lines.size() == 1);
   CHECK(result->guide_lines[0].column == 0);
 }
+
+TEST_CASE("TextAnalyzer reuses cached highlight for scope indent guides") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "braceCached",
+  "fileExtensions": [".bc2"],
+  "states": {
+    "default": [
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "{", "end": "}" }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("braceCached");
+  REQUIRE(analyzer != nullptr);
+
+  const U8String text = "{\n    x\n}";
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
+  REQUIRE(highlight != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text);
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].start_line == 0);
+  CHECK(result->guide_lines[0].end_line == 2);
+  CHECK(result->guide_lines[0].scope_rule_id == 0);
+}
+
+TEST_CASE("TextAnalyzer falls back to indentation guides without cached highlight") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "braceFallback",
+  "fileExtensions": [".bf"],
+  "states": {
+    "default": [
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": [
+    { "start": "{", "end": "}" }
+  ]
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("braceFallback");
+  REQUIRE(analyzer != nullptr);
+
+  const U8String text = "{\n    x\n}";
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text);
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].start_line == 1);
+  CHECK(result->guide_lines[0].end_line == 1);
+  CHECK(result->guide_lines[0].column == 4);
+  CHECK(result->guide_lines[0].scope_rule_id == -1);
+}
