@@ -1,12 +1,12 @@
-English | [简体中文](./README.md)
+简体中文 | [English](./README.md)
 
-# SweetLine Syntax Highlighting Engine
+# SweetLine 语法高亮引擎
 
-## Overview
+## 概述
 
-SweetLine is a cross-platform, high-performance, and extensible syntax highlighting engine designed for modern code editors and code display scenarios. Built on the Oniguruma regex engine and a finite state machine model, it processes large code files in real-time with accurate syntax highlighting.
+SweetLine 是一款跨平台、高性能、可扩展的语法高亮引擎，专为现代代码编辑器和代码展示场景设计。基于 Oniguruma 正则引擎和有限状态机模型，能够实时处理大型代码文件并提供精准的语法高亮。
 
-## Screenshots
+## 效果展示
 
 <p align="center">
   <img src="docs/snapshot/java.png" width="45%" alt="Java" />
@@ -17,31 +17,31 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
   <img src="docs/snapshot/toml.png" width="45%" alt="TOML" />
 </p>
 
-## Core Features
+## 核心特性
 
-### High Performance
-- Built on [Oniguruma](https://github.com/kkos/oniguruma) regex engine for fast pattern matching
-- Incremental update algorithm that only reanalyzes changed portions, ideal for real-time editor highlighting
-- Multi-line state preservation to avoid full document reanalysis
+### 高性能
+- 基于 [Oniguruma](https://github.com/kkos/oniguruma) 正则引擎，提供快速的 pattern 匹配
+- 增量更新算法，仅重新分析变更部分，适用于编辑器实时高亮场景
+- 多行状态保持，避免全文档重新分析
 
-### High Accuracy
-- Finite State Machine (FSM) based model supporting complex syntax rule nesting
-- Multiple capture group style mapping for fine-grained highlighting control
-- SubStates mechanism for handling nested syntax structures (e.g., generics, template parameters)
-- Zero-width match support for context-sensitive state transitions
+### 高精度
+- 基于有限状态机（FSM）模型，支持复杂的语法规则嵌套
+- 多捕获组样式映射，精准控制高亮粒度
+- 子状态（subStates）机制，处理嵌套语法结构（如泛型、模板参数）
+- 支持零宽匹配（zero-width match），处理上下文相关的状态切换
 
-### Highly Extensible
-- JSON-based syntax rule configuration — add new language support without writing code
-- Variable substitution and pattern reuse to reduce rule redundancy
-- 25+ built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
+### 高度可扩展
+- 使用 JSON 配置语法规则，无需编写代码即可新增语言支持
+- 支持变量替换和 pattern 复用，减少规则冗余
+- 内置 50+ 语言语法规则（Java、C/C++、Python、Kotlin、Rust、Go、TypeScript 等）
 
-### Cross-Platform
-- Core engine written in C++17
-- C API wrapper for easy FFI integration
-- Native support for Android (JNI), WebAssembly (Emscripten), HarmonyOS (NAPI)
-- Supports Windows, Linux, macOS and other desktop platforms
+### 跨平台
+- 核心引擎使用 C++17 编写
+- 提供 C API 封装，方便 FFI 集成
+- 原生支持 Android（JNI）、WebAssembly（Emscripten）、HarmonyOS（NAPI）
+- 支持 Windows、Linux、macOS 等桌面平台
 
-## Architecture Overview
+## 架构总览
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -53,7 +53,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 │                 SweetLine Core (C++17)                   │
 │  ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐  │
 │  │HighlightEng │ │ TextAnalyzer │ │DocumentAnalyzer  │  │
-│  │    ine      │ │ (Full Scan)  │ │(Incremental)     │  │
+│  │    ine      │ │(全量分析)    │ │ (增量分析)       │  │
 │  └──────┬──────┘ └──────┬───────┘ └────────┬─────────┘  │
 │         │               │                  │             │
 │  ┌──────▼───────────────▼──────────────────▼─────────┐  │
@@ -66,21 +66,21 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Quick Start
+## 快速开始
 
-### C++ Usage
+### C++ 使用
 
 ```cpp
 #include "highlight.h"
 using namespace sweetline;
 
-// 1. Create highlight engine
+// 1. 创建高亮引擎
 auto engine = std::make_shared<HighlightEngine>();
 
-// 2. Compile syntax rules
+// 2. 编译语法规则
 auto rule = engine->compileSyntaxFromFile("syntaxes/java.json");
 
-// 3. Create document object
+// 3. 创建文档对象
 auto document = std::make_shared<Document>("file:///example.java", R"(
 public class HelloWorld {
     public static void main(String[] args) {
@@ -89,30 +89,30 @@ public class HelloWorld {
 }
 )");
 
-// 4. Load document and analyze
+// 4. 加载文档并分析
 auto analyzer = engine->loadDocument(document);
 auto highlight = analyzer->analyze();
 
-// 5. Iterate highlight results
+// 5. 遍历高亮结果
 for (size_t i = 0; i < highlight->lines.size(); i++) {
     auto& line = highlight->lines[i];
     for (auto& span : line.spans) {
-        // span.range  - text range (line/column/index)
-        // span.style_id - style ID (keyword=1, string=2, ...)
+        // span.range  - 文本范围 (行/列/索引)
+        // span.style_id - 样式ID (keyword=1, string=2, ...)
     }
 }
 ```
 
-### Incremental Updates
+### 增量更新
 
 ```cpp
-// When the document is edited, only reanalyze the changed portion
+// 文档发生编辑时，只重新分析变更部分
 TextRange change_range { {2, 4}, {2, 8} };
 std::string new_text = "modified";
 auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
 ```
 
-### Android Usage
+### Android 使用
 
 ```groovy
 // build.gradle
@@ -120,17 +120,17 @@ implementation 'com.qiplat:sweetline:0.0.4'
 ```
 
 ```java
-// Create engine
+// 创建引擎
 HighlightEngine engine = new HighlightEngine(new HighlightConfig());
 
-// Compile syntax rules
+// 编译语法规则
 engine.compileSyntaxFromJson(jsonString);
 
-// Full analysis
+// 全量分析
 TextAnalyzer analyzer = engine.createAnalyzerByName("java");
 DocumentHighlight result = analyzer.analyzeText(sourceCode);
 
-// Iterate results
+// 遍历结果
 for (LineHighlight line : result.lines) {
     for (TokenSpan span : line.spans) {
         // span.range, span.styleId
@@ -138,23 +138,23 @@ for (LineHighlight line : result.lines) {
 }
 ```
 
-### WebAssembly Usage
+### WebAssembly 使用
 
 ```javascript
 import { sweetline } from './libsweetline.js';
 
-// Create engine
+// 创建引擎
 const config = new sweetline.HighlightConfig();
 const engine = new sweetline.HighlightEngine(config);
 
-// Compile syntax rules
+// 编译语法规则
 engine.compileSyntaxFromJson(jsonString);
 
-// Analyze text
+// 分析文本
 const analyzer = engine.createAnalyzerByName("javascript");
 const highlight = analyzer.analyzeText(sourceCode);
 
-// Iterate results
+// 遍历结果
 for (let i = 0; i < highlight.lines.size(); i++) {
     const line = highlight.lines.get(i);
     for (let j = 0; j < line.spans.size(); j++) {
@@ -164,9 +164,9 @@ for (let i = 0; i < highlight.lines.size(); i++) {
 }
 ```
 
-### Custom Syntax Rules
+### 自定义语法规则
 
-SweetLine uses JSON to define syntax rules. Here is a simple example:
+SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 
 ```json
 {
@@ -194,20 +194,20 @@ SweetLine uses JSON to define syntax rules. Here is a simple example:
 }
 ```
 
-For complete syntax rule configuration, see the [Syntax Rule Configuration Guide](docs/syntax_rule_en.md).
+完整语法规则配置说明请参见 [语法规则配置文档](docs/zh/syntax_rule.md)。
 
-## Documentation
+## 文档
 
-| Document | Description |
-|----------|-------------|
-| [Syntax Rule Configuration Guide](docs/syntax_rule_en.md) | Detailed guide on writing JSON syntax rule files |
-| [API Reference](docs/api_en.md) | API usage for C++, C, Android, and WebAssembly |
-| [Contributing Guide](docs/join_en.md) | How to participate in the project |
+| 文档 | 说明 |
+|------|------|
+| [语法规则配置文档](docs/zh/syntax_rule.md) | 详细介绍如何编写 JSON 语法规则文件 |
+| [API 文档](docs/zh/api.md) | C++、C、Android、WebAssembly 各平台 API 使用说明 |
+| [项目协作说明](docs/zh/join.md) | 参与项目共建指南 |
 
-## Built-in Language Support
+## 内置语言支持
 
-| Language | File | Language | File |
-|----------|------|----------|------|
+| 语言 | 文件 | 语言 | 文件 |
+|------|------|------|------|
 | Java | `java.json` | Python | `python.json` |
 | C | `c.json` | C++ | `c++.json` |
 | C# | `csharp.json` | Kotlin | `kotlin.json` |
@@ -220,13 +220,13 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 | YAML | `yaml.json` | TOML | `toml.json` |
 | Markdown | `markdown.json` | JSON | `json-sweetline.json` |
 
-## Performance Tips
+## 性能建议
 
-- **Pre-compile syntax rules**: Compile all required syntax rules at application startup; compiled rules are reusable
-- **Prefer incremental updates**: For editor scenarios, use `DocumentAnalyzer` incremental analysis instead of full analysis
-- **Optimize regular expressions**: Avoid overly complex backtracking-intensive patterns; use `variables` to reuse common patterns
-- **Design state machines carefully**: Control the number of states and ensure every state has a clear exit path
+- **预编译语法规则**：在应用启动时一次性编译所有需要的语法规则，编译后的规则可重复使用
+- **优先使用增量更新**：对于编辑器场景，使用 `DocumentAnalyzer` 的增量分析而非全量分析
+- **优化正则表达式**：避免过于复杂的回溯密集型 pattern，善用 `variables` 复用常见 pattern
+- **合理设计状态机**：控制状态数量，确保每个状态都有明确的退出路径
 
-## Contributing
+## 共建
 
-We welcome contributions to the SweetLine highlighting engine! If you'd like to participate, feel free to fork the repository, make changes, and submit merge requests. See the [Contributing Guide](docs/join_en.md) for details.
+欢迎一起共建 SweetLine 高亮引擎！如果您有参与项目的想法，可直接拉分支修改并提交合并请求，详见 [项目协作说明](docs/zh/join.md)。
