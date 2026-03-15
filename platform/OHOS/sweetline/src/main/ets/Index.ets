@@ -321,7 +321,7 @@ export namespace sweetline {
       this.tabSize = tabSize;
     }
 
-    protected toNativeBits(): number {
+    public toNativeBits(): number {
       let bits = 0;
       if (this.showIndex) {
         bits |= 1;
@@ -548,6 +548,21 @@ export namespace sweetline {
     }
 
     /**
+     * 根据patch内容重新分析整个文本的高亮结果(字符索引)
+     * @param startIndex patch的起始索引
+     * @param endIndex patch的结束索引
+     * @param newText patch的文本
+     * @returns 整个文本的高亮结果
+     */
+    public analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight {
+      if (this.nativeHandle == 0) {
+        return new DocumentHighlight();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeChanges2(this.nativeHandle, startIndex, endIndex, newText);
+      return NativeBufferPack.readDocumentHighlight(buffer);
+    }
+
+    /**
      * 根据patch内容重新分析文本，并仅返回指定可见行区域高亮切片
      * @param range patch的变更范围
      * @param newText patch的文本
@@ -566,21 +581,6 @@ export namespace sweetline {
         visibleRange.startLine, visibleRange.lineCount
       );
       return NativeBufferPack.readDocumentHighlightSlice(buffer);
-    }
-
-    /**
-     * 根据patch内容重新分析整个文本的高亮结果(字符索引)
-     * @param startIndex patch的起始索引
-     * @param endIndex patch的结束索引
-     * @param newText patch的文本
-     * @returns 整个文本的高亮结果
-     */
-    public analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight {
-      if (this.nativeHandle == 0) {
-        return new DocumentHighlight();
-      }
-      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeChanges2(this.nativeHandle, startIndex, endIndex, newText);
-      return NativeBufferPack.readDocumentHighlight(buffer);
     }
 
     /**

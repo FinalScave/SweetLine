@@ -368,15 +368,6 @@ export namespace sweetline {
         analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
 
         /**
-         * 根据patch内容重新分析并仅返回指定行区域高亮切片
-         * @param range patch的变更范围
-         * @param newText patch的文本
-         * @param visibleRange 可见行范围
-         * @return 指定行区域高亮切片
-         */
-        analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
-
-        /**
          * 根据patch内容重新分析整个托管文档的高亮结果
          * @param startOffset patch变更的起始字符索引
          * @param endOffset patch变更的结束字符索引
@@ -384,6 +375,15 @@ export namespace sweetline {
          * @return 整个托管文档的高亮结果
          */
         analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
+
+        /**
+         * 根据patch内容重新分析并仅返回指定行区域高亮切片
+         * @param range patch的变更范围
+         * @param newText patch的文本
+         * @param visibleRange 可见行范围
+         * @return 指定行区域高亮切片
+         */
+        analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
 
         /**
          * 对托管文档进行缩进划线分析（需先调用 analyze 或 analyzeIncremental）

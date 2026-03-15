@@ -163,8 +163,7 @@ EMSCRIPTEN_BINDINGS(highlight) {
     )
     .function("analyzeIndentGuides",
       emscripten::optional_override([](SharedPtr<TextAnalyzer>& self, const U8String& text) {
-        SharedPtr<DocumentHighlight> highlight = self->analyzeText(text);
-        return self->analyzeIndentGuides(text, highlight);
+        return self->analyzeIndentGuides(text);
       })
     );
 
@@ -172,8 +171,8 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .smart_ptr<SharedPtr<DocumentAnalyzer>>("SharedPtr<DocumentAnalyzer>")
     .function("analyze", &DocumentAnalyzer::analyze)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
-    .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
+    .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)
     .function("getDocument", &DocumentAnalyzer::getDocument)
     .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides);
 

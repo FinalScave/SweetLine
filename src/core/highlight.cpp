@@ -132,11 +132,20 @@ namespace NS_SWEETLINE {
   }
 #endif
 
-  // ===================================== LineState ============================================
+  // ===================================== LineScopeState ============================================
   bool LineScopeState::operator==(const LineScopeState& other) const {
     return nesting_level == other.nesting_level
       && scope_state == other.scope_state && scope_column == other.scope_column
       && indent_level == other.indent_level;
+  }
+
+  bool IndentGuideLine::BranchPoint::operator==(const BranchPoint &other) const {
+    return line == other.line && column == other.column;
+  }
+
+  bool IndentGuideLine::operator==(const IndentGuideLine &other) const {
+    return start_line == other.start_line && end_line == other.end_line
+      && column == other.column && scope_rule_id == other.scope_rule_id;
   }
 
   // ===================================== HighlightConfig ============================================

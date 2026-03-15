@@ -117,6 +117,8 @@ namespace NS_SWEETLINE {
     struct BranchPoint {
       int32_t line {0};
       int32_t column {0};
+
+      bool operator==(const BranchPoint& other) const;
     };
 
     /// 划线所在列（字符列）
@@ -131,6 +133,8 @@ namespace NS_SWEETLINE {
     int32_t scope_rule_id {-1};
     /// 分支点列表（如 else/case 的行列位置）
     List<BranchPoint> branches;
+
+    bool operator==(const IndentGuideLine& other) const;
   };
 
   /// 缩进划线分析结果
