@@ -97,6 +97,17 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     );
 
+  emscripten::class_<LineRange>("LineRange")
+    .constructor<>()
+    .property("startLine", &LineRange::start_line)
+    .property("lineCount", &LineRange::line_count);
+
+  emscripten::class_<DocumentHighlightSlice>("DocumentHighlightSlice")
+    .smart_ptr<SharedPtr<DocumentHighlightSlice>>("SharedPtr<DocumentHighlightSlice>")
+    .property("startLine", &DocumentHighlightSlice::start_line)
+    .property("totalLineCount", &DocumentHighlightSlice::total_line_count)
+    .property("lines", &DocumentHighlightSlice::lines);
+
   BIND_LIST(int32_t, "Int32List")
 
   emscripten::class_<LineScopeState>("LineScopeState")
@@ -161,6 +172,7 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .smart_ptr<SharedPtr<DocumentAnalyzer>>("SharedPtr<DocumentAnalyzer>")
     .function("analyze", &DocumentAnalyzer::analyze)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
+    .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("getDocument", &DocumentAnalyzer::getDocument)
     .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides);

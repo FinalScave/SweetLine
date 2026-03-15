@@ -55,6 +55,24 @@ namespace NS_SWEETLINE {
 #endif
   };
 
+  /// 行范围描述（0-based）
+  struct LineRange {
+    /// 起始行号
+    size_t start_line {0};
+    /// 行数量
+    size_t line_count {0};
+  };
+
+  /// 指定行区域的高亮结果切片
+  struct DocumentHighlightSlice {
+    /// 实际返回的起始行（可能经过边界裁剪）
+    size_t start_line {0};
+    /// patch 后文档总行数
+    size_t total_line_count {0};
+    /// 连续行高亮结果
+    List<LineHighlight> lines;
+  };
+
   /// 作用域划线区域（由匹配对如 {}/begin-end 界定的作用域块）
   struct ScopeBlock {
     /// 划线起始位置
@@ -203,6 +221,14 @@ namespace NS_SWEETLINE {
     /// @param new_text patch的文本
     /// @return 整个托管文档的高亮结果
     SharedPtr<DocumentHighlight> analyzeIncremental(const TextRange& range, const U8String& new_text) const;
+
+    /// 根据 patch 内容增量分析，并仅返回指定行区域高亮切片
+    /// @param range patch 的变更范围
+    /// @param new_text patch 的文本
+    /// @param visible_range 需要返回的可见行范围
+    /// @return 指定行区域高亮切片
+    SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(const TextRange& range, const U8String& new_text,
+      const LineRange& visible_range) const;
 
     /// 根据patch内容重新分析整个托管文档的高亮结果
     /// @param start_index patch变更的起始字符索引

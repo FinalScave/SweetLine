@@ -61,6 +61,24 @@ public class DocumentAnalyzer {
     }
 
     /**
+     * 根据 patch 内容重新分析文本，并仅返回指定可见行区域的高亮切片
+     * @param range patch 的变更范围（行列）
+     * @param newText patch 的文本
+     * @param visibleRange 可见行区域（startLine + lineCount）
+     * @return 指定行区域高亮切片
+     */
+    public DocumentHighlightSlice analyzeIncrementalInLineRange(TextRange range, String newText, LineRange visibleRange) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        long startRange = NativeBufferPack.packTextPosition(range.start);
+        long endRange = NativeBufferPack.packTextPosition(range.end);
+        int[] buffer = nativeAnalyzeChangesInLineRange(nativeHandle, startRange, endRange, newText,
+                visibleRange.startLine, visibleRange.lineCount);
+        return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * 对整个文本进行分析，并将高亮结果转换为 {@link Spannable}
      * @param styleFactory Span样式函数，通过styleId创建对应Span样式
      * @return {@link Spannable}
@@ -149,6 +167,10 @@ public class DocumentAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeChanges2(long handle, int startIndex, int endIndex, String newText);
+
+    @FastNative
+    private static native int[] nativeAnalyzeChangesInLineRange(long handle, long startPosition, long endPosition,
+                                                                String newText, int visibleStartLine, int visibleLineCount);
 
     @FastNative
     private static native int[] nativeAnalyzeIndentGuides(long handle);

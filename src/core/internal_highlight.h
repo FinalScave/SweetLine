@@ -85,6 +85,9 @@ namespace NS_SWEETLINE {
 
     SharedPtr<DocumentHighlight> analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text);
 
+    SharedPtr<DocumentHighlightSlice> analyzeHighlightIncrementalInLineRange(const TextRange& range, const U8String& new_text,
+      const LineRange& visible_range);
+
     SharedPtr<IndentGuideResult> analyzeIndentGuides();
 
     SharedPtr<Document> getDocument() const;

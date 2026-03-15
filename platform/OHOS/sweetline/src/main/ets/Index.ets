@@ -125,6 +125,43 @@ export namespace sweetline {
   }
 
   /**
+   * 行范围描述（0-based）
+   */
+  export class LineRange {
+    /**
+     * 起始行号
+     */
+    public startLine: number = 0;
+    /**
+     * 行数量
+     */
+    public lineCount: number = 0;
+
+    public constructor(startLine: number = 0, lineCount: number = 0) {
+      this.startLine = startLine;
+      this.lineCount = lineCount;
+    }
+  }
+
+  /**
+   * 指定行区域高亮切片
+   */
+  export class DocumentHighlightSlice {
+    /**
+     * 切片起始行
+     */
+    public startLine: number = 0;
+    /**
+     * patch 后文档总行数
+     */
+    public totalLineCount: number = 0;
+    /**
+     * 切片行高亮序列
+     */
+    public lines: Array<LineHighlight> = [];
+  }
+
+  /**
    * 行作用域划线分析状态
    */
   export class LineScopeState {
@@ -511,6 +548,27 @@ export namespace sweetline {
     }
 
     /**
+     * 根据patch内容重新分析文本，并仅返回指定可见行区域高亮切片
+     * @param range patch的变更范围
+     * @param newText patch的文本
+     * @param visibleRange 可见行区域
+     * @returns 指定行区域高亮切片
+     */
+    public analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice {
+      if (this.nativeHandle == 0) {
+        return new DocumentHighlightSlice();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeChangesInLineRange(
+        this.nativeHandle,
+        range.start.line, range.start.column,
+        range.end.line, range.end.column,
+        newText,
+        visibleRange.startLine, visibleRange.lineCount
+      );
+      return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * 根据patch内容重新分析整个文本的高亮结果(字符索引)
      * @param startIndex patch的起始索引
      * @param endIndex patch的结束索引
@@ -755,6 +813,57 @@ export namespace sweetline {
         lineHighlight.spans.push(span);
       }
       return highlight;
+    }
+
+    static readDocumentHighlightSlice(buffer: Int32Array): DocumentHighlightSlice {
+      const slice = new DocumentHighlightSlice();
+      if (!buffer || buffer.length < 5) {
+        return slice;
+      }
+      slice.startLine = buffer[0];
+      slice.totalLineCount = buffer[1];
+      const lineCount = Math.max(buffer[2], 0);
+      const spanCount = Math.max(buffer[3], 0);
+      const stride = Math.max(buffer[4], 0);
+      for (let i = 0; i < lineCount; i++) {
+        slice.lines.push(new LineHighlight());
+      }
+      for (let i = 0; i < spanCount; i++) {
+        let baseIndex = i * stride + 5;
+        if (baseIndex + 6 >= buffer.length) {
+          break;
+        }
+        let startLine = buffer[baseIndex];
+        let startColumn = buffer[baseIndex + 1];
+        let startIndex = buffer[baseIndex + 2];
+        let endLine = buffer[baseIndex + 3];
+        let endColumn = buffer[baseIndex + 4];
+        let endIndex = buffer[baseIndex + 5];
+
+        let range = new TextRange(
+          new TextPosition(startLine, startColumn, startIndex),
+          new TextPosition(endLine, endColumn, endIndex)
+        );
+        let span: TokenSpan;
+        if (stride > 7) {
+          if (baseIndex + 8 >= buffer.length) {
+            break;
+          }
+          let inlineStyle = new InlineStyle();
+          inlineStyle.foreground = buffer[baseIndex + 6];
+          inlineStyle.background = buffer[baseIndex + 7];
+          NativeBufferPack.unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
+          span = TokenSpan.withInlineStyle(range, inlineStyle);
+        } else {
+          span = new TokenSpan(range, buffer[baseIndex + 6]);
+        }
+        const localLine = startLine - slice.startLine;
+        if (localLine < 0 || localLine >= slice.lines.length) {
+          continue;
+        }
+        slice.lines[localLine].spans.push(span);
+      }
+      return slice;
     }
 
     static readLineAnalyzeResult(buffer: Int32Array): LineAnalyzeResult {

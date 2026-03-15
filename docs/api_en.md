@@ -275,6 +275,10 @@ public:
     SharedPtr<DocumentHighlight> analyzeIncremental(
         const TextRange& range, const U8String& new_text) const;
 
+    // Incremental analysis that returns only a visible line-range slice
+    SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(
+        const TextRange& range, const U8String& new_text, const LineRange& visible_range) const;
+
     // Incremental analysis (by character index)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         size_t start_index, size_t end_index, const U8String& new_text) const;
@@ -299,6 +303,10 @@ auto highlight = analyzer->analyze();
 // User edits: replace line 2, columns 4-8 with "modified"
 TextRange range {{2, 4}, {2, 8}};
 auto new_highlight = analyzer->analyzeIncremental(range, "modified");
+
+// Return only the visible slice [100, 100 + 60)
+LineRange visible {100, 60};
+auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
 
 // Build indent guides
 auto guides = analyzer->analyzeIndentGuides();
@@ -339,6 +347,19 @@ struct LineHighlight {
 struct DocumentHighlight {
     List<LineHighlight> lines;
     void toJson(U8String& result) const;  // Export as JSON
+};
+
+// Line range
+struct LineRange {
+    size_t start_line {0};
+    size_t line_count {0};
+};
+
+// Highlight slice for a visible line range
+struct DocumentHighlightSlice {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<LineHighlight> lines;
 };
 
 // Inline style

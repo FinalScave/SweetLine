@@ -275,6 +275,10 @@ public:
     SharedPtr<DocumentHighlight> analyzeIncremental(
         const TextRange& range, const U8String& new_text) const;
 
+    // 增量分析并返回指定可见行区域高亮切片
+    SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(
+        const TextRange& range, const U8String& new_text, const LineRange& visible_range) const;
+
     // 增量分析 (通过字符索引)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         size_t start_index, size_t end_index, const U8String& new_text) const;
@@ -299,6 +303,10 @@ auto highlight = analyzer->analyze();
 // 用户编辑: 将第 2 行第 4-8 列替换为 "modified"
 TextRange range {{2, 4}, {2, 8}};
 auto new_highlight = analyzer->analyzeIncremental(range, "modified");
+
+// 仅返回可见行范围 [100, 100 + 60) 的高亮切片
+LineRange visible {100, 60};
+auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
 
 // 生成缩进划线
 auto guides = analyzer->analyzeIndentGuides();
@@ -339,6 +347,19 @@ struct LineHighlight {
 struct DocumentHighlight {
     List<LineHighlight> lines;
     void toJson(U8String& result) const;  // 导出为 JSON
+};
+
+// 行范围
+struct LineRange {
+    size_t start_line {0};
+    size_t line_count {0};
+};
+
+// 指定行区域高亮切片
+struct DocumentHighlightSlice {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<LineHighlight> lines;
 };
 
 // 内联样式

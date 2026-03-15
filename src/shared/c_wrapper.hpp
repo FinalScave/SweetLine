@@ -138,9 +138,17 @@ inline int32_t computeSpanBufferStride(const HighlightConfig& config) {
   return base_count;
 }
 
-inline void writeDocumentHighlight(const SharedPtr<DocumentHighlight>& highlight, int32_t* buffer, const HighlightConfig& config) {
+inline size_t computeLineHighlightsSpanCount(const List<LineHighlight>& lines) {
+  size_t span_count = 0;
+  for (const LineHighlight& line : lines) {
+    span_count += line.spans.size();
+  }
+  return span_count;
+}
+
+inline void writeLineHighlights(const List<LineHighlight>& lines, int32_t* buffer, const HighlightConfig& config) {
   size_t index = 0;
-  for (const LineHighlight& line : highlight->lines) {
+  for (const LineHighlight& line : lines) {
     for (const TokenSpan& span : line.spans) {
       buffer[index++] = static_cast<int32_t>(span.range.start.line);
       buffer[index++] = static_cast<int32_t>(span.range.start.column);
@@ -157,6 +165,10 @@ inline void writeDocumentHighlight(const SharedPtr<DocumentHighlight>& highlight
       }
     }
   }
+}
+
+inline void writeDocumentHighlight(const SharedPtr<DocumentHighlight>& highlight, int32_t* buffer, const HighlightConfig& config) {
+  writeLineHighlights(highlight->lines, buffer, config);
 }
 
 inline void writeLineHighlight(const LineHighlight& highlight, int32_t* buffer, const HighlightConfig& config) {
@@ -176,6 +188,31 @@ inline void writeLineHighlight(const LineHighlight& highlight, int32_t* buffer, 
       buffer[index++] = static_cast<int32_t>(span.style_id);
     }
   }
+}
+
+/// 将 DocumentHighlightSlice 序列化为 int32_t 缓冲区
+/// 布局:
+/// buffer[0] = 切片起始行 start_line
+/// buffer[1] = patch 后文档总行数 total_line_count
+/// buffer[2] = 切片行数 line_count
+/// buffer[3] = 高亮块数量 span_count
+/// buffer[4] = 每个高亮块包含的整数字段数量(stride)
+/// 后续数据包含 span_count * stride 个整数字段
+inline int32_t* writeDocumentHighlightSlice(const SharedPtr<DocumentHighlightSlice>& slice, const HighlightConfig& config) {
+  if (slice == nullptr) {
+    return nullptr;
+  }
+  size_t span_count = computeLineHighlightsSpanCount(slice->lines);
+  size_t stride = static_cast<size_t>(computeSpanBufferStride(config));
+  size_t total_size = 5 + span_count * stride;
+  int32_t* buffer = new int32_t[total_size];
+  buffer[0] = static_cast<int32_t>(slice->start_line);
+  buffer[1] = static_cast<int32_t>(slice->total_line_count);
+  buffer[2] = static_cast<int32_t>(slice->lines.size());
+  buffer[3] = static_cast<int32_t>(span_count);
+  buffer[4] = static_cast<int32_t>(stride);
+  writeLineHighlights(slice->lines, buffer + 5, config);
+  return buffer;
 }
 
 /// 将 IndentGuideResult 序列化为 int32_t 缓冲区

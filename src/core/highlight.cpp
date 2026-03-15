@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include "internal_highlight.h"
 #include "util.h"
@@ -9,6 +10,35 @@
 #endif
 
 namespace NS_SWEETLINE {
+  namespace {
+    SharedPtr<DocumentHighlightSlice> buildHighlightSlice(
+      const SharedPtr<Document>& document,
+      const SharedPtr<DocumentHighlight>& highlight,
+      const LineRange& visible_range) {
+      auto slice = makeSharedPtr<DocumentHighlightSlice>();
+      if (document == nullptr) {
+        return slice;
+      }
+      slice->total_line_count = document->getLineCount();
+      slice->start_line = std::min(visible_range.start_line, slice->total_line_count);
+      if (highlight == nullptr || visible_range.line_count == 0 || slice->start_line >= slice->total_line_count) {
+        return slice;
+      }
+      size_t available_count = slice->total_line_count - slice->start_line;
+      size_t slice_line_count = std::min(visible_range.line_count, available_count);
+      slice->lines.reserve(slice_line_count);
+      for (size_t i = 0; i < slice_line_count; ++i) {
+        size_t line = slice->start_line + i;
+        if (line < highlight->lines.size()) {
+          slice->lines.push_back(highlight->lines[line]);
+        } else {
+          slice->lines.push_back({});
+        }
+      }
+      return slice;
+    }
+  }
+
   // ===================================== TokenSpan ============================================
   bool TokenSpan::operator==(const TokenSpan& other) const {
     return range == other.range && style_id == other.style_id && state == other.state && goto_state == other.goto_state;
@@ -541,6 +571,12 @@ namespace NS_SWEETLINE {
     return analyzeHighlightIncremental(TextRange{start_pos, end_pos}, new_text);
   }
 
+  SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::analyzeHighlightIncrementalInLineRange(
+    const TextRange& range, const U8String& new_text, const LineRange& visible_range) {
+    SharedPtr<DocumentHighlight> highlight = analyzeHighlightIncremental(range, new_text);
+    return buildHighlightSlice(m_document_, highlight, visible_range);
+  }
+
   SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
     return m_document_;
   }
@@ -586,6 +622,11 @@ namespace NS_SWEETLINE {
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(const TextRange& range, const U8String& new_text) const {
     return analyzer_impl_->analyzeHighlightIncremental(range, new_text);
+  }
+
+  SharedPtr<DocumentHighlightSlice> DocumentAnalyzer::analyzeIncrementalInLineRange(
+    const TextRange& range, const U8String& new_text, const LineRange& visible_range) const {
+    return analyzer_impl_->analyzeHighlightIncrementalInLineRange(range, new_text, visible_range);
   }
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(size_t start_index, size_t end_index, const U8String& new_text) const {

@@ -141,6 +141,38 @@ export namespace sweetline {
     }
 
     /**
+     * 行范围描述（0-based）
+     */
+    export class LineRange {
+        /**
+         * 起始行号
+         */
+        startLine: number;
+        /**
+         * 行数量
+         */
+        lineCount: number;
+    }
+
+    /**
+     * 指定行区域高亮切片
+     */
+    export class DocumentHighlightSlice {
+        /**
+         * 切片起始行
+         */
+        startLine: number;
+        /**
+         * patch后文档总行数
+         */
+        totalLineCount: number;
+        /**
+         * 切片行高亮序列
+         */
+        lines: LineHighlightList;
+    }
+
+    /**
      * 行作用域划线分析状态
      */
     export class LineScopeState {
@@ -334,6 +366,15 @@ export namespace sweetline {
          * @return 整个托管文档的高亮结果
          */
         analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
+
+        /**
+         * 根据patch内容重新分析并仅返回指定行区域高亮切片
+         * @param range patch的变更范围
+         * @param newText patch的文本
+         * @param visibleRange 可见行范围
+         * @return 指定行区域高亮切片
+         */
+        analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
 
         /**
          * 根据patch内容重新分析整个托管文档的高亮结果

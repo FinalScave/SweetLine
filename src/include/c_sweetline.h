@@ -233,6 +233,24 @@ SL_API int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle);
 /// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
 SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text);
 
+/// 对托管文档进行增量高亮分析，并只返回指定行区域高亮切片
+/// @param analyzer_handle 文档高亮分析器句柄
+/// @param changes_range 变更区域，数组排列结构: [startLine],[startColumn],[endLine],[endColumn]
+/// @param new_text 变更后文本
+/// @param visible_range 可见行区域，数组排列结构: [startLine],[lineCount]
+/// @return 指定行区域高亮切片，按字节顺序紧密排列，结构如下:
+/// @code
+/// result[0] = 切片起始行 start_line
+/// result[1] = patch 后文档总行数 total_line_count
+/// result[2] = 切片行数 line_count
+/// result[3] = 高亮块数量 span_count
+/// result[4] = 每个高亮块包含的整数字段数量 stride
+/// 后续数据包含 result[3] * result[4] 个整数字段，字段结构与 sl_document_analyze 相同
+/// @endcode
+/// 需要注意的是，返回值使用完毕之后需要调用 sl_free_buffer 进行释放
+SL_API int32_t* sl_document_analyze_incremental_in_line_range(
+  sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text, int32_t* visible_range);
+
 /// 对托管文档进行缩进划线分析（需先调用 sl_document_analyze 或 sl_document_analyze_incremental）
 /// @param analyzer_handle 文档高亮分析器句柄
 /// @return 分析结果，按字节顺序紧密排列，结构如下:

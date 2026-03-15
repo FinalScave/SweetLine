@@ -202,6 +202,19 @@ int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, i
   return buffer;
 }
 
+int32_t* sl_document_analyze_incremental_in_line_range(
+  sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text, int32_t* visible_range) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr || changes_range == nullptr || visible_range == nullptr) {
+    return nullptr;
+  }
+  TextPosition start = {static_cast<size_t>(changes_range[0]), static_cast<size_t>(changes_range[1])};
+  TextPosition end = {static_cast<size_t>(changes_range[2]), static_cast<size_t>(changes_range[3])};
+  LineRange range = {static_cast<size_t>(visible_range[0]), static_cast<size_t>(visible_range[1])};
+  SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeIncrementalInLineRange({start, end}, new_text, range);
+  return writeDocumentHighlightSlice(slice, analyzer->getHighlightConfig());
+}
+
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle) {
   SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
   if (analyzer == nullptr) {

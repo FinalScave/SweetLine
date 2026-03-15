@@ -65,6 +65,58 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Highlig
   return typed_array;
 }
 
+/// 将指定行区域高亮切片转换为 Int32Array 返回给 ArkTS 层
+/// 返回的数组结构:
+/// buffer[0] = 切片起始行 start_line
+/// buffer[1] = patch 后文档总行数 total_line_count
+/// buffer[2] = 切片行数 line_count
+/// buffer[3] = 高亮块数量 span_count
+/// buffer[4] = 每个高亮块包含的整数字段数量(stride)
+/// 后续数据包含 span_count * stride 个整数字段
+static napi_value ConvertDocumentHighlightSliceAsIntArray(napi_env env, const HighlightConfig& config,
+                                                           const SharedPtr<DocumentHighlightSlice>& slice) {
+  if (!slice) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  int32_t* raw_buffer = writeDocumentHighlightSlice(slice, config);
+  if (!raw_buffer) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  size_t span_count = static_cast<size_t>(raw_buffer[3]);
+  size_t stride = static_cast<size_t>(raw_buffer[4]);
+  size_t buffer_count = 5 + span_count * stride;
+  size_t buffer_size = buffer_count * sizeof(int32_t);
+
+  napi_value array_buffer;
+  napi_status status = napi_create_external_arraybuffer(
+      env,
+      raw_buffer,
+      buffer_size,
+      [](napi_env, void* data, void*) {
+        delete[] static_cast<int32_t*>(data);
+      },
+      nullptr,
+      &array_buffer
+  );
+  if (status != napi_ok) {
+    delete[] raw_buffer;
+    napi_throw_error(env, nullptr, "Failed to create external ArrayBuffer for DocumentHighlightSlice");
+    return nullptr;
+  }
+
+  napi_value typed_array;
+  status = napi_create_typedarray(env, napi_int32_array, buffer_count, array_buffer, 0, &typed_array);
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Failed to create TypedArray for DocumentHighlightSlice");
+    return nullptr;
+  }
+  return typed_array;
+}
+
 /// 将单行高亮分析结果转换为 Int32Array 返回给 ArkTS 层
 /// 返回的数组结构:
 /// buffer[0] = 高亮块数量
@@ -481,6 +533,39 @@ static napi_value DocumentAnalyzer_AnalyzeChanges(napi_env env, napi_callback_in
   return ConvertDocumentHighlightAsIntArray(env, analyzer->getHighlightConfig(), highlight);
 }
 
+/// 根据patch内容重新分析文本，并返回指定可见行区域高亮切片
+/// args: [handle, startLine, startColumn, endLine, endColumn, newText, visibleStartLine, visibleLineCount]
+static napi_value DocumentAnalyzer_AnalyzeChangesInLineRange(napi_env env, napi_callback_info info) {
+  size_t argc = 8;
+  napi_value args[8] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  U8String new_text;
+  if (!getStdStringFromNapiValue(env, args[5], new_text)) {
+    return getNapiUndefined(env);
+  }
+  int32_t start_line = 0, start_column = 0, end_line = 0, end_column = 0;
+  napi_get_value_int32(env, args[1], &start_line);
+  napi_get_value_int32(env, args[2], &start_column);
+  napi_get_value_int32(env, args[3], &end_line);
+  napi_get_value_int32(env, args[4], &end_column);
+  int32_t visible_start_line = 0, visible_line_count = 0;
+  napi_get_value_int32(env, args[6], &visible_start_line);
+  napi_get_value_int32(env, args[7], &visible_line_count);
+
+  TextRange range = {
+      {static_cast<size_t>(start_line), static_cast<size_t>(start_column)},
+      {static_cast<size_t>(end_line), static_cast<size_t>(end_column)}
+  };
+  LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+  SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeIncrementalInLineRange(range, new_text, visible_range);
+  return ConvertDocumentHighlightSliceAsIntArray(env, analyzer->getHighlightConfig(), slice);
+}
+
 /// 根据patch内容重新分析整个文本的高亮结果(字符索引范围)
 static napi_value DocumentAnalyzer_AnalyzeChanges2(napi_env env, napi_callback_info info) {
   size_t argc = 4;
@@ -780,6 +865,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"DocumentAnalyzer_Delete", nullptr, DocumentAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Analyze", nullptr, DocumentAnalyzer_Analyze, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges", nullptr, DocumentAnalyzer_AnalyzeChanges, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeChangesInLineRange", nullptr, DocumentAnalyzer_AnalyzeChangesInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges2", nullptr, DocumentAnalyzer_AnalyzeChanges2, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeIndentGuides", nullptr, DocumentAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_GetDocument", nullptr, DocumentAnalyzer_GetDocument, nullptr, nullptr, nullptr, napi_default, nullptr},

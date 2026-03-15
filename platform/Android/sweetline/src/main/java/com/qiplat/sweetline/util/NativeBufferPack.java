@@ -6,6 +6,7 @@ import android.text.Spanned;
 import android.text.style.CharacterStyle;
 
 import com.qiplat.sweetline.DocumentHighlight;
+import com.qiplat.sweetline.DocumentHighlightSlice;
 import com.qiplat.sweetline.IndentGuideLine;
 import com.qiplat.sweetline.IndentGuideResult;
 import com.qiplat.sweetline.InlineStyle;
@@ -51,6 +52,9 @@ public final class NativeBufferPack {
 
     public static DocumentHighlight readDocumentHighlight(int[] buffer) {
         DocumentHighlight highlight = new DocumentHighlight();
+        if (buffer == null || buffer.length < 2) {
+            return highlight;
+        }
         LineHighlight lineHighlight = new LineHighlight();
         int spanCount = buffer[0];
         int stride = buffer[1];
@@ -67,6 +71,9 @@ public final class NativeBufferPack {
             int styleId = 0;
             InlineStyle inlineStyle = null;
             if (stride > 7) {
+                if (baseIndex + 8 >= buffer.length) {
+                    break;
+                }
                 inlineStyle = new InlineStyle();
                 inlineStyle.foreground = buffer[baseIndex + 6];
                 inlineStyle.background = buffer[baseIndex + 7];
@@ -92,6 +99,72 @@ public final class NativeBufferPack {
             }
         }
         return highlight;
+    }
+
+    /**
+     * 从 int[] 缓冲区中解析指定行区域高亮切片
+     * 布局:
+     * buffer[0] = startLine
+     * buffer[1] = totalLineCount
+     * buffer[2] = lineCount
+     * buffer[3] = spanCount
+     * buffer[4] = stride
+     * 之后是 spanCount * stride 的高亮块数据
+     */
+    public static DocumentHighlightSlice readDocumentHighlightSlice(int[] buffer) {
+        DocumentHighlightSlice slice = new DocumentHighlightSlice();
+        if (buffer == null || buffer.length < 5) {
+            return slice;
+        }
+        slice.startLine = buffer[0];
+        slice.totalLineCount = buffer[1];
+        int lineCount = Math.max(buffer[2], 0);
+        int spanCount = Math.max(buffer[3], 0);
+        int stride = Math.max(buffer[4], 0);
+        for (int i = 0; i < lineCount; i++) {
+            slice.lines.add(new LineHighlight());
+        }
+        for (int i = 0; i < spanCount; i++) {
+            int baseIndex = i * stride + 5;
+            if (baseIndex + 6 >= buffer.length) {
+                break;
+            }
+            int startLine = buffer[baseIndex];
+            int startColumn = buffer[baseIndex + 1];
+            int startIndex = buffer[baseIndex + 2];
+            int endLine = buffer[baseIndex + 3];
+            int endColumn = buffer[baseIndex + 4];
+            int endIndex = buffer[baseIndex + 5];
+
+            int styleId = 0;
+            InlineStyle inlineStyle = null;
+            if (stride > 7) {
+                if (baseIndex + 8 >= buffer.length) {
+                    break;
+                }
+                inlineStyle = new InlineStyle();
+                inlineStyle.foreground = buffer[baseIndex + 6];
+                inlineStyle.background = buffer[baseIndex + 7];
+                unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
+            } else {
+                styleId = buffer[baseIndex + 6];
+            }
+
+            int localLine = startLine - slice.startLine;
+            if (localLine < 0 || localLine >= slice.lines.size()) {
+                continue;
+            }
+            TextRange range = new TextRange(
+                    new TextPosition(startLine, startColumn, startIndex),
+                    new TextPosition(endLine, endColumn, endIndex)
+            );
+            if (inlineStyle != null) {
+                slice.lines.get(localLine).spans.add(new TokenSpan(range, inlineStyle));
+            } else {
+                slice.lines.get(localLine).spans.add(new TokenSpan(range, styleId));
+            }
+        }
+        return slice;
     }
 
     public static Spannable readSpannable(String text, int[] buffer, SpannableStyleFactory styleFactory) {
