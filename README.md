@@ -33,7 +33,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ### Highly Extensible
 - JSON-based syntax rule configuration — add new language support without writing code
 - Variable substitution and pattern reuse to reduce rule redundancy
-- 25+ built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
+- 33 built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
 
 ### Cross-Platform
 - Core engine written in C++17
@@ -48,7 +48,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 │                    Application Layer                     │
 ├──────────┬──────────┬──────────┬────────────┬───────────┤
 │ Android  │   WASM   │   OHOS   │   C API    │   C++     │
-│  (JNI)   │(Emscript)│  (NAPI)  │  (FFI)     │  (Native) │
+│  (JNI)   │(Emscripten)│(NAPI)  │  (FFI)     │  (Native) │
 ├──────────┴──────────┴──────────┴────────────┴───────────┤
 │                 SweetLine Core (C++17)                   │
 │  ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐  │
@@ -116,7 +116,7 @@ auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:0.0.4'
+implementation 'com.qiplat:sweetline:0.1.2'
 ```
 
 ```java
@@ -201,7 +201,13 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 | Document | Description |
 |----------|-------------|
 | [Syntax Rule Configuration Guide](docs/en/syntax_rule.md) | Detailed guide on writing JSON syntax rule files |
-| [API Reference](docs/en/api.md) | API usage for C++, C, Android, and WebAssembly |
+| [API Reference (Index)](docs/en/api.md) | API entry page and reading order |
+| [Core API](docs/en/api_core.md) | Core concepts and C++ API |
+| [C API](docs/en/api_c.md) | C interface for FFI integration |
+| [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
+| [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |
+| [HarmonyOS API](docs/en/api_ohos.md) | ArkTS/NAPI API usage |
+| [Build Guide](docs/en/api_build.md) | Multi-platform build commands and options |
 | [Contributing Guide](docs/en/join.md) | How to participate in the project |
 
 ## Built-in Language Support
