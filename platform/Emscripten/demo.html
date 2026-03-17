@@ -1,61 +1,775 @@
-<!DOCTYPE html>
-<html>
-
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>SweetLine Highlight Test</title>
-    <meta charset="utf-8">
-</head>
-
-<body>
-<input type="file" id="syntaxFileInput" accept=".json">
-<input type="file" id="codeFileInput" accept="*">
-<button onclick="testHighlight()">Test Highlight</button>
-</body>
-
-<script type="module">
-    import sweetline from '../../cmake-build-emscripten/bin/libsweetline.js';
-    let lib
-    let syntaxJson;
-    let docName;
-    let docContent;
-
-    sweetline().then(function(sweetline) {
-        lib = sweetline;
-    });
-
-    function testHighlight() {
-        const config = new lib.HighlightConfig();
-        config.showIndex = true;
-        config.inlineStyle = true;
-        const engine = new lib.HighlightEngine(config);
-        engine.compileSyntaxFromJson(syntaxJson);
-
-        const document = new lib.Document("file:///" + docName, docContent);
-        const analyzer = engine.loadDocument(document);
-        const highlight = analyzer.analyze();
-        console.log(highlight.toJson());
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SweetLine Web Demo</title>
+  <style>
+    :root {
+      --line-h: 22px;
+      --bg: #f4efe5;
+      --panel: #f9f5ed;
+      --border: #d6ccb8;
+      --text: #232019;
+      --muted: #70624c;
     }
-    window.testHighlight = testHighlight;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(63,95,71,.18), transparent 40%),
+        radial-gradient(circle at 85% 78%, rgba(140,106,63,.18), transparent 42%),
+        linear-gradient(155deg, #f5f0e7, #ece3d4 52%, #f7f2e8);
+    }
+    .app {
+      width: min(1400px, calc(100vw - 20px));
+      margin: 10px auto;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(249,245,237,.94);
+      box-shadow: 0 12px 26px rgba(35,32,25,.08);
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #e7dcc7;
+    }
+    .title {
+      margin: 0 0 10px 0;
+      padding: 2px 2px 0 2px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      color: #2e2a21;
+      user-select: none;
+    }
+    .control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .control label { font-size: 12px; color: var(--muted); user-select: none; }
+    select, button, textarea { font: inherit; color: inherit; }
+    select, button {
+      height: 34px;
+      border: 1px solid #b9aa93;
+      border-radius: 8px;
+      background: #f8f3e9;
+      padding: 0 10px;
+    }
+    button { cursor: pointer; font-weight: 600; }
+    .accent { background: #dbe8dd; border-color: #8dac93; }
+    .split {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+      gap: 10px;
+      min-height: 70vh;
+    }
+    .pane {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+    .pane-h {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: #f2eadc;
+      color: #574a36;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: none;
+    }
+    .pane-h .meta { font-size: 12px; font-weight: 500; color: #7c6d57; }
+    #editorInput {
+      flex: 1;
+      width: 100%;
+      border: 0;
+      outline: none;
+      resize: none;
+      margin: 0;
+      padding: 12px;
+      background: #fffdf8;
+      color: #2b261c;
+      white-space: pre;
+      overflow: auto;
+      tab-size: 4;
+      line-height: var(--line-h);
+      font: 14px/var(--line-h) "Cascadia Code", "JetBrains Mono", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
+    }
+    .preview {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+      background: #0f141c;
+      color: #d5d9e0;
+      tab-size: 4;
+      font: 14px/var(--line-h) "Cascadia Code", "JetBrains Mono", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
+    }
+    .preview-inner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      width: 100%;
+      min-width: max-content;
+    }
+    .line-numbers {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      width: 58px;
+      text-align: right;
+      user-select: none;
+      color: rgba(218,228,243,.46);
+      background: rgba(8,12,18,.96);
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    .line-number, .code-line { height: var(--line-h); line-height: var(--line-h); white-space: pre; }
+    .line-number { padding: 0 10px 0 8px; }
+    .code-area { padding: 0 12px; min-height: 100%; }
+    .code-line { min-width: max-content; }
+    .status {
+      margin-top: 10px;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #efe4ce;
+      color: #5f533f;
+      font-size: 13px;
+    }
+    .status.good { background: #dbe8dd; color: #36503b; border-color: #aac0ae; }
+    .status.bad { background: #f2d7d7; color: #8c3f3f; border-color: #d5aaaa; }
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #a79880;
+      background: rgba(255,255,255,.45);
+      color: #5c4f3b;
+      font-size: 12px;
+      user-select: none;
+    }
+    @media (max-width: 1080px) {
+      .toolbar { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .split { grid-template-columns: 1fr; min-height: 74vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1 class="title">SweetLine Web Demo</h1>
+    <section class="toolbar">
+      <div class="control"><label for="exampleSelect">Example File</label><select id="exampleSelect"></select></div>
+      <div class="control"><label for="syntaxSelect">Syntax Rule</label><select id="syntaxSelect"></select></div>
+      <div class="control"><label for="themeSelect">Theme</label><select id="themeSelect"></select></div>
+      <div class="control"><label>&nbsp;</label><button id="loadExampleBtn" class="accent">Load Example</button></div>
+      <div class="control"><label>&nbsp;</label><button id="openCodeBtn">Open Local Code</button></div>
+      <div class="control"><label>&nbsp;</label><button id="openSyntaxBtn">Open Local Syntax</button></div>
+      <div class="control"><label>&nbsp;</label><button id="recompileBtn">Rebuild Analyzer</button></div>
+    </section>
 
-    document.getElementById('syntaxFileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            console.log('Select syntax file: ' + file.name)
-            syntaxJson = e.target.result;
-        };
-        reader.readAsText(file);
-    });
-    document.getElementById('codeFileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            console.log('Select code file: ' + file.name)
-            docName = file.name;
-            docContent = e.target.result;
-        };
-        reader.readAsText(file);
-    });
-</script>
+    <section class="split">
+      <article class="pane">
+        <div class="pane-h"><span>Editor (Incremental Source)</span><span id="editorMeta" class="meta">Chars: 0 | Lines: 1</span></div>
+        <textarea id="editorInput" spellcheck="false" wrap="off"></textarea>
+      </article>
+      <article class="pane">
+        <div class="pane-h"><span>Highlight Preview (Visible Slice)</span><span id="previewMeta" class="meta">Visible: -</span></div>
+        <div id="previewViewport" class="preview">
+          <div class="preview-inner">
+            <div id="lineNumbers" class="line-numbers">
+              <div id="lnTop"></div>
+              <div id="lnBody"></div>
+              <div id="lnBottom"></div>
+            </div>
+            <div class="code-area">
+              <div id="codeTop"></div>
+              <div id="codeBody"></div>
+              <div id="codeBottom"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
 
+    <section id="statusBar" class="status">
+      <span id="moduleState" class="pill">WASM: loading...</span>
+      <span id="statusText">Initializing...</span>
+    </section>
+  </div>
+
+  <input id="localCodeInput" type="file" accept="*/*" hidden />
+  <input id="localSyntaxInput" type="file" accept=".json,application/json" hidden />
+
+  <script type="module">
+    import createSweetLine from "../../cmake-build-emscripten/bin/libsweetline.js";
+    const LINE_HEIGHT = 22;
+    const OVERSCAN = 40;
+    const DEMO_SYNTAX_BASE = "../../syntaxes/";
+    const DEMO_EXAMPLE_BASE = "../../tests/files/";
+
+    const STYLE_IDS = {
+      keyword: 1, string: 2, number: 3, comment: 4, class: 5, method: 6, variable: 7,
+      punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14
+    };
+
+    const EXT_SYNTAX_MAP = {
+      ".t": "tiecode.json", ".c": "c.json", ".cpp": "cpp.json", ".cs": "csharp.json", ".dart": "dart.json",
+      ".go": "go.json", ".groovy": "groovy.json", ".html": "html.json", ".java": "java.json", ".js": "javascript.json",
+      ".json": "json-sweetline.json", ".kt": "kotlin.json", ".lua": "lua.json", ".m": "objc.json", ".php": "php.json",
+      ".ps1": "powershell.json", ".py": "python.json", ".rs": "rust.json", ".scala": "scala.json", ".sh": "shell.json",
+      ".sql": "sql.json", ".swift": "swift.json", ".toml": "toml.json", ".ts": "typescript.json", ".vb": "vb.json",
+      ".xml": "xml.json", ".yaml": "yaml.json", ".md": "markdown.json", ".wenyan": "wenyan.json", ".myu": "iapp.json"
+    };
+
+    const EXAMPLE_FILES = [
+      "example.c", "example.cpp", "example.cs", "example.dart", "example.go", "example.groovy", "example.html", "example.java", "example.js",
+      "example.kt", "example.lua", "example.m", "example.md", "example.myu", "example.php", "example.ps1", "example.py", "example.rs",
+      "example.scala", "example.sh", "example.sql", "example.swift", "example.t", "example.toml", "example.ts", "example.vb", "example.wenyan",
+      "example.xml", "example.yaml"
+    ];
+
+    function makeTheme(name, bg, text, colors) {
+      const map = {};
+      for (let i = 0; i < colors.length; i++) {
+        map[i + 1] = colors[i];
+      }
+      return { name, backgroundColor: bg, textColor: text, colors: map };
+    }
+
+    const THEMES = [
+      makeTheme("SweetLine Dark", 0xff1e1e1e, 0xffd4d4d4, [0xff569cd6,0xffbd63c5,0xffe4fad5,0xff60ae6f,0xff4ec9b0,0xff9cdcfe,0xff9b9bc8,0xffd69d85,0xfffffd9b,0xff569cd6,0xff9b9bc8,0xff4ec9b0,0xff4ec9b0,0xff569cd6]),
+      makeTheme("Monokai", 0xff272822, 0xfff8f8f2, [0xfff92672,0xffe6db74,0xffae81ff,0xff75715e,0xffa6e22e,0xffa6e22e,0xfff8f8f2,0xfff8f8f2,0xffe6db74,0xfff92672,0xffae81ff,0xfffd971f,0xffa6e22e,0xff66d9ef]),
+      makeTheme("Dracula", 0xff282a36, 0xfff8f8f2, [0xffff79c6,0xfff1fa8c,0xffbd93f9,0xff6272a4,0xff8be9fd,0xff50fa7b,0xfff8f8f2,0xfff8f8f2,0xffffb86c,0xffff79c6,0xffbd93f9,0xffffb86c,0xff50fa7b,0xff8be9fd]),
+      makeTheme("One Dark", 0xff282c34, 0xffabb2bf, [0xffc678dd,0xff98c379,0xffd19a66,0xff5c6370,0xffe5c07b,0xff61afef,0xffe06c75,0xffabb2bf,0xffe5c07b,0xffc678dd,0xffd19a66,0xff56b6c2,0xffe5c07b,0xff56b6c2]),
+      makeTheme("Solarized Dark", 0xff002b36, 0xff839496, [0xff859900,0xff2aa198,0xffd33682,0xff586e75,0xffb58900,0xff268bd2,0xffcb4b16,0xff839496,0xffb58900,0xff859900,0xffcb4b16,0xffd33682,0xff268bd2,0xff268bd2]),
+      makeTheme("Nord", 0xff2e3440, 0xffd8dee9, [0xff81a1c1,0xffa3be8c,0xffb48ead,0xff616e88,0xff8fbcbb,0xff88c0d0,0xffd8dee9,0xffeceff4,0xffebcb8b,0xff81a1c1,0xffb48ead,0xffebcb8b,0xff8fbcbb,0xff5e81ac]),
+      makeTheme("GitHub Dark", 0xff0d1117, 0xffc9d1d9, [0xffff7b72,0xffa5d6ff,0xff79c0ff,0xff8b949e,0xffffa657,0xffd2a8ff,0xffffa657,0xffc9d1d9,0xffffa657,0xffff7b72,0xff79c0ff,0xffffa657,0xff7ee787,0xff79c0ff])
+    ];
+
+    const els = {
+      exampleSelect: document.getElementById("exampleSelect"),
+      syntaxSelect: document.getElementById("syntaxSelect"),
+      themeSelect: document.getElementById("themeSelect"),
+      loadExampleBtn: document.getElementById("loadExampleBtn"),
+      openCodeBtn: document.getElementById("openCodeBtn"),
+      openSyntaxBtn: document.getElementById("openSyntaxBtn"),
+      recompileBtn: document.getElementById("recompileBtn"),
+      editorInput: document.getElementById("editorInput"),
+      editorMeta: document.getElementById("editorMeta"),
+      previewMeta: document.getElementById("previewMeta"),
+      previewViewport: document.getElementById("previewViewport"),
+      lineNumbers: document.getElementById("lineNumbers"),
+      lnTop: document.getElementById("lnTop"),
+      lnBody: document.getElementById("lnBody"),
+      lnBottom: document.getElementById("lnBottom"),
+      codeTop: document.getElementById("codeTop"),
+      codeBody: document.getElementById("codeBody"),
+      codeBottom: document.getElementById("codeBottom"),
+      statusBar: document.getElementById("statusBar"),
+      statusText: document.getElementById("statusText"),
+      moduleState: document.getElementById("moduleState"),
+      localCodeInput: document.getElementById("localCodeInput"),
+      localSyntaxInput: document.getElementById("localSyntaxInput")
+    };
+
+    const state = {
+      sl: null,
+      engine: null,
+      analyzer: null,
+      syntaxJson: "",
+      syntaxFile: "",
+      fileName: "example.java",
+      text: "",
+      lines: [""],
+      lineStarts: [0],
+      themeIndex: 0,
+      renderRaf: 0,
+      scrollRaf: 0,
+      loadingToken: 0,
+      lastVisibleKey: ""
+    };
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function ext(name) { const i = name.lastIndexOf("."); return i >= 0 ? name.slice(i).toLowerCase() : ""; }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function argbToCss(argb) {
+      const v = argb >>> 0;
+      const a = ((v >>> 24) & 255) / 255;
+      const r = (v >>> 16) & 255;
+      const g = (v >>> 8) & 255;
+      const b = v & 255;
+      return `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
+    }
+
+    function currentTheme() { return THEMES[state.themeIndex] || THEMES[0]; }
+
+    function setStatus(text, level = "") {
+      els.statusText.textContent = text;
+      els.statusBar.classList.remove("good", "bad");
+      if (level) { els.statusBar.classList.add(level); }
+    }
+
+    function setTextCaches(text) {
+      state.text = text;
+      state.lines = text.replace(/\r\n/g, "\n").split("\n");
+      if (state.lines.length === 0) { state.lines = [""]; }
+      const starts = [0];
+      for (let i = 0; i < text.length; i++) { if (text.charCodeAt(i) === 10) { starts.push(i + 1); } }
+      state.lineStarts = starts;
+      els.editorMeta.textContent = `Chars: ${text.length} | Lines: ${state.lines.length}`;
+    }
+
+    function indexToPos(lineStarts, textLength, index) {
+      const idx = clamp(index, 0, textLength);
+      let lo = 0, hi = lineStarts.length - 1, line = 0;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (lineStarts[mid] <= idx) { line = mid; lo = mid + 1; } else { hi = mid - 1; }
+      }
+      return { line, column: idx - lineStarts[line], index: idx };
+    }
+
+    function diffPatch(oldText, newText) {
+      if (oldText === newText) { return { startIndex: 0, oldEnd: 0, inserted: "" }; }
+      let start = 0;
+      while (start < oldText.length && start < newText.length && oldText.charCodeAt(start) === newText.charCodeAt(start)) { start++; }
+      let oldEnd = oldText.length - 1;
+      let newEnd = newText.length - 1;
+      while (oldEnd >= start && newEnd >= start && oldText.charCodeAt(oldEnd) === newText.charCodeAt(newEnd)) { oldEnd--; newEnd--; }
+      return { startIndex: start, oldEnd: oldEnd + 1, inserted: newText.slice(start, newEnd + 1) };
+    }
+
+    function visibleRange() {
+      const total = Math.max(state.lines.length, 1);
+      const rawStart = Math.floor(els.previewViewport.scrollTop / LINE_HEIGHT) - OVERSCAN;
+      const startLine = clamp(rawStart, 0, Math.max(total - 1, 0));
+      const lineCount = clamp(Math.ceil(els.previewViewport.clientHeight / LINE_HEIGHT) + OVERSCAN * 2, 1, Math.max(total - startLine, 1));
+      return { startLine, lineCount };
+    }
+
+    function toSlTextRange(startPos, endPos) {
+      const range = new state.sl.TextRange();
+      const s = new state.sl.TextPosition();
+      const e = new state.sl.TextPosition();
+      s.line = startPos.line; s.column = startPos.column; s.index = startPos.index;
+      e.line = endPos.line; e.column = endPos.column; e.index = endPos.index;
+      range.start = s; range.end = e;
+      return range;
+    }
+
+    function toSlLineRange(startLine, lineCount) {
+      const range = new state.sl.LineRange();
+      range.startLine = startLine;
+      range.lineCount = lineCount;
+      return range;
+    }
+    function tokenStyle(span) {
+      const theme = currentTheme();
+      const inl = span.inlineStyle;
+      const hasInline = inl && (inl.foreground !== 0 || inl.background !== 0 || inl.isBold || inl.isItalic || inl.isStrikethrough);
+      let fg = theme.colors[span.styleId] ?? theme.textColor;
+      let bg = 0;
+      let bold = false;
+      let italic = false;
+      let strike = false;
+      if (hasInline) {
+        if (inl.foreground !== 0) { fg = inl.foreground; }
+        if (inl.background !== 0) { bg = inl.background; }
+        bold = !!inl.isBold;
+        italic = !!inl.isItalic;
+        strike = !!inl.isStrikethrough;
+      }
+      let style = `color:${argbToCss(fg)};`;
+      if (bg !== 0) { style += `background:${argbToCss(bg)};`; }
+      if (bold) { style += "font-weight:700;"; }
+      if (italic) { style += "font-style:italic;"; }
+      if (strike) { style += "text-decoration:line-through;"; }
+      return style;
+    }
+
+    function renderLine(lineText, lineHighlight) {
+      if (!lineHighlight || !lineHighlight.spans) {
+        return lineText.length === 0 ? "&#8203;" : escapeHtml(lineText);
+      }
+      const spans = lineHighlight.spans;
+      const count = spans.size();
+      if (count === 0) {
+        return lineText.length === 0 ? "&#8203;" : escapeHtml(lineText);
+      }
+      let html = "";
+      let cursor = 0;
+      for (let i = 0; i < count; i++) {
+        const span = spans.get(i);
+        const start = clamp(span.range.start.column, 0, lineText.length);
+        const end = clamp(span.range.end.column, start, lineText.length);
+        if (start > cursor) {
+          html += escapeHtml(lineText.slice(cursor, start));
+        }
+        if (end > start) {
+          html += `<span style="${tokenStyle(span)}">${escapeHtml(lineText.slice(start, end))}</span>`;
+        }
+        cursor = end;
+      }
+      if (cursor < lineText.length) {
+        html += escapeHtml(lineText.slice(cursor));
+      }
+      return html.length === 0 ? "&#8203;" : html;
+    }
+
+    function updateLineNumberWidth(totalLines) {
+      const digits = String(Math.max(totalLines, 1)).length;
+      const width = Math.max(58, 26 + digits * 10);
+      els.lineNumbers.style.width = `${width}px`;
+    }
+
+    function renderSlice(slice) {
+      const totalLines = Math.max(slice.totalLineCount || 0, state.lines.length, 1);
+      const start = Math.max(slice.startLine || 0, 0);
+      const lines = slice.lines;
+      const visibleCount = lines ? lines.size() : 0;
+
+      let codeHtml = "";
+      let numHtml = "";
+      for (let i = 0; i < visibleCount; i++) {
+        const lineNo = start + i;
+        const lineText = state.lines[lineNo] ?? "";
+        const lineHighlight = lines.get(i);
+        codeHtml += `<div class="code-line">${renderLine(lineText, lineHighlight)}</div>`;
+        numHtml += `<div class="line-number">${lineNo + 1}</div>`;
+      }
+
+      const topPx = start * LINE_HEIGHT;
+      const bottomCount = Math.max(totalLines - start - visibleCount, 0);
+      const bottomPx = bottomCount * LINE_HEIGHT;
+
+      els.codeTop.style.height = `${topPx}px`;
+      els.codeBottom.style.height = `${bottomPx}px`;
+      els.lnTop.style.height = `${topPx}px`;
+      els.lnBottom.style.height = `${bottomPx}px`;
+      els.codeBody.innerHTML = codeHtml;
+      els.lnBody.innerHTML = numHtml;
+      updateLineNumberWidth(totalLines);
+
+      const end = Math.min(start + visibleCount - 1, totalLines - 1);
+      els.previewMeta.textContent = `Visible: ${start + 1}-${end + 1} / ${totalLines}`;
+    }
+
+    function renderPlainVisible() {
+      const vr = visibleRange();
+      const fakeSlice = {
+        startLine: vr.startLine,
+        totalLineCount: Math.max(state.lines.length, 1),
+        lines: { size: () => vr.lineCount, get: () => null }
+      };
+      renderSlice(fakeSlice);
+    }
+
+    function applyTheme() {
+      const theme = currentTheme();
+      els.previewViewport.style.background = argbToCss(theme.backgroundColor);
+      els.previewViewport.style.color = argbToCss(theme.textColor);
+      refreshVisibleNoChange(true).catch(() => {});
+    }
+
+    function registerStyleNames(engine) {
+      for (const [name, id] of Object.entries(STYLE_IDS)) {
+        engine.registerStyleName(name, id);
+      }
+    }
+
+    function disposeAnalyzer() {
+      if (state.engine && state.fileName) {
+        try { state.engine.removeDocument(`file:///${state.fileName}`); } catch (e) {}
+      }
+      if (state.analyzer && typeof state.analyzer.delete === "function") {
+        state.analyzer.delete();
+      }
+      state.analyzer = null;
+    }
+
+    function disposeEngine() {
+      disposeAnalyzer();
+      if (state.engine && typeof state.engine.delete === "function") {
+        state.engine.delete();
+      }
+      state.engine = null;
+    }
+
+    function buildEngine() {
+      disposeEngine();
+      const config = new state.sl.HighlightConfig();
+      config.showIndex = true;
+      config.inlineStyle = false;
+      config.tabSize = 4;
+      state.engine = new state.sl.HighlightEngine(config);
+      registerStyleNames(state.engine);
+      state.engine.defineMacro("WEB");
+    }
+
+    async function fetchText(path) {
+      const res = await fetch(path, { cache: "no-store" });
+      if (!res.ok) { throw new Error(`HTTP ${res.status} on ${path}`); }
+      return res.text();
+    }
+
+    async function refreshVisibleNoChange(force = false) {
+      if (!state.analyzer) {
+        renderPlainVisible();
+        return;
+      }
+      const vr = visibleRange();
+      const key = `${vr.startLine}:${vr.lineCount}:${state.text.length}`;
+      if (!force && key === state.lastVisibleKey) { return; }
+      state.lastVisibleKey = key;
+
+      const zero = { line: 0, column: 0, index: 0 };
+      const range = toSlTextRange(zero, zero);
+      const vis = toSlLineRange(vr.startLine, vr.lineCount);
+      const slice = state.analyzer.analyzeIncrementalInLineRange(range, "", vis);
+      renderSlice(slice);
+    }
+
+    function scheduleVisibleRefresh() {
+      if (state.scrollRaf) { return; }
+      state.scrollRaf = requestAnimationFrame(() => {
+        state.scrollRaf = 0;
+        refreshVisibleNoChange().catch((err) => {
+          console.error(err);
+          setStatus(`Visible refresh failed: ${err.message}`, "bad");
+        });
+      });
+    }
+
+    async function rebuildAnalyzer(reason = "Rebuild") {
+      if (!state.sl) { return; }
+      if (!state.syntaxJson) {
+        setStatus("No syntax JSON loaded.", "bad");
+        return;
+      }
+
+      const t0 = performance.now();
+      buildEngine();
+      state.engine.compileSyntaxFromJson(state.syntaxJson);
+      const compileMs = performance.now() - t0;
+
+      const doc = new state.sl.Document(`file:///${state.fileName}`, state.text);
+      state.analyzer = state.engine.loadDocument(doc);
+      if (!state.analyzer) {
+        setStatus("Failed to create DocumentAnalyzer.", "bad");
+        return;
+      }
+
+      const t1 = performance.now();
+      state.analyzer.analyze();
+      const fullMs = performance.now() - t1;
+
+      state.lastVisibleKey = "";
+      await refreshVisibleNoChange(true);
+      setStatus(`${reason}: compile ${compileMs.toFixed(2)} ms | full analyze ${fullMs.toFixed(2)} ms | lines ${state.lines.length}`, "good");
+    }
+
+    async function incrementalAnalyze(newText) {
+      if (!state.analyzer) {
+        setTextCaches(newText);
+        renderPlainVisible();
+        return;
+      }
+
+      const oldText = state.text;
+      const oldStarts = state.lineStarts;
+      const patch = diffPatch(oldText, newText);
+      setTextCaches(newText);
+
+      const startPos = indexToPos(oldStarts, oldText.length, patch.startIndex);
+      const endPos = indexToPos(oldStarts, oldText.length, patch.oldEnd);
+      const vr = visibleRange();
+      const range = toSlTextRange(startPos, endPos);
+      const vis = toSlLineRange(vr.startLine, vr.lineCount);
+
+      const t0 = performance.now();
+      const slice = state.analyzer.analyzeIncrementalInLineRange(range, patch.inserted, vis);
+      const ms = performance.now() - t0;
+      state.lastVisibleKey = `${vr.startLine}:${vr.lineCount}:${state.text.length}`;
+      renderSlice(slice);
+      setStatus(`Incremental: ${ms.toFixed(2)} ms | start ${patch.startIndex} | replaced ${patch.oldEnd - patch.startIndex} | inserted ${patch.inserted.length}`, "good");
+    }
+    async function loadExample(fileName) {
+      const syntaxFile = EXT_SYNTAX_MAP[ext(fileName)];
+      if (!syntaxFile) {
+        setStatus(`No syntax mapping for ${fileName}`, "bad");
+        return;
+      }
+      const token = ++state.loadingToken;
+      setStatus(`Loading ${fileName} ...`);
+      try {
+        const [code, syntax] = await Promise.all([
+          fetchText(`${DEMO_EXAMPLE_BASE}${fileName}`),
+          fetchText(`${DEMO_SYNTAX_BASE}${syntaxFile}`)
+        ]);
+        if (token !== state.loadingToken) { return; }
+        state.fileName = fileName;
+        state.syntaxFile = syntaxFile;
+        state.syntaxJson = syntax;
+        els.syntaxSelect.value = syntaxFile;
+        els.editorInput.value = code;
+        setTextCaches(code);
+        await rebuildAnalyzer(`Loaded ${fileName}`);
+      } catch (err) {
+        console.error(err);
+        setStatus(`Load failed: ${err.message}`, "bad");
+      }
+    }
+
+    async function loadBuiltinSyntax(syntaxFile) {
+      const token = ++state.loadingToken;
+      try {
+        const syntax = await fetchText(`${DEMO_SYNTAX_BASE}${syntaxFile}`);
+        if (token !== state.loadingToken) { return; }
+        state.syntaxFile = syntaxFile;
+        state.syntaxJson = syntax;
+        await rebuildAnalyzer(`Syntax ${syntaxFile}`);
+      } catch (err) {
+        console.error(err);
+        setStatus(`Syntax load failed: ${err.message}`, "bad");
+      }
+    }
+
+    function setupSelectors() {
+      EXAMPLE_FILES.forEach((name) => {
+        const op = document.createElement("option");
+        op.value = name;
+        op.textContent = name;
+        if (name === "example.java") { op.selected = true; }
+        els.exampleSelect.appendChild(op);
+      });
+
+      const syntaxFiles = Array.from(new Set(Object.values(EXT_SYNTAX_MAP))).sort();
+      syntaxFiles.forEach((name) => {
+        const op = document.createElement("option");
+        op.value = name;
+        op.textContent = name;
+        els.syntaxSelect.appendChild(op);
+      });
+
+      THEMES.forEach((theme, idx) => {
+        const op = document.createElement("option");
+        op.value = String(idx);
+        op.textContent = theme.name;
+        if (idx === 0) { op.selected = true; }
+        els.themeSelect.appendChild(op);
+      });
+    }
+
+    function setupEvents() {
+      els.loadExampleBtn.addEventListener("click", () => loadExample(els.exampleSelect.value));
+      els.exampleSelect.addEventListener("change", () => loadExample(els.exampleSelect.value));
+      els.syntaxSelect.addEventListener("change", () => loadBuiltinSyntax(els.syntaxSelect.value));
+
+      els.themeSelect.addEventListener("change", () => {
+        state.themeIndex = Number(els.themeSelect.value) || 0;
+        applyTheme();
+      });
+
+      els.recompileBtn.addEventListener("click", () => rebuildAnalyzer("Rebuild"));
+
+      els.openCodeBtn.addEventListener("click", () => {
+        els.localCodeInput.value = "";
+        els.localCodeInput.click();
+      });
+
+      els.openSyntaxBtn.addEventListener("click", () => {
+        els.localSyntaxInput.value = "";
+        els.localSyntaxInput.click();
+      });
+
+      els.localCodeInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) { return; }
+        const text = await file.text();
+        state.fileName = file.name;
+        els.editorInput.value = text;
+        setTextCaches(text);
+        const mapped = EXT_SYNTAX_MAP[ext(file.name)];
+        if (mapped) {
+          els.syntaxSelect.value = mapped;
+          await loadBuiltinSyntax(mapped);
+        } else {
+          await rebuildAnalyzer(`Loaded local file ${file.name}`);
+        }
+      });
+
+      els.localSyntaxInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) { return; }
+        state.syntaxFile = file.name;
+        state.syntaxJson = await file.text();
+        await rebuildAnalyzer(`Local syntax ${file.name}`);
+      });
+
+      els.editorInput.addEventListener("input", () => {
+        if (state.renderRaf) { cancelAnimationFrame(state.renderRaf); }
+        state.renderRaf = requestAnimationFrame(() => {
+          state.renderRaf = 0;
+          incrementalAnalyze(els.editorInput.value).catch((err) => {
+            console.error(err);
+            setStatus(`Incremental failed: ${err.message}`, "bad");
+          });
+        });
+      });
+
+      els.editorInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Tab") { return; }
+        event.preventDefault();
+        const input = els.editorInput;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = `${input.value.slice(0, start)}\t${input.value.slice(end)}`;
+        input.selectionStart = input.selectionEnd = start + 1;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+
+      els.previewViewport.addEventListener("scroll", scheduleVisibleRefresh);
+      window.addEventListener("resize", scheduleVisibleRefresh);
+    }
+
+    async function init() {
+      setupSelectors();
+      setupEvents();
+      applyTheme();
+      setTextCaches("");
+      renderPlainVisible();
+
+      try {
+        state.sl = await createSweetLine();
+        els.moduleState.textContent = "WASM: ready";
+        setStatus("WASM loaded, preparing default example...", "good");
+        await loadExample("example.java");
+      } catch (err) {
+        console.error(err);
+        els.moduleState.textContent = "WASM: failed";
+        setStatus(`Failed to load WASM module: ${err.message}`, "bad");
+      }
+    }
+
+    init();
+  </script>
+</body>
 </html>

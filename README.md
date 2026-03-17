@@ -13,6 +13,9 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
   <img src="docs/snapshot/winforms-c.png" width="45%" alt="WinForms Demo (C#)" />
 </p>
 <p align="center">
+  <img src="docs/snapshot/web-kt.png" width="90%" alt="Html Web Demo" />
+</p>
+<p align="center">
   <img src="docs/snapshot/android-cpp.png" width="45%" alt="Android Demo (C++)" />
   <img src="docs/snapshot/android-toml.png" width="45%" alt="Android Demo (TOML)" />
 </p>
