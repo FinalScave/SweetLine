@@ -72,7 +72,7 @@ public class Main extends JFrame {
     private boolean suppressComboEvents = false;
 
     public Main(Path syntaxesDir, Path examplesDir) {
-        super("SweetLine Demo");
+        super("SweetLine Demo(Swing)");
         this.syntaxesDir = syntaxesDir;
         this.examplesDir = examplesDir;
         this.themes = HighlightTheme.builtinThemes();

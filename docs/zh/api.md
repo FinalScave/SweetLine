@@ -9,6 +9,7 @@
 | 核心概念 + C++ | [核心 API](api_core.md) | 工作流程、核心数据结构与 C++ 接口 |
 | C / FFI | [C API](api_c.md) | C 语言接口与返回缓冲区格式 |
 | Android (Java/Kotlin) | [Android API](api_android.md) | JNI 绑定的 Java API |
+| .NET / WinForms (C#) | [.NET / WinForms API](api_dotnet.md) | P/Invoke 封装 API |
 | WebAssembly (JS/TS) | [WebAssembly API](api_wasm.md) | Emscripten 导出的 JS/TS API |
 | HarmonyOS (ArkTS/NAPI) | [HarmonyOS API](api_ohos.md) | ArkTS 绑定与入口说明 |
 | 构建与 CMake 选项 | [构建文档](api_build.md) | 多平台构建命令与参数 |

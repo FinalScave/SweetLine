@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PackageId>SweetLine</PackageId>
+		<Title>SweetLine</Title>
+		<Authors>Scave</Authors>
+		<Company>Mobie-IPE</Company>
+		<Product>SweetLine</Product>
+		<PackageProjectUrl>https://github.com/FinalScave/SweetLine</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/FinalScave/SweetLine</RepositoryUrl>
+		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="..\..\..\cmake-build-debug-visual-studio\bin\sweetline.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+</Project>

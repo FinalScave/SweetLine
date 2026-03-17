@@ -38,7 +38,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ### Cross-Platform
 - Core engine written in C++17
 - C API wrapper for easy FFI integration
-- Native support for Android (JNI), WebAssembly (Emscripten), HarmonyOS (NAPI)
+- Native support for Android (JNI), Java 22 (FFM), WebAssembly (Emscripten), HarmonyOS (NAPI), .NET/WinForms (P/Invoke)
 - Supports Windows, Linux, macOS and other desktop platforms
 
 ## Architecture Overview
@@ -205,6 +205,7 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
 | [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
+| [.NET / WinForms API](docs/en/api_dotnet.md) | C# API (P/Invoke wrapper) |
 | [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |
 | [HarmonyOS API](docs/en/api_ohos.md) | ArkTS/NAPI API usage |
 | [Build Guide](docs/en/api_build.md) | Multi-platform build commands and options |
