@@ -9,12 +9,12 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ## Screenshots
 
 <p align="center">
-  <img src="docs/snapshot/java.png" width="45%" alt="Java" />
-  <img src="docs/snapshot/cpp.png" width="45%" alt="C++" />
+  <img src="docs/snapshot/swing-java.png" width="45%" alt="Swing Demo (Java)" />
+  <img src="docs/snapshot/winforms-c.png" width="45%" alt="WinForms Demo (C#)" />
 </p>
 <p align="center">
-  <img src="docs/snapshot/shell.png" width="45%" alt="Shell" />
-  <img src="docs/snapshot/toml.png" width="45%" alt="TOML" />
+  <img src="docs/snapshot/android-cpp.png" width="45%" alt="Android Demo (C++)" />
+  <img src="docs/snapshot/android-toml.png" width="45%" alt="Android Demo (TOML)" />
 </p>
 
 ## Core Features
