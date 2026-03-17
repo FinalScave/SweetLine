@@ -1,6 +1,6 @@
 # .NET / WinForms API
 
-本文说明 `platform/WinForms/SweetLine` 下的 C# 封装。
+本文说明 `platform/CSharp/SweetLine` 下的 C# 封装。
 
 ## 概览
 

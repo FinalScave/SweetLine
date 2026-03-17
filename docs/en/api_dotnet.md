@@ -1,6 +1,6 @@
 # .NET / WinForms API
 
-This document describes the C# wrapper in `platform/WinForms/SweetLine`.
+This document describes the C# wrapper in `platform/CSharp/SweetLine`.
 
 ## Overview
 

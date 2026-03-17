@@ -21,6 +21,20 @@ cd platform/Android
 ./gradlew :sweetline:assembleRelease
 ```
 
+### Java 22 (FFM, Gradle)
+
+```bash
+cd platform/Java22
+./gradlew :sweetline:build
+./gradlew :demo:run
+```
+
+Java 22 module notes:
+- Build scripts are configured with `--enable-preview`.
+- Runtime needs `--enable-native-access=ALL-UNNAMED`.
+- If native library is not auto-discovered, set `-Dsweetline.lib.path=<native-lib-dir>`.
+- For JAR packaging scenarios, you can use `NativeLibraryExtractor.extractToDefaultDir()`.
+
 ### WebAssembly (Emscripten)
 
 ```bash

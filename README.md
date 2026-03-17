@@ -44,26 +44,26 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Application Layer                     │
-├──────────┬──────────┬──────────┬────────────┬───────────┤
-│ Android  │   WASM   │   OHOS   │   C API    │   C++     │
-│  (JNI)   │(Emscripten)│(NAPI)  │  (FFI)     │  (Native) │
-├──────────┴──────────┴──────────┴────────────┴───────────┤
-│                 SweetLine Core (C++17)                   │
-│  ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐  │
-│  │HighlightEng │ │ TextAnalyzer │ │DocumentAnalyzer  │  │
-│  │    ine      │ │ (Full Scan)  │ │(Incremental)     │  │
-│  └──────┬──────┘ └──────┬───────┘ └────────┬─────────┘  │
-│         │               │                  │             │
-│  ┌──────▼───────────────▼──────────────────▼─────────┐  │
-│  │           State Machine + Regex Engine             │  │
-│  │              (Oniguruma + FSM)                     │  │
-│  └───────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │           SyntaxRule (JSON Compiled)               │  │
-│  └───────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                Application Layer                                │
+├──────────┬──────────┬──────────────┬──────────┬──────────┬────────────┬─────────┤
+│ Android  │ Java 22  │ .NET/CSharp  │   WASM   │   OHOS   │   C API    │   C++   │
+│  (JNI)   │  (FFM)   │  (P/Invoke)  │(Emscripten)│ (NAPI) │   (FFI)    │ (Native)│
+├──────────┴──────────┴──────────────┴──────────┴──────────┴────────────┴─────────┤
+│                              SweetLine Core (C++17)                             │
+│  ┌─────────────┐ ┌──────────────┐ ┌──────────────────┐                           │
+│  │HighlightEng │ │ TextAnalyzer │ │DocumentAnalyzer  │                           │
+│  │    ine      │ │ (Full Scan)  │ │(Incremental)     │                           │
+│  └──────┬──────┘ └──────┬───────┘ └────────┬─────────┘                           │
+│         │               │                  │                                      │
+│  ┌──────▼───────────────▼──────────────────▼─────────┐                           │
+│  │           State Machine + Regex Engine             │                           │
+│  │              (Oniguruma + FSM)                     │                           │
+│  └───────────────────────────────────────────────────┘                           │
+│  ┌───────────────────────────────────────────────────┐                           │
+│  │           SyntaxRule (JSON Compiled)               │                           │
+│  └───────────────────────────────────────────────────┘                           │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Quick Start
@@ -111,6 +111,23 @@ TextRange change_range { {2, 4}, {2, 8} };
 std::string new_text = "modified";
 auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
 ```
+
+### Java 22 (FFM) Usage
+
+```java
+import com.qiplat.sweetline.*;
+
+try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
+    engine.compileSyntaxFromFile("syntaxes/java.json");
+
+    try (TextAnalyzer analyzer = engine.createAnalyzerByName("java")) {
+        DocumentHighlight result = analyzer.analyzeText(sourceCode);
+    }
+}
+```
+
+Java 22 FFM wrapper is located at `platform/Java22`.
+Running code requires native access enabled (for example `--enable-native-access=ALL-UNNAMED`) and a resolvable SweetLine native library path.
 
 ### Android Usage
 
@@ -205,6 +222,7 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
 | [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
+| [Java 22 API](docs/en/api_java22.md) | Java 22 FFM API |
 | [.NET / WinForms API](docs/en/api_dotnet.md) | C# API (P/Invoke wrapper) |
 | [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |
 | [HarmonyOS API](docs/en/api_ohos.md) | ArkTS/NAPI API usage |

@@ -2,10 +2,12 @@
 ```
 ├── 3dparty        Third-party C++ libraries
 ├── docs           Documentation
-├── platform       Platform-specific C++ bridge projects (not needed for Windows/Linux)
-    ├── Android    Android SDK project
+├── platform       Platform-specific wrappers/bindings
+    ├── Android    Android JNI SDK project
+    ├── Java22     Java 22 FFM wrapper and Swing demo
+    ├── CSharp     .NET/C# P/Invoke wrapper and WinForms demo
     ├── Emscripten WASM SDK project
-    └── OHOS       HarmonyOS SDK project
+    └── OHOS       HarmonyOS NAPI SDK project
 ├── src            C++ source code
     ├── core       Core implementation
     └── include    Public header files
@@ -28,6 +30,16 @@
 
 ## Android Studio
 1. Open the `platform/Android` project.
+
+## IntelliJ IDEA / Java 22 (FFM)
+1. Open the `platform/Java22` project.
+2. Use JDK 22.
+3. Build and run with Gradle tasks (for example: `:sweetline:build`, `:demo:run`).
+
+## .NET SDK / Visual Studio (C# WinForms)
+1. Open `platform/CSharp/CSharp.sln` or use the `dotnet` CLI.
+2. Build wrapper library: `dotnet build platform/CSharp/SweetLine/SweetLine.csproj`.
+3. Run demo app: `dotnet run --project platform/CSharp/Demo/Demo.csproj`.
 
 # C++ Naming Conventions
 ## File Naming

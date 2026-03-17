@@ -2,10 +2,12 @@
 ```
 ├── 3dparty 第三方C++库
 ├── docs 文档目录
-├── platform 各平台C++接口桥接项目（Windows和Linux不需要）
-    ├── Android Android平台SDK工程
-    ├── Emscripten WASM SDK工程
-    └── OHOS 鸿蒙 SDK工程
+├── platform 各平台封装/绑定工程
+    ├── Android Android JNI SDK 工程
+    ├── Java22 Java 22 FFM 封装与 Swing Demo
+    ├── CSharp .NET/C# P/Invoke 封装与 WinForms Demo
+    ├── Emscripten WASM SDK 工程
+    └── OHOS 鸿蒙 NAPI SDK 工程
 ├── src C++源代码目录
     ├── core 核心代码
     └── include 对外开放的头文件
@@ -28,6 +30,16 @@
 
 ## Android Studio
 1. 打开 platform/Android 工程 即可
+
+## IntelliJ IDEA / Java 22（FFM）
+1. 打开 `platform/Java22` 工程。
+2. 使用 JDK 22。
+3. 使用 Gradle 任务构建/运行（例如：`:sweetline:build`、`:demo:run`）。
+
+## .NET SDK / Visual Studio（C# WinForms）
+1. 打开 `platform/CSharp/CSharp.sln`，或使用 `dotnet` CLI。
+2. 构建封装库：`dotnet build platform/CSharp/SweetLine/SweetLine.csproj`。
+3. 运行 Demo：`dotnet run --project platform/CSharp/Demo/Demo.csproj`。
 
 # C++命名规范
 ## 文件命名

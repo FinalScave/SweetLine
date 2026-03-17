@@ -9,6 +9,7 @@ To reduce maintenance cost and improve readability, the API documentation is spl
 | Core Concepts + C++ | [Core API](api_core.md) | Workflow, core data structures, and C++ APIs |
 | C / FFI | [C API](api_c.md) | Pure C interfaces and return buffer format |
 | Android (Java/Kotlin) | [Android API](api_android.md) | JNI-based Java API |
+| Java 22 (FFM) | [Java 22 API](api_java22.md) | FFM wrapper API and native loading guide |
 | .NET / WinForms (C#) | [.NET / WinForms API](api_dotnet.md) | P/Invoke wrapper API |
 | WebAssembly (JS/TS) | [WebAssembly API](api_wasm.md) | Emscripten JS/TS API |
 | HarmonyOS (ArkTS/NAPI) | [HarmonyOS API](api_ohos.md) | ArkTS bindings and usage entry |
