@@ -63,8 +63,7 @@ public partial class Form1 : Form {
 		InitializeComponent();
 		InitializeUi();
 		Text = "SweetLine Demo(C# WinForms)";
-		Size = new Size(960, 720);
-		MinimumSize = new Size(960, 720);
+		Size = new Size(800, 1280);
 		StartPosition = FormStartPosition.CenterScreen;
 
 		if (_exampleFiles.Count > 0) {

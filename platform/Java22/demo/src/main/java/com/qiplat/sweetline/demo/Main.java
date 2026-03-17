@@ -84,7 +84,7 @@ public class Main extends JFrame {
 
         initUI();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(640, 480);
+        setSize(532, 856);
         setLocationRelativeTo(null);
 
         if (!exampleFiles.isEmpty()) {
