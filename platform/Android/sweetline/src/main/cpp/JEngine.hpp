@@ -146,16 +146,13 @@ public:
 
 static jintArray convertDocumentHighlightAsIntArray(JNIEnv* env, const SharedPtr<DocumentHighlight>& highlight,
                                                     const HighlightConfig& config) {
-  size_t span_count = highlight->spanCount();
-  size_t stride = computeSpanBufferStride(config);
-  jintArray result = env->NewIntArray(static_cast<jsize>(2 + span_count * stride));
+  size_t buffer_count = computeDocumentHighlightBufferSize(highlight, config);
+  jintArray result = env->NewIntArray(static_cast<jsize>(buffer_count));
   if (result == nullptr) {
     return nullptr;
   }
   jint* buffer = env->GetIntArrayElements(result, nullptr);
-  buffer[0] = static_cast<int32_t>(span_count);
-  buffer[1] = static_cast<int32_t>(stride);
-  writeDocumentHighlight(highlight, buffer + 2, config);
+  writeDocumentHighlight(highlight, buffer, config);
   env->ReleaseIntArrayElements(result, buffer, 0);
   return result;
 }
@@ -165,18 +162,14 @@ static jintArray convertDocumentHighlightSliceAsIntArray(JNIEnv* env, const Shar
   if (slice == nullptr) {
     return nullptr;
   }
-  int32_t* raw_buffer = writeDocumentHighlightSlice(slice, config);
-  if (raw_buffer == nullptr) {
+  size_t total_size = computeDocumentHighlightSliceBufferSize(slice, config);
+  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
+  if (jresult == nullptr) {
     return nullptr;
   }
-  size_t span_count = static_cast<size_t>(raw_buffer[3]);
-  size_t stride = static_cast<size_t>(raw_buffer[4]);
-  size_t total_size = 5 + span_count * stride;
-  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
-  if (jresult != nullptr) {
-    env->SetIntArrayRegion(jresult, 0, static_cast<jsize>(total_size), raw_buffer);
-  }
-  delete[] raw_buffer;
+  jint* buffer = env->GetIntArrayElements(jresult, nullptr);
+  writeDocumentHighlightSlice(slice, buffer, config);
+  env->ReleaseIntArrayElements(jresult, buffer, 0);
   return jresult;
 }
 
@@ -184,21 +177,14 @@ static jintArray convertIndentGuideResultAsIntArray(JNIEnv* env, const SharedPtr
   if (result == nullptr) {
     return nullptr;
   }
-  int32_t* raw_buffer = writeIndentGuideResult(result);
-  if (raw_buffer == nullptr) {
+  size_t total_size = computeIndentGuideResultBufferSize(result);
+  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
+  if (jresult == nullptr) {
     return nullptr;
   }
-  // Calculate total buffer size
-  size_t guide_data_size = 0;
-  for (const IndentGuideLine& g : result->guide_lines) {
-    guide_data_size += 6 + g.branches.size() * 2;
-  }
-  size_t total_size = 4 + guide_data_size + result->line_states.size() * 4;
-  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
-  if (jresult != nullptr) {
-    env->SetIntArrayRegion(jresult, 0, static_cast<jsize>(total_size), raw_buffer);
-  }
-  delete[] raw_buffer;
+  jint* buffer = env->GetIntArrayElements(jresult, nullptr);
+  writeIndentGuideResult(result, buffer);
+  env->ReleaseIntArrayElements(jresult, buffer, 0);
   return jresult;
 }
 
@@ -234,16 +220,17 @@ public:
     size_t span_count = analyze_result.highlight.spans.size();
     const HighlightConfig& config = analyzer->getHighlightConfig();
     size_t stride = computeSpanBufferStride(config);
-    jintArray result = env->NewIntArray(static_cast<jsize>(4 + span_count * stride));
+    jintArray result = env->NewIntArray(static_cast<jsize>(5 + span_count * stride));
     if (result == nullptr) {
       return nullptr;
     }
     jint* buffer = env->GetIntArrayElements(result, nullptr);
-    buffer[0] = static_cast<int32_t>(span_count);
+    buffer[0] = packSpanPayloadFlags(config);
     buffer[1] = static_cast<int32_t>(stride);
-    buffer[2] = analyze_result.end_state;
-    buffer[3] = static_cast<int32_t>(analyze_result.char_count);
-    writeLineHighlight(analyze_result.highlight, buffer + 4, config);
+    buffer[2] = static_cast<int32_t>(span_count);
+    buffer[3] = analyze_result.end_state;
+    buffer[4] = static_cast<int32_t>(analyze_result.char_count);
+    writeLineHighlight(analyze_result.highlight, buffer + 5, config);
     env->ReleaseIntArrayElements(result, buffer, 0);
     return result;
   }

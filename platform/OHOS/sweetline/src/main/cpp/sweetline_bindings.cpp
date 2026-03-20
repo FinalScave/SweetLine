@@ -8,25 +8,20 @@ using namespace NS_SWEETLINE;
 
 /// Convert document highlight result to Int32Array for ArkTS layer
 /// Returned array structure:
-/// buffer[0] = token span count
+/// buffer[0] = span payload flags(bit0: hasStartIndex, bit1: inlineStyle)
 /// buffer[1] = integer field count per token span(stride)
-/// Followed by the corresponding number of integer fields
+/// buffer[2] = line count
+/// Followed by line entries:
+///   line_entry[0] = token span count of current line
+///   followed by span payloads
 static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const HighlightConfig& config,
                                                      const SharedPtr<DocumentHighlight>& highlight) {
   if (!highlight) {
     napi_throw_error(env, nullptr, "Highlight pointer is null");
     return nullptr;
   }
-  
-  size_t span_count = highlight->spanCount();
-  if (span_count == 0) {
-    napi_value empty_array;
-    napi_create_array_with_length(env, 0, &empty_array);
-    return empty_array;
-  }
-  
-  int32_t stride = computeSpanBufferStride(config);
-  const size_t buffer_count = 2 + span_count * stride;
+
+  const size_t buffer_count = computeDocumentHighlightBufferSize(highlight, config);
   const size_t buffer_size = buffer_count * sizeof(int32_t);
 
   int32_t* raw_buffer = new(std::nothrow) int32_t[buffer_count];
@@ -34,9 +29,7 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Highlig
     napi_throw_error(env, nullptr, "Failed to allocate buffer memory");
     return nullptr;
   }
-  raw_buffer[0] = static_cast<int32_t>(span_count);
-  raw_buffer[1] = stride;
-  writeDocumentHighlight(highlight, raw_buffer + 2, config);
+  writeDocumentHighlight(highlight, raw_buffer, config);
 
   napi_value array_buffer;
   napi_status status = napi_create_external_arraybuffer(
@@ -67,12 +60,14 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Highlig
 
 /// Convert highlight slice for specified line range to Int32Array for ArkTS layer
 /// Returned array structure:
-/// buffer[0] = slice start line start_line
-/// buffer[1] = total line count after patch total_line_count
-/// buffer[2] = slice line count line_count
-/// buffer[3] = token span count span_count
-/// buffer[4] = integer field count per token span(stride)
-/// Followed by the corresponding number of integer fields
+/// buffer[0] = span payload flags(bit0: hasStartIndex, bit1: inlineStyle)
+/// buffer[1] = integer field count per token span(stride)
+/// buffer[2] = slice start line start_line
+/// buffer[3] = total line count after patch total_line_count
+/// buffer[4] = slice line count line_count
+/// Followed by line entries:
+///   line_entry[0] = token span count of current line
+///   followed by span payloads
 static napi_value ConvertDocumentHighlightSliceAsIntArray(napi_env env, const HighlightConfig& config,
                                                            const SharedPtr<DocumentHighlightSlice>& slice) {
   if (!slice) {
@@ -80,16 +75,14 @@ static napi_value ConvertDocumentHighlightSliceAsIntArray(napi_env env, const Hi
     napi_create_array_with_length(env, 0, &empty_array);
     return empty_array;
   }
-  int32_t* raw_buffer = writeDocumentHighlightSlice(slice, config);
+  const size_t buffer_count = computeDocumentHighlightSliceBufferSize(slice, config);
+  const size_t buffer_size = buffer_count * sizeof(int32_t);
+  int32_t* raw_buffer = new(std::nothrow) int32_t[buffer_count];
   if (!raw_buffer) {
-    napi_value empty_array;
-    napi_create_array_with_length(env, 0, &empty_array);
-    return empty_array;
+    napi_throw_error(env, nullptr, "Failed to allocate buffer memory for DocumentHighlightSlice");
+    return nullptr;
   }
-  size_t span_count = static_cast<size_t>(raw_buffer[3]);
-  size_t stride = static_cast<size_t>(raw_buffer[4]);
-  size_t buffer_count = 5 + span_count * stride;
-  size_t buffer_size = buffer_count * sizeof(int32_t);
+  writeDocumentHighlightSlice(slice, raw_buffer, config);
 
   napi_value array_buffer;
   napi_status status = napi_create_external_arraybuffer(
@@ -119,16 +112,17 @@ static napi_value ConvertDocumentHighlightSliceAsIntArray(napi_env env, const Hi
 
 /// Convert single line analysis result to Int32Array for ArkTS layer
 /// Returned array structure:
-/// buffer[0] = token span count
+/// buffer[0] = span payload flags(bit0: hasStartIndex, bit1: inlineStyle)
 /// buffer[1] = integer field count per token span(stride)
-/// buffer[2] = state ID at end of current line analysis
-/// buffer[3] = total characters analyzed in current line (excluding line ending)
+/// buffer[2] = token span count
+/// buffer[3] = state ID at end of current line analysis
+/// buffer[4] = total characters analyzed in current line (excluding line ending)
 /// Followed by the corresponding number of integer fields
 static napi_value ConvertLineAnalyzeResultAsIntArray(napi_env env, const HighlightConfig& config,
                                                       const LineAnalyzeResult& result) {
   size_t span_count = result.highlight.spans.size();
   int32_t stride = computeSpanBufferStride(config);
-  const size_t buffer_count = 4 + span_count * stride;
+  const size_t buffer_count = 5 + span_count * stride;
   const size_t buffer_size = buffer_count * sizeof(int32_t);
 
   int32_t* raw_buffer = new(std::nothrow) int32_t[buffer_count];
@@ -136,11 +130,12 @@ static napi_value ConvertLineAnalyzeResultAsIntArray(napi_env env, const Highlig
     napi_throw_error(env, nullptr, "Failed to allocate buffer memory");
     return nullptr;
   }
-  raw_buffer[0] = static_cast<int32_t>(span_count);
+  raw_buffer[0] = packSpanPayloadFlags(config);
   raw_buffer[1] = stride;
-  raw_buffer[2] = result.end_state;
-  raw_buffer[3] = static_cast<int32_t>(result.char_count);
-  writeLineHighlight(result.highlight, raw_buffer + 4, config);
+  raw_buffer[2] = static_cast<int32_t>(span_count);
+  raw_buffer[3] = result.end_state;
+  raw_buffer[4] = static_cast<int32_t>(result.char_count);
+  writeLineHighlight(result.highlight, raw_buffer + 5, config);
 
   napi_value array_buffer;
   napi_status status = napi_create_external_arraybuffer(
@@ -364,19 +359,14 @@ static napi_value ConvertIndentGuideResultAsIntArray(napi_env env, const SharedP
     napi_create_array_with_length(env, 0, &empty_array);
     return empty_array;
   }
-  int32_t* raw_buffer = writeIndentGuideResult(result);
+  const size_t total_count = computeIndentGuideResultBufferSize(result);
+  const size_t total_size = total_count * sizeof(int32_t);
+  int32_t* raw_buffer = new(std::nothrow) int32_t[total_count];
   if (!raw_buffer) {
-    napi_value empty_array;
-    napi_create_array_with_length(env, 0, &empty_array);
-    return empty_array;
+    napi_throw_error(env, nullptr, "Failed to allocate buffer memory for IndentGuideResult");
+    return nullptr;
   }
-  // Calculate total buffer size
-  size_t guide_data_size = 0;
-  for (const IndentGuideLine& g : result->guide_lines) {
-    guide_data_size += 6 + g.branches.size() * 2;
-  }
-  size_t total_count = 4 + guide_data_size + result->line_states.size() * 4;
-  size_t total_size = total_count * sizeof(int32_t);
+  writeIndentGuideResult(result, raw_buffer);
 
   napi_value array_buffer;
   napi_status status = napi_create_external_arraybuffer(

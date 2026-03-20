@@ -120,58 +120,82 @@ void sl_free_buffer(int32_t* result);
 
 ### 返回值格式
 
-所有分析函数返回 `int32_t*` 缓冲区，格式如下：
+所有分析函数都返回一个 `int32_t*` 缓冲区。
+
+完整文档高亮结果（`sl_text_analyze`、`sl_document_analyze`、`sl_document_analyze_incremental`）布局：
 
 ```
-result[0] = 高亮块数量 (span_count)
-result[1] = 每个高亮块的字段数 (fields_per_span)
-后续: span_count × fields_per_span 个 int32_t
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = lineCount
+后续是 lineCount 个行条目：
+  lineEntry[0] = 当前行 spanCount
+  后续是 spanCount * spanStride 个 int32_t 字段
 ```
 
-**样式 ID 模式** (`fields_per_span = 7`)：
+紧凑 span 协议：
+
 ```
-[startLine, startColumn, startIndex, endLine, endColumn, endIndex, styleId]
+公共字段: [column, length]
+如果 show_index=true: 追加 [startIndex]
+如果 inline_style=true: 追加 [foregroundColor, backgroundColor, fontAttributes]
+否则: 追加 [styleId]
 ```
 
-**内联样式模式** (`fields_per_span = 9`)：
+因此 `spanStride` 只会是：
+- `3` => `[column, length, styleId]`
+- `4` => `[column, length, startIndex, styleId]`
+- `5` => `[column, length, foregroundColor, backgroundColor, fontAttributes]`
+- `6` => `[column, length, startIndex, foregroundColor, backgroundColor, fontAttributes]`
+
+`fontAttributes` 位标记：
+- `fontAttributes & 1` => 粗体
+- `fontAttributes & 2` => 斜体
+- `fontAttributes & 4` => 删除线
+
+单行分析 `sl_text_analyze_line` 布局：
+
 ```
-[startLine, startColumn, startIndex, endLine, endColumn, endIndex,
- foregroundColor, backgroundColor, fontAttributes]
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = spanCount
+result[3] = endState
+result[4] = charCount
+后续是 spanCount * spanStride（同一套紧凑 span 协议）
 ```
 
-`fontAttributes` 位标志：
-- `fontAttributes & 1` → 粗体
-- `fontAttributes & 2` → 斜体
-- `fontAttributes & 4` → 删除线
+按可见行返回切片 `sl_document_analyze_incremental_in_line_range` 布局：
 
-单行分析 `sl_text_analyze_line` 额外包含：
 ```
-result[2] = 行结束状态 ID (end_state)
-result[3] = 行字符总数 (char_count)
-```
-
-行范围切片增量分析 `sl_document_analyze_incremental_in_line_range` 返回格式：
-```
-result[0] = 切片起始行 (start_line)
-result[1] = patch 后文档总行数 (total_line_count)
-result[2] = 切片行数 (line_count)
-result[3] = 高亮块数量 (span_count)
-result[4] = 每个高亮块字段数 (stride)
-后续: span_count × stride 个 int32_t
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = startLine
+result[3] = totalLineCount (patch 后总行数)
+result[4] = lineCount (切片行数)
+后续是 lineCount 个行条目：
+  lineEntry[0] = spanCount
+  后续是 spanCount * spanStride 个字段
 ```
 
 缩进划线分析 `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides` 返回格式：
+
 ```
 result[0] = 缩进划线数量 (guide_count)
 result[1] = 每条划线固定字段数 (stride = 6)
 result[2] = 行状态数量 (line_count)
 result[3] = 每行状态字段数 (line_stride = 4)
 
-之后是 guide_count 条划线数据，每条结构：
+之后是 guide_count 条划线记录：
 [column, startLine, endLine, nestingLevel, scopeRuleId, branchCount, branchLine0, branchColumn0, ...]
 每条实际长度 = stride + branchCount * 2
 
-之后是 line_count 条行状态数据，每条结构：
+之后是 line_count 条行状态记录：
 [nestingLevel, scopeState, scopeColumn, indentLevel]
 scopeState: 0=START, 1=END, 2=CONTENT
 ```
@@ -206,19 +230,22 @@ int main() {
     int32_t* result = sl_text_analyze(analyzer, code);
 
     if (result) {
-        int32_t span_count = result[0];
-        int32_t fields = result[1];
+        int32_t flags = result[0];
+        int32_t stride = result[1];
+        int32_t line_count = result[2];
+        int offset = 3;
 
-        for (int i = 0; i < span_count; i++) {
-            int offset = 2 + i * fields;
-            int startLine = result[offset];
-            int startCol  = result[offset + 1];
-            int endLine   = result[offset + 3];
-            int endCol    = result[offset + 4];
-            int styleId   = result[offset + 6];
-
-            printf("(%d:%d)-(%d:%d) style=%d\n",
-                   startLine, startCol, endLine, endCol, styleId);
+        // 此示例假设 show_index=false 且 inline_style=false
+        // span 负载为 [column, length, styleId]
+        (void)flags;
+        for (int line = 0; line < line_count; line++) {
+            int32_t span_count = result[offset++];
+            for (int i = 0; i < span_count; i++) {
+                int col = result[offset++];
+                int len = result[offset++];
+                int styleId = result[offset++];
+                printf("line=%d col=%d len=%d style=%d\n", line, col, len, styleId);
+            }
         }
 
         // 释放缓冲区
@@ -231,4 +258,3 @@ int main() {
 ```
 
 ---
-

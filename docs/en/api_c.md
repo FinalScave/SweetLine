@@ -121,48 +121,73 @@ void sl_free_buffer(int32_t* result);
 
 ### Return Value Format
 
-All analysis functions return an `int32_t*` buffer with the following format:
+All analysis functions return an `int32_t*` buffer.
+
+For full document highlight results (`sl_text_analyze`, `sl_document_analyze`,
+`sl_document_analyze_incremental`):
 
 ```
-result[0] = number of highlight spans (span_count)
-result[1] = number of fields per span (fields_per_span)
-followed by: span_count × fields_per_span int32_t values
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = lineCount
+followed by lineCount line entries:
+  lineEntry[0] = spanCount of current line
+  followed by spanCount * spanStride int32_t values
 ```
 
-**Style ID Mode** (`fields_per_span = 7`):
+Span payload (compact protocol):
+
 ```
-[startLine, startColumn, startIndex, endLine, endColumn, endIndex, styleId]
+common fields: [column, length]
+if show_index=true: append [startIndex]
+if inline_style=true: append [foregroundColor, backgroundColor, fontAttributes]
+else: append [styleId]
 ```
 
-**Inline Style Mode** (`fields_per_span = 9`):
-```
-[startLine, startColumn, startIndex, endLine, endColumn, endIndex,
- foregroundColor, backgroundColor, fontAttributes]
-```
+So `spanStride` is one of:
+- `3` => `[column, length, styleId]`
+- `4` => `[column, length, startIndex, styleId]`
+- `5` => `[column, length, foregroundColor, backgroundColor, fontAttributes]`
+- `6` => `[column, length, startIndex, foregroundColor, backgroundColor, fontAttributes]`
 
 `fontAttributes` bit flags:
-- `fontAttributes & 1` → Bold
-- `fontAttributes & 2` → Italic
-- `fontAttributes & 4` → Strikethrough
+- `fontAttributes & 1` => Bold
+- `fontAttributes & 2` => Italic
+- `fontAttributes & 4` => Strikethrough
 
-Single line analysis `sl_text_analyze_line` additionally includes:
+Single line analysis `sl_text_analyze_line` layout:
+
 ```
-result[2] = end state ID (end_state)
-result[3] = line character count (char_count)
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = spanCount
+result[3] = endState
+result[4] = charCount
+followed by spanCount * spanStride values (same compact span payload)
 ```
 
-Incremental line-range slice analysis `sl_document_analyze_incremental_in_line_range` returns:
+Incremental visible line-range slice `sl_document_analyze_incremental_in_line_range` layout:
+
 ```
-result[0] = slice start line (start_line)
-result[1] = total line count after patch (total_line_count)
-result[2] = line count in slice (line_count)
-result[3] = number of highlight spans (span_count)
-result[4] = number of fields per span (stride)
-followed by: span_count × stride int32_t values
+result[0] = flags
+            bit0: hasStartIndex
+            bit1: inlineStyle
+result[1] = spanStride
+result[2] = startLine
+result[3] = totalLineCount (after patch)
+result[4] = lineCount (slice line count)
+followed by lineCount line entries:
+  lineEntry[0] = spanCount
+  followed by spanCount * spanStride values
 ```
 
 Indent guide analysis `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides`
 returns:
+
 ```
 result[0] = number of indent guides (guide_count)
 result[1] = fixed field count per guide (stride = 6)
@@ -208,19 +233,21 @@ int main() {
     int32_t* result = sl_text_analyze(analyzer, code);
 
     if (result) {
-        int32_t span_count = result[0];
-        int32_t fields = result[1];
+        int32_t flags = result[0];
+        int32_t stride = result[1];
+        int32_t line_count = result[2];
+        int offset = 3;
 
-        for (int i = 0; i < span_count; i++) {
-            int offset = 2 + i * fields;
-            int startLine = result[offset];
-            int startCol  = result[offset + 1];
-            int endLine   = result[offset + 3];
-            int endCol    = result[offset + 4];
-            int styleId   = result[offset + 6];
-
-            printf("(%d:%d)-(%d:%d) style=%d\n",
-                   startLine, startCol, endLine, endCol, styleId);
+        // Example assumes show_index=false, inline_style=false => span payload [column, length, styleId]
+        (void)flags;
+        for (int line = 0; line < line_count; line++) {
+            int32_t span_count = result[offset++];
+            for (int i = 0; i < span_count; i++) {
+                int col = result[offset++];
+                int len = result[offset++];
+                int styleId = result[offset++];
+                printf("line=%d col=%d len=%d style=%d\n", line, col, len, styleId);
+            }
         }
 
         // Free buffer
@@ -233,4 +260,3 @@ int main() {
 ```
 
 ---
-

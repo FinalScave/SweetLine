@@ -484,7 +484,7 @@ export namespace sweetline {
       }
       let buffer: Int32Array = lib.TextAnalyzer_AnalyzeLine(
         this.nativeHandle, text, info.line, info.startState, info.startCharOffset);
-      return NativeBufferPack.readLineAnalyzeResult(buffer);
+      return NativeBufferPack.readLineAnalyzeResult(buffer, info.line);
     }
 
     /**
@@ -773,44 +773,49 @@ export namespace sweetline {
 
     static readDocumentHighlight(buffer: Int32Array): DocumentHighlight {
       const highlight = new DocumentHighlight();
-      if (!buffer || buffer.length < 2) {
+      if (!buffer || buffer.length < 3) {
         return highlight;
       }
-      const spanCount = buffer[0];
-      const stride = buffer[1];
-      let lineHighlight = new LineHighlight();
-      let line = -1;
-      for (let i = 0; i < spanCount; i++) {
-        let baseIndex = i * stride + 2;
-        let startLine = buffer[baseIndex];
-        let startColumn = buffer[baseIndex + 1];
-        let startIndex = buffer[baseIndex + 2];
-        let endLine = buffer[baseIndex + 3];
-        let endColumn = buffer[baseIndex + 4];
-        let endIndex = buffer[baseIndex + 5];
+      const flags = buffer[0];
+      const stride = Math.max(buffer[1], 0);
+      const lineCount = Math.max(buffer[2], 0);
+      const hasStartIndex = NativeBufferPack.flagsHasStartIndex(flags);
+      const inlineStyleMode = NativeBufferPack.flagsUsesInlineStyle(flags);
+      if (!NativeBufferPack.isValidSpanStride(stride, hasStartIndex, inlineStyleMode)) {
+        return highlight;
+      }
+      let idx = 3;
+      for (let line = 0; line < lineCount && idx < buffer.length; line++) {
+        let lineHighlight = new LineHighlight();
+        highlight.lines.push(lineHighlight);
+        const spanCount = Math.max(buffer[idx++], 0);
+        for (let i = 0; i < spanCount; i++) {
+          if (idx + stride > buffer.length) {
+            return highlight;
+          }
+          let startColumn = buffer[idx++];
+          let length = buffer[idx++];
+          let startIndex = hasStartIndex ? buffer[idx++] : 0;
+          let endColumn = startColumn + length;
+          let endIndex = hasStartIndex ? startIndex + length : 0;
 
-        let range = new TextRange(
-          new TextPosition(startLine, startColumn, startIndex),
-          new TextPosition(endLine, endColumn, endIndex)
-        );
+          let range = new TextRange(
+            new TextPosition(line, startColumn, startIndex),
+            new TextPosition(line, endColumn, endIndex)
+          );
 
-        let span: TokenSpan;
-        if (stride > 7) {
-          let inlineStyle = new InlineStyle();
-          inlineStyle.foreground = buffer[baseIndex + 6];
-          inlineStyle.background = buffer[baseIndex + 7];
-          NativeBufferPack.unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-          span = TokenSpan.withInlineStyle(range, inlineStyle);
-        } else {
-          span = new TokenSpan(range, buffer[baseIndex + 6]);
+          let span: TokenSpan;
+          if (inlineStyleMode) {
+            let inlineStyle = new InlineStyle();
+            inlineStyle.foreground = buffer[idx++];
+            inlineStyle.background = buffer[idx++];
+            NativeBufferPack.unpackInlineStyleTags(buffer[idx++], inlineStyle);
+            span = TokenSpan.withInlineStyle(range, inlineStyle);
+          } else {
+            span = new TokenSpan(range, buffer[idx++]);
+          }
+          lineHighlight.spans.push(span);
         }
-
-        if (startLine != line) {
-          line = startLine;
-          lineHighlight = new LineHighlight();
-          highlight.lines.push(lineHighlight);
-        }
-        lineHighlight.spans.push(span);
       }
       return highlight;
     }
@@ -820,85 +825,96 @@ export namespace sweetline {
       if (!buffer || buffer.length < 5) {
         return slice;
       }
-      slice.startLine = buffer[0];
-      slice.totalLineCount = buffer[1];
-      const lineCount = Math.max(buffer[2], 0);
-      const spanCount = Math.max(buffer[3], 0);
-      const stride = Math.max(buffer[4], 0);
+      const flags = buffer[0];
+      const stride = Math.max(buffer[1], 0);
+      slice.startLine = buffer[2];
+      slice.totalLineCount = buffer[3];
+      const lineCount = Math.max(buffer[4], 0);
+      const hasStartIndex = NativeBufferPack.flagsHasStartIndex(flags);
+      const inlineStyleMode = NativeBufferPack.flagsUsesInlineStyle(flags);
+      if (!NativeBufferPack.isValidSpanStride(stride, hasStartIndex, inlineStyleMode)) {
+        return slice;
+      }
+      let idx = 5;
       for (let i = 0; i < lineCount; i++) {
         slice.lines.push(new LineHighlight());
-      }
-      for (let i = 0; i < spanCount; i++) {
-        let baseIndex = i * stride + 5;
-        if (baseIndex + 6 >= buffer.length) {
+        if (idx >= buffer.length) {
           break;
         }
-        let startLine = buffer[baseIndex];
-        let startColumn = buffer[baseIndex + 1];
-        let startIndex = buffer[baseIndex + 2];
-        let endLine = buffer[baseIndex + 3];
-        let endColumn = buffer[baseIndex + 4];
-        let endIndex = buffer[baseIndex + 5];
-
-        let range = new TextRange(
-          new TextPosition(startLine, startColumn, startIndex),
-          new TextPosition(endLine, endColumn, endIndex)
-        );
-        let span: TokenSpan;
-        if (stride > 7) {
-          if (baseIndex + 8 >= buffer.length) {
-            break;
+        const spanCount = Math.max(buffer[idx++], 0);
+        const line = slice.startLine + i;
+        const lineHighlight = slice.lines[i];
+        for (let s = 0; s < spanCount; s++) {
+          if (idx + stride > buffer.length) {
+            return slice;
           }
-          let inlineStyle = new InlineStyle();
-          inlineStyle.foreground = buffer[baseIndex + 6];
-          inlineStyle.background = buffer[baseIndex + 7];
-          NativeBufferPack.unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-          span = TokenSpan.withInlineStyle(range, inlineStyle);
-        } else {
-          span = new TokenSpan(range, buffer[baseIndex + 6]);
+          let startColumn = buffer[idx++];
+          let length = buffer[idx++];
+          let startIndex = hasStartIndex ? buffer[idx++] : 0;
+          let endColumn = startColumn + length;
+          let endIndex = hasStartIndex ? startIndex + length : 0;
+
+          let range = new TextRange(
+            new TextPosition(line, startColumn, startIndex),
+            new TextPosition(line, endColumn, endIndex)
+          );
+          let span: TokenSpan;
+          if (inlineStyleMode) {
+            let inlineStyle = new InlineStyle();
+            inlineStyle.foreground = buffer[idx++];
+            inlineStyle.background = buffer[idx++];
+            NativeBufferPack.unpackInlineStyleTags(buffer[idx++], inlineStyle);
+            span = TokenSpan.withInlineStyle(range, inlineStyle);
+          } else {
+            span = new TokenSpan(range, buffer[idx++]);
+          }
+          lineHighlight.spans.push(span);
         }
-        const localLine = startLine - slice.startLine;
-        if (localLine < 0 || localLine >= slice.lines.length) {
-          continue;
-        }
-        slice.lines[localLine].spans.push(span);
       }
       return slice;
     }
 
-    static readLineAnalyzeResult(buffer: Int32Array): LineAnalyzeResult {
+    static readLineAnalyzeResult(buffer: Int32Array, lineNumber: number): LineAnalyzeResult {
       const result = new LineAnalyzeResult();
-      if (!buffer || buffer.length < 4) {
+      if (!buffer || buffer.length < 5) {
         return result;
       }
-      const spanCount = buffer[0];
+      const flags = buffer[0];
       const stride = buffer[1];
-      result.endState = buffer[2];
-      result.charCount = buffer[3];
+      const spanCount = buffer[2];
+      result.endState = buffer[3];
+      result.charCount = buffer[4];
+      const hasStartIndex = NativeBufferPack.flagsHasStartIndex(flags);
+      const inlineStyleMode = NativeBufferPack.flagsUsesInlineStyle(flags);
+      if (!NativeBufferPack.isValidSpanStride(stride, hasStartIndex, inlineStyleMode)) {
+        return result;
+      }
       let lineHighlight = new LineHighlight();
+      let idx = 5;
       for (let i = 0; i < spanCount; i++) {
-        let baseIndex = i * stride + 4;
-        let startLine = buffer[baseIndex];
-        let startColumn = buffer[baseIndex + 1];
-        let startIndex = buffer[baseIndex + 2];
-        let endLine = buffer[baseIndex + 3];
-        let endColumn = buffer[baseIndex + 4];
-        let endIndex = buffer[baseIndex + 5];
+        if (idx + stride > buffer.length) {
+          break;
+        }
+        let startColumn = buffer[idx++];
+        let length = buffer[idx++];
+        let startIndex = hasStartIndex ? buffer[idx++] : 0;
+        let endColumn = startColumn + length;
+        let endIndex = hasStartIndex ? startIndex + length : 0;
 
         let range = new TextRange(
-          new TextPosition(startLine, startColumn, startIndex),
-          new TextPosition(endLine, endColumn, endIndex)
+          new TextPosition(lineNumber, startColumn, startIndex),
+          new TextPosition(lineNumber, endColumn, endIndex)
         );
 
         let span: TokenSpan;
-        if (stride > 7) {
+        if (inlineStyleMode) {
           let inlineStyle = new InlineStyle();
-          inlineStyle.foreground = buffer[baseIndex + 6];
-          inlineStyle.background = buffer[baseIndex + 7];
-          NativeBufferPack.unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
+          inlineStyle.foreground = buffer[idx++];
+          inlineStyle.background = buffer[idx++];
+          NativeBufferPack.unpackInlineStyleTags(buffer[idx++], inlineStyle);
           span = TokenSpan.withInlineStyle(range, inlineStyle);
         } else {
-          span = new TokenSpan(range, buffer[baseIndex + 6]);
+          span = new TokenSpan(range, buffer[idx++]);
         }
         lineHighlight.spans.push(span);
       }
@@ -942,6 +958,19 @@ export namespace sweetline {
         result.lineStates.push(state);
       }
       return result;
+    }
+
+    private static isValidSpanStride(stride: number, hasStartIndex: boolean, inlineStyleMode: boolean): boolean {
+      const expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyleMode ? 3 : 1);
+      return stride == expected;
+    }
+
+    private static flagsUsesInlineStyle(flags: number): boolean {
+      return (flags & (1 << 1)) != 0;
+    }
+
+    private static flagsHasStartIndex(flags: number): boolean {
+      return (flags & 1) != 0;
     }
   }
 }

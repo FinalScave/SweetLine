@@ -129,7 +129,10 @@ inline TextLineInfo unpackTextLineInfo(int32_t* arr) {
 }
 
 inline int32_t computeSpanBufferStride(const HighlightConfig& config) {
-  int32_t base_count = 6; // Start/end line, column, and index
+  int32_t base_count = 2; // column, length
+  if (config.show_index) {
+    base_count += 1; // start index
+  }
   if (config.inline_style) {
     base_count += 3; // foreground color, background color, tags each occupy one int32
   } else {
@@ -138,111 +141,124 @@ inline int32_t computeSpanBufferStride(const HighlightConfig& config) {
   return base_count;
 }
 
-inline size_t computeLineHighlightsSpanCount(const List<LineHighlight>& lines) {
-  size_t span_count = 0;
-  for (const LineHighlight& line : lines) {
-    span_count += line.spans.size();
+inline int32_t packSpanPayloadFlags(const HighlightConfig& config) {
+  int32_t flags = 0;
+  if (config.show_index) {
+    flags |= 1; // bit0: has start index
   }
-  return span_count;
+  if (config.inline_style) {
+    flags |= (1 << 1); // bit1: inline style mode
+  }
+  return flags;
 }
 
-inline void writeLineHighlights(const List<LineHighlight>& lines, int32_t* buffer, const HighlightConfig& config) {
-  size_t index = 0;
-  for (const LineHighlight& line : lines) {
-    for (const TokenSpan& span : line.spans) {
-      buffer[index++] = static_cast<int32_t>(span.range.start.line);
-      buffer[index++] = static_cast<int32_t>(span.range.start.column);
-      buffer[index++] = static_cast<int32_t>(span.range.start.index);
-      buffer[index++] = static_cast<int32_t>(span.range.end.line);
-      buffer[index++] = static_cast<int32_t>(span.range.end.column);
-      buffer[index++] = static_cast<int32_t>(span.range.end.index);
-      if (config.inline_style) {
-        buffer[index++] = static_cast<int32_t>(span.inline_style.foreground);
-        buffer[index++] = static_cast<int32_t>(span.inline_style.background);
-        buffer[index++] = packInlineStyleTags(span.inline_style);
-      } else {
-        buffer[index++] = static_cast<int32_t>(span.style_id);
-      }
-    }
+inline size_t computeDocumentHighlightBufferSize(const SharedPtr<DocumentHighlight>& highlight, const HighlightConfig& config) {
+  size_t total_size = 3; // flags + span_stride + line_count
+  if (highlight == nullptr) {
+    return total_size;
+  }
+  size_t stride = static_cast<size_t>(computeSpanBufferStride(config));
+  for (const LineHighlight& line : highlight->lines) {
+    total_size += 1 + line.spans.size() * stride; // line span_count + span payload
+  }
+  return total_size;
+}
+
+inline size_t computeDocumentHighlightSliceBufferSize(const SharedPtr<DocumentHighlightSlice>& slice, const HighlightConfig& config) {
+  size_t total_size = 5; // flags + span_stride + start_line + total_line_count + line_count
+  if (slice == nullptr) {
+    return total_size;
+  }
+  size_t stride = static_cast<size_t>(computeSpanBufferStride(config));
+  for (const LineHighlight& line : slice->lines) {
+    total_size += 1 + line.spans.size() * stride; // line span_count + span payload
+  }
+  return total_size;
+}
+
+inline size_t computeIndentGuideResultBufferSize(const SharedPtr<IndentGuideResult>& result) {
+  size_t total_size = 4; // guide_count + stride + line_state_count + line_state_stride
+  if (result == nullptr) {
+    return total_size;
+  }
+  size_t guide_data_size = 0;
+  for (const IndentGuideLine& g : result->guide_lines) {
+    guide_data_size += 6 + g.branches.size() * 2; // fixed 6 fields + variable branches
+  }
+  constexpr size_t line_state_stride = 4;
+  total_size += guide_data_size + result->line_states.size() * line_state_stride;
+  return total_size;
+}
+
+inline void writeTokenSpanCompact(const TokenSpan& span, int32_t* buffer, size_t& index, const HighlightConfig& config) {
+  size_t length = span.range.end.column - span.range.start.column;
+  buffer[index++] = static_cast<int32_t>(span.range.start.column);
+  buffer[index++] = static_cast<int32_t>(length);
+  if (config.show_index) {
+    buffer[index++] = static_cast<int32_t>(span.range.start.index);
+  }
+  if (config.inline_style) {
+    buffer[index++] = static_cast<int32_t>(span.inline_style.foreground);
+    buffer[index++] = static_cast<int32_t>(span.inline_style.background);
+    buffer[index++] = packInlineStyleTags(span.inline_style);
+  } else {
+    buffer[index++] = static_cast<int32_t>(span.style_id);
   }
 }
 
 inline void writeDocumentHighlight(const SharedPtr<DocumentHighlight>& highlight, int32_t* buffer, const HighlightConfig& config) {
-  writeLineHighlights(highlight->lines, buffer, config);
+  size_t index = 0;
+  size_t line_count = highlight == nullptr ? 0 : highlight->lines.size();
+  buffer[index++] = packSpanPayloadFlags(config);
+  buffer[index++] = computeSpanBufferStride(config);
+  buffer[index++] = static_cast<int32_t>(line_count);
+  if (highlight == nullptr) {
+    return;
+  }
+  for (const LineHighlight& line : highlight->lines) {
+    buffer[index++] = static_cast<int32_t>(line.spans.size());
+    for (const TokenSpan& span : line.spans) {
+      writeTokenSpanCompact(span, buffer, index, config);
+    }
+  }
 }
 
 inline void writeLineHighlight(const LineHighlight& highlight, int32_t* buffer, const HighlightConfig& config) {
   size_t index = 0;
   for (const TokenSpan& span : highlight.spans) {
-    buffer[index++] = static_cast<int32_t>(span.range.start.line);
-    buffer[index++] = static_cast<int32_t>(span.range.start.column);
-    buffer[index++] = static_cast<int32_t>(span.range.start.index);
-    buffer[index++] = static_cast<int32_t>(span.range.end.line);
-    buffer[index++] = static_cast<int32_t>(span.range.end.column);
-    buffer[index++] = static_cast<int32_t>(span.range.end.index);
-    if (config.inline_style) {
-      buffer[index++] = static_cast<int32_t>(span.inline_style.foreground);
-      buffer[index++] = static_cast<int32_t>(span.inline_style.background);
-      buffer[index++] = packInlineStyleTags(span.inline_style);
-    } else {
-      buffer[index++] = static_cast<int32_t>(span.style_id);
+    writeTokenSpanCompact(span, buffer, index, config);
+  }
+}
+
+inline void writeDocumentHighlightSlice(const SharedPtr<DocumentHighlightSlice>& slice, int32_t* buffer,
+                                        const HighlightConfig& config) {
+  size_t index = 0;
+  buffer[index++] = packSpanPayloadFlags(config);
+  buffer[index++] = computeSpanBufferStride(config);
+  buffer[index++] = static_cast<int32_t>(slice == nullptr ? 0 : slice->start_line);
+  buffer[index++] = static_cast<int32_t>(slice == nullptr ? 0 : slice->total_line_count);
+  buffer[index++] = static_cast<int32_t>(slice == nullptr ? 0 : slice->lines.size());
+  if (slice == nullptr) {
+    return;
+  }
+  for (const LineHighlight& line : slice->lines) {
+    buffer[index++] = static_cast<int32_t>(line.spans.size());
+    for (const TokenSpan& span : line.spans) {
+      writeTokenSpanCompact(span, buffer, index, config);
     }
   }
 }
 
-/// Serialize DocumentHighlightSlice to an int32_t buffer
-/// Layout:
-/// buffer[0] = slice start line (start_line)
-/// buffer[1] = total line count after patch (total_line_count)
-/// buffer[2] = slice line count (line_count)
-/// buffer[3] = token span count (span_count)
-/// buffer[4] = number of integer fields per token span (stride)
-/// Followed by span_count * stride integer fields
-inline int32_t* writeDocumentHighlightSlice(const SharedPtr<DocumentHighlightSlice>& slice, const HighlightConfig& config) {
-  if (slice == nullptr) {
-    return nullptr;
-  }
-  size_t span_count = computeLineHighlightsSpanCount(slice->lines);
-  size_t stride = static_cast<size_t>(computeSpanBufferStride(config));
-  size_t total_size = 5 + span_count * stride;
-  int32_t* buffer = new int32_t[total_size];
-  buffer[0] = static_cast<int32_t>(slice->start_line);
-  buffer[1] = static_cast<int32_t>(slice->total_line_count);
-  buffer[2] = static_cast<int32_t>(slice->lines.size());
-  buffer[3] = static_cast<int32_t>(span_count);
-  buffer[4] = static_cast<int32_t>(stride);
-  writeLineHighlights(slice->lines, buffer + 5, config);
-  return buffer;
-}
-
-/// Serialize IndentGuideResult to an int32_t buffer
-/// Layout:
-/// buffer[0] = guide_lines count
-/// buffer[1] = fixed field count per guide_line (stride, excluding branches)
-/// buffer[2] = line_states count (i.e. line count)
-/// buffer[3] = field count per line_state (4)
-/// Followed by:
-///   guide_lines: [column, start_line, end_line, nesting_level, scope_rule_id, branch_count, branch_line_0, branch_column_0, ...]
-///   line_states: [nesting_level, scope_state, scope_column, indent_level] * line_count
-inline int32_t* writeIndentGuideResult(const SharedPtr<IndentGuideResult>& result) {
-  if (result == nullptr) {
-    return nullptr;
-  }
-  // Calculate total int count for guide_lines section
-  size_t guide_data_size = 0;
-  for (const IndentGuideLine& g : result->guide_lines) {
-    guide_data_size += 6 + g.branches.size() * 2; // 5 fixed fields + branch_count + (line, column) per branch
-  }
-  size_t line_state_count = result->line_states.size();
+inline void writeIndentGuideResult(const SharedPtr<IndentGuideResult>& result, int32_t* buffer) {
+  size_t line_state_count = result == nullptr ? 0 : result->line_states.size();
   constexpr int32_t line_state_stride = 4;
-  size_t total_size = 4 + guide_data_size + line_state_count * line_state_stride;
-  int32_t* buffer = new int32_t[total_size];
-
-  buffer[0] = static_cast<int32_t>(result->guide_lines.size());
+  buffer[0] = static_cast<int32_t>(result == nullptr ? 0 : result->guide_lines.size());
   buffer[1] = 6; // stride (fixed fields per guide_line, excluding variable branches)
   buffer[2] = static_cast<int32_t>(line_state_count);
   buffer[3] = line_state_stride;
-
+  if (result == nullptr) {
+    return;
+  }
   size_t idx = 4;
   for (const IndentGuideLine& g : result->guide_lines) {
     buffer[idx++] = g.column;
@@ -262,7 +278,6 @@ inline int32_t* writeIndentGuideResult(const SharedPtr<IndentGuideResult>& resul
     buffer[idx++] = ls.scope_column;
     buffer[idx++] = ls.indent_level;
   }
-  return buffer;
 }
 
 #endif //SWEETLINE_C_WRAPPER_HPP

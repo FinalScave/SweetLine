@@ -58,7 +58,7 @@ public class TextAnalyzer {
         }
         int[] packedTextLineInfo = NativeBufferPack.packTextLineInfo(info);
         int[] buffer = nativeAnalyzeLine(nativeHandle, text, packedTextLineInfo);
-        return NativeBufferPack.readLineAnalyzeResult(buffer);
+        return NativeBufferPack.readLineAnalyzeResult(buffer, info.line);
     }
 
     /**

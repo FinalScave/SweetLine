@@ -19,9 +19,12 @@ final class BufferParser {
      * Parse full document highlight from native buffer.
      * <p>Layout:
      * <pre>
-     * buffer[0] = spanCount
+     * buffer[0] = flags
      * buffer[1] = stride
-     * Followed by spanCount * stride int32_t fields
+     * buffer[2] = lineCount
+     * Followed by lineCount line entries:
+     * lineEntry[0] = spanCount of current line
+     * followed by spanCount * stride int32_t fields
      * </pre>
      */
     static DocumentHighlight readDocumentHighlight(MemorySegment bufferPtr) {
@@ -30,40 +33,43 @@ final class BufferParser {
             return highlight;
         }
 
-        // Read header: [spanCount, stride]
-        MemorySegment header = bufferPtr.reinterpret(2L * JAVA_INT.byteSize());
-        int spanCount = header.getAtIndex(JAVA_INT, 0);
+        // Read header: [flags, stride, lineCount]
+        MemorySegment header = bufferPtr.reinterpret(3L * JAVA_INT.byteSize());
+        int flags = header.getAtIndex(JAVA_INT, 0);
         int stride = header.getAtIndex(JAVA_INT, 1);
-
-        if (spanCount <= 0 || stride <= 0) {
+        int lineCount = Math.max(header.getAtIndex(JAVA_INT, 2), 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean inlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, inlineStyle)) {
             return highlight;
         }
+        MemorySegment buffer = bufferPtr.reinterpret(Long.MAX_VALUE);
 
-        // Reinterpret to full buffer size
-        long totalInts = 2L + (long) spanCount * stride;
-        MemorySegment buffer = bufferPtr.reinterpret(totalInts * JAVA_INT.byteSize());
-
-        LineHighlight lineHighlight = new LineHighlight();
-        int currentLine = -1;
-
-        for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 2;
-            int startLine = buffer.getAtIndex(JAVA_INT, baseIndex);
-            int startColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 1);
-            int startIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 2);
-            int endLine = buffer.getAtIndex(JAVA_INT, baseIndex + 3);
-            int endColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 4);
-            int endIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 5);
-
-            TokenSpan span = readTokenSpan(buffer, baseIndex, stride,
-                    startLine, startColumn, startIndex, endLine, endColumn, endIndex);
-
-            if (startLine != currentLine) {
-                currentLine = startLine;
-                lineHighlight = new LineHighlight();
-                highlight.lines().add(lineHighlight);
+        int idx = 3;
+        for (int line = 0; line < lineCount; line++) {
+            LineHighlight lineHighlight = new LineHighlight();
+            highlight.lines().add(lineHighlight);
+            int spanCount = Math.max(buffer.getAtIndex(JAVA_INT, idx++), 0);
+            for (int i = 0; i < spanCount; i++) {
+                int startColumn = buffer.getAtIndex(JAVA_INT, idx++);
+                int length = buffer.getAtIndex(JAVA_INT, idx++);
+                int startIndex = hasStartIndex ? buffer.getAtIndex(JAVA_INT, idx++) : 0;
+                int endColumn = startColumn + length;
+                int endIndex = hasStartIndex ? startIndex + length : 0;
+                TextRange range = new TextRange(
+                        new TextPosition(line, startColumn, startIndex),
+                        new TextPosition(line, endColumn, endIndex)
+                );
+                if (inlineStyle) {
+                    int fg = buffer.getAtIndex(JAVA_INT, idx++);
+                    int bg = buffer.getAtIndex(JAVA_INT, idx++);
+                    int fontAttr = buffer.getAtIndex(JAVA_INT, idx++);
+                    lineHighlight.spans().add(new TokenSpan(range, new InlineStyle(fg, bg, fontAttr)));
+                } else {
+                    int styleId = buffer.getAtIndex(JAVA_INT, idx++);
+                    lineHighlight.spans().add(new TokenSpan(range, styleId));
+                }
             }
-            lineHighlight.spans().add(span);
         }
         return highlight;
     }
@@ -72,12 +78,14 @@ final class BufferParser {
      * Parse highlight slice for specified line range from native buffer.
      * <p>Layout:
      * <pre>
-     * buffer[0] = startLine
-     * buffer[1] = totalLineCount
-     * buffer[2] = lineCount
-     * buffer[3] = spanCount
-     * buffer[4] = stride
-     * Followed by spanCount * stride int32_t fields
+     * buffer[0] = flags
+     * buffer[1] = stride
+     * buffer[2] = startLine
+     * buffer[3] = totalLineCount
+     * buffer[4] = lineCount
+     * Followed by lineCount line entries:
+     * lineEntry[0] = spanCount of current line
+     * followed by spanCount * stride int32_t fields
      * </pre>
      */
     static DocumentHighlightSlice readDocumentHighlightSlice(MemorySegment bufferPtr) {
@@ -86,35 +94,47 @@ final class BufferParser {
         }
 
         MemorySegment header = bufferPtr.reinterpret(5L * JAVA_INT.byteSize());
-        int startLine = header.getAtIndex(JAVA_INT, 0);
-        int totalLineCount = header.getAtIndex(JAVA_INT, 1);
-        int lineCount = Math.max(header.getAtIndex(JAVA_INT, 2), 0);
-        int spanCount = Math.max(header.getAtIndex(JAVA_INT, 3), 0);
-        int stride = Math.max(header.getAtIndex(JAVA_INT, 4), 0);
-
-        long totalInts = 5L + (long) spanCount * stride;
-        MemorySegment buffer = bufferPtr.reinterpret(totalInts * JAVA_INT.byteSize());
+        int flags = header.getAtIndex(JAVA_INT, 0);
+        int stride = Math.max(header.getAtIndex(JAVA_INT, 1), 0);
+        int startLine = header.getAtIndex(JAVA_INT, 2);
+        int totalLineCount = header.getAtIndex(JAVA_INT, 3);
+        int lineCount = Math.max(header.getAtIndex(JAVA_INT, 4), 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean inlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, inlineStyle)) {
+            return new DocumentHighlightSlice(startLine, totalLineCount, new ArrayList<>());
+        }
+        MemorySegment buffer = bufferPtr.reinterpret(Long.MAX_VALUE);
 
         List<LineHighlight> lines = new ArrayList<>(lineCount);
         for (int i = 0; i < lineCount; i++) {
             lines.add(new LineHighlight());
         }
 
-        for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 5;
-            int spanStartLine = buffer.getAtIndex(JAVA_INT, baseIndex);
-            int spanStartColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 1);
-            int spanStartIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 2);
-            int spanEndLine = buffer.getAtIndex(JAVA_INT, baseIndex + 3);
-            int spanEndColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 4);
-            int spanEndIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 5);
-
-            TokenSpan span = readTokenSpan(buffer, baseIndex, stride,
-                    spanStartLine, spanStartColumn, spanStartIndex, spanEndLine, spanEndColumn, spanEndIndex);
-
-            int localLine = spanStartLine - startLine;
-            if (localLine >= 0 && localLine < lines.size()) {
-                lines.get(localLine).spans().add(span);
+        int idx = 5;
+        for (int i = 0; i < lineCount; i++) {
+            int spanCount = Math.max(buffer.getAtIndex(JAVA_INT, idx++), 0);
+            int line = startLine + i;
+            LineHighlight lineHighlight = lines.get(i);
+            for (int s = 0; s < spanCount; s++) {
+                int startColumn = buffer.getAtIndex(JAVA_INT, idx++);
+                int length = buffer.getAtIndex(JAVA_INT, idx++);
+                int startIndex = hasStartIndex ? buffer.getAtIndex(JAVA_INT, idx++) : 0;
+                int endColumn = startColumn + length;
+                int endIndex = hasStartIndex ? startIndex + length : 0;
+                TextRange range = new TextRange(
+                        new TextPosition(line, startColumn, startIndex),
+                        new TextPosition(line, endColumn, endIndex)
+                );
+                if (inlineStyle) {
+                    int fg = buffer.getAtIndex(JAVA_INT, idx++);
+                    int bg = buffer.getAtIndex(JAVA_INT, idx++);
+                    int fontAttr = buffer.getAtIndex(JAVA_INT, idx++);
+                    lineHighlight.spans().add(new TokenSpan(range, new InlineStyle(fg, bg, fontAttr)));
+                } else {
+                    int styleId = buffer.getAtIndex(JAVA_INT, idx++);
+                    lineHighlight.spans().add(new TokenSpan(range, styleId));
+                }
             }
         }
         return new DocumentHighlightSlice(startLine, totalLineCount, lines);
@@ -124,40 +144,60 @@ final class BufferParser {
      * Parse single line analysis result from native buffer.
      * <p>Layout:
      * <pre>
-     * buffer[0] = spanCount
+     * buffer[0] = flags
      * buffer[1] = stride
-     * buffer[2] = endState
-     * buffer[3] = charCount
+     * buffer[2] = spanCount
+     * buffer[3] = endState
+     * buffer[4] = charCount
      * Followed by spanCount * stride int32_t fields
      * </pre>
      */
     static LineAnalyzeResult readLineAnalyzeResult(MemorySegment bufferPtr) {
+        return readLineAnalyzeResult(bufferPtr, 0);
+    }
+
+    static LineAnalyzeResult readLineAnalyzeResult(MemorySegment bufferPtr, int lineNumber) {
         if (bufferPtr.equals(MemorySegment.NULL)) {
             return new LineAnalyzeResult(new LineHighlight(), 0, 0);
         }
 
-        MemorySegment header = bufferPtr.reinterpret(4L * JAVA_INT.byteSize());
-        int spanCount = header.getAtIndex(JAVA_INT, 0);
+        MemorySegment header = bufferPtr.reinterpret(5L * JAVA_INT.byteSize());
+        int flags = header.getAtIndex(JAVA_INT, 0);
         int stride = header.getAtIndex(JAVA_INT, 1);
-        int endState = header.getAtIndex(JAVA_INT, 2);
-        int charCount = header.getAtIndex(JAVA_INT, 3);
+        int spanCount = header.getAtIndex(JAVA_INT, 2);
+        int endState = header.getAtIndex(JAVA_INT, 3);
+        int charCount = header.getAtIndex(JAVA_INT, 4);
 
-        long totalInts = 4L + (long) spanCount * stride;
-        MemorySegment buffer = bufferPtr.reinterpret(totalInts * JAVA_INT.byteSize());
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean inlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, inlineStyle)) {
+            return new LineAnalyzeResult(new LineHighlight(), endState, charCount);
+        }
+        MemorySegment buffer = bufferPtr.reinterpret(Long.MAX_VALUE);
 
         LineHighlight lineHighlight = new LineHighlight();
+        int idx = 5;
         for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 4;
-            int startLine = buffer.getAtIndex(JAVA_INT, baseIndex);
-            int startColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 1);
-            int startIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 2);
-            int endLine = buffer.getAtIndex(JAVA_INT, baseIndex + 3);
-            int endColumn = buffer.getAtIndex(JAVA_INT, baseIndex + 4);
-            int endIndex = buffer.getAtIndex(JAVA_INT, baseIndex + 5);
+            int startColumn = buffer.getAtIndex(JAVA_INT, idx++);
+            int length = buffer.getAtIndex(JAVA_INT, idx++);
+            int startIndex = hasStartIndex ? buffer.getAtIndex(JAVA_INT, idx++) : 0;
+            int endColumn = startColumn + length;
+            int endIndex = hasStartIndex ? startIndex + length : 0;
 
-            TokenSpan span = readTokenSpan(buffer, baseIndex, stride,
-                    startLine, startColumn, startIndex, endLine, endColumn, endIndex);
-            lineHighlight.spans().add(span);
+            TextRange range = new TextRange(
+                    new TextPosition(lineNumber, startColumn, startIndex),
+                    new TextPosition(lineNumber, endColumn, endIndex)
+            );
+
+            if (inlineStyle) {
+                int fg = buffer.getAtIndex(JAVA_INT, idx++);
+                int bg = buffer.getAtIndex(JAVA_INT, idx++);
+                int fontAttr = buffer.getAtIndex(JAVA_INT, idx++);
+                lineHighlight.spans().add(new TokenSpan(range, new InlineStyle(fg, bg, fontAttr)));
+            } else {
+                int styleId = buffer.getAtIndex(JAVA_INT, idx++);
+                lineHighlight.spans().add(new TokenSpan(range, styleId));
+            }
         }
         return new LineAnalyzeResult(lineHighlight, endState, charCount);
     }
@@ -186,11 +226,7 @@ final class BufferParser {
         int lineStateCount = header.getAtIndex(JAVA_INT, 2);
         // buffer[3] = lineStateStride (always 4)
 
-        // Estimate total buffer size: header(4) + guides(at least 6 each) + lineStates(4 each)
-        // Use a generous estimate to reinterpret, then read sequentially
-        long estimatedSize = 4L + (long) guideCount * 6 + (long) lineStateCount * 4;
-        // The actual size may be larger due to branches, but we'll reinterpret conservatively
-        // and then expand as needed. For safety, use a large reinterpret.
+        // The actual size may be larger due to branches, use a generous reinterpret upper bound.
         // A better approach: first scan guide lines to compute real size.
         // Since we need sequential access, reinterpret with a generous upper bound.
         long maxSize = 4L + (long) guideCount * 1024 + (long) lineStateCount * 4; // generous
@@ -225,24 +261,16 @@ final class BufferParser {
         return result;
     }
 
-    private static TokenSpan readTokenSpan(MemorySegment buffer, int baseIndex, int stride,
-                                           int startLine, int startColumn, int startIndex,
-                                           int endLine, int endColumn, int endIndex) {
-        TextRange range = new TextRange(
-                new TextPosition(startLine, startColumn, startIndex),
-                new TextPosition(endLine, endColumn, endIndex)
-        );
+    private static boolean isValidSpanStride(int stride, boolean hasStartIndex, boolean inlineStyle) {
+        int expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyle ? 3 : 1);
+        return stride == expected;
+    }
 
-        if (stride > 7) {
-            // Inline style mode: [fg, bg, fontAttributes]
-            int fg = buffer.getAtIndex(JAVA_INT, baseIndex + 6);
-            int bg = buffer.getAtIndex(JAVA_INT, baseIndex + 7);
-            int fontAttr = buffer.getAtIndex(JAVA_INT, baseIndex + 8);
-            return new TokenSpan(range, new InlineStyle(fg, bg, fontAttr));
-        } else {
-            // Style ID mode: [styleId]
-            int styleId = buffer.getAtIndex(JAVA_INT, baseIndex + 6);
-            return new TokenSpan(range, styleId);
-        }
+    private static boolean flagsUsesInlineStyle(int flags) {
+        return (flags & (1 << 1)) != 0;
+    }
+
+    private static boolean flagsHasStartIndex(int flags) {
+        return (flags & 1) != 0;
     }
 }

@@ -116,12 +116,9 @@ int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer_handle, const char* text)
   }
   const HighlightConfig& config = analyzer->getHighlightConfig();
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
-  int32_t span_count = static_cast<int32_t>(highlight->spanCount());
-  int32_t stride = computeSpanBufferStride(config);
-  int32_t* buffer = new int32_t[2 + span_count * stride];
-  buffer[0] = span_count;
-  buffer[1] = stride;
-  writeDocumentHighlight(highlight, buffer + 2, config);
+  size_t total_size = computeDocumentHighlightBufferSize(highlight, config);
+  int32_t* buffer = new int32_t[total_size];
+  writeDocumentHighlight(highlight, buffer, config);
   return buffer;
 }
 
@@ -136,12 +133,13 @@ int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer_handle, const char* 
   analyzer->analyzeLine(text, info_struct, result);
   int32_t span_count = static_cast<int32_t>(result.highlight.spans.size());
   int32_t stride = computeSpanBufferStride(config);
-  int32_t* buffer = new int32_t[4 + span_count * stride];
-  buffer[0] = span_count;
+  int32_t* buffer = new int32_t[5 + span_count * stride];
+  buffer[0] = packSpanPayloadFlags(config);
   buffer[1] = stride;
-  buffer[2] = result.end_state;
-  buffer[3] = static_cast<int32_t>(result.char_count);
-  writeLineHighlight(result.highlight, buffer + 4, config);
+  buffer[2] = span_count;
+  buffer[3] = result.end_state;
+  buffer[4] = static_cast<int32_t>(result.char_count);
+  writeLineHighlight(result.highlight, buffer + 5, config);
   return buffer;
 }
 
@@ -152,7 +150,10 @@ int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle, con
   }
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text, highlight);
-  return writeIndentGuideResult(result);
+  size_t total_size = computeIndentGuideResultBufferSize(result);
+  int32_t* buffer = new int32_t[total_size];
+  writeIndentGuideResult(result, buffer);
+  return buffer;
 }
 
 sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, sl_document_handle_t document_handle) {
@@ -175,12 +176,9 @@ int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle) {
   }
   const HighlightConfig& config = analyzer->getHighlightConfig();
   SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  int32_t span_count = static_cast<int32_t>(highlight->spanCount());
-  int32_t stride = computeSpanBufferStride(config);
-  int32_t* buffer = new int32_t[2 + span_count * stride];
-  buffer[0] = span_count;
-  buffer[1] = stride;
-  writeDocumentHighlight(highlight, buffer + 2, config);
+  size_t total_size = computeDocumentHighlightBufferSize(highlight, config);
+  int32_t* buffer = new int32_t[total_size];
+  writeDocumentHighlight(highlight, buffer, config);
   return buffer;
 }
 
@@ -193,12 +191,9 @@ int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, i
   TextPosition start = {static_cast<size_t>(changes_range[0]), static_cast<size_t>(changes_range[1])};
   TextPosition end = {static_cast<size_t>(changes_range[2]), static_cast<size_t>(changes_range[3])};
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeIncremental({start, end}, new_text);
-  int32_t span_count = static_cast<int32_t>(highlight->spanCount());
-  int32_t stride = computeSpanBufferStride(config);
-  int32_t* buffer = new int32_t[2 + span_count * stride];
-  buffer[0] = span_count;
-  buffer[1] = stride;
-  writeDocumentHighlight(highlight, buffer + 2, config);
+  size_t total_size = computeDocumentHighlightBufferSize(highlight, config);
+  int32_t* buffer = new int32_t[total_size];
+  writeDocumentHighlight(highlight, buffer, config);
   return buffer;
 }
 
@@ -212,7 +207,11 @@ int32_t* sl_document_analyze_incremental_in_line_range(
   TextPosition end = {static_cast<size_t>(changes_range[2]), static_cast<size_t>(changes_range[3])};
   LineRange range = {static_cast<size_t>(visible_range[0]), static_cast<size_t>(visible_range[1])};
   SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeIncrementalInLineRange({start, end}, new_text, range);
-  return writeDocumentHighlightSlice(slice, analyzer->getHighlightConfig());
+  const HighlightConfig& config = analyzer->getHighlightConfig();
+  size_t total_size = computeDocumentHighlightSliceBufferSize(slice, config);
+  int32_t* buffer = new int32_t[total_size];
+  writeDocumentHighlightSlice(slice, buffer, config);
+  return buffer;
 }
 
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle) {
@@ -221,7 +220,10 @@ int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle)
     return nullptr;
   }
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
-  return writeIndentGuideResult(result);
+  size_t total_size = computeIndentGuideResultBufferSize(result);
+  int32_t* buffer = new int32_t[total_size];
+  writeIndentGuideResult(result, buffer);
+  return buffer;
 }
 
 void sl_free_buffer(int32_t* result) {

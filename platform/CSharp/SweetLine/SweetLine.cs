@@ -318,7 +318,7 @@ public sealed class TextAnalyzer : IDisposable {
 		}
 
 		try {
-			return BufferParser.ReadLineAnalyzeResult(resultPtr);
+			return BufferParser.ReadLineAnalyzeResult(resultPtr, info.Line);
 		} finally {
 			SweetLineNative.FreeBuffer(resultPtr);
 		}
@@ -539,8 +539,11 @@ internal static class BufferParser {
 	/// <remarks>
 	/// Layout:
 	/// <code>
-	/// buffer[0] = spanCount
+	/// buffer[0] = flags
 	/// buffer[1] = stride
+	/// buffer[2] = lineCount
+	/// followed by lineCount line entries:
+	/// lineEntry[0] = spanCount of current line
 	/// followed by spanCount * stride int32 fields
 	/// </code>
 	/// </remarks>
@@ -550,49 +553,39 @@ internal static class BufferParser {
 			return highlight;
 		}
 
-		int spanCount = ReadInt(bufferPtr, 0);
-		int stride = ReadInt(bufferPtr, 1);
-		if (spanCount <= 0 || stride <= 0) {
+		int flags = ReadInt(bufferPtr, 0);
+		int stride = Math.Max(ReadInt(bufferPtr, 1), 0);
+		int lineCount = Math.Max(ReadInt(bufferPtr, 2), 0);
+		bool hasStartIndex = FlagsHasStartIndex(flags);
+		bool inlineStyle = FlagsUsesInlineStyle(flags);
+		if (!IsValidSpanStride(stride, hasStartIndex, inlineStyle)) {
 			return highlight;
 		}
 
-		int totalInts = CheckedTotalLength(2, spanCount, stride);
-		int[] buffer = new int[totalInts];
-		Marshal.Copy(bufferPtr, buffer, 0, totalInts);
-
-		LineHighlight? lineHighlight = null;
-		int currentLine = -1;
-		for (int i = 0; i < spanCount; i++) {
-			int baseIndex = 2 + i * stride;
-			if (!HasSpanHead(buffer, baseIndex)) {
-				break;
+		int index = 3;
+		for (int line = 0; line < lineCount; line++) {
+			LineHighlight lineHighlight = new();
+			highlight.Lines.Add(lineHighlight);
+			int spanCount = Math.Max(ReadInt(bufferPtr, index++), 0);
+			for (int i = 0; i < spanCount; i++) {
+				int startColumn = ReadInt(bufferPtr, index++);
+				int length = ReadInt(bufferPtr, index++);
+				int startIndex = hasStartIndex ? ReadInt(bufferPtr, index++) : 0;
+				int endColumn = startColumn + length;
+				int endIndex = hasStartIndex ? startIndex + length : 0;
+				TextRange range = new(
+					new TextPosition(line, startColumn, startIndex),
+					new TextPosition(line, endColumn, endIndex));
+				if (inlineStyle) {
+					int foreground = ReadInt(bufferPtr, index++);
+					int background = ReadInt(bufferPtr, index++);
+					int fontAttributes = ReadInt(bufferPtr, index++);
+					lineHighlight.Spans.Add(new TokenSpan(range, new InlineStyle(foreground, background, fontAttributes)));
+				} else {
+					int styleId = ReadInt(bufferPtr, index++);
+					lineHighlight.Spans.Add(new TokenSpan(range, styleId));
+				}
 			}
-
-			int startLine = buffer[baseIndex];
-			int startColumn = buffer[baseIndex + 1];
-			int startIndex = buffer[baseIndex + 2];
-			int endLine = buffer[baseIndex + 3];
-			int endColumn = buffer[baseIndex + 4];
-			int endIndex = buffer[baseIndex + 5];
-
-			TokenSpan span = ReadTokenSpan(
-				buffer,
-				baseIndex,
-				stride,
-				startLine,
-				startColumn,
-				startIndex,
-				endLine,
-				endColumn,
-				endIndex);
-
-			if (startLine != currentLine || lineHighlight is null) {
-				currentLine = startLine;
-				lineHighlight = new LineHighlight();
-				highlight.Lines.Add(lineHighlight);
-			}
-
-			lineHighlight.Spans.Add(span);
 		}
 
 		return highlight;
@@ -604,11 +597,13 @@ internal static class BufferParser {
 	/// <remarks>
 	/// Layout:
 	/// <code>
-	/// buffer[0] = startLine
-	/// buffer[1] = totalLineCount
-	/// buffer[2] = lineCount
-	/// buffer[3] = spanCount
-	/// buffer[4] = stride
+	/// buffer[0] = flags
+	/// buffer[1] = stride
+	/// buffer[2] = startLine
+	/// buffer[3] = totalLineCount
+	/// buffer[4] = lineCount
+	/// followed by lineCount line entries:
+	/// lineEntry[0] = spanCount of current line
 	/// followed by spanCount * stride int32 fields
 	/// </code>
 	/// </remarks>
@@ -617,49 +612,45 @@ internal static class BufferParser {
 			return new DocumentHighlightSlice();
 		}
 
-		int headerSize = 5;
-		int startLine = ReadInt(bufferPtr, 0);
-		int totalLineCount = ReadInt(bufferPtr, 1);
-		int lineCount = Math.Max(ReadInt(bufferPtr, 2), 0);
-		int spanCount = Math.Max(ReadInt(bufferPtr, 3), 0);
-		int stride = Math.Max(ReadInt(bufferPtr, 4), 0);
-
-		int totalInts = CheckedTotalLength(headerSize, spanCount, stride);
-		int[] buffer = new int[totalInts];
-		Marshal.Copy(bufferPtr, buffer, 0, totalInts);
+		int flags = ReadInt(bufferPtr, 0);
+		int stride = Math.Max(ReadInt(bufferPtr, 1), 0);
+		int startLine = ReadInt(bufferPtr, 2);
+		int totalLineCount = ReadInt(bufferPtr, 3);
+		int lineCount = Math.Max(ReadInt(bufferPtr, 4), 0);
+		bool hasStartIndex = FlagsHasStartIndex(flags);
+		bool inlineStyle = FlagsUsesInlineStyle(flags);
+		if (!IsValidSpanStride(stride, hasStartIndex, inlineStyle)) {
+			return new DocumentHighlightSlice(startLine, totalLineCount, []);
+		}
 
 		List<LineHighlight> lines = new(lineCount);
 		for (int i = 0; i < lineCount; i++) {
 			lines.Add(new LineHighlight());
 		}
 
-		for (int i = 0; i < spanCount; i++) {
-			int baseIndex = headerSize + i * stride;
-			if (!HasSpanHead(buffer, baseIndex)) {
-				break;
-			}
-
-			int spanStartLine = buffer[baseIndex];
-			int spanStartColumn = buffer[baseIndex + 1];
-			int spanStartIndex = buffer[baseIndex + 2];
-			int spanEndLine = buffer[baseIndex + 3];
-			int spanEndColumn = buffer[baseIndex + 4];
-			int spanEndIndex = buffer[baseIndex + 5];
-
-			TokenSpan span = ReadTokenSpan(
-				buffer,
-				baseIndex,
-				stride,
-				spanStartLine,
-				spanStartColumn,
-				spanStartIndex,
-				spanEndLine,
-				spanEndColumn,
-				spanEndIndex);
-
-			int localLine = spanStartLine - startLine;
-			if (localLine >= 0 && localLine < lines.Count) {
-				lines[localLine].Spans.Add(span);
+		int index = 5;
+		for (int i = 0; i < lineCount; i++) {
+			LineHighlight lineHighlight = lines[i];
+			int line = startLine + i;
+			int spanCount = Math.Max(ReadInt(bufferPtr, index++), 0);
+			for (int s = 0; s < spanCount; s++) {
+				int startColumn = ReadInt(bufferPtr, index++);
+				int length = ReadInt(bufferPtr, index++);
+				int startIndex = hasStartIndex ? ReadInt(bufferPtr, index++) : 0;
+				int endColumn = startColumn + length;
+				int endIndex = hasStartIndex ? startIndex + length : 0;
+				TextRange range = new(
+					new TextPosition(line, startColumn, startIndex),
+					new TextPosition(line, endColumn, endIndex));
+				if (inlineStyle) {
+					int foreground = ReadInt(bufferPtr, index++);
+					int background = ReadInt(bufferPtr, index++);
+					int fontAttributes = ReadInt(bufferPtr, index++);
+					lineHighlight.Spans.Add(new TokenSpan(range, new InlineStyle(foreground, background, fontAttributes)));
+				} else {
+					int styleId = ReadInt(bufferPtr, index++);
+					lineHighlight.Spans.Add(new TokenSpan(range, styleId));
+				}
 			}
 		}
 
@@ -672,54 +663,54 @@ internal static class BufferParser {
 	/// <remarks>
 	/// Layout:
 	/// <code>
-	/// buffer[0] = spanCount
+	/// buffer[0] = flags
 	/// buffer[1] = stride
-	/// buffer[2] = endState
-	/// buffer[3] = charCount
+	/// buffer[2] = spanCount
+	/// buffer[3] = endState
+	/// buffer[4] = charCount
 	/// followed by spanCount * stride int32 fields
 	/// </code>
 	/// </remarks>
 	internal static LineAnalyzeResult ReadLineAnalyzeResult(IntPtr bufferPtr) {
+		return ReadLineAnalyzeResult(bufferPtr, 0);
+	}
+
+	internal static LineAnalyzeResult ReadLineAnalyzeResult(IntPtr bufferPtr, int lineNumber) {
 		if (bufferPtr == IntPtr.Zero) {
 			return new LineAnalyzeResult(new LineHighlight(), 0, 0);
 		}
 
-		int spanCount = Math.Max(ReadInt(bufferPtr, 0), 0);
+		int flags = ReadInt(bufferPtr, 0);
 		int stride = Math.Max(ReadInt(bufferPtr, 1), 0);
-		int endState = ReadInt(bufferPtr, 2);
-		int charCount = ReadInt(bufferPtr, 3);
-
-		int headerSize = 4;
-		int totalInts = CheckedTotalLength(headerSize, spanCount, stride);
-		int[] buffer = new int[totalInts];
-		Marshal.Copy(bufferPtr, buffer, 0, totalInts);
+		int spanCount = Math.Max(ReadInt(bufferPtr, 2), 0);
+		int endState = ReadInt(bufferPtr, 3);
+		int charCount = ReadInt(bufferPtr, 4);
+		bool hasStartIndex = FlagsHasStartIndex(flags);
+		bool inlineStyle = FlagsUsesInlineStyle(flags);
+		if (!IsValidSpanStride(stride, hasStartIndex, inlineStyle)) {
+			return new LineAnalyzeResult(new LineHighlight(), endState, charCount);
+		}
 
 		LineHighlight lineHighlight = new();
+		int index = 5;
 		for (int i = 0; i < spanCount; i++) {
-			int baseIndex = headerSize + i * stride;
-			if (!HasSpanHead(buffer, baseIndex)) {
-				break;
+			int startColumn = ReadInt(bufferPtr, index++);
+			int length = ReadInt(bufferPtr, index++);
+			int startIndex = hasStartIndex ? ReadInt(bufferPtr, index++) : 0;
+			int endColumn = startColumn + length;
+			int endIndex = hasStartIndex ? startIndex + length : 0;
+			TextRange range = new(
+				new TextPosition(lineNumber, startColumn, startIndex),
+				new TextPosition(lineNumber, endColumn, endIndex));
+			if (inlineStyle) {
+				int foreground = ReadInt(bufferPtr, index++);
+				int background = ReadInt(bufferPtr, index++);
+				int fontAttributes = ReadInt(bufferPtr, index++);
+				lineHighlight.Spans.Add(new TokenSpan(range, new InlineStyle(foreground, background, fontAttributes)));
+			} else {
+				int styleId = ReadInt(bufferPtr, index++);
+				lineHighlight.Spans.Add(new TokenSpan(range, styleId));
 			}
-
-			int startLine = buffer[baseIndex];
-			int startColumn = buffer[baseIndex + 1];
-			int startIndex = buffer[baseIndex + 2];
-			int endLine = buffer[baseIndex + 3];
-			int endColumn = buffer[baseIndex + 4];
-			int endIndex = buffer[baseIndex + 5];
-
-			TokenSpan span = ReadTokenSpan(
-				buffer,
-				baseIndex,
-				stride,
-				startLine,
-				startColumn,
-				startIndex,
-				endLine,
-				endColumn,
-				endIndex);
-
-			lineHighlight.Spans.Add(span);
 		}
 
 		return new LineAnalyzeResult(lineHighlight, endState, charCount);
@@ -781,45 +772,16 @@ internal static class BufferParser {
 		return Marshal.ReadInt32(bufferPtr, index * sizeof(int));
 	}
 
-	private static bool HasSpanHead(int[] buffer, int baseIndex) {
-		return baseIndex >= 0 && baseIndex + 6 < buffer.Length;
+	private static bool IsValidSpanStride(int stride, bool hasStartIndex, bool inlineStyle) {
+		int expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyle ? 3 : 1);
+		return stride == expected;
 	}
 
-	private static int CheckedTotalLength(int headerSize, int itemCount, int stride) {
-		if (itemCount <= 0 || stride <= 0) {
-			return headerSize;
-		}
-
-		long total = headerSize + (long)itemCount * stride;
-		if (total > int.MaxValue) {
-			throw new InvalidOperationException("Native highlight buffer is too large.");
-		}
-
-		return (int)total;
+	private static bool FlagsUsesInlineStyle(int flags) {
+		return (flags & (1 << 1)) != 0;
 	}
 
-	private static TokenSpan ReadTokenSpan(
-		int[] buffer,
-		int baseIndex,
-		int stride,
-		int startLine,
-		int startColumn,
-		int startIndex,
-		int endLine,
-		int endColumn,
-		int endIndex) {
-		TextRange range = new(
-			new TextPosition(startLine, startColumn, startIndex),
-			new TextPosition(endLine, endColumn, endIndex));
-
-		if (stride > 7 && baseIndex + 8 < buffer.Length) {
-			int foreground = buffer[baseIndex + 6];
-			int background = buffer[baseIndex + 7];
-			int fontAttributes = buffer[baseIndex + 8];
-			return new TokenSpan(range, new InlineStyle(foreground, background, fontAttributes));
-		}
-
-		int styleId = baseIndex + 6 < buffer.Length ? buffer[baseIndex + 6] : 0;
-		return new TokenSpan(range, styleId);
+	private static bool FlagsHasStartIndex(int flags) {
+		return (flags & 1) != 0;
 	}
 }

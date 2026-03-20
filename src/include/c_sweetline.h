@@ -125,20 +125,23 @@ SL_API sl_analyzer_handle_t sl_engine_create_text_analyzer2(sl_engine_handle_t e
 /// @param text Full text content
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = number of token spans
-/// result[1] = number of integer fields per token span
-/// Followed by result[0] * result[1] integer fields, iterate by result[0] to read highlight results:
-/// With inline style support enabled (result[1] = 9):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,foregroundColor,backgroundColor,fontAttributes]
-/// ...
-/// fontAttributes is a bitmask for font display styles:
-/// if ((fontAttributes & 1) != 0) => bold
-/// if ((fontAttributes & (1 << 1)) != 0) => italic
-/// if ((fontAttributes & (1 << 2)) != 0) => strikethrough
-/// Without inline style support (result[1] = 7):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,styleId]
-/// ...
-/// Configure styles based on styleId
+/// result[0] = span payload flags
+///             bit0: hasStartIndex
+///             bit1: inlineStyle
+/// result[1] = span field count (stride)
+/// result[2] = line count
+/// Followed by line_count line entries:
+///   line_entry[0] = span count of current line
+///   Followed by span_count * stride fields
+/// Span payload:
+///   common: [column, length]
+///   if show_index=true: append [startIndex]
+///   if inline_style=true: append [foregroundColor, backgroundColor, fontAttributes]
+///   else: append [styleId]
+/// fontAttributes bitmask:
+///   (bits & 1) != 0 => bold
+///   (bits & (1 << 1)) != 0 => italic
+///   (bits & (1 << 2)) != 0 => strikethrough
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer_handle, const char* text);
@@ -154,22 +157,18 @@ SL_API int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer_handle, const char
 /// @endcode
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = number of token spans
+/// result[0] = span payload flags
+///             bit0: hasStartIndex
+///             bit1: inlineStyle
 /// result[1] = number of integer fields per token span
-/// result[2] = state ID at the end of current line analysis
-/// result[3] = total characters analyzed in current line (excluding line endings)
-/// Followed by result[0] * result[1] integer fields, iterate by result[0] to read highlight results:
-/// With inline style support enabled (result[1] = 9):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,foregroundColor,backgroundColor,fontAttributes]
-/// ...
-/// fontAttributes is a bitmask for font display styles:
-/// if ((fontAttributes & 1) != 0) => bold
-/// if ((fontAttributes & (1 << 1)) != 0) => italic
-/// if ((fontAttributes & (1 << 2)) != 0) => strikethrough
-/// Without inline style support (result[1] = 7):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,styleId]
-/// ...
-/// Configure styles based on styleId
+/// result[2] = number of token spans
+/// result[3] = state ID at the end of current line analysis
+/// result[4] = total characters analyzed in current line (excluding line endings)
+/// Followed by result[2] * result[1] integer fields (single-line span payload):
+///   common: [column, length]
+///   if show_index=true: append [startIndex]
+///   if inline_style=true: append [foregroundColor, backgroundColor, fontAttributes]
+///   else: append [styleId]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer_handle, const char* text, int32_t* line_info);
@@ -191,20 +190,8 @@ SL_API sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_ha
 /// @param analyzer_handle Document highlight analyzer handle
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = number of token spans
-/// result[1] = number of integer fields per token span
-/// Followed by result[0] * result[1] integer fields, iterate by result[0] to read highlight results:
-/// With inline style support enabled (result[1] = 9):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,foregroundColor,backgroundColor,fontAttributes]
-/// ...
-/// fontAttributes is a bitmask for font display styles:
-/// if ((fontAttributes & 1) != 0) => bold
-/// if ((fontAttributes & (1 << 1)) != 0) => italic
-/// if ((fontAttributes & (1 << 2)) != 0) => strikethrough
-/// Without inline style support (result[1] = 7):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,styleId]
-/// ...
-/// Configure styles based on styleId
+/// Same format as sl_text_analyze:
+/// [flags, spanStride, lineCount, lineEntry...]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle);
@@ -215,20 +202,8 @@ SL_API int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle);
 /// @param new_text Changed text
 /// @return Full analysis result for the entire document, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = number of token spans
-/// result[1] = number of integer fields per token span
-/// Followed by result[0] * result[1] integer fields, iterate by result[0] to read highlight results:
-/// With inline style support enabled (result[1] = 9):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,foregroundColor,backgroundColor,fontAttributes]
-/// ...
-/// fontAttributes is a bitmask for font display styles:
-/// if ((fontAttributes & 1) != 0) => bold
-/// if ((fontAttributes & (1 << 1)) != 0) => italic
-/// if ((fontAttributes & (1 << 2)) != 0) => strikethrough
-/// Without inline style support (result[1] = 7):
-/// [startLine,startColumn,startIndex,endLine,endColumn,endIndex,styleId]
-/// ...
-/// Configure styles based on styleId
+/// Same format as sl_text_analyze:
+/// [flags, spanStride, lineCount, lineEntry...]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text);
@@ -240,12 +215,16 @@ SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_ha
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = slice start line (start_line)
-/// result[1] = total line count after patch (total_line_count)
-/// result[2] = slice line count (line_count)
-/// result[3] = token span count (span_count)
-/// result[4] = number of integer fields per token span (stride)
-/// Followed by result[3] * result[4] integer fields, same structure as sl_document_analyze
+/// result[0] = span payload flags
+///             bit0: hasStartIndex
+///             bit1: inlineStyle
+/// result[1] = span field count (stride)
+/// result[2] = slice start line (start_line)
+/// result[3] = total line count after patch (total_line_count)
+/// result[4] = slice line count (line_count)
+/// Followed by line_count line entries:
+///   line_entry[0] = span count of current line
+///   followed by span payloads (same span payload structure as sl_text_analyze)
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_document_analyze_incremental_in_line_range(

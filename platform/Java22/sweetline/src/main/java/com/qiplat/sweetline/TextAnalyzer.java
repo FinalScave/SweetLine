@@ -67,7 +67,7 @@ public class TextAnalyzer implements AutoCloseable {
                 return new LineAnalyzeResult(new LineHighlight(), 0, 0);
             }
             try {
-                return BufferParser.readLineAnalyzeResult(resultPtr);
+                return BufferParser.readLineAnalyzeResult(resultPtr, info.line());
             } finally {
                 SweetLineNative.sl_free_buffer.invoke(resultPtr);
             }

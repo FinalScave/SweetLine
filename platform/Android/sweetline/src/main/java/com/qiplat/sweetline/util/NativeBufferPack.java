@@ -52,116 +52,102 @@ public final class NativeBufferPack {
 
     public static DocumentHighlight readDocumentHighlight(int[] buffer) {
         DocumentHighlight highlight = new DocumentHighlight();
-        if (buffer == null || buffer.length < 2) {
+        if (buffer == null || buffer.length < 3) {
             return highlight;
         }
-        LineHighlight lineHighlight = new LineHighlight();
-        int spanCount = buffer[0];
-        int stride = buffer[1];
-        int line = -1;
-        for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 2;
-            int startLine = buffer[baseIndex];
-            int startColumn = buffer[baseIndex + 1];
-            int startIndex = buffer[baseIndex + 2];
-            int endLine = buffer[baseIndex + 3];
-            int endColumn = buffer[baseIndex + 4];
-            int endIndex = buffer[baseIndex + 5];
-
-            int styleId = 0;
-            InlineStyle inlineStyle = null;
-            if (stride > 7) {
-                if (baseIndex + 8 >= buffer.length) {
-                    break;
+        int flags = buffer[0];
+        int stride = Math.max(buffer[1], 0);
+        int lineCount = Math.max(buffer[2], 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean isInlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, isInlineStyle)) {
+            return highlight;
+        }
+        int index = 3;
+        int spanFieldCount = spanFieldCount(stride);
+        for (int line = 0; line < lineCount && index < buffer.length; line++) {
+            LineHighlight lineHighlight = new LineHighlight();
+            highlight.lines.add(lineHighlight);
+            int spanCount = Math.max(buffer[index++], 0);
+            for (int i = 0; i < spanCount; i++) {
+                if (index + spanFieldCount > buffer.length) {
+                    return highlight;
                 }
-                inlineStyle = new InlineStyle();
-                inlineStyle.foreground = buffer[baseIndex + 6];
-                inlineStyle.background = buffer[baseIndex + 7];
-                unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-            } else {
-                styleId = buffer[baseIndex + 6];
-            }
+                int startColumn = buffer[index++];
+                int length = buffer[index++];
+                int startIndex = hasStartIndex ? buffer[index++] : 0;
+                int endColumn = startColumn + length;
+                int endIndex = hasStartIndex ? startIndex + length : 0;
 
-            if (startLine != line) {
-                line = startLine;
-                lineHighlight = new LineHighlight();
-                highlight.lines.add(lineHighlight);
-            }
+                TextRange range = new TextRange(
+                        new TextPosition(line, startColumn, startIndex),
+                        new TextPosition(line, endColumn, endIndex)
+                );
 
-            TextRange range = new TextRange(
-                    new TextPosition(startLine, startColumn, startIndex),
-                    new TextPosition(endLine, endColumn, endIndex)
-            );
-            if (inlineStyle != null) {
-                lineHighlight.spans.add(new TokenSpan(range, inlineStyle));
-            } else {
-                lineHighlight.spans.add(new TokenSpan(range, styleId));
+                if (isInlineStyle) {
+                    InlineStyle inlineStyle = new InlineStyle();
+                    inlineStyle.foreground = buffer[index++];
+                    inlineStyle.background = buffer[index++];
+                    unpackInlineStyleTags(buffer[index++], inlineStyle);
+                    lineHighlight.spans.add(new TokenSpan(range, inlineStyle));
+                } else {
+                    int styleId = buffer[index++];
+                    lineHighlight.spans.add(new TokenSpan(range, styleId));
+                }
             }
         }
         return highlight;
     }
 
-    /**
-     * Parse highlight slice for specified line range from int[] buffer
-     * Layout:
-     * buffer[0] = startLine
-     * buffer[1] = totalLineCount
-     * buffer[2] = lineCount
-     * buffer[3] = spanCount
-     * buffer[4] = stride
-     * Followed by spanCount * stride token span data
-     */
     public static DocumentHighlightSlice readDocumentHighlightSlice(int[] buffer) {
         DocumentHighlightSlice slice = new DocumentHighlightSlice();
         if (buffer == null || buffer.length < 5) {
             return slice;
         }
-        slice.startLine = buffer[0];
-        slice.totalLineCount = buffer[1];
-        int lineCount = Math.max(buffer[2], 0);
-        int spanCount = Math.max(buffer[3], 0);
-        int stride = Math.max(buffer[4], 0);
+        int flags = buffer[0];
+        int stride = Math.max(buffer[1], 0);
+        slice.startLine = buffer[2];
+        slice.totalLineCount = buffer[3];
+        int lineCount = Math.max(buffer[4], 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean isInlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, isInlineStyle)) {
+            return slice;
+        }
+        int spanFieldCount = spanFieldCount(stride);
+        int index = 5;
         for (int i = 0; i < lineCount; i++) {
             slice.lines.add(new LineHighlight());
-        }
-        for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 5;
-            if (baseIndex + 6 >= buffer.length) {
+            if (index >= buffer.length) {
                 break;
             }
-            int startLine = buffer[baseIndex];
-            int startColumn = buffer[baseIndex + 1];
-            int startIndex = buffer[baseIndex + 2];
-            int endLine = buffer[baseIndex + 3];
-            int endColumn = buffer[baseIndex + 4];
-            int endIndex = buffer[baseIndex + 5];
-
-            int styleId = 0;
-            InlineStyle inlineStyle = null;
-            if (stride > 7) {
-                if (baseIndex + 8 >= buffer.length) {
-                    break;
+            int spanCount = Math.max(buffer[index++], 0);
+            int line = slice.startLine + i;
+            LineHighlight lineHighlight = slice.lines.get(i);
+            for (int s = 0; s < spanCount; s++) {
+                if (index + spanFieldCount > buffer.length) {
+                    return slice;
                 }
-                inlineStyle = new InlineStyle();
-                inlineStyle.foreground = buffer[baseIndex + 6];
-                inlineStyle.background = buffer[baseIndex + 7];
-                unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-            } else {
-                styleId = buffer[baseIndex + 6];
-            }
+                int startColumn = buffer[index++];
+                int length = buffer[index++];
+                int startIndex = hasStartIndex ? buffer[index++] : 0;
+                int endColumn = startColumn + length;
+                int endIndex = hasStartIndex ? startIndex + length : 0;
 
-            int localLine = startLine - slice.startLine;
-            if (localLine < 0 || localLine >= slice.lines.size()) {
-                continue;
-            }
-            TextRange range = new TextRange(
-                    new TextPosition(startLine, startColumn, startIndex),
-                    new TextPosition(endLine, endColumn, endIndex)
-            );
-            if (inlineStyle != null) {
-                slice.lines.get(localLine).spans.add(new TokenSpan(range, inlineStyle));
-            } else {
-                slice.lines.get(localLine).spans.add(new TokenSpan(range, styleId));
+                TextRange range = new TextRange(
+                        new TextPosition(line, startColumn, startIndex),
+                        new TextPosition(line, endColumn, endIndex)
+                );
+                if (isInlineStyle) {
+                    InlineStyle inlineStyle = new InlineStyle();
+                    inlineStyle.foreground = buffer[index++];
+                    inlineStyle.background = buffer[index++];
+                    unpackInlineStyleTags(buffer[index++], inlineStyle);
+                    lineHighlight.spans.add(new TokenSpan(range, inlineStyle));
+                } else {
+                    int styleId = buffer[index++];
+                    lineHighlight.spans.add(new TokenSpan(range, styleId));
+                }
             }
         }
         return slice;
@@ -169,70 +155,95 @@ public final class NativeBufferPack {
 
     public static Spannable readSpannable(String text, int[] buffer, SpannableStyleFactory styleFactory) {
         SpannableString result = new SpannableString(text);
-        int spanCount = buffer[0];
-        int stride = buffer[1];
-        for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 2;
-            int startIndex = buffer[baseIndex + 2];
-            int endIndex = buffer[baseIndex + 5];
+        if (buffer == null || buffer.length < 3) {
+            return result;
+        }
+        int flags = buffer[0];
+        int stride = Math.max(buffer[1], 0);
+        int lineCount = Math.max(buffer[2], 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        if (!hasStartIndex) {
+            throw new IllegalStateException("Cannot readSpannable() without startIndex of TokenSpan");
+        }
+        boolean isInlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, isInlineStyle)) {
+            return result;
+        }
+        int spanFieldCount = spanFieldCount(stride);
+        int index = 3;
+        for (int line = 0; line < lineCount && index < buffer.length; line++) {
+            int spanCount = Math.max(buffer[index++], 0);
+            for (int i = 0; i < spanCount; i++) {
+                if (index + spanFieldCount > buffer.length) {
+                    return result;
+                }
+                int column = buffer[index++];
+                int length = buffer[index++];
+                int startIndex = buffer[index++];
+                int endIndex = startIndex + length;
 
-            int styleId = 0;
-            InlineStyle inlineStyle = null;
-            if (stride > 7) {
-                inlineStyle = new InlineStyle();
-                inlineStyle.foreground = buffer[baseIndex + 6];
-                inlineStyle.background = buffer[baseIndex + 7];
-                unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-            } else {
-                styleId = buffer[baseIndex + 6];
-            }
+                CharacterStyle characterStyle;
+                if (isInlineStyle) {
+                    InlineStyle inlineStyle = new InlineStyle();
+                    inlineStyle.foreground = buffer[index++];
+                    inlineStyle.background = buffer[index++];
+                    unpackInlineStyleTags(buffer[index++], inlineStyle);
+                    characterStyle = styleFactory.createCharacterStyle(inlineStyle);
+                } else {
+                    int styleId = buffer[index++];
+                    characterStyle = styleFactory.createCharacterStyle(styleId);
+                }
 
-            CharacterStyle characterStyle;
-            if (inlineStyle != null) {
-                characterStyle =styleFactory.createCharacterStyle(inlineStyle);
-            } else {
-                characterStyle =styleFactory.createCharacterStyle(styleId);
+                if (startIndex < 0 || endIndex < startIndex || endIndex > text.length()) {
+                    continue;
+                }
+                result.setSpan(characterStyle, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            result.setSpan(characterStyle, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         return result;
     }
 
-    public static LineAnalyzeResult readLineAnalyzeResult(int[] buffer) {
+    public static LineAnalyzeResult readLineAnalyzeResult(int[] buffer, int lineNumber) {
         LineAnalyzeResult result = new LineAnalyzeResult();
-        int spanCount = buffer[0];
+        if (buffer == null || buffer.length < 5) {
+            return result;
+        }
+        int flags = buffer[0];
         int stride = buffer[1];
-        result.endState = buffer[2];
-        result.charCount = buffer[3];
+        int spanCount = buffer[2];
+        result.endState = buffer[3];
+        result.charCount = buffer[4];
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        boolean isInlineStyle = flagsUsesInlineStyle(flags);
+        if (!isValidSpanStride(stride, hasStartIndex, isInlineStyle)) {
+            return result;
+        }
+        int spanFieldCount = spanFieldCount(stride);
         LineHighlight lineHighlight = new LineHighlight();
+        int index = 5;
         for (int i = 0; i < spanCount; i++) {
-            int baseIndex = i * stride + 4;
-            int startLine = buffer[baseIndex];
-            int startColumn = buffer[baseIndex + 1];
-            int startIndex = buffer[baseIndex + 2];
-            int endLine = buffer[baseIndex + 3];
-            int endColumn = buffer[baseIndex + 4];
-            int endIndex = buffer[baseIndex + 5];
-
-            int styleId = 0;
-            InlineStyle inlineStyle = null;
-            if (stride > 7) {
-                inlineStyle = new InlineStyle();
-                inlineStyle.foreground = buffer[baseIndex + 6];
-                inlineStyle.background = buffer[baseIndex + 7];
-                unpackInlineStyleTags(buffer[baseIndex + 8], inlineStyle);
-            } else {
-                styleId = buffer[baseIndex + 6];
+            if (index + spanFieldCount > buffer.length) {
+                break;
             }
+            int startColumn = buffer[index++];
+            int length = buffer[index++];
+            int startIndex = hasStartIndex ? buffer[index++] : 0;
+            int endColumn = startColumn + length;
+            int endIndex = hasStartIndex ? startIndex + length : 0;
 
             TextRange range = new TextRange(
-                    new TextPosition(startLine, startColumn, startIndex),
-                    new TextPosition(endLine, endColumn, endIndex)
+                    new TextPosition(lineNumber, startColumn, startIndex),
+                    new TextPosition(lineNumber, endColumn, endIndex)
             );
 
-            if (inlineStyle != null) {
+            if (isInlineStyle) {
+                InlineStyle inlineStyle = new InlineStyle();
+                inlineStyle.foreground = buffer[index++];
+                inlineStyle.background = buffer[index++];
+                unpackInlineStyleTags(buffer[index++], inlineStyle);
                 lineHighlight.spans.add(new TokenSpan(range, inlineStyle));
             } else {
+                int styleId = buffer[index++];
                 lineHighlight.spans.add(new TokenSpan(range, styleId));
             }
         }
@@ -240,15 +251,6 @@ public final class NativeBufferPack {
         return result;
     }
 
-    /**
-     * Parse indent guide analysis result from int[] buffer
-     * Layout:
-     * buffer[0] = guide_lines count
-     * buffer[1] = fixed field count per guide_line (stride=6)
-     * buffer[2] = line_states count
-     * buffer[3] = field count per line_state (4)
-     * Followed by: guide_lines data, line_states data
-     */
     public static IndentGuideResult readIndentGuideResult(int[] buffer) {
         IndentGuideResult result = new IndentGuideResult();
         if (buffer == null || buffer.length < 4) {
@@ -285,5 +287,22 @@ public final class NativeBufferPack {
             result.lineStates.add(state);
         }
         return result;
+    }
+
+    private static boolean isValidSpanStride(int stride, boolean hasStartIndex, boolean isInlineStyle) {
+        int expected = 2 + (hasStartIndex ? 1 : 0) + (isInlineStyle ? 3 : 1);
+        return stride == expected;
+    }
+
+    private static boolean flagsUsesInlineStyle(int flags) {
+        return (flags & (1 << 1)) != 0;
+    }
+
+    private static boolean flagsHasStartIndex(int flags) {
+        return (flags & 1) != 0;
+    }
+
+    private static int spanFieldCount(int stride) {
+        return stride;
     }
 }
