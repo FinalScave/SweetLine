@@ -147,7 +147,7 @@ Running code requires native access enabled (for example `--enable-native-access
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:0.1.2'
+implementation 'com.qiplat:sweetline:0.1.4'
 ```
 
 ```java
