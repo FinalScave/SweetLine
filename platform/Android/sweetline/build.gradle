@@ -4,7 +4,7 @@ plugins {
 }
 apply plugin: "signing"
 
-description = "Fast code highlight engine"
+description = "Cross-platform code highlight engine"
 group = "com.qiplat"
 version = "0.1.4"
 
@@ -112,8 +112,8 @@ centralPortal {
         url = "https://github.com/FinalScave/SweetLine"
         licenses {
             license {
-                name = "MIT License"
-                url = "https://www.mit-license.org"
+                name = "LGPL-2.1-or-later"
+                url = "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
             }
         }
         developers {

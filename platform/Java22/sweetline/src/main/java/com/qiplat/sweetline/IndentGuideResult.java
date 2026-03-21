@@ -12,6 +12,6 @@ import java.util.List;
 public record IndentGuideResult(List<IndentGuideLine> guideLines, List<LineScopeState> lineStates) {
 
     public IndentGuideResult() {
-this(new ArrayList<>(), new ArrayList<>());
+        this(new ArrayList<>(), new ArrayList<>());
     }
 }

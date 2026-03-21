@@ -11,6 +11,6 @@ import java.util.List;
 public record LineHighlight(List<TokenSpan> spans) {
 
     public LineHighlight() {
-this(new ArrayList<>());
+        this(new ArrayList<>());
     }
 }

@@ -22,7 +22,7 @@ import java.lang.foreign.MemorySegment;
  */
 public class HighlightEngine implements AutoCloseable {
 
-    private MemorySegment handle;
+    private final MemorySegment handle;
     private boolean closed = false;
 
     /**

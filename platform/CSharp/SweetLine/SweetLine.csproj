@@ -11,11 +11,13 @@
 		<Product>SweetLine</Product>
 		<PackageProjectUrl>https://github.com/FinalScave/SweetLine</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/FinalScave/SweetLine</RepositoryUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="..\..\..\cmake-build-debug-visual-studio\bin\sweetline.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+		<None Include="README.md" Pack="true" PackagePath="" />
+		<Content Include="..\..\..\cmake-build-release-visual-studio\bin\sweetline.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>

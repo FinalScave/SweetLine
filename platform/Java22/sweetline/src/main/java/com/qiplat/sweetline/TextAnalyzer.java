@@ -13,7 +13,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
  */
 public class TextAnalyzer implements AutoCloseable {
 
-    private MemorySegment handle;
+    private final MemorySegment handle;
     private boolean closed = false;
 
     TextAnalyzer(MemorySegment handle) {

@@ -11,6 +11,6 @@ import java.util.List;
 public record DocumentHighlight(List<LineHighlight> lines) {
 
     public DocumentHighlight() {
-this(new ArrayList<>());
+        this(new ArrayList<>());
     }
 }

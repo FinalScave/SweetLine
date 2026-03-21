@@ -23,6 +23,6 @@ public record IndentGuideLine(int column, int startLine, int endLine, int nestin
     }
 
     public IndentGuideLine(int column, int startLine, int endLine, int nestingLevel, int scopeRuleId) {
-this(column, startLine, endLine, nestingLevel, scopeRuleId, new ArrayList<>());
+        this(column, startLine, endLine, nestingLevel, scopeRuleId, new ArrayList<>());
     }
 }

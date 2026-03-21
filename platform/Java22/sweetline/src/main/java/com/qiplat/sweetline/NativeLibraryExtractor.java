@@ -29,10 +29,13 @@ import java.nio.file.StandardCopyOption;
  */
 public final class NativeLibraryExtractor {
 
-    /** Root path of native library resources within the JAR */
+    /**
+     * Root path of native library resources within the JAR
+     */
     private static final String NATIVE_RESOURCE_ROOT = "/native/";
 
-    private NativeLibraryExtractor() {}
+    private NativeLibraryExtractor() {
+    }
 
     /**
      * Extract the current platform's native library from JAR resources to the specified directory,
@@ -65,7 +68,7 @@ public final class NativeLibraryExtractor {
             if (is == null) {
                 throw new FileNotFoundException(
                         "Native library for the current platform not found in JAR: " + resourcePath +
-                        " (platform=" + platform + ", libName=" + libName + ")");
+                                " (platform=" + platform + ", libName=" + libName + ")");
             }
             Files.copy(is, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
@@ -105,7 +108,7 @@ public final class NativeLibraryExtractor {
             // Windows: Prefer using the LOCALAPPDATA environment variable
             String localAppData = System.getenv("LOCALAPPDATA");
             if (localAppData != null && !localAppData.isEmpty()) {
-            return Path.of(localAppData, "SweetLine", "native");
+                return Path.of(localAppData, "SweetLine", "native");
             }
             return Path.of(userHome, "AppData", "Local", "SweetLine", "native");
         } else if (os.contains("mac") || os.contains("darwin")) {
@@ -155,6 +158,7 @@ public final class NativeLibraryExtractor {
 
     /**
      * Get the size (in bytes) of a JAR resource.
+     *
      * @return resource size, or -1 if the resource does not exist
      */
     private static long getResourceSize(String resourcePath) throws IOException {

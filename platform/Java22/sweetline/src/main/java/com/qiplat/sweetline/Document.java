@@ -10,7 +10,7 @@ import java.lang.foreign.MemorySegment;
  */
 public class Document implements AutoCloseable {
 
-    private MemorySegment nativeHandle;
+    private final MemorySegment nativeHandle;
     private boolean closed = false;
 
     /**

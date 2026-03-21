@@ -1,9 +1,11 @@
 plugins {
     id 'java-library'
+    id 'net.thebugmc.gradle.sonatype-central-portal-publisher' version '1.2.4'
 }
 
+description = "Cross-platform code highlight engine"
 group = 'com.qiplat'
-version = '0.0.13'
+version = '0.1.4'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_22
@@ -26,4 +28,84 @@ tasks.withType(JavaCompile).configureEach {
 test {
     useJUnitPlatform()
     jvmArgs '--enable-preview', '--enable-native-access=ALL-UNNAMED'
+}
+
+javadoc {
+    failOnError false
+    options {
+        locale("zh_CN")
+        encoding("utf-8")
+        links("http://docs.oracle.com/javase/7/docs/api")
+    }
+}
+
+ext.localPublishProps = new Properties()
+File f = rootProject.file(".gradle/publish.properties")
+if (f.exists()) {
+    f.withInputStream { ext.localPublishProps.load(it) }
+}
+
+static def toNonBlank(String value) {
+    if (value == null) {
+        return null
+    }
+    String trimmed = value.trim()
+    return trimmed.isEmpty() ? null : trimmed
+}
+
+def getPublishConfig(String name) {
+    return toNonBlank(providers.gradleProperty(name).orNull)
+            ?: toNonBlank(providers.environmentVariable(name).orNull)
+            ?: toNonBlank(providers.environmentVariable(name.replace('.', '_').toUpperCase()).orNull)
+            ?: toNonBlank(ext.localPublishProps.getProperty(name))
+}
+
+String defaultGpgExecutable = System.getProperty("os.name")
+        .toLowerCase()
+        .contains("windows") ? "gpg.exe" : "gpg"
+String gpgExecutable = getPublishConfig("signing.gnupg.executable") ?: defaultGpgExecutable
+String gpgKeyName = getPublishConfig("signing.gnupg.keyName")
+String gpgPassphrase = getPublishConfig("signing.gnupg.passphrase")
+project.extensions.extraProperties.set("signing.gnupg.executable", gpgExecutable)
+rootProject.extensions.extraProperties.set("signing.gnupg.executable", gpgExecutable)
+if (gpgKeyName != null && !gpgKeyName.empty) {
+    project.extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
+    rootProject.extensions.extraProperties.set("signing.gnupg.keyName", gpgKeyName)
+}
+if (gpgPassphrase != null && !gpgPassphrase.empty) {
+    project.extensions.extraProperties.set("signing.gnupg.passphrase", gpgPassphrase)
+    rootProject.extensions.extraProperties.set("signing.gnupg.passphrase", gpgPassphrase)
+}
+
+signing {
+    useGpgCmd()
+}
+
+centralPortal {
+    username = getPublishConfig("sonatype.username")
+    password = getPublishConfig("sonatype.password")
+    name = "sweetline-ffm"
+
+    pom {
+        url = "https://github.com/FinalScave/SweetLine"
+        licenses {
+            license {
+                name = "LGPL-2.1-or-later"
+                url = "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
+            }
+        }
+        developers {
+            developer {
+                name = "Scave"
+                email = "iscave@163.com"
+                organization = "Mobile IPE"
+                organizationUrl = "https://github.com/mobile-ipe"
+            }
+        }
+        scm {
+            connection = "scm:git:https://github.com/FinalScave/SweetLine.git"
+            developerConnection = "scm:git:https://github.com/FinalScave/SweetLine"
+            url = "https://github.com/FinalScave/SweetLine"
+        }
+    }
 }

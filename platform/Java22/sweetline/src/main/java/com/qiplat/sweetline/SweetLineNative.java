@@ -32,7 +32,7 @@ final class SweetLineNative {
     };
     private static final String LOAD_LIBRARY_ERROR =
             "Cannot load native library 'sweetline'. " +
-            "Set -Dsweetline.lib.path=<dir> or add the library to java.library.path. ";
+                    "Set -Dsweetline.lib.path=<dir> or add the library to java.library.path. ";
 
     static final Linker LINKER = Linker.nativeLinker();
     static final SymbolLookup LOOKUP;

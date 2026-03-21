@@ -15,7 +15,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
  */
 public class DocumentAnalyzer implements AutoCloseable {
 
-    private MemorySegment handle;
+    private final MemorySegment handle;
     private boolean closed = false;
 
     DocumentAnalyzer(MemorySegment handle) {
@@ -105,7 +105,7 @@ public class DocumentAnalyzer implements AutoCloseable {
             MemorySegment resultPtr = (MemorySegment) SweetLineNative.sl_document_analyze_incremental_in_line_range
                     .invoke(handle, changesSeg, textSeg, visibleSeg);
             if (resultPtr.equals(MemorySegment.NULL)) {
-return new DocumentHighlightSlice(0, 0, new ArrayList<>());
+                return new DocumentHighlightSlice(0, 0, new ArrayList<>());
             }
             try {
                 return BufferParser.readDocumentHighlightSlice(resultPtr);

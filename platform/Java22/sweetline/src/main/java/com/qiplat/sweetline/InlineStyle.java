@@ -11,11 +11,17 @@ package com.qiplat.sweetline;
  */
 public record InlineStyle(int foreground, int background, boolean isBold, boolean isItalic, boolean isStrikethrough) {
 
-    /** Font attribute bitmask for bold */
+    /**
+     * Font attribute bitmask for bold
+     */
     public static final int STYLE_BOLD = 1;
-    /** Font attribute bitmask for italic */
+    /**
+     * Font attribute bitmask for italic
+     */
     public static final int STYLE_ITALIC = STYLE_BOLD << 1;
-    /** Font attribute bitmask for strikethrough */
+    /**
+     * Font attribute bitmask for strikethrough
+     */
     public static final int STYLE_STRIKE_THROUGH = STYLE_ITALIC << 1;
 
     /**
