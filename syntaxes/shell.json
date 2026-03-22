@@ -6,6 +6,44 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "bracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "simpleVariableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "specialVariableRule": [
+      {
+        "pattern": "(\\$)([@*#?\\-!$0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^']*)'",
+        "style": "string"
+      }
+    ],
+    "numberLiteralRule": [
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
+        "style": "number"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -45,20 +83,14 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+        "include": "bracedVariableRule"
       },
       {
         "pattern": "(\\$\\(\\()([^)]*)(\\)\\))",
         "styles": [1, "punctuation", 2, "number", 3, "punctuation"]
       },
       {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([@*#?\\-!$0-9])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "\\$\\(",
@@ -80,8 +112,7 @@
         "style": "string"
       },
       {
-        "pattern": "'(?:[^']*)'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "'",
@@ -89,8 +120,7 @@
         "state": "singleQuoteString"
       },
       {
-        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
-        "style": "number"
+        "include": "numberLiteralRule"
       },
       {
         "pattern": "#${any}*",
@@ -112,16 +142,7 @@
         "style": "string"
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([@*#?\\-!$0-9])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "\\$\\([^)]*\\)",
@@ -137,8 +158,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "singleQuoteString": [
@@ -148,8 +168,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "commandSubstitution": [
@@ -179,16 +198,7 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([@*#?\\-!$0-9])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "\\$\\(",
@@ -200,12 +210,7 @@
         "style": "string"
       },
       {
-        "pattern": "'(?:[^']*)'",
-        "style": "string"
-      },
-      {
-        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
-        "style": "number"
+        "includes": ["singleQuotedStringRule", "numberLiteralRule"]
       },
       {
         "pattern": "\\|\\||&&|[|&;\\[\\]><!=+\\-*/%]",
@@ -227,28 +232,14 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([@*#?\\-!$0-9])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
         "style": "string"
       },
       {
-        "pattern": "'(?:[^']*)'",
-        "style": "string"
-      },
-      {
-        "pattern": "\\b(?:[0-9]+\\.?[0-9]*)\\b",
-        "style": "number"
+        "includes": ["singleQuotedStringRule", "numberLiteralRule"]
       },
       {
         "pattern": "[|&;><]",
@@ -262,16 +253,7 @@
         "state": "default"
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["bracedVariableRule", "simpleVariableRule", "stringAnyCharRule"]
       }
     ]
   },

@@ -12,6 +12,27 @@
 
 ---
 
+## 依赖引入
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>com.qiplat</groupId>
+  <artifactId>sweetline-ffm</artifactId>
+  <version>1.1.0</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+// build.gradle
+implementation 'com.qiplat:sweetline-ffm:1.1.0'
+```
+
+---
+
 ## 环境要求
 
 - JDK 22
@@ -169,4 +190,3 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
     }
 }
 ```
-

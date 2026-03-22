@@ -6,6 +6,39 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      }
+    ],
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -110,9 +143,7 @@
         "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class", 5, "punctuation", 6, "punctuation"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "(\\))${whiteSpace}*(:)",
@@ -125,12 +156,7 @@
         "state": "templateString"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "/(?![*/])(?:[^/\\\\\\[]|\\\\.|\\[(?:[^\\]\\\\]|\\\\.)*\\])+/[gimsuvy]*",
@@ -158,8 +184,7 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "=>|\\?\\.|\\.\\.\\.|\\.\\.|\\?\\?|\\+\\+|--|<<|>>>?|<=|>=|===?|!==?|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~#]",
@@ -176,8 +201,7 @@
         "styles": [1, "class", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,:<>&|?]",
@@ -189,8 +213,7 @@
         "state": "default"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "typeHeader"
@@ -246,12 +269,7 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "${identifier}",
@@ -276,17 +294,14 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "(${identifier})(\\.)(${identifier})",
         "styles": [1, "class", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[{=]",
@@ -298,8 +313,7 @@
         "style": "punctuation"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "default"
@@ -315,21 +329,7 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
-      },
-      {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["genericTypeRefRule", "classIdentifierRule", "doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "[,\\[\\]|&?:{}()=]",

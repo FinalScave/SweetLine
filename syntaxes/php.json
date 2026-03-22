@@ -8,6 +8,26 @@
     "any": "[\\S\\s]",
     "builtinType": "int|float|string|bool|array|object|callable|iterable|void|never|mixed|null|self|parent|static|true|false"
   },
+  "fragments": {
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      }
+    ],
+    "numberLiteralRule": [
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -155,8 +175,7 @@
         "state": "doubleString"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
@@ -171,8 +190,7 @@
         "style": "number"
       },
       {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
-        "style": "number"
+        "include": "numberLiteralRule"
       },
       {
         "pattern": "/\\*",
@@ -275,16 +293,14 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
-        "style": "number"
+        "include": "numberLiteralRule"
       },
       {
         "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
         "style": "string"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "${variable}",
@@ -347,16 +363,14 @@
         "style": "string"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "\\b(true|false|null)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
-        "style": "number"
+        "include": "numberLiteralRule"
       },
       {
         "pattern": "${identifier}",
@@ -389,8 +403,7 @@
         "style": "annotation"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "heredoc": [
@@ -412,8 +425,7 @@
         "style": "annotation"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "nowdoc": [
@@ -423,8 +435,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "longComment": [

@@ -10,6 +10,57 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
+        "style": "string"
+      }
+    ],
+    "numberLiteralRule": [
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
+        "style": "number"
+      }
+    ],
+    "builtinLiteralRule": [
+      {
+        "pattern": "(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      }
+    ],
+    "qualifiedGenericTypeRule": [
+      {
+        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "qualifiedTypeRule": [
+      {
+        "pattern": "${qualifiedTypeId}",
+        "style": "class"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -18,8 +69,7 @@
         "state": "blockComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "(package)${whiteSpace}+(object)${whiteSpace}+(${identifier})",
@@ -240,12 +290,7 @@
         "state": "interpolatedString"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "stringEscapeRule"]
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F](?:[0-9a-fA-F_]*)(?:[lL])?\\b",
@@ -256,12 +301,7 @@
         "style": "number"
       },
       {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
-        "style": "number"
-      },
-      {
-        "pattern": "(true|false|null)\\b",
-        "styles": [1, "builtin"]
+        "includes": ["numberLiteralRule", "builtinLiteralRule"]
       },
       {
         "pattern": "\\b(Byte|Short|Int|Long|Float|Double|Boolean|Char|Unit|Any|AnyVal|AnyRef|Nothing|Null|String)\\b",
@@ -325,9 +365,7 @@
         "styles": [1, "variable", 2, "keyword", 3, "variable"]
       },
       {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "qualifiedGenericTypeRule"
       },
       {
         "pattern": "${qualifiedId}",
@@ -347,13 +385,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${qualifiedTypeId}",
-        "style": "class"
+        "includes": ["qualifiedGenericTypeRule", "qualifiedTypeRule"]
       },
       {
         "pattern": "\\(",
@@ -370,8 +402,7 @@
         "style": "punctuation"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "typeHeader"
@@ -415,29 +446,7 @@
         "styles": [1, "variable", 2, "punctuation"]
       },
       {
-        "pattern": "(true|false|null)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
-        "style": "string"
-      },
-      {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
-        "style": "number"
-      },
-      {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${qualifiedTypeId}",
-        "style": "class"
+        "includes": ["builtinLiteralRule", "doubleQuotedStringRule", "stringEscapeRule", "numberLiteralRule", "qualifiedGenericTypeRule", "qualifiedTypeRule"]
       },
       {
         "pattern": "<-|=>|\\?=>|<:|>:|[\\[\\],.=:&|?+\\-*/%<>{}()]",
@@ -490,29 +499,7 @@
         "styles": [1, "variable", 2, "punctuation"]
       },
       {
-        "pattern": "(true|false|null)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\u[0-9a-fA-F]{4}'",
-        "style": "string"
-      },
-      {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
-        "style": "number"
-      },
-      {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${qualifiedTypeId}",
-        "style": "class"
+        "includes": ["builtinLiteralRule", "doubleQuotedStringRule", "stringEscapeRule", "numberLiteralRule", "qualifiedGenericTypeRule", "qualifiedTypeRule"]
       },
       {
         "pattern": "<-|=>|\\?=>|<:|>:|[\\[\\],.=:&|?+\\-*/%<>{}()]",
@@ -532,13 +519,7 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${qualifiedTypeId}",
-        "style": "class"
+        "includes": ["qualifiedGenericTypeRule", "qualifiedTypeRule"]
       },
       {
         "pattern": "[={]",
@@ -554,8 +535,7 @@
         "style": "punctuation"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "default"
@@ -571,21 +551,7 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[dDfFlL]?)\\b",
-        "style": "number"
-      },
-      {
-        "pattern": "(${qualifiedTypeId})(\\[)(.*)(\\])",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${qualifiedTypeId}",
-        "style": "class"
+        "includes": ["doubleQuotedStringRule", "numberLiteralRule", "qualifiedGenericTypeRule", "qualifiedTypeRule"]
       },
       {
         "pattern": "<-|=>|\\?=>|<:|>:|#|[\\[\\],.:&|?+\\-*/%<>!=(){}]",
@@ -612,8 +578,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "tripleString": [
@@ -623,8 +588,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "tripleInterpolatedString": [
@@ -643,8 +607,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "blockComment": [

@@ -10,6 +10,22 @@ WinForms/.NET 封装基于 SweetLine C API 的 P/Invoke：
 - 托管 API（`HighlightEngine`、`TextAnalyzer`、`DocumentAnalyzer`、`Document`）：`SweetLine.cs`
 - 数据模型（`TokenSpan`、`DocumentHighlight`、`IndentGuideResult` 等）：`Models.cs`
 
+## 依赖引入
+
+### NuGet
+
+```bash
+dotnet add package SweetLine --version 1.1.0
+```
+
+或在 `.csproj` 中添加：
+
+```xml
+<ItemGroup>
+  <PackageReference Include="SweetLine" Version="1.1.0" />
+</ItemGroup>
+```
+
 ## 核心类型
 
 - `HighlightConfig`：引擎配置（`ShowIndex`、`InlineStyle`）

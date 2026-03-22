@@ -6,6 +6,26 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "stringInterpolationExprRule": [
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -172,16 +192,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
       }
     ],
     "tripleSingleString": [
@@ -191,16 +202,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
       }
     ],
     "fDoubleString": [
@@ -210,16 +212,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"
@@ -232,16 +225,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"

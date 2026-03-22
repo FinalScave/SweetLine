@@ -10,6 +10,22 @@ The WinForms/.NET wrapper is a P/Invoke binding over the SweetLine C API:
 - Managed API (`HighlightEngine`, `TextAnalyzer`, `DocumentAnalyzer`, `Document`): `SweetLine.cs`
 - Data models (`TokenSpan`, `DocumentHighlight`, `IndentGuideResult`, ...): `Models.cs`
 
+## Dependency
+
+### NuGet
+
+```bash
+dotnet add package SweetLine --version 1.1.0
+```
+
+Or in `.csproj`:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="SweetLine" Version="1.1.0" />
+</ItemGroup>
+```
+
 ## Core Types
 
 - `HighlightConfig`: engine options (`ShowIndex`, `InlineStyle`)

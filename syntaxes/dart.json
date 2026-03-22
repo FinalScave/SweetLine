@@ -6,6 +6,32 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "stringInterpolationExprRule": [
+      {
+        "pattern": "\\$\\{[^}]*\\}",
+        "style": "annotation"
+      }
+    ],
+    "stringInterpolationVarRule": [
+      {
+        "pattern": "\\$${identifier}",
+        "style": "annotation"
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -215,20 +241,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\$\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\$${identifier}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringInterpolationVarRule", "stringEscapeRule", "stringAnyCharRule"]
       }
     ],
     "tripleSingleString": [
@@ -238,20 +251,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\$\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\$${identifier}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringInterpolationVarRule", "stringEscapeRule", "stringAnyCharRule"]
       }
     ],
     "doubleString": [
@@ -261,20 +261,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\$\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\$${identifier}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringInterpolationVarRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"
@@ -287,20 +274,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\$\\{[^}]*\\}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\$${identifier}",
-        "style": "annotation"
-      },
-      {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringInterpolationExprRule", "stringInterpolationVarRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"

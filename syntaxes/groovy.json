@@ -7,6 +7,20 @@
     "any": "[\\S\\s]",
     "primitiveType": "void|boolean|byte|char|short|int|long|float|double"
   },
+  "fragments": {
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -290,12 +304,7 @@
         "style": "annotation"
       },
       {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringEscapeRule", "stringAnyCharRule"]
       }
     ],
     "tripleSingleString": [
@@ -305,12 +314,7 @@
         "state": "default"
       },
       {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringEscapeRule", "stringAnyCharRule"]
       }
     ],
     "doubleString": [
@@ -328,12 +332,7 @@
         "style": "annotation"
       },
       {
-        "pattern": "\\\\.",
-        "style": "string"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"

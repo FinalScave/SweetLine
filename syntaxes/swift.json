@@ -6,6 +6,20 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      }
+    ],
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -144,8 +158,7 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "->|\\.\\.\\.|\\.\\.<?|\\?\\?|\\+\\+|--|<<|>>|<=|>=|===?|!==?|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~#]",
@@ -166,8 +179,7 @@
         "styles": [1, "class", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,:<>&?]",
@@ -179,8 +191,7 @@
         "state": "default"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "typeHeader"
@@ -280,8 +291,7 @@
         "styles": [1, "class", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "\\{",
@@ -293,8 +303,7 @@
         "style": "punctuation"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "default"
@@ -311,8 +320,7 @@
         "subStates": [3, "genericType"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,\\[\\]&?:.]",

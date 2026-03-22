@@ -6,6 +6,38 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^']|'')*'",
+        "style": "string"
+      }
+    ],
+    "bracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "simpleVariableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "specialVariableRule": [
+      {
+        "pattern": "(\\$)([_?$^])",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -33,8 +65,7 @@
         "state": "doubleString"
       },
       {
-        "pattern": "'(?:[^']|'')*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "\\b(using)${whiteSpace}+(namespace|module|assembly|type)${whiteSpace}+([\\w.]+)",
@@ -77,20 +108,14 @@
         "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "variable"]
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+        "include": "bracedVariableRule"
       },
       {
         "pattern": "(@)(${identifier})",
         "styles": [1, "punctuation", 2, "variable"]
       },
       {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([_?$^])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\()([^)]*)(\\))(\\])",
@@ -176,16 +201,7 @@
         "state": "subexpression"
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([_?$^])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "\"",
@@ -193,8 +209,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "subexpression": [
@@ -204,12 +219,7 @@
         "state": "doubleString"
       },
       {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "(\\$)([_?$^])",
-        "styles": [1, "punctuation", 2, "variable"]
+        "includes": ["simpleVariableRule", "specialVariableRule"]
       },
       {
         "pattern": "(\\[)(${identifier}(?:\\.${identifier})*)(\\])(::)(${identifier})(\\()",
@@ -241,8 +251,7 @@
         "style": "string"
       },
       {
-        "pattern": "'(?:[^']|'')*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "\\b[0-9]+\\.?[0-9]*\\b",
@@ -273,16 +282,7 @@
         "state": "hereSubexpr"
       },
       {
-        "pattern": "(\\$\\{)([^}]*)(\\})",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
-      },
-      {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["bracedVariableRule", "simpleVariableRule", "stringAnyCharRule"]
       }
     ],
     "hereSubexpr": [
@@ -292,8 +292,7 @@
         "state": "hereStringDouble"
       },
       {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
+        "include": "simpleVariableRule"
       },
       {
         "pattern": "${any}",
@@ -307,8 +306,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "attrArgs": [
@@ -317,12 +315,7 @@
         "style": "builtin"
       },
       {
-        "pattern": "(\\$)(${identifier})",
-        "styles": [1, "punctuation", 2, "variable"]
-      },
-      {
-        "pattern": "'(?:[^']|'')*'",
-        "style": "string"
+        "includes": ["simpleVariableRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "\\b[0-9]+\\b",

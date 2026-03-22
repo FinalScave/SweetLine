@@ -10,6 +10,21 @@
     "embedCodeRefThis": "(#)(this)",
     "embedCodeRefClass": "(#)(cls|ncls)(<)(${identifier})(>)"
   },
+  "fragments": {
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -119,8 +134,7 @@
     ],
     "classDeclare": [
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[<>,:\\[\\]]",
@@ -132,9 +146,7 @@
     ],
     "typeDeclare": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[\\[\\]]",
@@ -146,8 +158,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -187,9 +198,7 @@
     ],
     "returnType": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[\\[\\]]",
@@ -201,8 +210,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -210,13 +218,7 @@
     ],
     "genericType": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["genericTypeRefRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,\\[\\]]",

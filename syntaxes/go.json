@@ -6,21 +6,29 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "builtinTypeKeywordRule": [
+      {
+        "pattern": "\\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr|any|comparable)\\b",
+        "styles": [1, "keyword"]
+      }
+    ]
+  },
   "states": {
     "default": [
       {
-        "pattern": "\\b(func)\\b${whiteSpace}+(\\()${whiteSpace}*(${identifier})${whiteSpace}+([*]*${identifier})${whiteSpace}*(\\))${whiteSpace}+(${identifier})${whiteSpace}*(\\()" ,
+        "pattern": "\\b(func)\\b${whiteSpace}+(\\()${whiteSpace}*(${identifier})${whiteSpace}+([*]*${identifier})${whiteSpace}*(\\))${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "keyword", 2, "punctuation", 3, "variable", 4, "class", 5, "punctuation", 6, "method", 7, "punctuation"],
         "state": "funcParams"
       },
       {
-        "pattern": "\\b(func)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)(.*)(\\])${whiteSpace}*(\\()" ,
+        "pattern": "\\b(func)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)(.*)(\\])${whiteSpace}*(\\()",
         "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
         "subStates": [4, "typeParams"],
         "state": "funcParams"
       },
       {
-        "pattern": "\\b(func)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()" ,
+        "pattern": "\\b(func)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "keyword", 2, "method", 3, "punctuation"],
         "state": "funcParams"
       },
@@ -76,8 +84,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr|any|comparable)\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "\\b(true|false|nil|iota)\\b",
@@ -88,7 +95,7 @@
         "styles": [1, "builtin", 2, "punctuation"]
       },
       {
-        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()" ,
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
       },
       {
@@ -96,7 +103,7 @@
         "styles": [1, "variable", 2, "punctuation", 3, "variable"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(\\()" ,
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "method", 2, "punctuation"]
       },
       {
@@ -176,8 +183,7 @@
         "styles": [1, "variable", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "\\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr|any|comparable)\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "\\b(func)\\b${whiteSpace}*(\\()",
@@ -209,8 +215,7 @@
     ],
     "typeParams": [
       {
-        "pattern": "\\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr|any|comparable)\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "(${identifier})",

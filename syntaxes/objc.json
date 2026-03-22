@@ -7,6 +7,26 @@
     "any": "[\\S\\s]",
     "builtinType": "void|char|short|int|long|float|double|signed|unsigned|bool|BOOL|size_t|ssize_t|id|instancetype|SEL|IMP|Class|NSInteger|NSUInteger|CGFloat|NSTimeInterval|dispatch_queue_t|dispatch_block_t|dispatch_group_t|dispatch_semaphore_t"
   },
+  "fragments": {
+    "builtinTypeKeywordRule": [
+      {
+        "pattern": "\\b(${builtinType})\\b",
+        "styles": [1, "keyword"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      }
+    ],
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -126,8 +146,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(${builtinType})\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "\\b(YES|NO|true|false|nil|Nil|NULL)\\b",
@@ -185,8 +204,7 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "->|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
@@ -212,8 +230,7 @@
         "state": "protocolState"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[{;]",
@@ -221,8 +238,7 @@
         "state": "default"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "default"
@@ -235,8 +251,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": ",",
@@ -248,8 +263,7 @@
     ],
     "protocolList": [
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,*]",
@@ -276,16 +290,14 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(${builtinType})\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "(${identifier})${whiteSpace}*(\\*)",
         "styles": [1, "class", 2, "punctuation"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "\\*",
@@ -326,8 +338,7 @@
         "state": "default"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "methodSel"
@@ -339,16 +350,14 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(${builtinType})\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "(${identifier})${whiteSpace}*(\\*)",
         "styles": [1, "class", 2, "punctuation"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "\\*",
@@ -398,8 +407,7 @@
         "state": "default"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "methodSel"
@@ -427,8 +435,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(${builtinType})\\b",
-        "styles": [1, "keyword"]
+        "include": "builtinTypeKeywordRule"
       },
       {
         "pattern": "\\b(YES|NO|true|false|nil|Nil|NULL|self)\\b",

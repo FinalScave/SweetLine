@@ -5,6 +5,15 @@
     "any": "[\\S\\s]",
     "whiteSpace": "[ \\t\\f]"
   },
+  "fragments": {
+    "fencedCodeBlockCloseRule": [
+      {
+        "pattern": "^(```)${whiteSpace}*$",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -252,9 +261,7 @@
     ],
     "codeBlockJava": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "java"
@@ -262,9 +269,7 @@
     ],
     "codeBlockJavaScript": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "javascript"
@@ -272,9 +277,7 @@
     ],
     "codeBlockTypeScript": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "typescript"
@@ -282,9 +285,7 @@
     ],
     "codeBlockPython": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "python"
@@ -292,9 +293,7 @@
     ],
     "codeBlockC": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "c"
@@ -302,9 +301,7 @@
     ],
     "codeBlockCpp": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "c++"
@@ -312,9 +309,7 @@
     ],
     "codeBlockCSharp": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "csharp"
@@ -322,9 +317,7 @@
     ],
     "codeBlockGo": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "go"
@@ -332,9 +325,7 @@
     ],
     "codeBlockKotlin": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "kotlin"
@@ -342,9 +333,7 @@
     ],
     "codeBlockRust": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "rust"
@@ -352,9 +341,7 @@
     ],
     "codeBlockSwift": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "swift"
@@ -362,9 +349,7 @@
     ],
     "codeBlockDart": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "dart"
@@ -372,9 +357,7 @@
     ],
     "codeBlockLua": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "lua"
@@ -382,9 +365,7 @@
     ],
     "codeBlockShell": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "shell"
@@ -392,9 +373,7 @@
     ],
     "codeBlockSql": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "sql"
@@ -402,9 +381,7 @@
     ],
     "codeBlockHtml": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "html"
@@ -412,9 +389,7 @@
     ],
     "codeBlockXml": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "xml"
@@ -422,9 +397,7 @@
     ],
     "codeBlockJson": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "json"
@@ -432,9 +405,7 @@
     ],
     "codeBlockYaml": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "yaml"
@@ -442,9 +413,7 @@
     ],
     "codeBlockToml": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "toml"
@@ -452,9 +421,7 @@
     ],
     "codeBlockGroovy": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "groovy"
@@ -462,9 +429,7 @@
     ],
     "codeBlockTiecode": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "tiecode"
@@ -472,9 +437,7 @@
     ],
     "codeBlockPlain": [
       {
-        "pattern": "^(```)${whiteSpace}*$",
-        "styles": [1, "punctuation"],
-        "state": "default"
+        "include": "fencedCodeBlockCloseRule"
       },
       {
         "pattern": "${any}",

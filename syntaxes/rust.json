@@ -6,6 +6,45 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      }
+    ],
+    "staticLifetimeRule": [
+      {
+        "pattern": "('static)\\b",
+        "styles": [1, "lifetime"]
+      }
+    ],
+    "namedLifetimeRule": [
+      {
+        "pattern": "('${identifier})",
+        "styles": [1, "lifetime"]
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "scopedTypeRule": [
+      {
+        "pattern": "(${identifier})(::)(${identifier})",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      }
+    ],
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -110,20 +149,14 @@
         "state": "rawString"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "'[^'\\\\]'|'\\\\.'|'\\\\x[0-9a-fA-F]{2}'|'\\\\u\\{[0-9a-fA-F]+\\}'",
         "style": "string"
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
+        "includes": ["staticLifetimeRule", "namedLifetimeRule"]
       },
       {
         "pattern": "(${identifier})(::)(${identifier})${whiteSpace}*(\\()",
@@ -146,9 +179,7 @@
         "styles": [1, "method", 2, "punctuation"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F_]+(?:_?(?:u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize))?\\b",
@@ -194,20 +225,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "(${identifier})(::)(${identifier})",
-        "styles": [1, "class", 2, "punctuation", 3, "class"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["staticLifetimeRule", "namedLifetimeRule", "scopedTypeRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,+:&*!?<>]",
@@ -228,20 +246,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "(${identifier})(::)(${identifier})",
-        "styles": [1, "class", 2, "punctuation", 3, "class"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["staticLifetimeRule", "namedLifetimeRule", "scopedTypeRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,+:&*()\\[\\]<>]",
@@ -287,12 +292,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
+        "includes": ["staticLifetimeRule", "namedLifetimeRule"]
       },
       {
         "pattern": "(${identifier})${whiteSpace}*(\\{)",
@@ -315,17 +315,14 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "//${any}*",
         "style": "comment"
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[,()\\[\\]&*:=]",
@@ -377,12 +374,7 @@
         "styles": [1, "class"]
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
+        "includes": ["staticLifetimeRule", "namedLifetimeRule"]
       },
       {
         "pattern": "\\b(true|false)\\b",
@@ -393,13 +385,7 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "includes": ["doubleQuotedStringRule", "genericTypeRefRule"]
       },
       {
         "pattern": "[,\\[\\]&*:=<>()]",
@@ -411,29 +397,14 @@
     ],
     "funcReturn": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "(${identifier})(::)(${identifier})",
-        "styles": [1, "class", 2, "punctuation", 3, "class"]
-      },
-      {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
+        "includes": ["genericTypeRefRule", "scopedTypeRule", "staticLifetimeRule", "namedLifetimeRule"]
       },
       {
         "pattern": "\\b(where|dyn|impl|mut)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[{;]",
@@ -454,25 +425,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "('static)\\b",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "('${identifier})",
-        "styles": [1, "lifetime"]
-      },
-      {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "(${identifier})(::)(${identifier})",
-        "styles": [1, "class", 2, "punctuation", 3, "class"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["staticLifetimeRule", "namedLifetimeRule", "genericTypeRefRule", "scopedTypeRule", "classIdentifierRule"]
       },
       {
         "pattern": "::|[,\\[\\]&*+:=!?]",

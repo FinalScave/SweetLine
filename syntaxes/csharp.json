@@ -7,6 +7,27 @@
     "any": "[\\S\\s]",
     "builtinType": "bool|byte|sbyte|char|decimal|double|float|int|uint|long|ulong|short|ushort|nint|nuint|object|string|dynamic|void"
   },
+  "fragments": {
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ],
+    "stringTerminatorToDefaultRule": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -261,8 +282,7 @@
         "state": "methodParams"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,:<>\\(\\)]",
@@ -341,8 +361,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -381,8 +400,7 @@
         "subStates": [3, "genericType"]
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[,\\[\\]?]",
@@ -395,13 +413,7 @@
         "style": "string"
       },
       {
-        "pattern": "\"",
-        "style": "string",
-        "state": "default"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringTerminatorToDefaultRule", "stringAnyCharRule"]
       }
     ],
     "interpolatedString": [
@@ -422,13 +434,7 @@
         "style": "string"
       },
       {
-        "pattern": "\"",
-        "style": "string",
-        "state": "default"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringTerminatorToDefaultRule", "stringAnyCharRule"]
       }
     ],
     "interpolatedVerbatimString": [
@@ -449,13 +455,7 @@
         "style": "string"
       },
       {
-        "pattern": "\"",
-        "style": "string",
-        "state": "default"
-      },
-      {
-        "pattern": "${any}",
-        "style": "string"
+        "includes": ["stringTerminatorToDefaultRule", "stringAnyCharRule"]
       }
     ],
     "rawString": [
@@ -465,8 +465,7 @@
         "state": "default"
       },
       {
-        "pattern": "${any}",
-        "style": "string"
+        "include": "stringAnyCharRule"
       }
     ],
     "longComment": [

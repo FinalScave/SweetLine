@@ -1,45 +1,7 @@
 {
   "name": "tiecode",
   "fileExtensions": [".t"],
-  "styles": [
-    {
-      "name": "keyword",
-      "foreground": "#FF569CD6",
-      "tags": ["bold", "italic"]
-    },
-    {
-      "name": "string",
-      "foreground": "#FFBD63C5"
-    },
-    {
-      "name": "number",
-      "foreground": "#FFE4FAD5"
-    },
-    {
-      "name": "comment",
-      "foreground": "#FF60AE6F"
-    },
-    {
-      "name": "class",
-      "foreground": "#FF4EC9B0"
-    },
-    {
-      "name": "method",
-      "foreground": "#FF9CDCFE"
-    },
-    {
-      "name": "variable",
-      "foreground": "#FF9B9BC8"
-    },
-    {
-      "name": "punctuation",
-      "foreground": "#FFD69D85"
-    },
-    {
-      "name": "annotation",
-      "foreground": "#FFFFFD9B"
-    }
-  ],
+  "styles": [{"name": "keyword", "foreground": "#FF569CD6", "tags": ["bold", "italic"]}, {"name": "string", "foreground": "#FFBD63C5"}, {"name": "number", "foreground": "#FFE4FAD5"}, {"name": "comment", "foreground": "#FF60AE6F"}, {"name": "class", "foreground": "#FF4EC9B0"}, {"name": "method", "foreground": "#FF9CDCFE"}, {"name": "variable", "foreground": "#FF9B9BC8"}, {"name": "punctuation", "foreground": "#FFD69D85"}, {"name": "annotation", "foreground": "#FFFFFD9B"}],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",
@@ -48,6 +10,21 @@
     "any": "[\\S\\s]",
     "embedCodeRefThis": "(#)(this)",
     "embedCodeRefClass": "(#)(cls|ncls)(<)(${identifier})(>)"
+  },
+  "fragments": {
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ]
   },
   "states": {
     "default": [
@@ -158,8 +135,7 @@
     ],
     "classDeclare": [
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "pattern": "[<>,:\\[\\]]",
@@ -171,9 +147,7 @@
     ],
     "typeDeclare": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[\\[\\]]",
@@ -185,8 +159,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -226,9 +199,7 @@
     ],
     "returnType": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[\\[\\]]",
@@ -240,8 +211,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -249,13 +219,7 @@
     ],
     "genericType": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["genericTypeRefRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,\\[\\]]",

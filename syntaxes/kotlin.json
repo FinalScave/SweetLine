@@ -6,6 +6,39 @@
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
+  "fragments": {
+    "builtinBooleanLiteralRule": [
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      }
+    ],
+    "numberLiteralRule": [
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFlL]?)\\b",
+        "style": "number"
+      }
+    ],
+    "classIdentifierRule": [
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -95,8 +128,7 @@
         "styles": [1, "class"]
       },
       {
-        "pattern": "\\b(true|false|null)\\b",
-        "styles": [1, "builtin"]
+        "include": "builtinBooleanLiteralRule"
       },
       {
         "pattern": "(@)(${identifier})",
@@ -120,9 +152,7 @@
         "styles": [1, "variable", 2, "punctuation", 3, "variable"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "\"\"\"",
@@ -135,8 +165,7 @@
         "state": "doubleString"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F_]+[uUlL]*\\b",
@@ -147,8 +176,7 @@
         "style": "number"
       },
       {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFlL]?)\\b",
-        "style": "number"
+        "include": "numberLiteralRule"
       },
       {
         "pattern": "/\\*",
@@ -184,13 +212,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["genericTypeRefRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,:]",
@@ -239,20 +261,14 @@
         "state": "default"
       },
       {
-        "pattern": "\\b(true|false|null)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFlL]?)\\b",
-        "style": "number"
+        "includes": ["builtinBooleanLiteralRule", "numberLiteralRule"]
       },
       {
         "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
         "style": "string"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "[,\\[\\]=?]",
@@ -283,20 +299,14 @@
         "state": "default"
       },
       {
-        "pattern": "\\b(true|false|null)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFlL]?)\\b",
-        "style": "number"
+        "includes": ["builtinBooleanLiteralRule", "numberLiteralRule"]
       },
       {
         "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
         "style": "string"
       },
       {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "include": "singleQuotedStringRule"
       },
       {
         "pattern": "[,\\[\\]=?]",
@@ -308,9 +318,7 @@
     ],
     "returnType": [
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
+        "include": "genericTypeRefRule"
       },
       {
         "pattern": "[\\[\\]?]",
@@ -322,8 +330,7 @@
         "state": "default"
       },
       {
-        "pattern": "${identifier}",
-        "style": "class"
+        "include": "classIdentifierRule"
       },
       {
         "onLineEndState": "default"
@@ -335,13 +342,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
-        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
-        "subStates": [3, "genericType"]
-      },
-      {
-        "pattern": "${identifier}",
-        "style": "class"
+        "includes": ["genericTypeRefRule", "classIdentifierRule"]
       },
       {
         "pattern": "[,\\[\\]*?:]",
