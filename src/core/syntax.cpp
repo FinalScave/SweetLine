@@ -1,6 +1,7 @@
 #ifdef SWEETLINE_DEBUG
 #include <iostream>
 #endif
+#include <algorithm>
 
 #include "internal_syntax.h"
 #include "highlight.h"
@@ -325,10 +326,124 @@ namespace NS_SWEETLINE {
     }
   }
 
+  U8String SyntaxRuleCompiler::makeJsonPath(const U8String& parent_path, const size_t index) {
+    return parent_path + "[" + std::to_string(index) + "]";
+  }
+
+  void SyntaxRuleCompiler::appendFragmentEntries(const U8String& fragment_name, const U8String& reference_path,
+    const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries) {
+    auto it = fragments.find(fragment_name);
+    if (it == fragments.end()) {
+      throw SyntaxRuleParseError(
+        SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        "fragment not found: " + fragment_name + " at " + reference_path);
+    }
+    auto stack_it = std::find(include_stack.begin(), include_stack.end(), fragment_name);
+    if (stack_it != include_stack.end()) {
+      U8String chain;
+      for (auto iter = stack_it; iter != include_stack.end(); ++iter) {
+        if (!chain.empty()) {
+          chain += " -> ";
+        }
+        chain += *iter;
+      }
+      if (!chain.empty()) {
+        chain += " -> ";
+      }
+      chain += fragment_name;
+      throw SyntaxRuleParseError(
+        SyntaxRuleParseError::ERR_STATE_INVALID,
+        "circular fragments include: " + chain);
+    }
+    include_stack.push_back(fragment_name);
+    resolveIncludesInEntries(it->second, "fragments." + fragment_name, fragments, include_stack, expanded_entries);
+    include_stack.pop_back();
+  }
+
+  void SyntaxRuleCompiler::resolveIncludesInEntries(const nlohmann::json& entries_json, const U8String& source_path,
+    const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries) {
+    if (!entries_json.is_array()) {
+      throw SyntaxRuleParseError(
+        SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        source_path + " must be an array");
+    }
+    for (size_t i = 0; i < entries_json.size(); ++i) {
+      const nlohmann::json& entry_json = entries_json[i];
+      const U8String entry_path = makeJsonPath(source_path, i);
+      if (!entry_json.is_object()) {
+        throw SyntaxRuleParseError(
+          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          entry_path + " must be an object");
+      }
+      const bool has_include = entry_json.contains("include");
+      const bool has_includes = entry_json.contains("includes");
+      if (!has_include && !has_includes) {
+        expanded_entries.push_back(entry_json);
+        continue;
+      }
+      if (has_include && has_includes) {
+        throw SyntaxRuleParseError(
+          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          entry_path + " cannot contain both include and includes");
+      }
+      if (entry_json.size() != 1) {
+        throw SyntaxRuleParseError(
+          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          entry_path + " include/includes rule must not contain other fields");
+      }
+      if (has_include) {
+        const nlohmann::json& include_json = entry_json["include"];
+        if (!include_json.is_string()) {
+          throw SyntaxRuleParseError(
+            SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+            entry_path + ".include must be a string");
+        }
+        appendFragmentEntries(include_json.get<U8String>(), entry_path + ".include", fragments, include_stack, expanded_entries);
+        continue;
+      }
+      const nlohmann::json& includes_json = entry_json["includes"];
+      if (!includes_json.is_array()) {
+        throw SyntaxRuleParseError(
+          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          entry_path + ".includes must be an array");
+      }
+      for (size_t j = 0; j < includes_json.size(); ++j) {
+        if (!includes_json[j].is_string()) {
+          throw SyntaxRuleParseError(
+            SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+            makeJsonPath(entry_path + ".includes", j) + " must be a string");
+        }
+        appendFragmentEntries(includes_json[j].get<U8String>(),
+          makeJsonPath(entry_path + ".includes", j), fragments, include_stack, expanded_entries);
+      }
+    }
+  }
+
+  SyntaxRuleCompiler::FragmentMap SyntaxRuleCompiler::collectFragments(nlohmann::json& root) {
+    FragmentMap fragments;
+    if (!root.contains("fragments")) {
+      return fragments;
+    }
+    const nlohmann::json& fragments_json = root["fragments"];
+    if (!fragments_json.is_object()) {
+      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fragments");
+    }
+    for (const auto& item : fragments_json.items()) {
+      if (!item.value().is_array()) {
+        throw SyntaxRuleParseError(
+          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          "fragments." + item.key());
+      }
+      fragments.insert_or_assign(item.key(), item.value());
+    }
+    return fragments;
+  }
+
   void SyntaxRuleCompiler::parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("states")) {
       throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "states");
     }
+    FragmentMap fragments = collectFragments(root);
     const nlohmann::json& states_json = root["states"];
     if (!states_json.is_object()) {
       throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "states");
@@ -341,7 +456,10 @@ namespace NS_SWEETLINE {
       }
       StateRule state_rule;
       state_rule.name = key;
-      parseState(rule, state_rule, state_json);
+      nlohmann::json expanded_state_json = nlohmann::json::array();
+      List<U8String> include_stack;
+      resolveIncludesInEntries(state_json, "states." + key, fragments, include_stack, expanded_state_json);
+      parseState(rule, state_rule, expanded_state_json);
       int32_t state_id = rule->getOrCreateStateId(state_rule.name);
       rule->state_rules_map.insert_or_assign(state_id, std::move(state_rule));
     }

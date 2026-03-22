@@ -166,6 +166,127 @@ TEST_CASE("importSyntax merges rules from source syntax") {
   REQUIRE(style_ids.find(3) != style_ids.end()); // number from host syntax
 }
 
+TEST_CASE("fragments include and includes expand reusable rules") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "fragmentLang",
+  "fileExtensions": [".frag"],
+  "fragments": {
+    "keywordRule": [
+      { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
+    ],
+    "numberRule": [
+      { "pattern": "\\b([0-9]+)\\b", "styles": [1, "number"] }
+    ],
+    "combinedRules": [
+      { "includes": ["keywordRule", "numberRule"] }
+    ]
+  },
+  "states": {
+    "default": [
+      { "include": "combinedRules" }
+    ]
+  }
+})";
+  SharedPtr<SyntaxRule> rule;
+  REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
+  REQUIRE(rule != nullptr);
+
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("fragmentLang");
+  REQUIRE(analyzer != nullptr);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo 42");
+  REQUIRE(highlight != nullptr);
+
+  std::unordered_set<int32_t> style_ids;
+  for (const LineHighlight& line : highlight->lines) {
+    for (const TokenSpan& span : line.spans) {
+      style_ids.insert(span.style_id);
+    }
+  }
+  REQUIRE(style_ids.find(1) != style_ids.end()); // keyword
+  REQUIRE(style_ids.find(3) != style_ids.end()); // number
+}
+
+TEST_CASE("fragments includes keeps declared order") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "fragmentOrder",
+  "fileExtensions": [".fgo"],
+  "fragments": {
+    "first": [
+      { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
+    ],
+    "second": [
+      { "pattern": "\\b(foo)\\b", "styles": [1, "number"] }
+    ]
+  },
+  "states": {
+    "default": [
+      { "includes": ["second", "first"] }
+    ]
+  }
+})";
+  SharedPtr<SyntaxRule> rule;
+  REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
+  REQUIRE(rule != nullptr);
+
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("fragmentOrder");
+  REQUIRE(analyzer != nullptr);
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo");
+  REQUIRE(highlight != nullptr);
+  REQUIRE_FALSE(highlight->lines.empty());
+  REQUIRE_FALSE(highlight->lines[0].spans.empty());
+  CHECK(highlight->lines[0].spans[0].style_id == 3); // "second" matches first
+}
+
+TEST_CASE("fragments include rejects missing fragment") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "fragmentMissing",
+  "fileExtensions": [".fgm"],
+  "states": {
+    "default": [
+      { "include": "notExists" }
+    ]
+  }
+})";
+  try {
+    engine->compileSyntaxFromJson(syntax);
+    FAIL("Expected SyntaxRuleParseError");
+  } catch (const SyntaxRuleParseError& e) {
+    CHECK(e.code() == SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID);
+    CHECK(e.message().find("fragment not found") != U8String::npos);
+  }
+}
+
+TEST_CASE("fragments include rejects circular references") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "fragmentCycle",
+  "fileExtensions": [".fgc"],
+  "fragments": {
+    "a": [
+      { "include": "b" }
+    ],
+    "b": [
+      { "include": "a" }
+    ]
+  },
+  "states": {
+    "default": [
+      { "include": "a" }
+    ]
+  }
+})";
+  try {
+    engine->compileSyntaxFromJson(syntax);
+    FAIL("Expected SyntaxRuleParseError");
+  } catch (const SyntaxRuleParseError& e) {
+    CHECK(e.code() == SyntaxRuleParseError::ERR_STATE_INVALID);
+    CHECK(e.message().find("circular fragments include") != U8String::npos);
+  }
+}
+
 TEST_CASE("importSyntax with #ifdef is controlled by macros") {
   const U8String source_syntax = R"({
   "name": "sourceLang",

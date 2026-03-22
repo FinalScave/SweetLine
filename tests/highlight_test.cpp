@@ -10,6 +10,7 @@ namespace {
   static const char* kMultiLineSyntaxPath = TESTS_DIR"/multi-line/multi-line.json";
   static const char* kMultiLineTestPath = TESTS_DIR"/multi-line/multi-line.test";
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
+  static const char* kKotlinSyntaxPath = SYNTAX_DIR"/kotlin.json";
   static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
   static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
   static const char* kTiecodeExampleFilePath = TESTS_DIR"/files/example.t";
@@ -26,6 +27,15 @@ namespace {
     engine->registerStyleName("punctuation", 8);
     engine->registerStyleName("annotation", 9);
     return engine;
+  }
+
+  int32_t styleAtColumn(const LineHighlight& line, size_t column) {
+    for (const TokenSpan& span : line.spans) {
+      if (column >= span.range.start.column && column < span.range.end.column) {
+        return span.style_id;
+      }
+    }
+    return -1;
   }
 }
 
@@ -69,6 +79,40 @@ TEST_CASE("Highlight example.java") {
   REQUIRE(highlight != nullptr);
   REQUIRE(highlight->lines.size() == document->getLineCount());
   REQUIRE(highlight->spanCount() > 0);
+}
+
+TEST_CASE("Kotlin declaration keywords stay keyword style") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kKotlinSyntaxPath));
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("kotlin");
+  REQUIRE(analyzer != nullptr);
+
+  const U8String code = "enum class Color\n"
+                        "abstract class Type<T>\n"
+                        "interface Service\n"
+                        "abstract interface class Weird<T>\n";
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code);
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 4);
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kClass = 5;
+
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);   // enum
+  CHECK(styleAtColumn(highlight->lines[0], 5) == kKeyword);   // class
+  CHECK(styleAtColumn(highlight->lines[0], 11) == kClass);    // Color
+
+  CHECK(styleAtColumn(highlight->lines[1], 0) == kKeyword);   // abstract
+  CHECK(styleAtColumn(highlight->lines[1], 9) == kKeyword);   // class
+  CHECK(styleAtColumn(highlight->lines[1], 15) == kClass);    // Type
+
+  CHECK(styleAtColumn(highlight->lines[2], 0) == kKeyword);   // interface
+  CHECK(styleAtColumn(highlight->lines[2], 10) == kClass);    // Service
+
+  CHECK(styleAtColumn(highlight->lines[3], 0) == kKeyword);   // abstract
+  CHECK(styleAtColumn(highlight->lines[3], 9) == kKeyword);   // interface
+  CHECK(styleAtColumn(highlight->lines[3], 19) == kKeyword);  // class
+  CHECK(styleAtColumn(highlight->lines[3], 25) == kClass);    // Weird
 }
 
 TEST_CASE("Highlight example.t") {

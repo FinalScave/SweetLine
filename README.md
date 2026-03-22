@@ -34,8 +34,8 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 - Zero-width match support for context-sensitive state transitions
 
 ### Highly Extensible
-- JSON-based syntax rule configuration — add new language support without writing code
-- Variable substitution and pattern reuse to reduce rule redundancy
+- JSON-based syntax rule configuration – add new language support without writing code
+- Variable substitution, `fragments` (`include` / `includes`), and pattern reuse to reduce rule redundancy
 - 33 built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
 
 ### Cross-Platform
@@ -206,20 +206,19 @@ SweetLine uses JSON to define syntax rules. Here is a simple example:
   "variables": {
     "identifier": "[a-zA-Z_]\\w*"
   },
+  "fragments": {
+    "commonLiterals": [
+      { "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"", "style": "string" },
+      { "pattern": "//[^\\n]*", "style": "comment" }
+    ]
+  },
   "states": {
     "default": [
       {
         "pattern": "\\b(if|else|while|return)\\b",
         "styles": [1, "keyword"]
       },
-      {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "//[^\\n]*",
-        "style": "comment"
-      }
+      { "include": "commonLiterals" }
     ]
   }
 }

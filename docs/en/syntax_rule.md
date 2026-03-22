@@ -7,6 +7,7 @@ SweetLine uses JSON to define syntax highlighting rules. Each JSON file describe
 - [Basic Structure](#basic-structure)
 - [Top-Level Fields](#top-level-fields)
 - [variables - Variable Definitions](#variables---variable-definitions)
+- [fragments - Rule Fragment Reuse](#fragments---rule-fragment-reuse)
 - [states - State Machine Definition](#states---state-machine-definition)
 - [Pattern Matching Rules](#pattern-matching-rules)
 - [Style System](#style-system)
@@ -30,6 +31,7 @@ A complete syntax rule JSON file has the following structure:
   "name": "languageName",
   "fileExtensions": [".ext1", ".ext2"],
   "variables": { ... },
+  "fragments": { ... },
   "styles": [ ... ],
   "states": {
     "default": [ ... ],
@@ -48,6 +50,7 @@ A complete syntax rule JSON file has the following structure:
 | `name` | string | Yes | Syntax rule name, used for `getSyntaxRuleByName()` lookup |
 | `fileExtensions` | string[] | Yes | Supported file extensions, used for `getSyntaxRuleByExtension()` matching |
 | `variables` | object | No | Reusable regex pattern variable definitions |
+| `fragments` | object | No | Reusable rule arrays that can be referenced by `include` / `includes` |
 | `styles` | array | No | Inline style definitions (only for `inline_style` mode) |
 | `states` | object | Yes | State machine definitions containing all states and their matching rules |
 | `scopeRules` | array | No | Scope rule definitions (for folding/indent guides) |
@@ -88,6 +91,41 @@ After expansion, this is equivalent to:
 - Variables support nested references (e.g., `"identifier": "${identifierStart}${identifierPart}"`)
 - SweetLine uses Oniguruma regex syntax, supporting `\p{Han}` (Unicode properties), lookaheads/lookbehinds, and other advanced features
 - Backslashes must be double-escaped in JSON: regex `\b` is written as `\\b` in JSON
+
+---
+
+## fragments - Rule Fragment Reuse
+
+`fragments` lets you define reusable rule arrays and expand them into `states` (or other fragments)
+via `include` / `includes`. This helps reduce duplicated JSON and keep rule priority predictable.
+
+```json
+{
+  "fragments": {
+    "commonLiterals": [
+      { "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"", "style": "string" },
+      { "pattern": "\\b[0-9]+\\b", "style": "number" }
+    ],
+    "commonComments": [
+      { "pattern": "/\\*", "style": "comment", "state": "longComment" },
+      { "pattern": "//${any}*", "style": "comment" }
+    ]
+  },
+  "states": {
+    "default": [
+      { "include": "commonLiterals" },
+      { "includes": ["commonComments"] }
+    ]
+  }
+}
+```
+
+Rules:
+- `include` takes one fragment name (`string`)
+- `includes` takes multiple fragment names (`string[]`) and expands in array order
+- `include` / `includes` entries are expanded in-place, so normal rule priority is preserved
+- `include` / `includes` entries cannot contain other fields
+- Circular fragment references are rejected during compilation
 
 ---
 
@@ -132,8 +170,10 @@ Each matching rule object contains the following fields:
 | `importSyntax` | string | No* | Import another syntax rule into the current state |
 | `#ifdef` | string | No | Used with `importSyntax`; import only when the macro is defined |
 | `onLineEndState` | string | No* | Auto-transition state at end of line (special rule, no `pattern`) |
+| `include` | string | No* | Expand one named fragment in-place (special rule, no `pattern`) |
+| `includes` | string[] | No* | Expand multiple named fragments in-place (special rule, no `pattern`) |
 
-> `*` Note: Regular matching rules must have `pattern`; `onLineEndState` and `importSyntax` are special rules without `pattern`.
+> `*` Note: Regular matching rules must have `pattern`; `onLineEndState`, `importSyntax`, `include`, and `includes` are special rules without `pattern`.
 
 ### Basic Pattern Example
 

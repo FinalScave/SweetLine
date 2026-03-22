@@ -103,6 +103,8 @@ namespace NS_SWEETLINE {
     /// @param file Syntax rule definition file (JSON)
     SharedPtr<SyntaxRule> compileSyntaxFromFile(const U8String& file);
   private:
+    using FragmentMap = HashMap<U8String, nlohmann::json>;
+
     SharedPtr<StyleMapping> m_style_mapping_;
     bool m_inline_style_ {false};
     HighlightEngine* m_engine_ {nullptr};
@@ -111,6 +113,12 @@ namespace NS_SWEETLINE {
     static void parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void parseVariables(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void parseInlineStyles(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static U8String makeJsonPath(const U8String& parent_path, size_t index);
+    static void appendFragmentEntries(const U8String& fragment_name, const U8String& reference_path,
+      const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries);
+    static void resolveIncludesInEntries(const nlohmann::json& entries_json, const U8String& source_path,
+      const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries);
+    static FragmentMap collectFragments(nlohmann::json& root);
     void parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     void parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
 		void parseScopeRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
