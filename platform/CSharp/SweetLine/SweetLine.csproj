@@ -13,7 +13,7 @@
 		<RepositoryUrl>https://github.com/FinalScave/SweetLine</RepositoryUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

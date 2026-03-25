@@ -71,7 +71,7 @@ namespace NS_SWEETLINE {
 
     List<const ScopeRule*> ordered_scope_rules = collectScopeRulesOrdered(rule, false);
     List<ScopeStackEntry> block_stack;
-    size_t line_count = highlight->lines.size();
+    size_t line_count = std::min(highlight->lines.size(), document->getLineCount());
     result->line_states.resize(line_count);
 
     for (size_t line_num = 0; line_num < line_count; ++line_num) {
@@ -274,7 +274,7 @@ namespace NS_SWEETLINE {
       return;
     }
 
-    size_t line_count = document->getLineCount();
+    size_t line_count = std::min(document->getLineCount(), highlight->lines.size());
     if (line_count == 0) {
       return;
     }
