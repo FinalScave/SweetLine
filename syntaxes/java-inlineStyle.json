@@ -357,7 +357,7 @@
       },
       {
         "pattern": "(@return|@returns|@since|@version|@author|@deprecated|@serial|@serialField|@serialData|@see|@link|@linkplain|@inheritDoc|@docRoot|@code|@literal|@value|@implSpec|@implNote|@apiNote|@hidden|@snippet)\\b",
-        "style": "annotation"
+        "styles": [1, "annotation"]
       },
       {
         "pattern": "(\\{@(?:link|linkplain|code|literal|value|snippet))${whiteSpace}+(${identifier})(#)(${identifier})(\\})",

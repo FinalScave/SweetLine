@@ -5,10 +5,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.io.*;
 
-/* multi-line comment
- * show Java highlight features
- */
-
 /**
  * Javadoc for annotation definition.
  *
