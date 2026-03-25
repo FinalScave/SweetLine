@@ -22,7 +22,23 @@ open class Container<K, V>(val key: K, val value: V) : Map<K, V>
 abstract class Mapper<T : Comparable<T>>(val items: List<T>) : Iterable<T>
 class Registry<T>(name: String) : Repository<T> where T : Any
 
+/**
+ * A generic repository for managing entities.
+ *
+ * @param T the type of entity this repository manages
+ * @see UserService
+ * @since 1.0
+ * @sample com.example.demo.UserService
+ */
 interface Repository<T> {
+    /**
+     * Finds an entity by its unique identifier.
+     *
+     * @param id the unique identifier of the entity
+     * @return the entity if found, or null
+     * @throws IllegalArgumentException if [id] is negative
+     * @see UserService#findById
+     */
     suspend fun findById(id: Int): T?
     fun getAll(): List<T>
 }

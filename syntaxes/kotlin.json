@@ -179,6 +179,11 @@
         "include": "numberLiteralRule"
       },
       {
+        "pattern": "/\\*\\*(?!/)",
+        "style": "comment",
+        "state": "docComment"
+      },
+      {
         "pattern": "/\\*",
         "style": "comment",
         "state": "longComment"
@@ -193,6 +198,20 @@
       }
     ],
     "classHeader": [
+      {
+        "pattern": "/\\*\\*(?!/)",
+        "style": "comment",
+        "state": "docComment"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "//${any}*",
+        "style": "comment"
+      },
       {
         "pattern": "(<)([^()]*)(>)",
         "styles": [1, "punctuation", 3, "punctuation"],
@@ -392,6 +411,41 @@
       },
       {
         "onLineEndState": "default"
+      }
+    ],
+    "docComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "(@param)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "variable"]
+      },
+      {
+        "pattern": "(@throws|@exception)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "class"]
+      },
+      {
+        "pattern": "(@see)${whiteSpace}+(${identifier})(#)(${identifier})",
+        "styles": [1, "annotation", 2, "class", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(@return|@returns|@since|@author|@deprecated|@see|@receiver|@property|@constructor|@sample|@suppress|@throws|@exception)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(\\[${identifier}\\])",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(</?)(${identifier})([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "longComment": [
