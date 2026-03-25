@@ -9,7 +9,13 @@ import java.io.*;
  * show Java highlight features
  */
 
-// annotation definition
+/**
+ * Javadoc for annotation definition.
+ *
+ * @author SweetLine
+ * @since 1.0
+ * @see MyAnnotation#value()
+ */
 @interface MyAnnotation {
     String value() default "default";
     int count() default 0;
@@ -35,7 +41,15 @@ interface Comparable<T> {
     int compareTo(T other);
 }
 
-// sealed class + permits
+/**
+ * A sealed base class for geometric shapes.
+ *
+ * <p>Subclasses must implement {@link Shape#area()}.
+ *
+ * @implNote This uses sealed classes introduced in Java 17.
+ * @see Circle
+ * @see Rectangle
+ */
 sealed class Shape permits Circle, Rectangle {
     abstract double area();
 }
@@ -75,7 +89,18 @@ non-sealed class Rectangle extends Shape {
     }
 }
 
-// generic method, wildcard, variable, control flow
+/**
+ * Generic example class demonstrating various Java features.
+ *
+ * <p>Usage example:</p>
+ * <pre>{@code
+ *   Example<Circle> ex = new Example<>(List.of());
+ * }</pre>
+ *
+ * @param <T> the element type, must be {@linkplain Comparable}
+ * @deprecated Use {@link Example#transform()} instead of manual iteration.
+ * @apiNote This class is for demonstration purposes only.
+ */
 @SuppressWarnings("unchecked")
 @MyAnnotation(value = "示例", count = 5, enabled = true)
 public class Example<T extends Comparable<T>> {
@@ -114,7 +139,16 @@ public class Example<T extends Comparable<T>> {
         return List.of(item);
     }
 
-    // generic method + nested generic params (>> ending)
+    /**
+     * Finds the maximum element in a list.
+     *
+     * @param <E> the element type
+     * @param list the input list, must not be empty
+     * @return the maximum element
+     * @throws NullPointerException if {@code list} is {@literal null}
+     * @throws IllegalArgumentException if the list is empty
+     * @see Comparable#compareTo(Object)
+     */
     public static <E extends Comparable<? super E>> E findMax(List<? extends E> list) {
         E max = null;
         for (E item : list) {
@@ -156,7 +190,12 @@ public class Example<T extends Comparable<T>> {
         };
     }
 
-    // instanceof + try-catch-finally
+    /**
+     * Handles an object with pattern matching.
+     *
+     * @param obj the object to handle, may be {@code null}
+     * @exception IllegalArgumentException if obj is an Integer
+     */
     public void handle(Object obj) {
         try {
             if (obj instanceof String str) {

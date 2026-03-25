@@ -154,6 +154,11 @@
         "style": "number"
       },
       {
+        "pattern": "/\\*\\*(?!/)",
+        "style": "comment",
+        "state": "docComment"
+      },
+      {
         "pattern": "/\\*",
         "style": "comment",
         "state": "longComment"
@@ -326,6 +331,49 @@
       {
         "pattern": "${any}",
         "style": "string"
+      }
+    ],
+    "docComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "(@param)${whiteSpace}+(<)(${identifier})(>)",
+        "styles": [1, "annotation", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "(@param)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "variable"]
+      },
+      {
+        "pattern": "(@throws|@exception)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "class"]
+      },
+      {
+        "pattern": "(@see)${whiteSpace}+(${identifier})(#)(${identifier})",
+        "styles": [1, "annotation", 2, "class", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(@return|@returns|@since|@version|@author|@deprecated|@serial|@serialField|@serialData|@see|@link|@linkplain|@inheritDoc|@docRoot|@code|@literal|@value|@implSpec|@implNote|@apiNote|@hidden|@snippet)\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "(\\{@(?:link|linkplain|code|literal|value|snippet))${whiteSpace}+(${identifier})(#)(${identifier})(\\})",
+        "styles": [1, "annotation", 2, "class", 3, "punctuation", 4, "method", 5, "annotation"]
+      },
+      {
+        "pattern": "(\\{@(?:link|linkplain|code|literal|value|snippet))${whiteSpace}+(${identifier})(\\})",
+        "styles": [1, "annotation", 2, "class", 3, "annotation"]
+      },
+      {
+        "pattern": "(</?)(${identifier})([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "longComment": [
