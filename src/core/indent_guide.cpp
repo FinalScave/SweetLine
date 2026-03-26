@@ -350,7 +350,7 @@ namespace NS_SWEETLINE {
               if (end_line > static_cast<int32_t>(line_num)) {
                 IndentGuideLine guide;
                 guide.column = start_indent + tab_size;
-                guide.start_line = static_cast<int32_t>(line_num) + 1;
+                guide.start_line = static_cast<int32_t>(line_num);
                 guide.end_line = end_line;
                 guide.nesting_level = start_indent / tab_size;
                 guide.scope_rule_id = br->rule_id;
