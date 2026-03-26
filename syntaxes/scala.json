@@ -37,7 +37,7 @@
     ],
     "builtinLiteralRule": [
       {
-        "pattern": "(true|false|null)\\b",
+        "pattern": "\\b(true|false|null)\\b",
         "styles": [1, "builtin"]
       }
     ],
@@ -63,6 +63,11 @@
   },
   "states": {
     "default": [
+      {
+        "pattern": "/\\*\\*(?!/)",
+        "style": "comment",
+        "state": "docComment"
+      },
       {
         "pattern": "/\\*",
         "style": "comment",
@@ -320,11 +325,11 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(${qualifiedId})(\\.)((${methodName}))${whiteSpace}*(\\()",
+        "pattern": "(${qualifiedId})(\\.)(${methodName})${whiteSpace}*(\\()",
         "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
       },
       {
-        "pattern": "(${qualifiedId})(\\.)((${identifier}))",
+        "pattern": "(${qualifiedId})(\\.)(${identifier})",
         "styles": [1, "variable", 2, "punctuation", 3, "variable"]
       },
       {
@@ -405,7 +410,7 @@
         "include": "lineCommentRule"
       },
       {
-        "onLineEndState": "typeHeader"
+        "onLineEndState": "default"
       }
     ],
     "classParams": [
@@ -608,6 +613,41 @@
       },
       {
         "include": "stringAnyCharRule"
+      }
+    ],
+    "docComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "(@param)${whiteSpace}+(${identifier})",
+        "styles": [1, "annotation", 2, "variable"]
+      },
+      {
+        "pattern": "(@throws)${whiteSpace}+(${qualifiedTypeId})",
+        "styles": [1, "annotation", 2, "class"]
+      },
+      {
+        "pattern": "(@see)${whiteSpace}+(${qualifiedTypeId})(#)(${methodName})",
+        "styles": [1, "annotation", 2, "class", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(@return|@returns|@since|@version|@author|@deprecated|@see|@note|@example|@usecase|@todo|@tparam|@constructor|@inheritdoc|@group|@groupname|@groupdesc|@groupprio|@define|@migration)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(\\[\\[)(${qualifiedId})(\\]\\])",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "(</?)(${identifier})([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "blockComment": [
