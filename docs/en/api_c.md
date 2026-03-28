@@ -107,6 +107,12 @@ int32_t* sl_document_analyze_incremental_in_line_range(sl_analyzer_handle_t anal
                                                          const char* new_text,
                                                          int32_t* visible_range);
 
+// Read only a visible line-range slice from the current cached highlight result
+// Requires sl_document_analyze or sl_document_analyze_incremental first
+// visible_range layout: [startLine, lineCount]
+int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
+                                          int32_t* visible_range);
+
 // Indent guide analysis for managed document
 // (requires sl_document_analyze or sl_document_analyze_incremental first)
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
@@ -170,7 +176,8 @@ result[4] = charCount
 followed by spanCount * spanStride values (same compact span payload)
 ```
 
-Incremental visible line-range slice `sl_document_analyze_incremental_in_line_range` layout:
+Visible line-range slice `sl_document_analyze_incremental_in_line_range` /
+`sl_document_get_highlight_slice` layout:
 
 ```
 result[0] = flags

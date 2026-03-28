@@ -317,6 +317,17 @@ public:
     return convertDocumentHighlightSliceAsIntArray(env, slice, analyzer->getHighlightConfig());
   }
 
+  static jintArray getHighlightSlice(JNIEnv* env, jclass clazz, jlong handle, jint visible_start_line,
+                                     jint visible_line_count) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+    SharedPtr<DocumentHighlightSlice> slice = analyzer->getHighlightSlice(visible_range);
+    return convertDocumentHighlightSliceAsIntArray(env, slice, analyzer->getHighlightConfig());
+  }
+
   static jintArray analyzeIndentGuides(JNIEnv* env, jclass clazz, jlong handle) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
@@ -341,6 +352,7 @@ public:
       {"nativeAnalyzeChanges", "(JJJLjava/lang/String;)[I", (void*) analyzeChanges},
       {"nativeAnalyzeChanges2", "(JIILjava/lang/String;)[I", (void*) analyzeChanges2},
       {"nativeAnalyzeChangesInLineRange", "(JJJLjava/lang/String;II)[I", (void*) analyzeChangesInLineRange},
+      {"nativeGetHighlightSlice", "(JII)[I", (void*) getHighlightSlice},
       {"nativeAnalyzeIndentGuides", "(J)[I", (void*) analyzeIndentGuides},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
   };

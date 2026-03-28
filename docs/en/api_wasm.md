@@ -76,6 +76,7 @@ class DocumentAnalyzer {
     analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
     analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
+    getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
 }
 
@@ -118,6 +119,9 @@ class LineAnalyzeResult {
     charCount: number;
 }
 ```
+
+`analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
+`getHighlightSlice(...)` reads a visible slice from the latest cached document highlight result.
 
 ### Complete WASM Example
 
@@ -182,7 +186,13 @@ async function main() {
     range.end.column = 2;
     result = docAnalyzer.analyzeIncremental(range, "while");
 
+    const visibleRange = new sl.LineRange();
+    visibleRange.startLine = 0;
+    visibleRange.lineCount = 80;
+    const visible = docAnalyzer.getHighlightSlice(visibleRange);
+
     // Export JSON
+    console.log(visible.totalLineCount);
     console.log(result.toJson());
 }
 

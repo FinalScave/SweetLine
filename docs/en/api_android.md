@@ -12,7 +12,7 @@ Android provides a Java API through JNI bindings. Class and function names are c
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.1.2'
+implementation 'com.qiplat:sweetline:1.2.0'
 ```
 
 Or import via source dependency by adding the `platform/Android/sweetline` module to your project.
@@ -111,6 +111,9 @@ public class DocumentAnalyzer {
     public DocumentHighlightSlice analyzeIncrementalInLineRange(
             TextRange range, String newText, LineRange visibleRange);
 
+    // Read only visible line-range slice from the current cached highlight result
+    public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
+
     // Spannable variants
     public Spannable analyzeAsSpannable(SpannableStyleFactory factory);
     public Spannable analyzeIncrementalAsSpannable(TextRange range, String newText,
@@ -125,6 +128,9 @@ public class DocumentAnalyzer {
     public Document getDocument();
 }
 ```
+
+`analyzeIncrementalInLineRange(...)` applies a patch and immediately returns a slice.
+`getHighlightSlice(...)` reads a slice from the latest cached result produced by `analyze()` or `analyzeIncremental(...)`.
 
 ### Data Structures
 
@@ -239,6 +245,7 @@ TextRange changeRange = new TextRange(
     new TextPosition(2, 8, 0)
 );
 DocumentHighlight newHighlight = docAnalyzer.analyzeIncremental(changeRange, "modified");
+DocumentHighlightSlice visible = docAnalyzer.getHighlightSlice(new LineRange(0, 120));
 
 // Option 3: Convert to Spannable directly (for use with TextView)
 Spannable spannable = textAnalyzer.analyzeTextAsSpannable(sourceCode, styleId -> {

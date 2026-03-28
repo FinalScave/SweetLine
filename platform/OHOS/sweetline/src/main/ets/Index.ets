@@ -584,6 +584,22 @@ export namespace sweetline {
     }
 
     /**
+     * Get highlight slice from the current cached result (requires prior call to analyze or analyzeIncremental)
+     * @param visibleRange Visible line range
+     * @returns Highlight slice for the specified line range
+     */
+    public getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice {
+      if (this.nativeHandle == 0) {
+        return new DocumentHighlightSlice();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_GetHighlightSlice(
+        this.nativeHandle,
+        visibleRange.startLine, visibleRange.lineCount
+      );
+      return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
      * @returns Indent guide analysis result
      */

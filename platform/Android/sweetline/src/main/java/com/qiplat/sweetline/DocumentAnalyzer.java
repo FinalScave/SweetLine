@@ -79,6 +79,20 @@ public class DocumentAnalyzer {
     }
 
     /**
+     * Get highlight slice from the current cached result
+     * Requires prior call to {@link #analyze()} or {@link #analyzeIncremental(TextRange, String)}
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Highlight slice for the specified line range
+     */
+    public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeGetHighlightSlice(nativeHandle, visibleRange.startLine, visibleRange.lineCount);
+        return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * Perform full text analysis and convert highlight result to {@link Spannable}
      * @param styleFactory Span style factory, creates Span style by styleId
      * @return {@link Spannable}
@@ -171,6 +185,9 @@ public class DocumentAnalyzer {
     @FastNative
     private static native int[] nativeAnalyzeChangesInLineRange(long handle, long startPosition, long endPosition,
                                                                 String newText, int visibleStartLine, int visibleLineCount);
+
+    @FastNative
+    private static native int[] nativeGetHighlightSlice(long handle, int visibleStartLine, int visibleLineCount);
 
     @FastNative
     private static native int[] nativeAnalyzeIndentGuides(long handle);

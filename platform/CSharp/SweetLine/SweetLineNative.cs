@@ -336,6 +336,14 @@ internal static class SweetLineNative {
 		[In] int[] visibleRange);
 
 	/// <summary>
+	/// <c>sl_document_get_highlight_slice(sl_analyzer_handle_t, int32_t*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_document_get_highlight_slice", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr DocumentGetHighlightSlice(
+		IntPtr analyzerHandle,
+		[In] int[] visibleRange);
+
+	/// <summary>
 	/// <c>sl_document_analyze_indent_guides(sl_analyzer_handle_t)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_indent_guides", CallingConvention = CallingConvention.Cdecl)]

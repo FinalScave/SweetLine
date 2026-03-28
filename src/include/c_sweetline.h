@@ -230,6 +230,18 @@ SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_ha
 SL_API int32_t* sl_document_analyze_incremental_in_line_range(
   sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text, int32_t* visible_range);
 
+/// Get highlight slice from the current cached document highlight result
+/// Requires prior call to sl_document_analyze or sl_document_analyze_incremental
+/// @param analyzer_handle Document highlight analyzer handle
+/// @param visible_range Visible line range, array structure: [startLine],[lineCount]
+/// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
+/// @code
+/// Same format as sl_document_analyze_incremental_in_line_range:
+/// [flags, spanStride, startLine, totalLineCount, lineCount, lineEntry...]
+/// @endcode
+/// Note: the return value must be freed by calling sl_free_buffer after use
+SL_API int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer_handle, int32_t* visible_range);
+
 /// Perform indent guide analysis on a managed document (requires prior call to sl_document_analyze or sl_document_analyze_incremental)
 /// @param analyzer_handle Document highlight analyzer handle
 /// @return Analysis result, tightly packed in byte order. Structure:
@@ -249,7 +261,8 @@ SL_API int32_t* sl_document_analyze_incremental_in_line_range(
 SL_API int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle);
 
 /// Free the memory of analysis results. All analysis functions returning int32_t*
-/// (sl_text_analyze, sl_text_analyze_line, sl_document_analyze, sl_document_analyze_incremental) must be freed via this function
+/// (such as sl_text_analyze, sl_document_analyze, sl_document_analyze_incremental,
+/// sl_document_analyze_incremental_in_line_range, sl_document_get_highlight_slice) must be freed via this function
 /// @param result Highlight analysis result
 SL_API void sl_free_buffer(int32_t* result);
 

@@ -192,13 +192,33 @@ TEST_CASE("Analyze incremental in visible line range") {
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   SharedPtr<Document> document2 = makeSharedPtr<Document>("Main2.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer2 = engine->loadDocument(document2);
+  SharedPtr<Document> document3 = makeSharedPtr<Document>("Main3.java", code_txt);
+  SharedPtr<DocumentAnalyzer> analyzer3 = engine->loadDocument(document3);
   REQUIRE(analyzer != nullptr);
   REQUIRE(analyzer2 != nullptr);
-  REQUIRE(analyzer->analyze() != nullptr);
-  REQUIRE(analyzer2->analyze() != nullptr);
+  REQUIRE(analyzer3 != nullptr);
+  SharedPtr<DocumentHighlight> initial = analyzer->analyze();
+  SharedPtr<DocumentHighlight> initial2 = analyzer2->analyze();
+  REQUIRE(initial != nullptr);
+  REQUIRE(initial2 != nullptr);
+
+  LineRange visible_range = {1, 6};
+  SharedPtr<DocumentHighlightSlice> initial_slice = analyzer->getHighlightSlice(visible_range);
+  REQUIRE(initial_slice != nullptr);
+  REQUIRE(initial_slice->start_line == visible_range.start_line);
+  REQUIRE(initial_slice->total_line_count == analyzer->getDocument()->getLineCount());
+  REQUIRE(initial_slice->lines.size() == visible_range.line_count);
+  for (size_t i = 0; i < initial_slice->lines.size(); ++i) {
+    CHECK(initial_slice->lines[i] == initial->lines[initial_slice->start_line + i]);
+  }
+
+  SharedPtr<DocumentHighlightSlice> cold_slice = analyzer3->getHighlightSlice(visible_range);
+  REQUIRE(cold_slice != nullptr);
+  CHECK(cold_slice->start_line == visible_range.start_line);
+  CHECK(cold_slice->total_line_count == analyzer3->getDocument()->getLineCount());
+  CHECK(cold_slice->lines.empty());
 
   TextRange range = {{0, 0}, {0, 0}};
-  LineRange visible_range = {1, 6};
   SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeIncrementalInLineRange(range, "// inserted\n", visible_range);
   SharedPtr<DocumentHighlight> full = analyzer2->analyzeIncremental(range, "// inserted\n");
   REQUIRE(slice != nullptr);
@@ -208,6 +228,15 @@ TEST_CASE("Analyze incremental in visible line range") {
   REQUIRE(slice->lines.size() == visible_range.line_count);
   for (size_t i = 0; i < slice->lines.size(); ++i) {
     CHECK(slice->lines[i] == full->lines[slice->start_line + i]);
+  }
+
+  SharedPtr<DocumentHighlightSlice> cached_updated_slice = analyzer->getHighlightSlice(visible_range);
+  REQUIRE(cached_updated_slice != nullptr);
+  REQUIRE(cached_updated_slice->start_line == slice->start_line);
+  REQUIRE(cached_updated_slice->total_line_count == slice->total_line_count);
+  REQUIRE(cached_updated_slice->lines.size() == slice->lines.size());
+  for (size_t i = 0; i < cached_updated_slice->lines.size(); ++i) {
+    CHECK(cached_updated_slice->lines[i] == slice->lines[i]);
   }
 
   LineRange out_of_bound_range = {full->lines.size() + 10, 5};

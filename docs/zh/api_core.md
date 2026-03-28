@@ -20,7 +20,8 @@
        │
        └── DocumentAnalyzer (增量分析，托管文档)
              ├── analyze()              → 首次全量分析
-             └── analyzeIncremental()   → 增量更新分析
+             ├── analyzeIncremental()   → 增量更新分析
+             └── getHighlightSlice()   → 从缓存结果中读取可见切片
 ```
 
 ### 两种分析器
@@ -274,6 +275,10 @@ public:
     SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(
         const TextRange& range, const U8String& new_text, const LineRange& visible_range) const;
 
+    // 从最新缓存的高亮结果中读取指定可见行区域切片
+    // 需先调用 analyze 或 analyzeIncremental
+    SharedPtr<DocumentHighlightSlice> getHighlightSlice(const LineRange& visible_range) const;
+
     // 增量分析 (通过字符索引)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         size_t start_index, size_t end_index, const U8String& new_text) const;
@@ -288,6 +293,9 @@ public:
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
 };
 ```
+
+`analyzeIncrementalInLineRange(...)` 是“应用补丁并立即返回切片”的便捷接口。
+`getHighlightSlice(...)` 则直接复用最近一次分析产生的缓存高亮结果，不会重新执行分析。
 
 #### 使用示例
 
@@ -305,6 +313,7 @@ auto new_highlight = analyzer->analyzeIncremental(range, "modified");
 // 仅返回可见行范围 [100, 100 + 60) 的高亮切片
 LineRange visible {100, 60};
 auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
+auto cached_slice = analyzer->getHighlightSlice(visible);
 
 // 生成缩进划线
 auto guides = analyzer->analyzeIndentGuides();

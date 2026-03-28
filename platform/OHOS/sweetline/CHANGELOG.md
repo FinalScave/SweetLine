@@ -1,6 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- 补充 `DocumentAnalyzer.analyzeIncrementalInLineRange(...)` 的 README 示例
+- 补充 `DocumentAnalyzer.getHighlightSlice(...)` 的 README 示例与 API 说明
+- 补充 `DocumentHighlightSlice` / `LineRange` 等可见区切片相关文档
+
 ## 1.0.0
+
 - 初始开源发布
 - 支持全量高亮分析与增量更新
 - 支持单行分析与行状态传递

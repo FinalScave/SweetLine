@@ -15,14 +15,14 @@ The WinForms/.NET wrapper is a P/Invoke binding over the SweetLine C API:
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.1.0
+dotnet add package SweetLine --version 1.2.0
 ```
 
 Or in `.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.1.0" />
+  <PackageReference Include="SweetLine" Version="1.2.0" />
 </ItemGroup>
 ```
 
@@ -59,12 +59,17 @@ if (analyzer != null)
 
 ## Incremental Analysis
 
+`AnalyzeIncrementalInLineRange(...)` applies a patch and returns the requested slice immediately.
+`GetHighlightSlice(...)` reads a visible slice from the latest cached result after `Analyze()` or `AnalyzeIncremental(...)`.
+
 ```csharp
 var changeRange = new TextRange(
     new TextPosition(line: 2, column: 4),
     new TextPosition(line: 2, column: 8));
 
 DocumentHighlight updated = analyzer!.AnalyzeIncremental(changeRange, "modified");
+DocumentHighlightSlice visibleFromCache = analyzer.GetHighlightSlice(
+    new LineRange(startLine: 0, lineCount: 120));
 DocumentHighlightSlice visible = analyzer.AnalyzeIncrementalInLineRange(
     changeRange,
     "modified",

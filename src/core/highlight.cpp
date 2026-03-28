@@ -587,6 +587,18 @@ namespace NS_SWEETLINE {
     return buildHighlightSlice(m_document_, highlight, visible_range);
   }
 
+  SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::getHighlightSlice(const LineRange& visible_range) const {
+    if (m_document_ == nullptr || m_highlight_ == nullptr || m_highlight_->lines.size() != m_document_->getLineCount()) {
+      auto slice = makeSharedPtr<DocumentHighlightSlice>();
+      if (m_document_ != nullptr) {
+        slice->total_line_count = m_document_->getLineCount();
+        slice->start_line = std::min(visible_range.start_line, slice->total_line_count);
+      }
+      return slice;
+    }
+    return buildHighlightSlice(m_document_, m_highlight_, visible_range);
+  }
+
   SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
     return m_document_;
   }
@@ -637,6 +649,10 @@ namespace NS_SWEETLINE {
   SharedPtr<DocumentHighlightSlice> DocumentAnalyzer::analyzeIncrementalInLineRange(
     const TextRange& range, const U8String& new_text, const LineRange& visible_range) const {
     return analyzer_impl_->analyzeHighlightIncrementalInLineRange(range, new_text, visible_range);
+  }
+
+  SharedPtr<DocumentHighlightSlice> DocumentAnalyzer::getHighlightSlice(const LineRange& visible_range) const {
+    return analyzer_impl_->getHighlightSlice(visible_range);
   }
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(size_t start_index, size_t end_index, const U8String& new_text) const {

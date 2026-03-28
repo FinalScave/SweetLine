@@ -214,6 +214,10 @@ final class SweetLineNative {
             "sl_document_analyze_incremental_in_line_range",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS, ADDRESS));
 
+    // sl_document_get_highlight_slice(pointer, int32_t*) -> int32_t*
+    static final MethodHandle sl_document_get_highlight_slice = downcall("sl_document_get_highlight_slice",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
     // sl_document_analyze_indent_guides(pointer) -> int32_t*
     static final MethodHandle sl_document_analyze_indent_guides = downcall("sl_document_analyze_indent_guides",
             FunctionDescriptor.of(ADDRESS, ADDRESS));

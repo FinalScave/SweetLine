@@ -234,6 +234,12 @@ namespace NS_SWEETLINE {
     SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(const TextRange& range, const U8String& new_text,
       const LineRange& visible_range) const;
 
+    /// Get highlight slice from the current cached result
+    /// Requires prior call to analyze or analyzeIncremental
+    /// @param visible_range The visible line range to return
+    /// @return Highlight slice for the specified line range
+    SharedPtr<DocumentHighlightSlice> getHighlightSlice(const LineRange& visible_range) const;
+
     /// Incrementally re-analyze the entire managed document based on patch content
     /// @param start_index Start character index of the patch change
     /// @param end_index End character index of the patch change

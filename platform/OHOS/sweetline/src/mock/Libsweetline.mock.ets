@@ -19,6 +19,7 @@ const NativeMock: Record<string, Object> = {
   'DocumentAnalyzer_Analyze': (handle: number): Int32Array => { return new Int32Array(0); },
   'DocumentAnalyzer_AnalyzeChanges': (handle: number, startLine: number, startColumn: number, endLine: number, endColumn: number, newText: string): Int32Array => { return new Int32Array(0); },
   'DocumentAnalyzer_AnalyzeChanges2': (handle: number, startIndex: number, endIndex: number, newText: string): Int32Array => { return new Int32Array(0); },
+  'DocumentAnalyzer_GetHighlightSlice': (handle: number, visibleStartLine: number, visibleLineCount: number): Int32Array => { return new Int32Array(0); },
   'DocumentAnalyzer_GetDocument': (handle: number): number => { return 0; },
   'DocumentAnalyzer_AnalyzeIndentGuides': (handle: number): Int32Array => { return new Int32Array(0); },
   'HighlightEngine_Create': (configBits: number): number => { return 0; },

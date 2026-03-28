@@ -20,7 +20,7 @@ This document describes the Java 22 FFM wrapper in `platform/Java22/sweetline`.
 <dependency>
   <groupId>com.qiplat</groupId>
   <artifactId>sweetline-ffm</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
@@ -28,7 +28,7 @@ This document describes the Java 22 FFM wrapper in `platform/Java22/sweetline`.
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline-ffm:1.1.0'
+implementation 'com.qiplat:sweetline-ffm:1.2.0'
 ```
 
 ---
@@ -117,10 +117,14 @@ public class DocumentAnalyzer implements AutoCloseable {
     public DocumentHighlight analyzeIncremental(TextRange range, String newText);
     public DocumentHighlightSlice analyzeIncrementalInLineRange(
             TextRange range, String newText, LineRange visibleRange);
+    public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
     public void close();
 }
 ```
+
+`analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
+`getHighlightSlice(...)` reads a visible slice from the latest cached result after `analyze()` or `analyzeIncremental(...)`.
 
 ---
 
@@ -178,6 +182,8 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
                         new TextPosition(0, 13),
                         new TextPosition(0, 17));
                 DocumentHighlight updated = analyzer.analyzeIncremental(change, "Sample");
+                DocumentHighlightSlice cachedVisible = analyzer.getHighlightSlice(
+                        new LineRange(0, 80));
 
                 DocumentHighlightSlice visible = analyzer.analyzeIncrementalInLineRange(
                         change,

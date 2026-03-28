@@ -173,6 +173,7 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)
+    .function("getHighlightSlice", &DocumentAnalyzer::getHighlightSlice)
     .function("getDocument", &DocumentAnalyzer::getDocument)
     .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides);
 

@@ -124,7 +124,16 @@ for (size_t i = 0; i < highlight->lines.size(); i++) {
 TextRange change_range { {2, 4}, {2, 8} };
 std::string new_text = "modified";
 auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
+
+// 仅从最新缓存的高亮结果中读取当前可见行
+LineRange visible_range {100, 60};
+auto visible_slice = analyzer->getHighlightSlice(visible_range);
+
+// 也可以把补丁应用和可见区切片合并成一次调用
+auto updated_slice = analyzer->analyzeIncrementalInLineRange(change_range, new_text, visible_range);
 ```
+
+当渲染层只需要当前可见窗口时，优先在 `analyze()` 或 `analyzeIncremental()` 之后调用 `getHighlightSlice()`。
 
 ### Java 22（FFM）使用
 
@@ -147,7 +156,7 @@ Java 22 FFM 封装位于 `platform/Java22`。
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.1.2'
+implementation 'com.qiplat:sweetline:1.2.0'
 ```
 
 ```java

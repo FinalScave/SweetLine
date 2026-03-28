@@ -20,7 +20,7 @@
 <dependency>
   <groupId>com.qiplat</groupId>
   <artifactId>sweetline-ffm</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
@@ -28,7 +28,7 @@
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline-ffm:1.1.0'
+implementation 'com.qiplat:sweetline-ffm:1.2.0'
 ```
 
 ---
@@ -117,10 +117,14 @@ public class DocumentAnalyzer implements AutoCloseable {
     public DocumentHighlight analyzeIncremental(TextRange range, String newText);
     public DocumentHighlightSlice analyzeIncrementalInLineRange(
             TextRange range, String newText, LineRange visibleRange);
+    public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
     public void close();
 }
 ```
+
+`analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
+`getHighlightSlice(...)` 用于在 `analyze()` 或 `analyzeIncremental(...)` 之后，从最近缓存结果中读取可见切片。
 
 ---
 
@@ -178,6 +182,8 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
                         new TextPosition(0, 13),
                         new TextPosition(0, 17));
                 DocumentHighlight updated = analyzer.analyzeIncremental(change, "Sample");
+                DocumentHighlightSlice cachedVisible = analyzer.getHighlightSlice(
+                        new LineRange(0, 80));
 
                 DocumentHighlightSlice visible = analyzer.analyzeIncrementalInLineRange(
                         change,

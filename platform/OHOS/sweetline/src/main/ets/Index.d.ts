@@ -390,6 +390,12 @@ export declare namespace sweetline {
      */
     public analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
     /**
+     * Get highlight slice from the current cached result (requires prior call to analyze or analyzeIncremental)
+     * @param visibleRange Visible line range
+     * @returns Highlight slice for the specified line range
+     */
+    public getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
+    /**
      * Incrementally re-analyze the text based on patch content (by character index)
      * @param startIndex Start index of the patch change
      * @param endIndex End index of the patch change

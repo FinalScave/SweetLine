@@ -20,7 +20,8 @@ This document covers core concepts and the C++ API.
        │
        └── DocumentAnalyzer (incremental analysis, managed document)
              ├── analyze()              → initial full analysis
-             └── analyzeIncremental()   → incremental update analysis
+             ├── analyzeIncremental()   → incremental update analysis
+             └── getHighlightSlice()   → read visible slice from cached result
 ```
 
 ### Two Types of Analyzers
@@ -274,6 +275,10 @@ public:
     SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(
         const TextRange& range, const U8String& new_text, const LineRange& visible_range) const;
 
+    // Read a visible line-range slice from the latest cached highlight result
+    // Requires a prior call to analyze or analyzeIncremental
+    SharedPtr<DocumentHighlightSlice> getHighlightSlice(const LineRange& visible_range) const;
+
     // Incremental analysis (by character index)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         size_t start_index, size_t end_index, const U8String& new_text) const;
@@ -288,6 +293,9 @@ public:
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
 };
 ```
+
+`analyzeIncrementalInLineRange(...)` is a convenience API that applies a patch and immediately returns a visible slice.
+`getHighlightSlice(...)` reuses the latest cached document highlight result without running a new analysis.
 
 #### Usage Example
 
@@ -305,6 +313,7 @@ auto new_highlight = analyzer->analyzeIncremental(range, "modified");
 // Return only the visible slice [100, 100 + 60)
 LineRange visible {100, 60};
 auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
+auto cached_slice = analyzer->getHighlightSlice(visible);
 
 // Build indent guides
 auto guides = analyzer->analyzeIndentGuides();

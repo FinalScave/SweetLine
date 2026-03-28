@@ -76,6 +76,7 @@ class DocumentAnalyzer {
     analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
     analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
+    getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
 }
 
@@ -118,6 +119,9 @@ class LineAnalyzeResult {
     charCount: number;
 }
 ```
+
+`analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
+`getHighlightSlice(...)` 用于从最近缓存的文档高亮结果中读取可见切片。
 
 ### 完整 WASM 示例
 
@@ -182,7 +186,13 @@ async function main() {
     range.end.column = 2;
     result = docAnalyzer.analyzeIncremental(range, "while");
 
+    const visibleRange = new sl.LineRange();
+    visibleRange.startLine = 0;
+    visibleRange.lineCount = 80;
+    const visible = docAnalyzer.getHighlightSlice(visibleRange);
+
     // 导出 JSON
+    console.log(visible.totalLineCount);
     console.log(result.toJson());
 }
 

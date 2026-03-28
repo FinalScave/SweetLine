@@ -37,6 +37,7 @@ class DocumentAnalyzer {
   analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
   analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
+  getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
 }
 ```
@@ -53,12 +54,20 @@ const analyzer = engine.createAnalyzerByName("java");
 if (analyzer) {
   const highlight = analyzer.analyzeText(sourceCode);
 }
+
+const document = new sweetline.Document("file:///Main.java", sourceCode);
+const documentAnalyzer = engine.loadDocument(document);
+if (documentAnalyzer) {
+  documentAnalyzer.analyze();
+  const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
+}
 ```
 
 ## Notes
 
 - API naming largely follows WebAssembly/TypeScript style.
 - For incremental highlighting, prefer `DocumentAnalyzer`.
+- Use `getHighlightSlice(...)` after `analyze()` / `analyzeIncremental(...)` when only the visible line window is needed.
 - For indent guides, use `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`.
 - For build commands, see [Build Guide](api_build.md).
 

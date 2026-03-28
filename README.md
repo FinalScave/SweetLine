@@ -124,7 +124,16 @@ for (size_t i = 0; i < highlight->lines.size(); i++) {
 TextRange change_range { {2, 4}, {2, 8} };
 std::string new_text = "modified";
 auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
+
+// Read only the visible lines from the latest cached highlight result
+LineRange visible_range {100, 60};
+auto visible_slice = analyzer->getHighlightSlice(visible_range);
+
+// Or combine patch + visible slice in one call
+auto updated_slice = analyzer->analyzeIncrementalInLineRange(change_range, new_text, visible_range);
 ```
+
+Use `getHighlightSlice()` after `analyze()` or `analyzeIncremental()` when the renderer only needs a visible window of lines.
 
 ### Java 22 (FFM) Usage
 
@@ -147,7 +156,7 @@ Running code requires native access enabled (for example `--enable-native-access
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.1.2'
+implementation 'com.qiplat:sweetline:1.2.0'
 ```
 
 ```java

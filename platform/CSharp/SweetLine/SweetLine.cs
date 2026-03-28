@@ -478,6 +478,30 @@ public sealed class DocumentAnalyzer : IDisposable {
 	}
 
 	/// <summary>
+	/// Gets highlight slice from the current cached result.
+	/// </summary>
+	/// <param name="visibleRange">Visible line range (<c>startLine + lineCount</c>).</param>
+	/// <returns>Highlight slice for visible lines.</returns>
+	/// <remarks>
+	/// Requires a prior call to <see cref="Analyze"/> or <see cref="AnalyzeIncremental(TextRange, string)"/>.
+	/// </remarks>
+	public DocumentHighlightSlice GetHighlightSlice(LineRange visibleRange) {
+		EnsureOpen();
+
+		int[] packedVisibleRange = [visibleRange.StartLine, visibleRange.LineCount];
+		IntPtr resultPtr = SweetLineNative.DocumentGetHighlightSlice(_handle, packedVisibleRange);
+		if (resultPtr == IntPtr.Zero) {
+			return new DocumentHighlightSlice();
+		}
+
+		try {
+			return BufferParser.ReadDocumentHighlightSlice(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
 	/// Performs indent guide analysis on the managed document.
 	/// </summary>
 	/// <returns>Indent guide analysis result.</returns>

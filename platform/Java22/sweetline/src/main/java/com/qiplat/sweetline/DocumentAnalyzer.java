@@ -118,6 +118,35 @@ public class DocumentAnalyzer implements AutoCloseable {
     }
 
     /**
+     * Get highlight slice from the current cached result.
+     * Requires prior call to {@link #analyze()} or {@link #analyzeIncremental(TextRange, String)}.
+     *
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Highlight slice for the specified line range
+     */
+    public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange) {
+        ensureOpen();
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment visibleSeg = arena.allocate(JAVA_INT, 2);
+            visibleSeg.setAtIndex(JAVA_INT, 0, visibleRange.startLine());
+            visibleSeg.setAtIndex(JAVA_INT, 1, visibleRange.lineCount());
+
+            MemorySegment resultPtr = (MemorySegment) SweetLineNative.sl_document_get_highlight_slice
+                    .invoke(handle, visibleSeg);
+            if (resultPtr.equals(MemorySegment.NULL)) {
+                return new DocumentHighlightSlice(0, 0, new ArrayList<>());
+            }
+            try {
+                return BufferParser.readDocumentHighlightSlice(resultPtr);
+            } finally {
+                SweetLineNative.sl_free_buffer.invoke(resultPtr);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to get highlight slice", e);
+        }
+    }
+
+    /**
      * Perform indent guide analysis on the managed document.
      * Requires prior call to {@link #analyze()} or {@link #analyzeIncremental(TextRange, String)}.
      *

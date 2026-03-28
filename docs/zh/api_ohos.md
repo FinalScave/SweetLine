@@ -37,6 +37,7 @@ class DocumentAnalyzer {
   analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
   analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
+  getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
 }
 ```
@@ -53,12 +54,20 @@ const analyzer = engine.createAnalyzerByName("java");
 if (analyzer) {
   const highlight = analyzer.analyzeText(sourceCode);
 }
+
+const document = new sweetline.Document("file:///Main.java", sourceCode);
+const documentAnalyzer = engine.loadDocument(document);
+if (documentAnalyzer) {
+  documentAnalyzer.analyze();
+  const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
+}
 ```
 
 ## 说明
 
 - API 命名风格整体与 WebAssembly/TypeScript 侧一致。
 - 编辑器场景建议优先使用 `DocumentAnalyzer` 做增量分析。
+- 只需要当前可见窗口时，可在 `analyze()` / `analyzeIncremental(...)` 之后调用 `getHighlightSlice(...)`。
 - 缩进划线可使用 `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`。
 - 构建命令请参见 [构建文档](api_build.md)。
 

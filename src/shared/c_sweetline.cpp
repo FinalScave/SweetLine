@@ -214,6 +214,20 @@ int32_t* sl_document_analyze_incremental_in_line_range(
   return buffer;
 }
 
+int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer_handle, int32_t* visible_range) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr || visible_range == nullptr) {
+    return nullptr;
+  }
+  LineRange range = {static_cast<size_t>(visible_range[0]), static_cast<size_t>(visible_range[1])};
+  SharedPtr<DocumentHighlightSlice> slice = analyzer->getHighlightSlice(range);
+  const HighlightConfig& config = analyzer->getHighlightConfig();
+  size_t total_size = computeDocumentHighlightSliceBufferSize(slice, config);
+  int32_t* buffer = new int32_t[total_size];
+  writeDocumentHighlightSlice(slice, buffer, config);
+  return buffer;
+}
+
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle) {
   SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
   if (analyzer == nullptr) {

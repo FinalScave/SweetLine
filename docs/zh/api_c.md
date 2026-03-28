@@ -107,6 +107,12 @@ int32_t* sl_document_analyze_incremental_in_line_range(sl_analyzer_handle_t anal
                                                          const char* new_text,
                                                          int32_t* visible_range);
 
+// 从当前缓存的高亮结果中只读取可见行区域切片
+// 需先调用 sl_document_analyze 或 sl_document_analyze_incremental
+// visible_range 数组结构: [startLine, lineCount]
+int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
+                                          int32_t* visible_range);
+
 // 托管文档缩进划线分析 (需先调用 sl_document_analyze 或 sl_document_analyze_incremental)
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 ```
@@ -168,7 +174,8 @@ result[4] = charCount
 后续是 spanCount * spanStride（同一套紧凑 span 协议）
 ```
 
-按可见行返回切片 `sl_document_analyze_incremental_in_line_range` 布局：
+按可见行返回切片 `sl_document_analyze_incremental_in_line_range` /
+`sl_document_get_highlight_slice` 布局：
 
 ```
 result[0] = flags
