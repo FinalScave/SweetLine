@@ -147,7 +147,7 @@ Java 22 FFM 封装位于 `platform/Java22`。
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.1.0'
+implementation 'com.qiplat:sweetline:1.1.2'
 ```
 
 ```java
