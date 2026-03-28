@@ -6,7 +6,7 @@
   "types": "./src/main/ets/Index.d.ts",
   "author": "Scave",
   "license": "LGPL 2.1",
-  "keywords": ["rich text", "highlight", "syntax", "c++"],
+  "keywords": ["rich text", "highlight", "syntax", "cpp"],
   "homepage": "https://github.com/FinalScave/SweetLine",
   "repository": "https://github.com/FinalScave/SweetLine",
   "dependencies": {
