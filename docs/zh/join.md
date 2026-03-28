@@ -8,6 +8,7 @@
     ├── CSharp .NET/C# P/Invoke 封装与 WinForms Demo
     ├── Emscripten WASM SDK 工程
     └── OHOS 鸿蒙 NAPI SDK 工程
+├── prebuilt 预构建动态库
 ├── src C++源代码目录
     ├── core 核心代码
     └── include 对外开放的头文件

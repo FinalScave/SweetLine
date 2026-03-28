@@ -19,7 +19,7 @@ const sweetline = await Module();
 
 ### TypeScript 类型
 
-完整的 TypeScript 类型定义文件位于 `platform/Emscripten/libsweetline.d.ts`。
+完整的 TypeScript 类型定义文件位于 `platform/Emscripten/sweetline.d.ts`。
 
 ### HighlightEngine
 

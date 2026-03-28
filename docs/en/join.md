@@ -8,6 +8,7 @@
     ├── CSharp     .NET/C# P/Invoke wrapper and WinForms demo
     ├── Emscripten WASM SDK project
     └── OHOS       HarmonyOS NAPI SDK project
+├── prebuilt       Prebuilt shared libs
 ├── src            C++ source code
     ├── core       Core implementation
     └── include    Public header files

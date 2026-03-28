@@ -19,7 +19,7 @@ const sweetline = await Module();
 
 ### TypeScript Types
 
-The complete TypeScript type definition file is located at `platform/Emscripten/libsweetline.d.ts`.
+The complete TypeScript type definition file is located at `platform/Emscripten/sweetline.d.ts`.
 
 ### HighlightEngine
 
