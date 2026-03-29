@@ -2,7 +2,7 @@
 # Arguments:
 # -b, --build           Build directory
 # -o, --output          Output directory
-# -s, --src             SweetEditor project source directory
+# -s, --src             SweetLine project source directory
 # -p, --platform        Target platform (all/android/windows/ohos/wasm; all means build everything)
 # --android-ndk         Android NDK path
 # --ohos-toolchain      OHOS toolchain CMake file path
@@ -54,6 +54,7 @@ done
 set -- "${POSITIONAL_ARGS[@]}"
 
 TARGET_NAME=sweetline
+WASM_TARGET_NAME=sweetline
 echo "============================= Start building: $PLATFORM ============================="
 
 function resolve_android_strip_tool() {
@@ -93,7 +94,7 @@ function copy_built_libraries() {
 function build_windows_msvc() {
   echo "============================= Windows X64 ============================="
   WINDOWS_BUILD_DIR="$BUILD_DIR/windows"
-  WINDOWS_PREBUILT_DIR="$OUTPUT_DIR/windows-x64"
+  WINDOWS_PREBUILT_DIR="$OUTPUT_DIR/windows/x64"
   cmake $PROJECT_DIR \
     -B $WINDOWS_BUILD_DIR \
     -G "Visual Studio 17 2022" \
@@ -101,7 +102,7 @@ function build_windows_msvc() {
     -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \
     -DCMAKE_CXX_FLAGS="/std:c++17 /EHsc /utf-8"
-  cmake --build $WINDOWS_BUILD_DIR --target $TARGET_NAME -j 12 --config Release
+  cmake --build $WINDOWS_BUILD_DIR --target $TARGET_NAME -j 24 --config Release
   copy_built_libraries "$WINDOWS_BUILD_DIR/bin" "$WINDOWS_PREBUILT_DIR"
 }
 
@@ -109,19 +110,14 @@ function build_osx() {
   OSX_ARCH=$1
   echo "============================= MacOSX $OSX_ARCH ============================="
   OSX_BUILD_DIR="$BUILD_DIR/osx/$OSX_ARCH"
-  if [ $OSX_ARCH = "arm64" ]; then
-    OSX_PREBUILT_DIR="$OUTPUT_DIR/osx-arm64"
-  elif [ $OSX_ARCH = "x86_64" ]; then
-    OSX_PREBUILT_DIR="$OUTPUT_DIR/osx-x64"
-  else
-    echo "Unsupported arch: $OSX_ARCH"
-    return 1
-  fi
+  OSX_PREBUILT_DIR="$OUTPUT_DIR/osx/$OSX_ARCH"
   cmake $PROJECT_DIR \
     -B $OSX_BUILD_DIR \
     -G "Ninja" \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_STATIC_LIB=OFF \
+    -DBUILD_TESTING=OFF \
     -DCMAKE_OSX_ARCHITECTURES="$OSX_ARCH"
   cmake --build $OSX_BUILD_DIR --target $TARGET_NAME -j 12
   copy_built_libraries "$OSX_BUILD_DIR/lib" "$OSX_PREBUILT_DIR"
@@ -131,9 +127,9 @@ function build_linux() {
     LINUX_ARCH=$1
     LINUX_BUILD_DIR="$BUILD_DIR/linux/$LINUX_ARCH"
     if [ $LINUX_ARCH = "aarch64" ]; then
-      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux-arm64"
+      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux/aarch64"
     elif [ $LINUX_ARCH = "x86_64" ]; then
-      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux-x64"
+      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux/x86_64"
     else
       echo "Unsupported arch: $LINUX_ARCH"
       return 1
@@ -142,7 +138,9 @@ function build_linux() {
       -B $LINUX_BUILD_DIR \
       -G "Ninja" \
       -DCMAKE_CXX_FLAGS="-std=c++17 -fPIC" \
-      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_STATIC_LIB=OFF \
+      -DBUILD_TESTING=OFF
     cmake --build $LINUX_BUILD_DIR --target $TARGET_NAME -j 12
     copy_built_libraries "$LINUX_BUILD_DIR/lib" "$LINUX_PREBUILT_DIR"
 }
@@ -151,12 +149,14 @@ function build_emscripten() {
   echo "============================= WebAssembly ============================="
   WASM_BUILD_DIR="$BUILD_DIR/emscripten"
   WASM_PREBUILT_DIR="$OUTPUT_DIR/wasm"
-  emcmake.bat cmake $PROJECT_DIR \
+  emcmake.bat cmake $PROJECT_DIR\
     -B $WASM_BUILD_DIR \
     -G "Ninja" \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
-    -DCMAKE_BUILD_TYPE=Release
-  cmake --build $WASM_BUILD_DIR --target $TARGET_NAME -j 12
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_STATIC_LIB=OFF \
+    -DBUILD_TESTING=OFF
+  cmake --build $WASM_BUILD_DIR --target $WASM_TARGET_NAME -j 24
   copy_built_libraries "$WASM_BUILD_DIR/bin" "$WASM_PREBUILT_DIR"
 }
 
@@ -169,14 +169,7 @@ function build_android() {
   echo "============================= Android $ANDROID_ARCH ============================="
   echo "============================= NDK: $ANDROID_NDK ============================="
   ANDROID_BUILD_DIR="$BUILD_DIR/android/$ANDROID_ARCH"
-  if [ $ANDROID_ARCH = "arm64-v8a" ]; then
-    ANDROID_PREBUILT_DIR="$OUTPUT_DIR/android-arm64"
-  elif [ $ANDROID_ARCH = "x86_64" ]; then
-    ANDROID_PREBUILT_DIR="$OUTPUT_DIR/android-x64"
-  else
-    echo "Unsupported arch: $ANDROID_ARCH"
-    return 1
-  fi
+  ANDROID_PREBUILT_DIR="$OUTPUT_DIR/android/$ANDROID_ARCH"
   cmake $PROJECT_DIR \
     -B $ANDROID_BUILD_DIR \
     -G "Ninja" \
@@ -187,8 +180,10 @@ function build_android() {
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
     -DANDROID_PLATFORM=android-21 \
-    -DCMAKE_CXX_FLAGS="-std=c++17"
-  cmake --build $ANDROID_BUILD_DIR --target $TARGET_NAME -j 12
+    -DCMAKE_CXX_FLAGS="-std=c++17" \
+    -DBUILD_STATIC_LIB=OFF \
+    -DBUILD_TESTING=OFF
+  cmake --build $ANDROID_BUILD_DIR --target $TARGET_NAME -j 24
 
   local strip_tool
   strip_tool=$(resolve_android_strip_tool)
@@ -212,14 +207,7 @@ function build_ohos() {
   echo "============================= OHOS $OHOS_ARCH ============================="
   echo "============================= Toolchain: $OHOS_TOOLCHAIN ============================="
   OHOS_BUILD_DIR="$BUILD_DIR/ohos/$OHOS_ARCH"
-  if [ $OHOS_ARCH = "arm64-v8a" ]; then
-    OHOS_PREBUILT_DIR="$OUTPUT_DIR/ohos-arm64"
-  elif [ $OHOS_ARCH = "x86_64" ]; then
-    OHOS_PREBUILT_DIR="$OUTPUT_DIR/ohos-x64"
-  else
-    echo "Unsupported arch: $OHOS_ARCH"
-    return 1
-  fi
+  OHOS_PREBUILT_DIR="$OUTPUT_DIR/ohos/$OHOS_ARCH"
   cmake $PROJECT_DIR \
     -B $OHOS_BUILD_DIR \
     -G "Ninja" \
@@ -227,14 +215,16 @@ function build_ohos() {
     -DOHOS_ARCH=$OHOS_ARCH \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE="$OHOS_TOOLCHAIN" \
-    -DCMAKE_CXX_FLAGS="-std=c++17"
-  cmake --build $OHOS_BUILD_DIR --target $TARGET_NAME -j 12
+    -DCMAKE_CXX_FLAGS="-std=c++17" \
+    -DBUILD_STATIC_LIB=OFF \
+    -DBUILD_TESTING=OFF
+  cmake --build $OHOS_BUILD_DIR --target $TARGET_NAME -j 24
   copy_built_libraries "$OHOS_BUILD_DIR/lib" "$OHOS_PREBUILT_DIR"
 }
 
 if [ $PLATFORM = "all" ]; then
   build_windows_msvc
-  build_linux aarch64
+  build_linux x86_64
   build_android arm64-v8a
   build_android x86_64
   build_ohos arm64-v8a
@@ -247,7 +237,6 @@ elif [ $PLATFORM = "osx" ]; then
   build_osx arm64
   build_osx x86_64
 elif [ $PLATFORM = "linux" ]; then
-  build_linux aarch64
   build_linux x86_64
 elif [ $PLATFORM = "android" ]; then
   build_android arm64-v8a

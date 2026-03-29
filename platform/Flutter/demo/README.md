@@ -10,7 +10,7 @@ sources. Sync them before running the demo after changing `syntaxes/` or
 `tests/files/`:
 
 ```bash
-cd D:/Projects/CrossPlatform/SweetLine/platform/Flutter
+cd D:/Projects/CrossPlatform/SweetLine/platform/Flutter/demo
 dart run tool/sync_demo_assets.dart
 ```
 

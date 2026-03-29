@@ -1,11 +1,10 @@
 import 'dart:io';
 
-const List<String> _supportedTargets = <String>[
-  'android-arm64',
-  'android-x64',
-  'ios-arm64',
-  'osx-arm64',
-  'windows-x64',
+const List<String> _supportedRoots = <String>[
+  'android',
+  'ios',
+  'osx',
+  'windows',
 ];
 
 void main() {
@@ -29,19 +28,19 @@ void main() {
   nativeRoot.createSync(recursive: true);
 
   final copiedTargets = <String>[];
-  for (final target in _supportedTargets) {
+  for (final rootName in _supportedRoots) {
     final sourceDir = Directory(
-      '${prebuiltRoot.path}${Platform.pathSeparator}$target',
+      '${prebuiltRoot.path}${Platform.pathSeparator}$rootName',
     );
     if (!sourceDir.existsSync()) {
       continue;
     }
     final copiedCount = _copyDirectoryContents(
       sourceDir,
-      Directory('${nativeRoot.path}${Platform.pathSeparator}$target'),
+      Directory('${nativeRoot.path}${Platform.pathSeparator}$rootName'),
     );
     if (copiedCount > 0) {
-      copiedTargets.add('$target ($copiedCount files)');
+      copiedTargets.add('$rootName ($copiedCount files)');
     }
   }
 

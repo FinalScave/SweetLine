@@ -19,22 +19,22 @@ void main(List<String> args) async {
     late final String fileName;
 
     if (targetOS == OS.windows && targetArchitecture == Architecture.x64) {
-      relativePath = 'windows-x64/sweetline.dll';
+      relativePath = 'windows/x64/sweetline.dll';
       fileName = 'sweetline.dll';
     } else if (targetOS == OS.android &&
         targetArchitecture == Architecture.arm64) {
-      relativePath = 'android-arm64/libsweetline.so';
+      relativePath = 'android/arm64-v8a/libsweetline.so';
       fileName = 'libsweetline.so';
     } else if (targetOS == OS.android &&
         targetArchitecture == Architecture.x64) {
-      relativePath = 'android-x64/libsweetline.so';
+      relativePath = 'android/x86_64/libsweetline.so';
       fileName = 'libsweetline.so';
     } else if (targetOS == OS.macOS &&
         targetArchitecture == Architecture.arm64) {
-      relativePath = 'osx-arm64/libsweetline.dylib';
+      relativePath = 'osx/arm64/libsweetline.dylib';
       fileName = 'libsweetline.dylib';
     } else if (targetOS == OS.iOS && targetArchitecture == Architecture.arm64) {
-      relativePath = 'ios-arm64/sweetline.framework';
+      relativePath = 'ios/arm64/sweetline.framework';
       fileName = 'sweetline.framework';
     } else {
       throw UnsupportedError(
