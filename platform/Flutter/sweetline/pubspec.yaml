@@ -1,0 +1,22 @@
+name: sweetline
+description: "Flutter/Dart FFI wrapper for the SweetLine native syntax highlighting engine."
+homepage: https://github.com/FinalScave/SweetLine
+repository: https://github.com/FinalScave/SweetLine
+issue_tracker: https://github.com/FinalScave/SweetLine/issues
+resolution: workspace
+version: 1.0.0
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  code_assets: ^1.0.0
+  ffi: ^2.1.4
+  hooks: ^1.0.0
+  logging: ^1.3.0
+  native_toolchain_c: ^0.17.4
+
+dev_dependencies:
+  ffigen: ^20.1.1
+  flutter_lints: ^6.0.0
+  test: ^1.28.0
