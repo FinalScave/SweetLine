@@ -1,0 +1,40 @@
+# macOS
+*.DS_Store
+.build-local
+.localhome/
+/Examples-MacOS/.build
+
+# Xcode projects and workspaces
+*.xcodeproj
+*.xcworkspace
+
+# Xcode user data
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.pbxuser
+!default.pbxuser
+*.perspectivev3
+!default.perspectivev3
+*.xcuserstate
+xcuserdata/
+
+# Xcode metadata and build outputs
+*.dSYM
+*.dSYM.zip
+*.hmap
+*.ipa
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+
+# Package managers and dependencies
+*.swiftpm
+.build/
+/binaries/*.xcframework
+Pods/
+
+# Playgrounds
+timeline.xctimeline
