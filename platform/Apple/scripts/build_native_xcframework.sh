@@ -3,19 +3,46 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APPLE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-REPO_ROOT="$(cd "${APPLE_DIR}/../.." && pwd)"
-MACOS_BUILD_DIR="${REPO_ROOT}/build/apple-macos"
-IOS_DEVICE_BUILD_DIR="${REPO_ROOT}/build/apple-ios-device"
-IOS_SIM_BUILD_DIR="${REPO_ROOT}/build/apple-ios-simulator"
-OUTPUT_DIR="${APPLE_DIR}/binaries"
-OUTPUT_XCFRAMEWORK="${OUTPUT_DIR}/SweetLineNative.xcframework"
-FRAMEWORK_NAME="SweetLineNative"
-MACOS_LIB_PATH="${MACOS_BUILD_DIR}/lib/libsweetline.dylib"
-IOS_DEVICE_LIB_PATH="${IOS_DEVICE_BUILD_DIR}/lib/Release/libsweetline.dylib"
-IOS_SIM_LIB_PATH="${IOS_SIM_BUILD_DIR}/lib/Release/libsweetline.dylib"
-MACOS_FRAMEWORK_PATH="${MACOS_BUILD_DIR}/${FRAMEWORK_NAME}.framework"
+REPO_ROOT="${SWEETLINE_REPO_ROOT:-$(cd "${APPLE_DIR}/../.." && pwd)}"
+APPLE_BUILD_ROOT="${SWEETLINE_APPLE_BUILD_ROOT:-${REPO_ROOT}/build}"
+OUTPUT_DIR="${SWEETLINE_APPLE_OUTPUT_DIR:-${APPLE_DIR}/binaries}"
+BUILD_SCOPE="${1:-all}"
+
+source "${REPO_ROOT}/scripts/build-shared.sh"
+
+default_xcframework_name() {
+  case "$1" in
+    ios)
+      printf '%s\n' "${APPLE_XCFRAMEWORK_IOS_NAME}"
+      ;;
+    osx)
+      printf '%s\n' "${APPLE_XCFRAMEWORK_OSX_NAME}"
+      ;;
+    all|*)
+      printf '%s\n' "${APPLE_XCFRAMEWORK_NAME}"
+      ;;
+  esac
+}
+
+OUTPUT_NAME="${2:-$(default_xcframework_name "${BUILD_SCOPE}")}"
+OUTPUT_XCFRAMEWORK="${OUTPUT_DIR}/${OUTPUT_NAME}"
+FRAMEWORK_NAME="${APPLE_FRAMEWORK_NAME}"
+TARGET_NAME="sweetline"
+
+MACOS_ARM64_BUILD_DIR="${APPLE_BUILD_ROOT}/apple-macos-arm64"
+MACOS_X64_BUILD_DIR="${APPLE_BUILD_ROOT}/apple-macos-x86_64"
+MACOS_UNIVERSAL_DIR="${APPLE_BUILD_ROOT}/apple-macos-universal"
+IOS_DEVICE_BUILD_DIR="${APPLE_BUILD_ROOT}/apple-ios-device"
+IOS_SIM_BUILD_DIR="${APPLE_BUILD_ROOT}/apple-ios-simulator"
+
+MACOS_UNIVERSAL_FRAMEWORK_PATH="${MACOS_UNIVERSAL_DIR}/${FRAMEWORK_NAME}.framework"
 IOS_DEVICE_FRAMEWORK_PATH="${IOS_DEVICE_BUILD_DIR}/${FRAMEWORK_NAME}.framework"
 IOS_SIM_FRAMEWORK_PATH="${IOS_SIM_BUILD_DIR}/${FRAMEWORK_NAME}.framework"
+
+if [[ "${BUILD_SCOPE}" != "all" && "${BUILD_SCOPE}" != "ios" && "${BUILD_SCOPE}" != "osx" ]]; then
+  echo "Unsupported build scope: ${BUILD_SCOPE}" >&2
+  exit 1
+fi
 
 create_framework_bundle() {
   local dylib_path="$1"
@@ -67,71 +94,129 @@ EOF
 build_xcode_target() {
   local build_dir="$1"
 
-  cmake --build "${build_dir}" --config Release -- \
+  cmake --build "${build_dir}" --target "${TARGET_NAME}" --config Release -j 12 -- \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGN_IDENTITY=
 }
 
+build_macos_arch() {
+  local arch="$1"
+  local build_dir="$2"
+
+  rm -rf "${build_dir}"
+  cmake -S "${REPO_ROOT}" -B "${build_dir}" \
+    -G Xcode \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_OSX_SYSROOT=macosx \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
+    -DCMAKE_OSX_ARCHITECTURES="${arch}" \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_SHARED_LIB=ON \
+    -DBUILD_STATIC_LIB=OFF
+
+  build_xcode_target "${build_dir}"
+}
+
+build_ios_variant() {
+  local build_dir="$1"
+  local sysroot="$2"
+  local arch="$3"
+
+  rm -rf "${build_dir}"
+  cmake -S "${REPO_ROOT}" -B "${build_dir}" \
+    -G Xcode \
+    -DCMAKE_SYSTEM_NAME=iOS \
+    -DCMAKE_OSX_SYSROOT="${sysroot}" \
+    -DCMAKE_OSX_ARCHITECTURES="${arch}" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_SHARED_LIB=ON \
+    -DBUILD_STATIC_LIB=OFF
+
+  build_xcode_target "${build_dir}"
+}
+
+require_file() {
+  local file_path="$1"
+  local label="$2"
+
+  if [[ ! -f "${file_path}" ]]; then
+    echo "${label} not found at ${file_path}" >&2
+    exit 1
+  fi
+}
+
+build_macos_universal_framework() {
+  local arm64_dylib=""
+  local x64_dylib=""
+  local universal_dylib="${MACOS_UNIVERSAL_DIR}/lib/libsweetline.dylib"
+
+  build_macos_arch arm64 "${MACOS_ARM64_BUILD_DIR}"
+  build_macos_arch x86_64 "${MACOS_X64_BUILD_DIR}"
+
+  arm64_dylib="$(find_apple_dylib_path "${MACOS_ARM64_BUILD_DIR}")"
+  x64_dylib="$(find_apple_dylib_path "${MACOS_X64_BUILD_DIR}")"
+
+  require_file "${arm64_dylib}" "macOS arm64 shared library"
+  require_file "${x64_dylib}" "macOS x86_64 shared library"
+
+  rm -rf "${MACOS_UNIVERSAL_DIR}"
+  mkdir -p "${MACOS_UNIVERSAL_DIR}/lib"
+  lipo -create "${arm64_dylib}" "${x64_dylib}" -output "${universal_dylib}"
+
+  create_framework_bundle "${universal_dylib}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.macos"
+}
+
+build_ios_frameworks() {
+  local ios_device_dylib=""
+  local ios_sim_dylib=""
+
+  build_ios_variant "${IOS_DEVICE_BUILD_DIR}" iphoneos arm64
+  build_ios_variant "${IOS_SIM_BUILD_DIR}" iphonesimulator arm64
+
+  ios_device_dylib="$(find_apple_dylib_path "${IOS_DEVICE_BUILD_DIR}")"
+  ios_sim_dylib="$(find_apple_dylib_path "${IOS_SIM_BUILD_DIR}")"
+
+  require_file "${ios_device_dylib}" "iOS device shared library"
+  require_file "${ios_sim_dylib}" "iOS simulator shared library"
+
+  create_framework_bundle "${ios_device_dylib}" "${IOS_DEVICE_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios"
+  create_framework_bundle "${ios_sim_dylib}" "${IOS_SIM_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios-simulator"
+}
+
+create_xcframework() {
+  local output_path="$1"
+  shift
+  local cmd=(xcodebuild -create-xcframework)
+  local framework_path=""
+
+  rm -rf "${output_path}"
+
+  for framework_path in "$@"; do
+    cmd+=( -framework "${framework_path}" )
+  done
+  cmd+=( -output "${output_path}" )
+
+  "${cmd[@]}"
+}
+
 mkdir -p "${OUTPUT_DIR}"
 
-cmake -S "${REPO_ROOT}" -B "${MACOS_BUILD_DIR}" \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
-  -DBUILD_TESTING=OFF \
-  -DBUILD_SHARED_LIB=ON \
-  -DBUILD_STATIC_LIB=OFF
-
-cmake --build "${MACOS_BUILD_DIR}" --config Release
-
-cmake -S "${REPO_ROOT}" -B "${IOS_DEVICE_BUILD_DIR}" \
-  -G Xcode \
-  -DCMAKE_SYSTEM_NAME=iOS \
-  -DCMAKE_OSX_SYSROOT=iphoneos \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
-  -DBUILD_TESTING=OFF \
-  -DBUILD_SHARED_LIB=ON \
-  -DBUILD_STATIC_LIB=OFF
-
-build_xcode_target "${IOS_DEVICE_BUILD_DIR}"
-
-cmake -S "${REPO_ROOT}" -B "${IOS_SIM_BUILD_DIR}" \
-  -G Xcode \
-  -DCMAKE_SYSTEM_NAME=iOS \
-  -DCMAKE_OSX_SYSROOT=iphonesimulator \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
-  -DBUILD_TESTING=OFF \
-  -DBUILD_SHARED_LIB=ON \
-  -DBUILD_STATIC_LIB=OFF
-
-build_xcode_target "${IOS_SIM_BUILD_DIR}"
-
-if [[ ! -f "${MACOS_LIB_PATH}" ]]; then
-  echo "Native macOS shared library not found at ${MACOS_LIB_PATH}" >&2
-  exit 1
-fi
-
-if [[ ! -f "${IOS_DEVICE_LIB_PATH}" ]]; then
-  echo "Native iOS device shared library not found at ${IOS_DEVICE_LIB_PATH}" >&2
-  exit 1
-fi
-
-if [[ ! -f "${IOS_SIM_LIB_PATH}" ]]; then
-  echo "Native iOS simulator shared library not found at ${IOS_SIM_LIB_PATH}" >&2
-  exit 1
-fi
-
-create_framework_bundle "${MACOS_LIB_PATH}" "${MACOS_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.macos"
-create_framework_bundle "${IOS_DEVICE_LIB_PATH}" "${IOS_DEVICE_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios"
-create_framework_bundle "${IOS_SIM_LIB_PATH}" "${IOS_SIM_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios-simulator"
-
-rm -rf "${OUTPUT_XCFRAMEWORK}"
-xcodebuild -create-xcframework \
-  -framework "${MACOS_FRAMEWORK_PATH}" \
-  -framework "${IOS_DEVICE_FRAMEWORK_PATH}" \
-  -framework "${IOS_SIM_FRAMEWORK_PATH}" \
-  -output "${OUTPUT_XCFRAMEWORK}"
+case "${BUILD_SCOPE}" in
+  osx)
+    build_macos_universal_framework
+    create_xcframework "${OUTPUT_XCFRAMEWORK}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}"
+    ;;
+  ios)
+    build_ios_frameworks
+    create_xcframework "${OUTPUT_XCFRAMEWORK}" "${IOS_DEVICE_FRAMEWORK_PATH}" "${IOS_SIM_FRAMEWORK_PATH}"
+    ;;
+  all)
+    build_macos_universal_framework
+    build_ios_frameworks
+    create_xcframework "${OUTPUT_XCFRAMEWORK}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}" "${IOS_DEVICE_FRAMEWORK_PATH}" "${IOS_SIM_FRAMEWORK_PATH}"
+    ;;
+esac
 
 echo "Generated ${OUTPUT_XCFRAMEWORK}"
