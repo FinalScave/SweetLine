@@ -10,22 +10,29 @@ BUILD_SCOPE="${1:-all}"
 
 source "${REPO_ROOT}/scripts/build-shared.sh"
 
-default_xcframework_name() {
-  case "$1" in
-    ios)
-      printf '%s\n' "${APPLE_XCFRAMEWORK_IOS_NAME}"
-      ;;
-    osx)
-      printf '%s\n' "${APPLE_XCFRAMEWORK_OSX_NAME}"
-      ;;
-    all|*)
-      printf '%s\n' "${APPLE_XCFRAMEWORK_NAME}"
-      ;;
-  esac
-}
+REPO_ROOT="${SWEETLINE_REPO_ROOT:-$(cd "${APPLE_DIR}/../.." && pwd)}"
+APPLE_BUILD_ROOT="${SWEETLINE_APPLE_BUILD_ROOT:-${REPO_ROOT}/build}"
+OUTPUT_DIR="${SWEETLINE_APPLE_OUTPUT_DIR:-${APPLE_DIR}/binaries}"
+BUILD_SCOPE="${1:-all}"
 
-OUTPUT_NAME="${2:-$(default_xcframework_name "${BUILD_SCOPE}")}"
-OUTPUT_XCFRAMEWORK="${OUTPUT_DIR}/${OUTPUT_NAME}"
+if [[ "${BUILD_SCOPE}" = "all" && $# -ge 2 ]]; then
+  echo "Custom output name is not supported for build scope 'all'" >&2
+  exit 1
+fi
+
+case "${BUILD_SCOPE}" in
+  ios)
+    OUTPUT_NAME="${2:-${APPLE_XCFRAMEWORK_IOS_NAME}}"
+    ;;
+  osx)
+    OUTPUT_NAME="${2:-${APPLE_XCFRAMEWORK_OSX_NAME}}"
+    ;;
+  all)
+    OUTPUT_NAME=""
+    ;;
+esac
+
+OUTPUT_XCFRAMEWORK="${OUTPUT_NAME:+${OUTPUT_DIR}/${OUTPUT_NAME}}"
 FRAMEWORK_NAME="${APPLE_FRAMEWORK_NAME}"
 TARGET_NAME="sweetline"
 
@@ -207,16 +214,19 @@ case "${BUILD_SCOPE}" in
   osx)
     build_macos_universal_framework
     create_xcframework "${OUTPUT_XCFRAMEWORK}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}"
+    echo "Generated ${OUTPUT_XCFRAMEWORK}"
     ;;
   ios)
     build_ios_frameworks
     create_xcframework "${OUTPUT_XCFRAMEWORK}" "${IOS_DEVICE_FRAMEWORK_PATH}" "${IOS_SIM_FRAMEWORK_PATH}"
+    echo "Generated ${OUTPUT_XCFRAMEWORK}"
     ;;
   all)
     build_macos_universal_framework
+    create_xcframework "${OUTPUT_DIR}/${APPLE_XCFRAMEWORK_OSX_NAME}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}"
     build_ios_frameworks
-    create_xcframework "${OUTPUT_XCFRAMEWORK}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}" "${IOS_DEVICE_FRAMEWORK_PATH}" "${IOS_SIM_FRAMEWORK_PATH}"
+    create_xcframework "${OUTPUT_DIR}/${APPLE_XCFRAMEWORK_IOS_NAME}" "${IOS_DEVICE_FRAMEWORK_PATH}" "${IOS_SIM_FRAMEWORK_PATH}"
+    echo "Generated ${OUTPUT_DIR}/${APPLE_XCFRAMEWORK_OSX_NAME}"
+    echo "Generated ${OUTPUT_DIR}/${APPLE_XCFRAMEWORK_IOS_NAME}"
     ;;
 esac
-
-echo "Generated ${OUTPUT_XCFRAMEWORK}"

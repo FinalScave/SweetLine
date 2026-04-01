@@ -7,7 +7,6 @@
 # --android-ndk         Android NDK path
 # --ohos-toolchain      OHOS toolchain CMake file path
 
-# Parse arguments
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR/.."
 BUILD_DIR="$PROJECT_DIR/build"
@@ -15,44 +14,47 @@ OUTPUT_DIR="$PROJECT_DIR/prebuilt"
 ANDROID_NDK="${ANDROID_NDK:-}"
 OHOS_TOOLCHAIN="${OHOS_TOOLCHAIN:-}"
 PLATFORM="all"
-POSITIONAL_ARGS=()
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -b|--build)
-      BUILD_DIR="$2"
-      shift 2
-      ;;
-    -o|--output)
-      OUTPUT_DIR="$2"
-      shift 2
-      ;;
-    -s|--src)
-      PROJECT_DIR="$2"
-      shift 2
-      ;;
-    -p|--platform)
-      PLATFORM="$2"
-      shift 2
-      ;;
-    --android-ndk)
-      ANDROID_NDK="$2"
-      shift 2
-      ;;
-    --ohos-toolchain)
-      OHOS_TOOLCHAIN="$2"
-      shift 2
-      ;;
-    -*|--*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      POSITIONAL_ARGS+=("$1")
-      shift
-      ;;
-  esac
-done
-set -- "${POSITIONAL_ARGS[@]}"
+
+parse_build_shared_args() {
+  POSITIONAL_ARGS=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -b|--build)
+        BUILD_DIR="$2"
+        shift 2
+        ;;
+      -o|--output)
+        OUTPUT_DIR="$2"
+        shift 2
+        ;;
+      -s|--src)
+        PROJECT_DIR="$2"
+        shift 2
+        ;;
+      -p|--platform)
+        PLATFORM="$2"
+        shift 2
+        ;;
+      --android-ndk)
+        ANDROID_NDK="$2"
+        shift 2
+        ;;
+      --ohos-toolchain)
+        OHOS_TOOLCHAIN="$2"
+        shift 2
+        ;;
+      -*|--*)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+      *)
+        POSITIONAL_ARGS+=("$1")
+        shift
+        ;;
+    esac
+  done
+  set -- "${POSITIONAL_ARGS[@]}"
+}
 
 # Shared Apple helpers
 APPLE_FRAMEWORK_NAME="SweetLineNative"
@@ -213,7 +215,6 @@ create_osx_universal_dylib() {
 
 TARGET_NAME=sweetline
 WASM_TARGET_NAME=sweetline
-echo "============================= Start building: $PLATFORM ============================="
 
 function resolve_android_strip_tool() {
   local host_tags=("windows-x86_64" "linux-x86_64" "darwin-x86_64" "darwin-arm64")
@@ -503,56 +504,65 @@ function build_ohos() {
   copy_built_libraries "$OHOS_BUILD_DIR/lib" "$OHOS_PREBUILT_DIR"
 }
 
-if [ "$PLATFORM" = "all" ]; then
-  apple_outputs_skipped=0
-  build_windows_msvc
-  build_apple_outputs || {
-    apple_build_status=$?
-    if [ "$apple_build_status" -eq 2 ]; then
-      apple_outputs_skipped=1
-    else
-      exit "$apple_build_status"
-    fi
-  }
-  build_linux x86_64
-  build_android arm64-v8a
-  build_android x86_64
-  build_ohos arm64-v8a
-  build_ohos x86_64
-elif [ "$PLATFORM" = "wasm" ]; then
-  build_emscripten
-elif [ "$PLATFORM" = "windows" ]; then
-  build_windows_msvc
-elif [ "$PLATFORM" = "osx" ]; then
-  apple_prerequisite_status >/dev/null || {
-    apple_prerequisite_status >&2
-    exit 1
-  }
-  build_osx arm64
-  build_osx x86_64
-  build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
-elif [ "$PLATFORM" = "ios" ]; then
-  apple_prerequisite_status >/dev/null || {
-    apple_prerequisite_status >&2
-    exit 1
-  }
-  build_ios arm64
-  build_ios simulator-arm64
-  build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
-elif [ "$PLATFORM" = "linux" ]; then
-  build_linux x86_64
-elif [ "$PLATFORM" = "android" ]; then
-  build_android arm64-v8a
-  build_android x86_64
-elif [ "$PLATFORM" = "ohos" ]; then
-  build_ohos arm64-v8a
-  build_ohos x86_64
-else
-  echo "Unsupported platform: $PLATFORM" >&2
-  exit 1
-fi
+run_build_shared() {
+  parse_build_shared_args "$@"
+  echo "============================= Start building: $PLATFORM ============================="
 
-if [ "${apple_outputs_skipped:-0}" -eq 1 ]; then
-  echo "============================= Build Summary ============================="
-  echo "Apple artifacts skipped because prerequisites were not satisfied."
+  if [ "$PLATFORM" = "all" ]; then
+    apple_outputs_skipped=0
+    build_windows_msvc
+    build_apple_outputs || {
+      apple_build_status=$?
+      if [ "$apple_build_status" -eq 2 ]; then
+        apple_outputs_skipped=1
+      else
+        exit "$apple_build_status"
+      fi
+    }
+    build_linux x86_64
+    build_android arm64-v8a
+    build_android x86_64
+    build_ohos arm64-v8a
+    build_ohos x86_64
+  elif [ "$PLATFORM" = "wasm" ]; then
+    build_emscripten
+  elif [ "$PLATFORM" = "windows" ]; then
+    build_windows_msvc
+  elif [ "$PLATFORM" = "osx" ]; then
+    apple_prerequisite_status >/dev/null || {
+      apple_prerequisite_status >&2
+      exit 1
+    }
+    build_osx arm64
+    build_osx x86_64
+    build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
+  elif [ "$PLATFORM" = "ios" ]; then
+    apple_prerequisite_status >/dev/null || {
+      apple_prerequisite_status >&2
+      exit 1
+    }
+    build_ios arm64
+    build_ios simulator-arm64
+    build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
+  elif [ "$PLATFORM" = "linux" ]; then
+    build_linux x86_64
+  elif [ "$PLATFORM" = "android" ]; then
+    build_android arm64-v8a
+    build_android x86_64
+  elif [ "$PLATFORM" = "ohos" ]; then
+    build_ohos arm64-v8a
+    build_ohos x86_64
+  else
+    echo "Unsupported platform: $PLATFORM" >&2
+    exit 1
+  fi
+
+  if [ "${apple_outputs_skipped:-0}" -eq 1 ]; then
+    echo "============================= Build Summary ============================="
+    echo "Apple artifacts skipped because prerequisites were not satisfied."
+  fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  run_build_shared "$@"
 fi
