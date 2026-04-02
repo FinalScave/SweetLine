@@ -17,7 +17,8 @@ This workspace now builds as a Swift-direct-C Apple SDK backed by split `SweetLi
 
 ## Intended local workflow
 
-- Build native xcframework via `scripts/build_native_xcframework.sh`
+- Rebuild prebuilt Apple xcframework archives via `make build-prebuilt` (optional)
+- Install Apple xcframeworks into `platform/Apple/binaries` via `scripts/copy-native-xcframework.sh` or `make copy-native`
 - Validate manifest via `swift package dump-package --package-path platform/Apple`
 - Build SDK via `swift build --package-path platform/Apple`
 - Build demo via `cd Examples-MacOS && swift build`
