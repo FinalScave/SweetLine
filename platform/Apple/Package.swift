@@ -15,12 +15,19 @@ let package = Package(
     ],
     targets: [
         .binaryTarget(
-            name: "SweetLineNative",
-            path: "binaries/SweetLineNative.xcframework"
+            name: "SweetLineCoreIOS",
+            path: "binaries/SweetLineCoreIOS.xcframework"
+        ),
+        .binaryTarget(
+            name: "SweetLineCoreOSX",
+            path: "binaries/SweetLineCoreOSX.xcframework"
         ),
         .target(
             name: "SweetLineBridge",
-            dependencies: ["SweetLineNative"],
+            dependencies: [
+                .target(name: "SweetLineCoreIOS", condition: .when(platforms: [.iOS])),
+                .target(name: "SweetLineCoreOSX", condition: .when(platforms: [.macOS])),
+            ],
             publicHeadersPath: "include"
         ),
         .target(
@@ -33,7 +40,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SweetLineAppleTests",
-            dependencies: ["SweetLineMacOS", "SweetLineNative"],
+            dependencies: ["SweetLineMacOS"],
             path: "Tests/SweetLineAppleTests"
         ),
     ],

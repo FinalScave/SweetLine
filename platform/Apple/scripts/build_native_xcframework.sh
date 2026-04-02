@@ -172,7 +172,7 @@ build_macos_universal_framework() {
   mkdir -p "${MACOS_UNIVERSAL_DIR}/lib"
   lipo -create "${arm64_dylib}" "${x64_dylib}" -output "${universal_dylib}"
 
-  create_framework_bundle "${universal_dylib}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.macos"
+  create_framework_bundle "${universal_dylib}" "${MACOS_UNIVERSAL_FRAMEWORK_PATH}" "com.qiplat.sweetline.core.macos"
 }
 
 build_ios_frameworks() {
@@ -188,8 +188,8 @@ build_ios_frameworks() {
   require_file "${ios_device_dylib}" "iOS device shared library"
   require_file "${ios_sim_dylib}" "iOS simulator shared library"
 
-  create_framework_bundle "${ios_device_dylib}" "${IOS_DEVICE_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios"
-  create_framework_bundle "${ios_sim_dylib}" "${IOS_SIM_FRAMEWORK_PATH}" "com.qiplat.sweetline.native.ios-simulator"
+  create_framework_bundle "${ios_device_dylib}" "${IOS_DEVICE_FRAMEWORK_PATH}" "com.qiplat.sweetline.core.ios"
+  create_framework_bundle "${ios_sim_dylib}" "${IOS_SIM_FRAMEWORK_PATH}" "com.qiplat.sweetline.core.ios-simulator"
 }
 
 create_xcframework() {

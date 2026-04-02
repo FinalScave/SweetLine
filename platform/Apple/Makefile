@@ -26,5 +26,5 @@ demo-build:
 
 clean:
 	rm -rf .build
-	rm -rf binaries/SweetLineNativeIOS.xcframework
-	rm -rf binaries/SweetLineNativeOSX.xcframework
+	rm -rf binaries/SweetLineCoreIOS.xcframework
+	rm -rf binaries/SweetLineCoreOSX.xcframework

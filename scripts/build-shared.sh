@@ -57,9 +57,9 @@ parse_build_shared_args() {
 }
 
 # Shared Apple helpers
-APPLE_FRAMEWORK_NAME="SweetLineNative"
-APPLE_XCFRAMEWORK_IOS_NAME="SweetLineNativeIOS.xcframework"
-APPLE_XCFRAMEWORK_OSX_NAME="SweetLineNativeOSX.xcframework"
+APPLE_FRAMEWORK_NAME="SweetLineCore"
+APPLE_XCFRAMEWORK_IOS_NAME="SweetLineCoreIOS.xcframework"
+APPLE_XCFRAMEWORK_OSX_NAME="SweetLineCoreOSX.xcframework"
 
 apple_runtime_prebuilt_dir() {
   local output_root="$1"

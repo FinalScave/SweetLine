@@ -4,16 +4,16 @@ This directory contains the Apple-side workspace for SweetLine.
 
 ## Architecture
 
-- `SweetLineNative` — xcframework binary target built from the native SweetLine library
+- `SweetLineCoreIOS` / `SweetLineCoreOSX` — platform-specific xcframework binary targets built from the native SweetLine library
 - `SweetLineBridge` — thin C bridge module that re-exports `c_sweetline.h`
-- `SweetLineNativeWrapper` — SDK-side native link anchor for the static xcframework
+- `SweetLineCoreWrapper` — SDK-side native link anchor for the static xcframework
 - `SweetLineCoreInternal` — Swift SDK core wrappers, native handle management, and result decoders
 - `SweetLineMacOS` — macOS-facing library target
 - `Examples-MacOS` — separate demo package that validates the SDK and includes its own demo-side native wrapper for final executable linkage
 
 ## Current status
 
-This workspace now builds as a Swift-direct-C Apple SDK backed by `SweetLineNative.xcframework`.
+This workspace now builds as a Swift-direct-C Apple SDK backed by split `SweetLineCoreIOS.xcframework` and `SweetLineCoreOSX.xcframework` artifacts.
 
 ## Intended local workflow
 
