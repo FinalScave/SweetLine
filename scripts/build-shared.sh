@@ -3,7 +3,7 @@
 # -b, --build           Build directory
 # -o, --output          Output directory
 # -s, --src             SweetLine project source directory
-# -p, --platform        Target platform (all/android/windows/osx/ios/ohos/wasm; all means build everything)
+# -p, --platform        Target platform (all/android/windows/osx/ios/ohos/wasm; all means build everything except Apple)
 # --android-ndk         Android NDK path
 # --ohos-toolchain      OHOS toolchain CMake file path
 
@@ -389,22 +389,6 @@ function build_apple_xcframework() {
   verify_file_exists "$xcframework_zip" "$label XCFramework archive"
 }
 
-function build_apple_outputs() {
-  local prerequisite_message=""
-
-  prerequisite_message="$(apple_prerequisite_status)" || {
-    echo "$prerequisite_message"
-    return 2
-  }
-
-  build_osx arm64
-  build_osx x86_64
-  build_ios arm64
-  build_ios simulator-arm64
-  build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
-  build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
-}
-
 function build_linux() {
     LINUX_ARCH=$1
     LINUX_BUILD_DIR="$BUILD_DIR/linux/$LINUX_ARCH"
@@ -511,14 +495,6 @@ run_build_shared() {
   if [ "$PLATFORM" = "all" ]; then
     apple_outputs_skipped=0
     build_windows_msvc
-    build_apple_outputs || {
-      apple_build_status=$?
-      if [ "$apple_build_status" -eq 2 ]; then
-        apple_outputs_skipped=1
-      else
-        exit "$apple_build_status"
-      fi
-    }
     build_linux x86_64
     build_android arm64-v8a
     build_android x86_64
