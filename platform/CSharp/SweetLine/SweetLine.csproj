@@ -14,12 +14,20 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
 		<Version>1.2.0</Version>
+		<RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
+		<SweetLineNativeDir>$(RepoRoot)prebuilt\windows\x64\</SweetLineNativeDir>
+		<SweetLineNativeDll>$(SweetLineNativeDir)sweetline.dll</SweetLineNativeDll>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="" />
-		<Content Include="..\..\..\cmake-build-release-visual-studio\bin\sweetline.dll" Pack="true" PackagePath="runtimes\win-x64\native\">
+		<Content Include="$(SweetLineNativeDll)" Pack="true" PackagePath="runtimes\win-x64\native\">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+
+	<Target Name="ValidateSweetLineNative" BeforeTargets="Build;Pack">
+		<Error Condition="!Exists('$(SweetLineNativeDll)')"
+			   Text="Missing native library: $(SweetLineNativeDll). Build or sync the Windows prebuilt SweetLine shared library first." />
+	</Target>
 </Project>

@@ -12,6 +12,15 @@ java {
     targetCompatibility = JavaVersion.VERSION_22
 }
 
+def repoRoot = rootProject.projectDir.toPath().resolve('../..').normalize().toFile()
+def generatedNativeResourcesDir = layout.buildDirectory.dir('generated/resources/main')
+
+sourceSets {
+    main {
+        resources.srcDir(generatedNativeResourcesDir)
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -19,6 +28,31 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+tasks.register('syncNativeResources', Sync) {
+    into(generatedNativeResourcesDir)
+
+    from(new File(repoRoot, 'prebuilt/windows/x64')) {
+        include 'sweetline.dll'
+        into 'native/windows-x86_64'
+    }
+    from(new File(repoRoot, 'prebuilt/linux/x86_64')) {
+        include 'libsweetline.so'
+        into 'native/linux-x86_64'
+    }
+    from(new File(repoRoot, 'prebuilt/osx/x86_64')) {
+        include 'libsweetline.dylib'
+        into 'native/macos-x86_64'
+    }
+    from(new File(repoRoot, 'prebuilt/osx/arm64')) {
+        include 'libsweetline.dylib'
+        into 'native/macos-aarch64'
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn(tasks.named('syncNativeResources'))
 }
 
 tasks.withType(JavaCompile).configureEach {

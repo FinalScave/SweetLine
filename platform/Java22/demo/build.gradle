@@ -21,17 +21,40 @@ dependencies {
 application {
     mainClass = 'com.qiplat.sweetline.demo.Main'
     def osName = System.getProperty('os.name').toLowerCase()
+    def osArch = System.getProperty('os.arch').toLowerCase()
     def nativeLibSubDir
     if (osName.contains('windows')) {
-        nativeLibSubDir = '../../cmake-build-debug-visual-studio/bin'
+        nativeLibSubDir = '../../prebuilt/windows/x64'
     } else if (osName.contains('mac')) {
-        nativeLibSubDir = '../../build/lib'
+        if (osArch.contains('aarch64') || osArch.contains('arm64')) {
+            nativeLibSubDir = '../../prebuilt/osx/arm64'
+        } else {
+            nativeLibSubDir = '../../prebuilt/osx/x86_64'
+        }
     } else if (osName.contains('linux')) {
-        nativeLibSubDir = '../../build/lib'
+        nativeLibSubDir = '../../prebuilt/linux/x86_64'
     } else {
         throw new GradleException("Unsupported OS for SweetLine demo nativeLibDir: ${System.getProperty('os.name')}")
     }
     def nativeLibDir = rootProject.projectDir.toPath().resolve(nativeLibSubDir).toAbsolutePath().normalize().toString()
+    def expectedLibName
+    if (osName.contains('windows')) {
+        expectedLibName = 'sweetline.dll'
+    } else if (osName.contains('mac')) {
+        expectedLibName = 'libsweetline.dylib'
+    } else {
+        expectedLibName = 'libsweetline.so'
+    }
+
+    tasks.named('run') {
+        doFirst {
+            def expectedLib = new File(nativeLibDir, expectedLibName)
+            if (!expectedLib.exists()) {
+                throw new GradleException("Native library not found: ${expectedLib}. Build or sync the matching prebuilt SweetLine shared library first.")
+            }
+        }
+    }
+
     applicationDefaultJvmArgs = [
             '--enable-preview',
             '--enable-native-access=ALL-UNNAMED',

@@ -17,19 +17,6 @@ final class SweetLineNative {
     }
 
     private static final String LIB_PATH_KEY = "sweetline.lib.path";
-    private static final String[] LIB_SEARCH_PATHS = {
-            "../../cmake-build-release-visual-studio/bin/Release",
-            "../../cmake-build-release-visual-studio/bin/Debug",
-            "../../cmake-build-release-visual-studio/bin",
-            "../../cmake-build-release/bin",
-            "../../cmake-build-debug-visual-studio/bin/Debug",
-            "../../cmake-build-debug-visual-studio/bin",
-            "../../cmake-build-debug/bin",
-            "../../cmake-build-debug/lib",
-            "../../build/bin",
-            "../../build/lib",
-            "../../build/mac/lib",
-    };
     private static final String LOAD_LIBRARY_ERROR =
             "Cannot load native library 'sweetline'. " +
                     "Set -Dsweetline.lib.path=<dir> or add the library to java.library.path. ";
@@ -46,12 +33,6 @@ final class SweetLineNative {
 
         // -Dsweetline.lib.path explicitly specified (including the scenario auto-set by NativeLibraryExtractor.extract)
         SymbolLookup lookup = tryExplicitLibrary(libName);
-        if (lookup != null) {
-            return lookup;
-        }
-
-        // Auto-detect from source-relative paths during development
-        lookup = tryLoadFromCandidates(libName, LIB_SEARCH_PATHS);
         if (lookup != null) {
             return lookup;
         }
@@ -75,19 +56,6 @@ final class SweetLineNative {
             return null;
         }
         return lookupLibrary(Path.of(libPath, libName));
-    }
-
-    /**
-     * Try loading from development build directories relative to the working directory.
-     */
-    private static SymbolLookup tryLoadFromCandidates(String libName, String[] searchPaths) {
-        for (String searchPath : searchPaths) {
-            SymbolLookup lookup = lookupLibrary(Path.of(searchPath, libName).toAbsolutePath().normalize());
-            if (lookup != null) {
-                return lookup;
-            }
-        }
-        return null;
     }
 
     /**
