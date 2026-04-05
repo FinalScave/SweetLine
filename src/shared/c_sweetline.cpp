@@ -1,5 +1,7 @@
 #include "c_wrapper.hpp"
 
+using namespace NS_SWEETLINE;
+
 StringKeepAlive& StringKeepAlive::getInstance() {
   static thread_local StringKeepAlive string_pool;
   return string_pool;

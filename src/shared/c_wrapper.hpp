@@ -4,6 +4,8 @@
 #include "../include/c_sweetline.h"
 #include "highlight.h"
 
+using namespace NS_SWEETLINE;
+
 class StringKeepAlive {
 public:
   static StringKeepAlive& getInstance();
@@ -67,8 +69,6 @@ void deleteCPtrHolder(HandleT handle) {
     delete holder;
   }
 }
-
-using namespace NS_SWEETLINE;
 
 inline int32_t packHighlightConfig(const HighlightConfig& config) {
   int32_t bits = 0;
