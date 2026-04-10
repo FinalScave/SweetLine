@@ -1,4 +1,4 @@
-# sweetline
+﻿# sweetline
 
 SweetLine Flutter/Dart FFI package.
 
@@ -19,47 +19,40 @@ It wraps the SweetLine native C API and provides a Dart-friendly API for:
 - optional `showIndex` support
 - optional inline-style output
 
-## Supported native binaries
+## Supported platforms
 
-The current package build hook bundles prebuilt native libraries for:
+The published package bundles prebuilt native libraries for:
 
 - Android `arm64-v8a`
 - Android `x86_64`
+- Linux `x86_64`
+- macOS `arm64`
+- macOS `x86_64`
 - Windows `x86_64`
+- iOS device `arm64`
+- iOS simulator `arm64`
 
 Web is not supported.
 
-## Prepare native binaries
-
-The package build hook reads native libraries from the package-local `native/`
-directory. Before running the demo, tests, or publishing the package, sync the
-prebuilt binaries from the repository root:
-
-```bash
-cd D:/Projects/CrossPlatform/SweetLine/platform/Flutter/sweetline
-dart tool/sync_native_binaries.dart
-```
-
-Use `dart tool/...`, not `dart run tool/...`. Running through `dart run` will
-trigger build hooks before the `native/` directory is populated.
-
 ## Installation
-
-Add the package dependency:
 
 ```yaml
 dependencies:
-  sweetline:
-    path: ../sweetline
+  sweetline: ^1.0.1
 ```
-
-If you publish the package later, replace the local `path` dependency with the published version.
 
 ## Load syntax rules
 
-SweetLine does not hardcode language grammars in the Dart layer. You need to provide syntax JSON yourself, then compile it into the engine.
+SweetLine does not hardcode language grammars in the Dart layer. You need to
+provide syntax JSON yourself, then compile it into the engine.
 
-In Flutter applications, loading syntax JSON from assets is the most direct approach:
+Built-in syntax rule JSON files can be downloaded from the SweetLine open
+source repository's [`syntaxes/`](https://github.com/FinalScave/SweetLine/tree/master/syntaxes)
+directory. In most cases you only need to copy the language files your app
+actually uses into Flutter assets.
+
+In Flutter applications, loading syntax JSON from assets is the most direct
+approach:
 
 ```yaml
 flutter:
@@ -82,7 +75,8 @@ Future<HighlightEngine> createEngine() async {
 }
 ```
 
-You can also call `compileSyntaxFromFile(...)` if you already have a real file path on the current platform.
+You can also call `compileSyntaxFromFile(...)` if you already have a real file
+path on the current platform.
 
 ## Quick start
 
@@ -104,7 +98,7 @@ Future<void> main() async {
       throw StateError('dart syntax is not available');
     }
 
-    final result = analyzer.analyzeText('class Foo<T> {\\n  final int value;\\n}');
+    final result = analyzer.analyzeText('class Foo<T> {\n  final int value;\n}');
     for (var line = 0; line < result.lines.length; line++) {
       for (final span in result.lines[line].spans) {
         print(
@@ -123,7 +117,8 @@ Future<void> main() async {
 
 ## Incremental document analysis
 
-Use `DocumentAnalyzer` when text changes over time and you need incremental re-analysis.
+Use `DocumentAnalyzer` when text changes over time and you need incremental
+re-analysis.
 
 ```dart
 import 'package:sweetline/sweetline.dart';
@@ -144,7 +139,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
         const TextPosition(1, 0),
         const TextPosition(1, 0),
       ),
-      '  print(value);\\n',
+      '  print(value);\n',
       const LineRange(0, 40),
     );
 

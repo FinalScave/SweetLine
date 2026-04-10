@@ -1,3 +1,9 @@
+## 1.0.1
+
+* Add Linux native library support in the Flutter build hook.
+* Add iOS simulator `arm64` native library selection in the Flutter build hook.
+* Improve package documentation for syntax rule sourcing and publishing.
+
 ## 1.0.0
 
 * Initial Flutter/Dart FFI wrapper for the SweetLine native engine.

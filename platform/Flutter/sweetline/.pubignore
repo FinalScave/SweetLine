@@ -23,3 +23,6 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
+/DEVELOPING.md
+/native/ios/*.xcframework.zip
+/native/osx/*.xcframework.zip

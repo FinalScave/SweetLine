@@ -4,6 +4,52 @@ import 'package:code_assets/code_assets.dart';
 import 'package:hooks/hooks.dart';
 import 'package:logging/logging.dart';
 
+const String _assetId = 'lib/sweetline.dart';
+
+final Map<_NativeTarget, _NativeBinary> _nativeBinaries =
+    <_NativeTarget, _NativeBinary>{
+      _NativeTarget(OS.windows, Architecture.x64): _NativeBinary(
+        relativePath: 'windows/x64/sweetline.dll',
+        fileName: 'sweetline.dll',
+      ),
+      _NativeTarget(OS.linux, Architecture.x64): _NativeBinary(
+        relativePath: 'linux/x86_64/libsweetline.so',
+        fileName: 'libsweetline.so',
+      ),
+      _NativeTarget(OS.android, Architecture.arm64): _NativeBinary(
+        relativePath: 'android/arm64-v8a/libsweetline.so',
+        fileName: 'libsweetline.so',
+      ),
+      _NativeTarget(OS.android, Architecture.x64): _NativeBinary(
+        relativePath: 'android/x86_64/libsweetline.so',
+        fileName: 'libsweetline.so',
+      ),
+      _NativeTarget(OS.macOS, Architecture.arm64): _NativeBinary(
+        relativePath: 'osx/arm64/libsweetline.dylib',
+        fileName: 'libsweetline.dylib',
+      ),
+      _NativeTarget(OS.macOS, Architecture.x64): _NativeBinary(
+        relativePath: 'osx/x86_64/libsweetline.dylib',
+        fileName: 'libsweetline.dylib',
+      ),
+      _NativeTarget(
+        OS.iOS,
+        Architecture.arm64,
+        iosSdk: IOSSdk.iPhoneOS,
+      ): _NativeBinary(
+        relativePath: 'ios/arm64/libsweetline.dylib',
+        fileName: 'libsweetline.dylib',
+      ),
+      _NativeTarget(
+        OS.iOS,
+        Architecture.arm64,
+        iosSdk: IOSSdk.iPhoneSimulator,
+      ): _NativeBinary(
+        relativePath: 'ios/simulator-arm64/libsweetline.dylib',
+        fileName: 'libsweetline.dylib',
+      ),
+    };
+
 void main(List<String> args) async {
   _initLogger();
 
@@ -14,57 +60,46 @@ void main(List<String> args) async {
 
     final targetOS = input.config.code.targetOS;
     final targetArchitecture = input.config.code.targetArchitecture;
-
-    late final String relativePath;
-    late final String fileName;
-
-    if (targetOS == OS.windows && targetArchitecture == Architecture.x64) {
-      relativePath = 'windows/x64/sweetline.dll';
-      fileName = 'sweetline.dll';
-    } else if (targetOS == OS.android &&
-        targetArchitecture == Architecture.arm64) {
-      relativePath = 'android/arm64-v8a/libsweetline.so';
-      fileName = 'libsweetline.so';
-    } else if (targetOS == OS.android &&
-        targetArchitecture == Architecture.x64) {
-      relativePath = 'android/x86_64/libsweetline.so';
-      fileName = 'libsweetline.so';
-    } else if (targetOS == OS.macOS &&
-        targetArchitecture == Architecture.arm64) {
-      relativePath = 'osx/arm64/libsweetline.dylib';
-      fileName = 'libsweetline.dylib';
-    } else if (targetOS == OS.macOS &&
-        targetArchitecture == Architecture.x64) {
-      relativePath = 'osx/x86_64/libsweetline.dylib';
-      fileName = 'libsweetline.dylib';
-    } else if (targetOS == OS.iOS && targetArchitecture == Architecture.arm64) {
-      relativePath = 'ios/arm64/libsweetline.dylib';
-      fileName = 'libsweetline.dylib';
-    } else {
+    final targetIOSSdk =
+      targetOS == OS.iOS ? input.config.code.iOS.targetSdk : null;
+    final nativeBinary =
+        _nativeBinaries[_NativeTarget(
+          targetOS,
+          targetArchitecture,
+          iosSdk: targetIOSSdk,
+        )];
+    if (nativeBinary == null) {
+      final supportedTargets = _nativeBinaries.keys
+          .map((target) => target.displayName)
+          .join(', ');
       throw UnsupportedError(
-        'Unsupported target: ${targetOS.name} / ${targetArchitecture?.name}',
+        'Unsupported target: '
+        '${_NativeTarget(targetOS, targetArchitecture, iosSdk: targetIOSSdk).displayName}.\n'
+        'Supported targets: $supportedTargets',
       );
     }
 
-    final sourceUri = input.packageRoot.resolve('native/$relativePath');
+    final sourceUri = input.packageRoot.resolve(
+      'native/${nativeBinary.relativePath}',
+    );
     final sourceFile = File(sourceUri.toFilePath());
     if (!sourceFile.existsSync()) {
       throw StateError(
         'Native library not found: ${sourceFile.path}\n'
         'packageRoot: ${input.packageRoot}\n'
-        'requested: $relativePath\n'
+        'requested: ${nativeBinary.relativePath}\n'
         'Run `dart tool/sync_native_binaries.dart` in the sweetline package '
         'directory to populate native binaries.',
       );
     }
 
-    final outFile = input.outputDirectory.resolve(fileName);
+    final outFile = input.outputDirectory.resolve(nativeBinary.fileName);
     await sourceFile.copy(outFile.toFilePath());
 
     output.assets.code.add(
       CodeAsset(
         package: input.packageName,
-        name: 'lib/sweetline.dart',
+        name: _assetId,
         linkMode: DynamicLoadingBundled(),
         file: outFile,
       ),
@@ -77,4 +112,38 @@ void _initLogger() {
   Logger.root.onRecord.listen((record) {
     stdout.writeln('[${record.level.name}] ${record.message}');
   });
+}
+
+final class _NativeTarget {
+  const _NativeTarget(this.os, this.architecture, {this.iosSdk});
+
+  final OS os;
+  final Architecture architecture;
+  final IOSSdk? iosSdk;
+
+  String get displayName {
+    if (os == OS.iOS && iosSdk != null) {
+      return '${os.name}/${architecture.name}/${iosSdk!.type}';
+    }
+    return '${os.name}/${architecture.name}';
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _NativeTarget &&
+          runtimeType == other.runtimeType &&
+          os == other.os &&
+          architecture == other.architecture &&
+          iosSdk == other.iosSdk;
+
+  @override
+  int get hashCode => Object.hash(os, architecture, iosSdk);
+}
+
+final class _NativeBinary {
+  const _NativeBinary({required this.relativePath, required this.fileName});
+
+  final String relativePath;
+  final String fileName;
 }
