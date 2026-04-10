@@ -33,12 +33,16 @@ void main(List<String> args) async {
         targetArchitecture == Architecture.arm64) {
       relativePath = 'osx/arm64/libsweetline.dylib';
       fileName = 'libsweetline.dylib';
+    } else if (targetOS == OS.macOS &&
+        targetArchitecture == Architecture.x64) {
+      relativePath = 'osx/x86_64/libsweetline.dylib';
+      fileName = 'libsweetline.dylib';
     } else if (targetOS == OS.iOS && targetArchitecture == Architecture.arm64) {
-      relativePath = 'ios/arm64/sweetline.framework';
-      fileName = 'sweetline.framework';
+      relativePath = 'ios/arm64/libsweetline.dylib';
+      fileName = 'libsweetline.dylib';
     } else {
       throw UnsupportedError(
-        'Unsupported target: ${targetOS.name} / ${targetArchitecture.name}',
+        'Unsupported target: ${targetOS.name} / ${targetArchitecture?.name}',
       );
     }
 

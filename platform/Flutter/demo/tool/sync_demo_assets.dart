@@ -37,21 +37,16 @@ const String _syntaxSampleName = 'json-sweetline.json';
 
 void main() {
   final scriptFile = File.fromUri(Platform.script).absolute;
-  final flutterRoot = scriptFile.parent.parent;
+  // demo/tool/sync_demo_assets.dart → demo/tool/ → demo/
+  final demoRoot = scriptFile.parent.parent;
+  // demo/ → Flutter/
+  final flutterRoot = demoRoot.parent;
+  // Flutter/ → platform/ → SweetLine/
   final repoRoot = flutterRoot.parent.parent;
 
-  final syntaxesSourceDir = Directory(
-    '${repoRoot.path}${Platform.pathSeparator}syntaxes',
-  );
-  final examplesSourceDir = Directory(
-    '${repoRoot.path}${Platform.pathSeparator}tests${Platform.pathSeparator}files',
-  );
-  final demoRoot = Directory(
-    '${flutterRoot.path}${Platform.pathSeparator}demo',
-  );
-  final syntaxAssetsDir = Directory(
-    '${demoRoot.path}${Platform.pathSeparator}assets${Platform.pathSeparator}syntaxes',
-  );
+  final syntaxesSourceDir = Directory('${repoRoot.path}${Platform.pathSeparator}syntaxes');
+  final examplesSourceDir = Directory('${repoRoot.path}${Platform.pathSeparator}tests${Platform.pathSeparator}files');
+  final syntaxAssetsDir = Directory('${demoRoot.path}${Platform.pathSeparator}assets${Platform.pathSeparator}syntaxes');
   final exampleAssetsDir = Directory(
     '${demoRoot.path}${Platform.pathSeparator}assets${Platform.pathSeparator}examples',
   );
@@ -60,34 +55,21 @@ void main() {
   );
 
   if (!syntaxesSourceDir.existsSync()) {
-    throw StateError(
-      'Syntax source directory not found: ${syntaxesSourceDir.path}',
-    );
+    throw StateError('Syntax source directory not found: ${syntaxesSourceDir.path}');
   }
   if (!examplesSourceDir.existsSync()) {
-    throw StateError(
-      'Example source directory not found: ${examplesSourceDir.path}',
-    );
+    throw StateError('Example source directory not found: ${examplesSourceDir.path}');
   }
 
-  final syntaxFiles = _listFiles(
-    syntaxesSourceDir,
-    (file) => file.path.toLowerCase().endsWith('.json'),
-  );
-  final exampleFiles = _listFiles(
-    examplesSourceDir,
-    (file) => file.uri.pathSegments.last.startsWith('example.'),
-  );
+  final syntaxFiles = _listFiles(syntaxesSourceDir, (file) => file.path.toLowerCase().endsWith('.json'));
+  final exampleFiles = _listFiles(examplesSourceDir, (file) => file.uri.pathSegments.last.startsWith('example.'));
 
   _syncDirectory(sourceFiles: syntaxFiles, destinationDir: syntaxAssetsDir);
   _syncDirectory(sourceFiles: exampleFiles, destinationDir: exampleAssetsDir);
 
-  final syntaxNames = syntaxFiles
-      .map((file) => file.uri.pathSegments.last)
-      .toSet();
-  final exampleSamples =
-      exampleFiles.map(_buildExampleSample).toList(growable: true)
-        ..sort((left, right) => left.fileName.compareTo(right.fileName));
+  final syntaxNames = syntaxFiles.map((file) => file.uri.pathSegments.last).toSet();
+  final exampleSamples = exampleFiles.map(_buildExampleSample).toList(growable: true)
+    ..sort((left, right) => left.fileName.compareTo(right.fileName));
 
   if (!syntaxNames.contains(_syntaxSampleName)) {
     throw StateError('Missing syntax sample: $_syntaxSampleName');
@@ -103,44 +85,31 @@ void main() {
   for (final sample in exampleSamples) {
     final syntaxFileName = sample.syntaxAssetPath.split('/').last;
     if (!syntaxNames.contains(syntaxFileName)) {
-      throw StateError(
-        'Missing syntax asset "$syntaxFileName" for sample "${sample.fileName}"',
-      );
+      throw StateError('Missing syntax asset "$syntaxFileName" for sample "${sample.fileName}"');
     }
   }
 
   generatedFile.parent.createSync(recursive: true);
   generatedFile.writeAsStringSync(_buildGeneratedSource(exampleSamples));
 
-  stdout.writeln(
-    'Synced ${syntaxFiles.length} syntaxes and ${exampleFiles.length} examples.',
-  );
+  stdout.writeln('Synced ${syntaxFiles.length} syntaxes and ${exampleFiles.length} examples.');
   stdout.writeln('Generated asset manifest: ${generatedFile.path}');
 }
 
 List<File> _listFiles(Directory directory, bool Function(File file) predicate) {
-  final files =
-      directory
-          .listSync()
-          .whereType<File>()
-          .where(predicate)
-          .toList(growable: false)
-        ..sort((left, right) => left.path.compareTo(right.path));
+  final files = directory.listSync().whereType<File>().where(predicate).toList(growable: false)
+    ..sort((left, right) => left.path.compareTo(right.path));
   return files;
 }
 
-void _syncDirectory({
-  required List<File> sourceFiles,
-  required Directory destinationDir,
-}) {
+void _syncDirectory({required List<File> sourceFiles, required Directory destinationDir}) {
   destinationDir.createSync(recursive: true);
 
   final expectedNames = <String>{};
   for (final sourceFile in sourceFiles) {
     final fileName = sourceFile.uri.pathSegments.last;
     expectedNames.add(fileName);
-    final destinationPath =
-        '${destinationDir.path}${Platform.pathSeparator}$fileName';
+    final destinationPath = '${destinationDir.path}${Platform.pathSeparator}$fileName';
     sourceFile.copySync(destinationPath);
   }
 
@@ -158,9 +127,7 @@ void _syncDirectory({
 _DemoSampleData _buildExampleSample(File file) {
   final fileName = file.uri.pathSegments.last;
   final extensionIndex = fileName.indexOf('.');
-  final extension = extensionIndex >= 0
-      ? fileName.substring(extensionIndex)
-      : '';
+  final extension = extensionIndex >= 0 ? fileName.substring(extensionIndex) : '';
   final syntaxFileName = _extensionToSyntax[extension];
   if (syntaxFileName == null) {
     throw StateError('No syntax mapping for example file: $fileName');
@@ -189,20 +156,14 @@ String _buildGeneratedSource(List<_DemoSampleData> samples) {
     ..writeln('  final String syntaxAssetPath;')
     ..writeln('}')
     ..writeln()
-    ..writeln(
-      'const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[',
-    );
+    ..writeln('const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[');
 
   for (final sample in samples) {
     buffer
       ..writeln('  DemoAssetEntry(')
       ..writeln("    fileName: '${_escapeDartString(sample.fileName)}',")
-      ..writeln(
-        "    sourceAssetPath: '${_escapeDartString(sample.sourceAssetPath)}',",
-      )
-      ..writeln(
-        "    syntaxAssetPath: '${_escapeDartString(sample.syntaxAssetPath)}',",
-      )
+      ..writeln("    sourceAssetPath: '${_escapeDartString(sample.sourceAssetPath)}',")
+      ..writeln("    syntaxAssetPath: '${_escapeDartString(sample.syntaxAssetPath)}',")
       ..writeln('  ),');
   }
 
@@ -224,11 +185,7 @@ String _escapeDartString(String value) {
 }
 
 class _DemoSampleData {
-  const _DemoSampleData({
-    required this.fileName,
-    required this.sourceAssetPath,
-    required this.syntaxAssetPath,
-  });
+  const _DemoSampleData({required this.fileName, required this.sourceAssetPath, required this.syntaxAssetPath});
 
   final String fileName;
   final String sourceAssetPath;
