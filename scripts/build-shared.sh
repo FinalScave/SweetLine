@@ -390,25 +390,42 @@ function build_apple_xcframework() {
 }
 
 function build_linux() {
-    LINUX_ARCH=$1
-    LINUX_BUILD_DIR="$BUILD_DIR/linux/$LINUX_ARCH"
-    if [ $LINUX_ARCH = "aarch64" ]; then
-      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux/aarch64"
-    elif [ $LINUX_ARCH = "x86_64" ]; then
-      LINUX_PREBUILT_DIR="$OUTPUT_DIR/linux/x86_64"
+    local linux_arch="$1"
+    local linux_build_dir="$BUILD_DIR/linux/$linux_arch"
+    local linux_prebuilt_dir=""
+    local linux_toolchain_args=()
+    local linux_cache_file="$linux_build_dir/CMakeCache.txt"
+
+    if [ "$linux_arch" = "aarch64" ]; then
+      linux_prebuilt_dir="$OUTPUT_DIR/linux/aarch64"
+      command -v aarch64-linux-gnu-gcc >/dev/null 2>&1 || {
+        echo "Missing aarch64-linux-gnu-gcc. Install gcc-aarch64-linux-gnu." >&2
+        return 1
+      }
+      command -v aarch64-linux-gnu-g++ >/dev/null 2>&1 || {
+        echo "Missing aarch64-linux-gnu-g++. Install g++-aarch64-linux-gnu." >&2
+        return 1
+      }
+      if [ ! -f "$linux_cache_file" ]; then
+        linux_toolchain_args+=("-DCMAKE_TOOLCHAIN_FILE=$PROJECT_DIR/scripts/cmake/linux-aarch64-toolchain.cmake")
+      fi
+    elif [ "$linux_arch" = "x86_64" ]; then
+      linux_prebuilt_dir="$OUTPUT_DIR/linux/x86_64"
     else
-      echo "Unsupported arch: $LINUX_ARCH"
+      echo "Unsupported arch: $linux_arch"
       return 1
     fi
-    cmake $PROJECT_DIR \
-      -B $LINUX_BUILD_DIR \
+
+    cmake "$PROJECT_DIR" \
+      -B "$linux_build_dir" \
       -G "Ninja" \
       -DCMAKE_CXX_FLAGS="-std=c++17 -fPIC" \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_STATIC_LIB=OFF \
-      -DBUILD_TESTING=OFF
-    cmake --build $LINUX_BUILD_DIR --target $TARGET_NAME -j 12
-    copy_built_libraries "$LINUX_BUILD_DIR/lib" "$LINUX_PREBUILT_DIR"
+      -DBUILD_TESTING=OFF \
+      "${linux_toolchain_args[@]}"
+    cmake --build "$linux_build_dir" --target "$TARGET_NAME" -j 12
+    copy_built_libraries "$linux_build_dir/lib" "$linux_prebuilt_dir"
 }
 
 function build_emscripten() {
@@ -496,6 +513,7 @@ run_build_shared() {
     apple_outputs_skipped=0
     build_windows_msvc
     build_linux x86_64
+    build_linux aarch64
     build_android arm64-v8a
     build_android x86_64
     build_ohos arm64-v8a
@@ -522,6 +540,7 @@ run_build_shared() {
     build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
   elif [ "$PLATFORM" = "linux" ]; then
     build_linux x86_64
+    build_linux aarch64
   elif [ "$PLATFORM" = "android" ]; then
     build_android arm64-v8a
     build_android x86_64
