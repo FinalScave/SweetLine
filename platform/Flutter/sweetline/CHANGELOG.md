@@ -1,3 +1,7 @@
+## 1.0.2
+
+* Add Linux `aarch64` native library support.
+
 ## 1.0.1
 
 * Add Linux native library support in the Flutter build hook.

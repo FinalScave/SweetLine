@@ -20,7 +20,7 @@
 <dependency>
   <groupId>com.qiplat</groupId>
   <artifactId>sweetline-ffm</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
 </dependency>
 ```
 
@@ -28,7 +28,7 @@
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline-ffm:1.2.0'
+implementation 'com.qiplat:sweetline-ffm:1.2.1'
 ```
 
 ---

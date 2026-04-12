@@ -15,14 +15,14 @@ The WinForms/.NET wrapper is a P/Invoke binding over the SweetLine C API:
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.2.0
+dotnet add package SweetLine --version 1.2.1
 ```
 
 Or in `.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.2.0" />
+  <PackageReference Include="SweetLine" Version="1.2.1" />
 </ItemGroup>
 ```
 
@@ -83,4 +83,4 @@ DocumentHighlightSlice visible = analyzer.AnalyzeIncrementalInLineRange(
 - Native library lookup:
   - `SWEETLINE_LIB_PATH` (file path or directory)
   - app directory / runtime native directories
-  - common project build output directories
+  - system default native resolution

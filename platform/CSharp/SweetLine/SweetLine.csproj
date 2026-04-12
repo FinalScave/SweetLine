@@ -13,21 +13,44 @@
 		<RepositoryUrl>https://github.com/FinalScave/SweetLine</RepositoryUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
-		<Version>1.2.0</Version>
+		<Version>1.2.1</Version>
 		<RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
-		<SweetLineNativeDir>$(RepoRoot)prebuilt\windows\x64\</SweetLineNativeDir>
-		<SweetLineNativeDll>$(SweetLineNativeDir)sweetline.dll</SweetLineNativeDll>
+		<SweetLineNativeWinX64>$(RepoRoot)prebuilt\windows\x64\sweetline.dll</SweetLineNativeWinX64>
+		<SweetLineNativeLinuxX64>$(RepoRoot)prebuilt\linux\x86_64\libsweetline.so</SweetLineNativeLinuxX64>
+		<SweetLineNativeLinuxArm64>$(RepoRoot)prebuilt\linux\aarch64\libsweetline.so</SweetLineNativeLinuxArm64>
+		<SweetLineNativeOsxX64>$(RepoRoot)prebuilt\osx\x86_64\libsweetline.dylib</SweetLineNativeOsxX64>
+		<SweetLineNativeOsxArm64>$(RepoRoot)prebuilt\osx\arm64\libsweetline.dylib</SweetLineNativeOsxArm64>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="" />
-		<Content Include="$(SweetLineNativeDll)" Pack="true" PackagePath="runtimes\win-x64\native\">
+		<Content Include="$(SweetLineNativeWinX64)" Pack="true" PackagePath="runtimes\win-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(SweetLineNativeLinuxX64)" Pack="true" PackagePath="runtimes\linux-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(SweetLineNativeLinuxArm64)" Pack="true" PackagePath="runtimes\linux-arm64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(SweetLineNativeOsxX64)" Pack="true" PackagePath="runtimes\osx-x64\native\">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(SweetLineNativeOsxArm64)" Pack="true" PackagePath="runtimes\osx-arm64\native\">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 
 	<Target Name="ValidateSweetLineNative" BeforeTargets="Build;Pack">
-		<Error Condition="!Exists('$(SweetLineNativeDll)')"
-			   Text="Missing native library: $(SweetLineNativeDll). Build or sync the Windows prebuilt SweetLine shared library first." />
+		<Error Condition="!Exists('$(SweetLineNativeWinX64)')"
+			   Text="Missing native library: $(SweetLineNativeWinX64)." />
+		<Error Condition="!Exists('$(SweetLineNativeLinuxX64)')"
+			   Text="Missing native library: $(SweetLineNativeLinuxX64)." />
+		<Error Condition="!Exists('$(SweetLineNativeLinuxArm64)')"
+			   Text="Missing native library: $(SweetLineNativeLinuxArm64)." />
+		<Error Condition="!Exists('$(SweetLineNativeOsxX64)')"
+			   Text="Missing native library: $(SweetLineNativeOsxX64)." />
+		<Error Condition="!Exists('$(SweetLineNativeOsxArm64)')"
+			   Text="Missing native library: $(SweetLineNativeOsxArm64)." />
 	</Target>
 </Project>

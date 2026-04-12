@@ -15,14 +15,14 @@ WinForms/.NET 封装基于 SweetLine C API 的 P/Invoke：
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.2.0
+dotnet add package SweetLine --version 1.2.1
 ```
 
 或在 `.csproj` 中添加：
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.2.0" />
+  <PackageReference Include="SweetLine" Version="1.2.1" />
 </ItemGroup>
 ```
 
@@ -83,4 +83,4 @@ DocumentHighlightSlice visible = analyzer.AnalyzeIncrementalInLineRange(
 - Native 库加载顺序：
   - `SWEETLINE_LIB_PATH`（文件路径或目录）
   - 应用目录 / runtime native 目录
-  - 常见工程构建输出目录
+  - 系统默认 native 解析

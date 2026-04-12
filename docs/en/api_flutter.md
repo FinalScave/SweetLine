@@ -14,7 +14,7 @@ wrappers.
 
 ```yaml
 dependencies:
-  sweetline: ^1.0.1
+  sweetline: ^1.0.2
 ```
 
 For local monorepo development you can also use a `path` dependency pointing to
@@ -113,6 +113,7 @@ The published package currently bundles native binaries for:
 
 - Android `arm64-v8a`
 - Android `x86_64`
+- Linux `aarch64`
 - Linux `x86_64`
 - macOS `arm64`
 - macOS `x86_64`

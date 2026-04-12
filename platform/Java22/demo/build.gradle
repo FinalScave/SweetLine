@@ -32,7 +32,11 @@ application {
             nativeLibSubDir = '../../prebuilt/osx/x86_64'
         }
     } else if (osName.contains('linux')) {
-        nativeLibSubDir = '../../prebuilt/linux/x86_64'
+        if (osArch.contains('aarch64') || osArch.contains('arm64')) {
+            nativeLibSubDir = '../../prebuilt/linux/aarch64'
+        } else {
+            nativeLibSubDir = '../../prebuilt/linux/x86_64'
+        }
     } else {
         throw new GradleException("Unsupported OS for SweetLine demo nativeLibDir: ${System.getProperty('os.name')}")
     }

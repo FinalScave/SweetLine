@@ -21,21 +21,6 @@ internal static class SweetLineNative {
 
 	private const string NativeLibraryName = "sweetline";
 
-	private static readonly string[] RelativeSearchPaths =
-	[
-		"../../../../cmake-build-release-visual-studio/bin/Release",
-		"../../../../cmake-build-release-visual-studio/bin/Debug",
-		"../../../../cmake-build-release-visual-studio/bin",
-		"../../../../cmake-build-release/bin",
-		"../../../../cmake-build-debug-visual-studio/bin/Debug",
-		"../../../../cmake-build-debug-visual-studio/bin",
-		"../../../../cmake-build-debug/bin",
-		"../../../../cmake-build-debug/lib",
-		"../../../../build/bin",
-		"../../../../build/lib",
-		"../../../../build/mac/lib"
-	];
-
 	static SweetLineNative() {
 		try {
 			NativeLibrary.SetDllImportResolver(typeof(SweetLineNative).Assembly, ResolveLibrary);
@@ -84,7 +69,7 @@ internal static class SweetLineNative {
 	/// Search order:
 	/// 1) Explicit <c>SWEETLINE_LIB_PATH</c>
 	/// 2) App base / current directory candidates
-	/// 3) Runtime native folders and common build output folders
+	/// 3) Runtime native folders
 	/// 4) System default native resolution
 	/// </remarks>
 	private static IntPtr ResolveLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
@@ -143,13 +128,13 @@ internal static class SweetLineNative {
 		}
 
 		foreach (string root in roots) {
-			TryAddCandidate(seen, list, Path.Combine(root, fileName));
 			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "win-x64", "native", fileName));
 			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "win-arm64", "native", fileName));
-
-			foreach (string relativePath in RelativeSearchPaths) {
-				TryAddCandidate(seen, list, Path.Combine(root, relativePath, fileName));
-			}
+			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "linux-x64", "native", fileName));
+			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "linux-arm64", "native", fileName));
+			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "osx-x64", "native", fileName));
+			TryAddCandidate(seen, list, Path.Combine(root, "runtimes", "osx-arm64", "native", fileName));
+			TryAddCandidate(seen, list, Path.Combine(root, fileName));
 		}
 
 		return list;

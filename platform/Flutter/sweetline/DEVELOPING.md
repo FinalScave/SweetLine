@@ -25,6 +25,7 @@ The sync script mirrors selected `prebuilt/` directories into
 Current build hook mappings:
 
 - `windows/x64/sweetline.dll`
+- `linux/aarch64/libsweetline.so`
 - `linux/x86_64/libsweetline.so`
 - `android/arm64-v8a/libsweetline.so`
 - `android/x86_64/libsweetline.so`

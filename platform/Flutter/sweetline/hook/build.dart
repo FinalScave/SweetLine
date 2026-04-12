@@ -16,6 +16,10 @@ final Map<_NativeTarget, _NativeBinary> _nativeBinaries =
         relativePath: 'linux/x86_64/libsweetline.so',
         fileName: 'libsweetline.so',
       ),
+      _NativeTarget(OS.linux, Architecture.arm64): _NativeBinary(
+        relativePath: 'linux/aarch64/libsweetline.so',
+        fileName: 'libsweetline.so',
+      ),
       _NativeTarget(OS.android, Architecture.arm64): _NativeBinary(
         relativePath: 'android/arm64-v8a/libsweetline.so',
         fileName: 'libsweetline.so',

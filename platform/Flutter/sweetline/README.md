@@ -25,6 +25,7 @@ The published package bundles prebuilt native libraries for:
 
 - Android `arm64-v8a`
 - Android `x86_64`
+- Linux `aarch64`
 - Linux `x86_64`
 - macOS `arm64`
 - macOS `x86_64`
@@ -38,7 +39,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.0.1
+  sweetline: ^1.0.2
 ```
 
 ## Load syntax rules
