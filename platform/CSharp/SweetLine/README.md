@@ -144,9 +144,9 @@ Build or sync the native libraries under `prebuilt/windows/x64`, `prebuilt/linux
 `prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, and `prebuilt/osx/arm64` first.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.0
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.1
 
-dotnet nuget push artifacts/nuget/SweetLine.1.2.0.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.2.1.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate

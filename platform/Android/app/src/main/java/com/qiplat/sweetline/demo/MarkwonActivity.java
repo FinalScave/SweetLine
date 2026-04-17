@@ -37,6 +37,8 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         SweetLineGlobal.getEngineInstance().registerStyleName("lifetime", 12);
         SweetLineGlobal.getEngineInstance().registerStyleName("selector", 13);
         SweetLineGlobal.getEngineInstance().registerStyleName("builtin", 14);
+        SweetLineGlobal.getEngineInstance().registerStyleName("url", 15);
+        SweetLineGlobal.getEngineInstance().registerStyleName("property", 16);
         colorMap.append(1, 0XFF569CD6);
         colorMap.append(2, 0XFFBD63C5);
         colorMap.append(3, 0XFFE4FAD5);
@@ -51,6 +53,8 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         colorMap.append(12, 0XFF4EC9B0);
         colorMap.append(13, 0XFF4EC9B0);
         colorMap.append(14, 0XFF569CD6);
+        colorMap.append(15, 0XFF4FC1FF);
+        colorMap.append(16, 0XFF9CDCFE);
     }
 
     @Override
@@ -76,9 +80,11 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         try {
             String[] syntaxFiles = {
                     "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json",
-                    "javascript.json", "html.json", "java.json", "json-sweetline.json", "kotlin.json", "lua.json",
-                    "python.json", "rust.json", "scala.json", "shell.json", "sql.json", "swift.json", "toml.json",
-                    "typescript.json", "xml.json", "yaml.json", "tiecode.json", "markdown.json"
+                    "javascript.json", "html.json", "java.json", "json-sweetline.json", "jsonc.json", "json5.json",
+                    "kotlin.json", "lua.json", "python.json", "rust.json", "scala.json", "shell.json", "sql.json",
+                    "swift.json", "toml.json", "typescript.json", "xml.json", "yaml.json", "tiecode.json",
+                    "markdown.json", "css.json", "scss.json", "less.json", "cmake.json", "dockerfile.json",
+                    "makefile.json", "properties.json", "env.json"
             };
             for (String syntaxFile : syntaxFiles) {
                 String syntaxJson = AssetUtils.readAsset(this, syntaxFile);

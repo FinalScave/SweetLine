@@ -7,6 +7,12 @@
     "any": "[\\S\\s]"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
     "bracedVariableRule": [
       {
         "pattern": "(\\$\\{)([^}]*)(\\})",
@@ -27,8 +33,23 @@
     ],
     "singleQuotedStringRule": [
       {
-        "pattern": "'(?:[^']*)'",
-        "style": "string"
+        "pattern": "(')([^']*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "singleQuotedStringContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "doubleQuotedStringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
       }
     ],
     "numberLiteralRule": [
@@ -123,8 +144,7 @@
         "include": "numberLiteralRule"
       },
       {
-        "pattern": "#${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "<<-?'?(\\w+)'?",
@@ -153,6 +173,9 @@
         "style": "annotation"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "\"",
         "style": "string",
         "state": "default"
@@ -168,7 +191,46 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "include": "stringAnyCharRule"
+      }
+    ],
+    "doubleQuotedStringContent": [
+      {
+        "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
+      },
+      {
+        "pattern": "\\$\\([^)]*\\)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "`[^`]*`",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "singleQuotedStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "commandSubstitution": [
@@ -206,8 +268,7 @@
         "state": "commandSubstitution"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "includes": ["singleQuotedStringRule", "numberLiteralRule"]
@@ -235,8 +296,7 @@
         "includes": ["bracedVariableRule", "simpleVariableRule", "specialVariableRule"]
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "includes": ["singleQuotedStringRule", "numberLiteralRule"]
@@ -253,7 +313,7 @@
         "state": "default"
       },
       {
-        "includes": ["bracedVariableRule", "simpleVariableRule", "stringAnyCharRule"]
+        "includes": ["bracedVariableRule", "simpleVariableRule", "urlRule", "stringAnyCharRule"]
       }
     ]
   },

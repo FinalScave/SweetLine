@@ -1,0 +1,129 @@
+{
+  "name": "dockerfile",
+  "fileExtensions": [".dockerfile", ".containerfile"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "ident": "[A-Za-z_][A-Za-z0-9_]*"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "bracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "simpleVariableRule": [
+      {
+        "pattern": "(\\$)(${ident})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^(${whiteSpace}*)(ARG|ENV|LABEL)(${whiteSpace}+)([A-Za-z_][A-Za-z0-9_.-]*)(=)",
+        "styles": [2, "keyword", 4, "variable", 5, "punctuation"]
+      },
+      {
+        "pattern": "^(${whiteSpace}*)(FROM)(${whiteSpace}+)",
+        "styles": [2, "keyword"]
+      },
+      {
+        "pattern": "^(${whiteSpace}*)(RUN|CMD|LABEL|EXPOSE|ENV|ADD|COPY|ENTRYPOINT|VOLUME|USER|WORKDIR|ARG|ONBUILD|STOPSIGNAL|HEALTHCHECK|SHELL|MAINTAINER)(${whiteSpace}+)",
+        "styles": [2, "keyword"]
+      },
+      {
+        "pattern": "(${whiteSpace}|^)(AS)(${whiteSpace}+)([A-Za-z_][A-Za-z0-9_.-]*)",
+        "styles": [2, "keyword", 4, "class"]
+      },
+      {
+        "pattern": "(--[A-Za-z][A-Za-z0-9-]*)(=)",
+        "styles": [1, "annotation", 2, "punctuation"]
+      },
+      {
+        "pattern": "(--[A-Za-z][A-Za-z0-9-]*)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "includes": ["urlRule", "bracedVariableRule", "simpleVariableRule"]
+      },
+      {
+        "pattern": "\\b\\d+(?:/(?:tcp|udp))?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[\\[\\],=:\\\\]",
+        "style": "punctuation"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "bracedVariableRule", "simpleVariableRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

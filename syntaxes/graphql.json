@@ -1,0 +1,141 @@
+{
+  "name": "graphql",
+  "fileExtensions": [".graphql", ".gql", ".graphqls"],
+  "variables": {
+    "identifier": "[_A-Za-z][_0-9A-Za-z]*",
+    "typeIdentifier": "[A-Z][_0-9A-Za-z]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "directiveRule": [
+      {
+        "pattern": "(@)(${identifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "variableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "blockString"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "(query|mutation|subscription|fragment)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(type|interface|union|enum|input|scalar|directive)${whiteSpace}+(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:schema|extend|implements|on|repeatable)\\b",
+        "style": "keyword"
+      },
+      {
+        "include": "directiveRule"
+      },
+      {
+        "include": "variableRule"
+      },
+      {
+        "pattern": "(?:${identifier})(?=${whiteSpace}*:)",
+        "style": "property"
+      },
+      {
+        "pattern": "(?:${identifier})(?=${whiteSpace}*\\()",
+        "style": "method"
+      },
+      {
+        "pattern": "\\b(?:Int|Float|String|Boolean|ID)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "\\b-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\.\\.\\.|[!$():=@\\[\\]{},|&]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "blockString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

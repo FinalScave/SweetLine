@@ -1,0 +1,85 @@
+{
+  "name": "gitignore",
+  "fileExtensions": [".gitignore"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "^(?:${whiteSpace}*)(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "escapedLiteralRule": [
+      {
+        "pattern": "(\\\\)([#\\!\\*\\?\\[\\]\\\\ ])",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "bracketPatternRule": [
+      {
+        "pattern": "(\\[)(!?\\^?)([^\\]]*)(\\])",
+        "styles": [1, "punctuation", 2, "annotation", 3, "selector", 4, "punctuation"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)(!)(?=\\S)",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "\\*\\*",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\*(?!\\*)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\?",
+        "style": "annotation"
+      },
+      {
+        "pattern": "/",
+        "style": "punctuation"
+      },
+      {
+        "include": "escapedLiteralRule"
+      },
+      {
+        "include": "bracketPatternRule"
+      },
+      {
+        "pattern": "[^\\s#!*?\\[\\]/\\\\]+",
+        "style": "selector"
+      },
+      {
+        "pattern": "${whiteSpace}+",
+        "style": "punctuation"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

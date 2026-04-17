@@ -9,6 +9,14 @@
     "any": "[\\S\\s]",
     "primitiveType": "void|boolean|byte|char|short|int|long|float|double"
   },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ]
+  },
   "states": {
     "default": [
       {
@@ -133,8 +141,9 @@
         "state": "textBlock"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
       },
       {
         "pattern": "'(?:[^'\\\\]|\\\\.)*'",
@@ -163,8 +172,9 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "pattern": "//",
+        "style": "comment",
+        "state": "lineComment"
       },
       {
         "pattern": "->|::",
@@ -289,8 +299,9 @@
         "styles": [1, "class", 2, "punctuation", 3, "variable"]
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
       },
       {
         "pattern": "'(?:[^'\\\\]|\\\\.)*'",
@@ -324,6 +335,9 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "\\\\.",
         "style": "string"
       },
@@ -332,11 +346,47 @@
         "style": "string"
       }
     ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "lineComment": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
     "docComment": [
       {
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "(@param)${whiteSpace}+(<)(${identifier})(>)",
@@ -380,6 +430,9 @@
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

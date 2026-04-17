@@ -1,0 +1,177 @@
+{
+  "name": "protobuf",
+  "fileExtensions": [".proto"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "qualifiedIdentifier": "${identifier}(?:\\.${identifier})*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "scalarType": "double|float|int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string|bytes",
+    "mapKeyType": "int32|int64|uint32|uint64|sint32|sint64|fixed32|fixed64|sfixed32|sfixed64|bool|string"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "(syntax)${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "punctuation"]
+      },
+      {
+        "pattern": "(package)${whiteSpace}+(${qualifiedIdentifier})",
+        "styles": [1, "keyword", 2, "annotation"]
+      },
+      {
+        "pattern": "(import)(?:${whiteSpace}+(public|weak))?",
+        "styles": [1, "keyword", 2, "keyword"]
+      },
+      {
+        "pattern": "(message|enum|service)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(option)${whiteSpace}*(\\()(${qualifiedIdentifier})(\\))${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "property", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "(option)${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "(rpc)${whiteSpace}+(${identifier})${whiteSpace}*(\\()${whiteSpace}*(${qualifiedIdentifier})${whiteSpace}*(\\))${whiteSpace}*(returns)${whiteSpace}*(\\()${whiteSpace}*(stream)${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}*(\\))",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 4, "class", 5, "punctuation", 6, "keyword", 7, "punctuation", 8, "keyword", 9, "class", 10, "punctuation"]
+      },
+      {
+        "pattern": "(rpc)${whiteSpace}+(${identifier})${whiteSpace}*(\\()${whiteSpace}*(${qualifiedIdentifier})${whiteSpace}*(\\))${whiteSpace}*(returns)${whiteSpace}*(\\()${whiteSpace}*(${qualifiedIdentifier})${whiteSpace}*(\\))",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 4, "class", 5, "punctuation", 6, "keyword", 7, "punctuation", 8, "class", 9, "punctuation"]
+      },
+      {
+        "pattern": "(oneof|group|extend)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "property"]
+      },
+      {
+        "pattern": "(map)${whiteSpace}*(<)${whiteSpace}*(${mapKeyType})${whiteSpace}*(,)${whiteSpace}*(${scalarType})(?=${whiteSpace}*>)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "builtin", 4, "punctuation", 5, "builtin"]
+      },
+      {
+        "pattern": "(map)${whiteSpace}*(<)${whiteSpace}*(${mapKeyType})${whiteSpace}*(,)${whiteSpace}*(${qualifiedIdentifier})(?=${whiteSpace}*>)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "builtin", 4, "punctuation", 5, "class"]
+      },
+      {
+        "pattern": "(repeated|optional|required|stream)${whiteSpace}+(${scalarType})${whiteSpace}+(${identifier})(?=${whiteSpace}*=)",
+        "styles": [1, "keyword", 2, "builtin", 3, "variable"]
+      },
+      {
+        "pattern": "(repeated|optional|required|stream)${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}+(${identifier})(?=${whiteSpace}*=)",
+        "styles": [1, "keyword", 2, "class", 3, "variable"]
+      },
+      {
+        "pattern": "(${scalarType})${whiteSpace}+(${identifier})(?=${whiteSpace}*=)",
+        "styles": [1, "builtin", 2, "variable"]
+      },
+      {
+        "pattern": "(${qualifiedIdentifier})${whiteSpace}+(${identifier})(?=${whiteSpace}*=)",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "(\\()(${qualifiedIdentifier})(\\))",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "(?:${qualifiedIdentifier})(?=${whiteSpace}*=)",
+        "style": "property"
+      },
+      {
+        "pattern": "\\b(?:public|weak|reserved|extensions|to|max)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:${scalarType})\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[{}()\\[\\];,<>:=]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

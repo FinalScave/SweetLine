@@ -7,10 +7,24 @@
     "any": "[\\S\\s]"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
     "lineCommentRule": [
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "doubleStringContent"]
       }
     ],
     "classIdentifierRule": [
@@ -257,8 +271,7 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "[,\\[\\]=?@&.]",
@@ -334,6 +347,9 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "\\\\\\([^)]*\\)",
         "style": "annotation"
       },
@@ -353,6 +369,9 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "\\\\\\([^)]*\\)",
         "style": "annotation"
       },
@@ -368,11 +387,40 @@
         "onLineEndState": "default"
       }
     ],
+    "doubleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\\\([^)]*\\)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
     "longComment": [
       {
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

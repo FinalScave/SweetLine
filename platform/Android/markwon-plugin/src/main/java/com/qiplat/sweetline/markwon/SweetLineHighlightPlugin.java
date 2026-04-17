@@ -33,6 +33,25 @@ public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
         syntaxNameMapping.put("kt", "kotlin");
         syntaxNameMapping.put("c++", "cpp");
         syntaxNameMapping.put("c#", "csharp");
+        syntaxNameMapping.put("docker", "dockerfile");
+        syntaxNameMapping.put("make", "makefile");
+        syntaxNameMapping.put("dotenv", "env");
+        syntaxNameMapping.put("proto", "protobuf");
+        syntaxNameMapping.put("protobuf", "protobuf");
+        syntaxNameMapping.put("graphql", "graphql");
+        syntaxNameMapping.put("gql", "graphql");
+        syntaxNameMapping.put("nginx", "nginx");
+        syntaxNameMapping.put("conf", "nginx");
+        syntaxNameMapping.put("gitignore", "gitignore");
+        syntaxNameMapping.put("diff", "diff");
+        syntaxNameMapping.put("patch", "diff");
+        syntaxNameMapping.put("rb", "ruby");
+        syntaxNameMapping.put("ruby", "ruby");
+        syntaxNameMapping.put("hcl", "hcl");
+        syntaxNameMapping.put("tf", "terraform");
+        syntaxNameMapping.put("terraform", "terraform");
+        syntaxNameMapping.put("vue", "vue");
+        syntaxNameMapping.put("svelte", "svelte");
     }
 
     public SweetLineHighlightPlugin(CodeBackground background, SpannableStyleFactory styleFactory) {

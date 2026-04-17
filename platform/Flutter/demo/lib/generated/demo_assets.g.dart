@@ -20,6 +20,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/c.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.cmake',
+    sourceAssetPath: 'assets/examples/example.cmake',
+    syntaxAssetPath: 'assets/syntaxes/cmake.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.cpp',
     sourceAssetPath: 'assets/examples/example.cpp',
     syntaxAssetPath: 'assets/syntaxes/cpp.json',
@@ -30,9 +35,34 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/csharp.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.css',
+    sourceAssetPath: 'assets/examples/example.css',
+    syntaxAssetPath: 'assets/syntaxes/css.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.dart',
     sourceAssetPath: 'assets/examples/example.dart',
     syntaxAssetPath: 'assets/syntaxes/dart.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.diff',
+    sourceAssetPath: 'assets/examples/example.diff',
+    syntaxAssetPath: 'assets/syntaxes/diff.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.dockerfile',
+    sourceAssetPath: 'assets/examples/example.dockerfile',
+    syntaxAssetPath: 'assets/syntaxes/dockerfile.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.env',
+    sourceAssetPath: 'assets/examples/example.env',
+    syntaxAssetPath: 'assets/syntaxes/env.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.gitignore',
+    sourceAssetPath: 'assets/examples/example.gitignore',
+    syntaxAssetPath: 'assets/syntaxes/gitignore.json',
   ),
   DemoAssetEntry(
     fileName: 'example.go',
@@ -40,9 +70,19 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/go.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.graphql',
+    sourceAssetPath: 'assets/examples/example.graphql',
+    syntaxAssetPath: 'assets/syntaxes/graphql.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.groovy',
     sourceAssetPath: 'assets/examples/example.groovy',
     syntaxAssetPath: 'assets/syntaxes/groovy.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.hcl',
+    sourceAssetPath: 'assets/examples/example.hcl',
+    syntaxAssetPath: 'assets/syntaxes/hcl.json',
   ),
   DemoAssetEntry(
     fileName: 'example.html',
@@ -60,9 +100,24 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/javascript.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.json5',
+    sourceAssetPath: 'assets/examples/example.json5',
+    syntaxAssetPath: 'assets/syntaxes/json5.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.jsonc',
+    sourceAssetPath: 'assets/examples/example.jsonc',
+    syntaxAssetPath: 'assets/syntaxes/jsonc.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.kt',
     sourceAssetPath: 'assets/examples/example.kt',
     syntaxAssetPath: 'assets/syntaxes/kotlin.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.less',
+    sourceAssetPath: 'assets/examples/example.less',
+    syntaxAssetPath: 'assets/syntaxes/less.json',
   ),
   DemoAssetEntry(
     fileName: 'example.lua',
@@ -80,14 +135,34 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/markdown.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.mk',
+    sourceAssetPath: 'assets/examples/example.mk',
+    syntaxAssetPath: 'assets/syntaxes/makefile.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.myu',
     sourceAssetPath: 'assets/examples/example.myu',
     syntaxAssetPath: 'assets/syntaxes/iapp.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.nginx',
+    sourceAssetPath: 'assets/examples/example.nginx',
+    syntaxAssetPath: 'assets/syntaxes/nginx.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.php',
     sourceAssetPath: 'assets/examples/example.php',
     syntaxAssetPath: 'assets/syntaxes/php.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.properties',
+    sourceAssetPath: 'assets/examples/example.properties',
+    syntaxAssetPath: 'assets/syntaxes/properties.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.proto',
+    sourceAssetPath: 'assets/examples/example.proto',
+    syntaxAssetPath: 'assets/syntaxes/protobuf.json',
   ),
   DemoAssetEntry(
     fileName: 'example.ps1',
@@ -100,6 +175,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/python.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.rb',
+    sourceAssetPath: 'assets/examples/example.rb',
+    syntaxAssetPath: 'assets/syntaxes/ruby.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.rs',
     sourceAssetPath: 'assets/examples/example.rs',
     syntaxAssetPath: 'assets/syntaxes/rust.json',
@@ -108,6 +188,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     fileName: 'example.scala',
     sourceAssetPath: 'assets/examples/example.scala',
     syntaxAssetPath: 'assets/syntaxes/scala.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.scss',
+    sourceAssetPath: 'assets/examples/example.scss',
+    syntaxAssetPath: 'assets/syntaxes/scss.json',
   ),
   DemoAssetEntry(
     fileName: 'example.sh',
@@ -120,6 +205,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     syntaxAssetPath: 'assets/syntaxes/sql.json',
   ),
   DemoAssetEntry(
+    fileName: 'example.svelte',
+    sourceAssetPath: 'assets/examples/example.svelte',
+    syntaxAssetPath: 'assets/syntaxes/svelte.json',
+  ),
+  DemoAssetEntry(
     fileName: 'example.swift',
     sourceAssetPath: 'assets/examples/example.swift',
     syntaxAssetPath: 'assets/syntaxes/swift.json',
@@ -128,6 +218,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     fileName: 'example.t',
     sourceAssetPath: 'assets/examples/example.t',
     syntaxAssetPath: 'assets/syntaxes/tiecode.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.tf',
+    sourceAssetPath: 'assets/examples/example.tf',
+    syntaxAssetPath: 'assets/syntaxes/terraform.json',
   ),
   DemoAssetEntry(
     fileName: 'example.toml',
@@ -143,6 +238,11 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     fileName: 'example.vb',
     sourceAssetPath: 'assets/examples/example.vb',
     syntaxAssetPath: 'assets/syntaxes/vb.json',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.vue',
+    sourceAssetPath: 'assets/examples/example.vue',
+    syntaxAssetPath: 'assets/syntaxes/vue.json',
   ),
   DemoAssetEntry(
     fileName: 'example.wenyan',
@@ -168,31 +268,51 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
 
 const List<String> demoAssetFileNames = <String>[
   'example.c',
+  'example.cmake',
   'example.cpp',
   'example.cs',
+  'example.css',
   'example.dart',
+  'example.diff',
+  'example.dockerfile',
+  'example.env',
+  'example.gitignore',
   'example.go',
+  'example.graphql',
   'example.groovy',
+  'example.hcl',
   'example.html',
   'example.java',
   'example.js',
+  'example.json5',
+  'example.jsonc',
   'example.kt',
+  'example.less',
   'example.lua',
   'example.m',
   'example.md',
+  'example.mk',
   'example.myu',
+  'example.nginx',
   'example.php',
+  'example.properties',
+  'example.proto',
   'example.ps1',
   'example.py',
+  'example.rb',
   'example.rs',
   'example.scala',
+  'example.scss',
   'example.sh',
   'example.sql',
+  'example.svelte',
   'example.swift',
   'example.t',
+  'example.tf',
   'example.toml',
   'example.ts',
   'example.vb',
+  'example.vue',
   'example.wenyan',
   'example.xml',
   'example.yaml',

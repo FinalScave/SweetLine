@@ -124,6 +124,8 @@ public enum DemoSampleSupport {
     private static let styleLifetime: Int32 = 12
     private static let styleSelector: Int32 = 13
     private static let styleBuiltin: Int32 = 14
+    private static let styleUrl: Int32 = 15
+    private static let styleProperty: Int32 = 16
 
     public static let placeholderMessage = "SweetLine Apple demo skeleton is ready for integration."
 
@@ -148,6 +150,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFF4EC9B0,
                 styleSelector: 0xFF4EC9B0,
                 styleBuiltin: 0xFF569CD6,
+                styleUrl: 0xFF4FC1FF,
+                styleProperty: 0xFF9CDCFE,
             ]
         ),
         makeTheme(
@@ -170,6 +174,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFFFD971F,
                 styleSelector: 0xFFA6E22E,
                 styleBuiltin: 0xFF66D9EF,
+                styleUrl: 0xFF66D9EF,
+                styleProperty: 0xFFA6E22E,
             ]
         ),
         makeTheme(
@@ -192,6 +198,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFFFFB86C,
                 styleSelector: 0xFF50FA7B,
                 styleBuiltin: 0xFF8BE9FD,
+                styleUrl: 0xFF8BE9FD,
+                styleProperty: 0xFF50FA7B,
             ]
         ),
         makeTheme(
@@ -214,6 +222,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFF56B6C2,
                 styleSelector: 0xFFE5C07B,
                 styleBuiltin: 0xFF56B6C2,
+                styleUrl: 0xFF61AFEF,
+                styleProperty: 0xFF61AFEF,
             ]
         ),
         makeTheme(
@@ -236,6 +246,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFFD33682,
                 styleSelector: 0xFF268BD2,
                 styleBuiltin: 0xFF268BD2,
+                styleUrl: 0xFF268BD2,
+                styleProperty: 0xFF268BD2,
             ]
         ),
         makeTheme(
@@ -258,6 +270,8 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFFEBCB8B,
                 styleSelector: 0xFF8FBCBB,
                 styleBuiltin: 0xFF5E81AC,
+                styleUrl: 0xFF88C0D0,
+                styleProperty: 0xFF88C0D0,
             ]
         ),
         makeTheme(
@@ -280,12 +294,34 @@ public enum DemoSampleSupport {
                 styleLifetime: 0xFFFFA657,
                 styleSelector: 0xFF7EE787,
                 styleBuiltin: 0xFF79C0FF,
+                styleUrl: 0xFF79C0FF,
+                styleProperty: 0xFF79C0FF,
             ]
         ),
     ]
 
     public static let builtinSamples: [DemoSample] = [
         DemoSample(fileName: "example.swift", syntaxFileName: "swift.json"),
+        DemoSample(fileName: "example.css", syntaxFileName: "css.json"),
+        DemoSample(fileName: "example.scss", syntaxFileName: "scss.json"),
+        DemoSample(fileName: "example.less", syntaxFileName: "less.json"),
+        DemoSample(fileName: "example.jsonc", syntaxFileName: "jsonc.json"),
+        DemoSample(fileName: "example.json5", syntaxFileName: "json5.json"),
+        DemoSample(fileName: "example.cmake", syntaxFileName: "cmake.json"),
+        DemoSample(fileName: "example.dockerfile", syntaxFileName: "dockerfile.json"),
+        DemoSample(fileName: "example.mk", syntaxFileName: "makefile.json"),
+        DemoSample(fileName: "example.properties", syntaxFileName: "properties.json"),
+        DemoSample(fileName: "example.env", syntaxFileName: "env.json"),
+        DemoSample(fileName: "example.proto", syntaxFileName: "protobuf.json"),
+        DemoSample(fileName: "example.graphql", syntaxFileName: "graphql.json"),
+        DemoSample(fileName: "example.nginx", syntaxFileName: "nginx.json"),
+        DemoSample(fileName: "example.gitignore", syntaxFileName: "gitignore.json"),
+        DemoSample(fileName: "example.diff", syntaxFileName: "diff.json"),
+        DemoSample(fileName: "example.rb", syntaxFileName: "ruby.json"),
+        DemoSample(fileName: "example.hcl", syntaxFileName: "hcl.json"),
+        DemoSample(fileName: "example.tf", syntaxFileName: "terraform.json"),
+        DemoSample(fileName: "example.vue", syntaxFileName: "vue.json"),
+        DemoSample(fileName: "example.svelte", syntaxFileName: "svelte.json"),
     ]
 
     public static func defaultConfig() -> HighlightConfig {
@@ -399,6 +435,8 @@ public enum DemoSampleSupport {
         try engine.registerStyleName("lifetime", styleID: styleLifetime)
         try engine.registerStyleName("selector", styleID: styleSelector)
         try engine.registerStyleName("builtin", styleID: styleBuiltin)
+        try engine.registerStyleName("url", styleID: styleUrl)
+        try engine.registerStyleName("property", styleID: styleProperty)
     }
 
     private static func resolveRepositoryRoot() -> URL {

@@ -35,10 +35,9 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
-  static final Map<String, DemoAssetEntry> _samplesByFileName =
-      <String, DemoAssetEntry>{
-        for (final sample in demoAssetEntries) sample.fileName: sample,
-      };
+  static final Map<String, DemoAssetEntry> _samplesByFileName = <String, DemoAssetEntry>{
+    for (final sample in demoAssetEntries) sample.fileName: sample,
+  };
 
   late final HighlightEngine _engine;
   late final List<HighlightTheme> _themes;
@@ -57,9 +56,7 @@ class _DemoPageState extends State<DemoPage> {
     super.initState();
     _themes = HighlightTheme.builtinThemes();
     _currentTheme = _themes.first;
-    _engine = HighlightEngine(
-      const HighlightConfig(showIndex: true, inlineStyle: false),
-    );
+    _engine = HighlightEngine(const HighlightConfig(showIndex: true, inlineStyle: false));
     _registerStyleNames(_engine);
     _definePlatformMacros(_engine);
 
@@ -157,19 +154,11 @@ class _DemoPageState extends State<DemoPage> {
           padding: const EdgeInsets.all(14),
           child: Container(
             decoration: BoxDecoration(
-              color: HighlightTheme.blend(
-                theme.background,
-                Colors.white,
-                0.015,
-              ),
+              color: HighlightTheme.blend(theme.background, Colors.white, 0.015),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: theme.separator),
               boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withAlpha(46),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
-                ),
+                BoxShadow(color: Colors.black.withAlpha(46), blurRadius: 18, offset: const Offset(0, 10)),
               ],
             ),
             clipBehavior: Clip.antiAlias,
@@ -179,15 +168,11 @@ class _DemoPageState extends State<DemoPage> {
                   theme: theme,
                   selectedFile: _selectedFile,
                   exampleFiles: demoAssetFileNames,
-                  themeNames: _themes
-                      .map((theme) => theme.name)
-                      .toList(growable: false),
+                  themeNames: _themes.map((theme) => theme.name).toList(growable: false),
                   selectedThemeName: theme.name,
                   onFileSelected: _highlightFile,
                   onThemeSelected: (themeName) {
-                    final nextTheme = _themes.firstWhere(
-                      (item) => item.name == themeName,
-                    );
+                    final nextTheme = _themes.firstWhere((item) => item.name == themeName);
                     setState(() {
                       _currentTheme = nextTheme;
                     });
@@ -203,30 +188,20 @@ class _DemoPageState extends State<DemoPage> {
                           sourceCode: _sourceCode,
                           highlight: _highlight,
                           indentGuides: _indentGuides,
-                          placeholder: _isLoading
-                              ? 'Analyzing...'
-                              : (_error ?? 'Select a file'),
+                          placeholder: _isLoading ? 'Analyzing...' : (_error ?? 'Select a file'),
                         ),
                       ),
                       if (_isLoading)
                         const Positioned(
                           top: 18,
                           right: 18,
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2.2),
-                          ),
+                          child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2)),
                         ),
                     ],
                   ),
                 ),
                 Container(height: 1, color: theme.separator),
-                _StatusBar(
-                  theme: theme,
-                  statusText: _statusText,
-                  errorText: _error,
-                ),
+                _StatusBar(theme: theme, statusText: _statusText, errorText: _error),
               ],
             ),
           ),
@@ -250,6 +225,8 @@ class _DemoPageState extends State<DemoPage> {
     engine.registerStyleName('lifetime', HighlightTheme.styleLifetime);
     engine.registerStyleName('selector', HighlightTheme.styleSelector);
     engine.registerStyleName('builtin', HighlightTheme.styleBuiltin);
+    engine.registerStyleName('url', HighlightTheme.styleUrl);
+    engine.registerStyleName('property', HighlightTheme.styleProperty);
   }
 
   static void _definePlatformMacros(HighlightEngine engine) {
@@ -302,12 +279,7 @@ class _HeaderBar extends StatelessWidget {
         children: <Widget>[
           Text(
             'SweetLine Flutter Demo',
-            style: TextStyle(
-              color: theme.text,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-            ),
+            style: TextStyle(color: theme.text, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: 0.2),
           ),
           _LabeledDropdown(
             label: 'File',
@@ -358,12 +330,7 @@ class _LabeledDropdown extends StatelessWidget {
         children: <Widget>[
           Text(
             label.toUpperCase(),
-            style: TextStyle(
-              color: theme.lineNumber,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
+            style: TextStyle(color: theme.lineNumber, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.1),
           ),
           const SizedBox(height: 6),
           DecoratedBox(
@@ -380,11 +347,7 @@ class _LabeledDropdown extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 borderRadius: BorderRadius.circular(12),
                 iconEnabledColor: theme.accent,
-                style: TextStyle(
-                  color: theme.text,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(color: theme.text, fontSize: 13, fontWeight: FontWeight.w500),
                 items: items
                     .map(
                       (item) => DropdownMenuItem<String>(
@@ -408,11 +371,7 @@ class _LabeledDropdown extends StatelessWidget {
 }
 
 class _StatusBar extends StatelessWidget {
-  const _StatusBar({
-    required this.theme,
-    required this.statusText,
-    required this.errorText,
-  });
+  const _StatusBar({required this.theme, required this.statusText, required this.errorText});
 
   final HighlightTheme theme;
   final String statusText;

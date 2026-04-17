@@ -1,0 +1,207 @@
+{
+  "name": "makefile",
+  "fileExtensions": [".mk", ".make", ".mak"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "ident": "[A-Za-z_][A-Za-z0-9_./-]*"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "braceVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "parenFunctionRule": [
+      {
+        "pattern": "(\\$\\()([A-Za-z_][A-Za-z0-9_-]*)(?=${whiteSpace})",
+        "styles": [1, "punctuation", 2, "method"]
+      }
+    ],
+    "parenVariableRule": [
+      {
+        "pattern": "(\\$\\()([^)\\s]+)(\\))",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "autoVariableRule": [
+      {
+        "pattern": "(\\$)([@%<?^+*|])",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^${whiteSpace}*(ifeq|ifneq|ifdef|ifndef|else|endif|include|-include|sinclude|define|endef|override|export|unexport|private|vpath)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${ident})${whiteSpace}*(::=|:=|\\+=|\\?=|!=|=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "^([^\\t#:=][^:=#]*?)(::|:)",
+        "styles": [1, "selector", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(\\.PHONY|\\.SUFFIXES|\\.DEFAULT|\\.PRECIOUS|\\.INTERMEDIATE|\\.SECONDARY|\\.SECONDEXPANSION|\\.DELETE_ON_ERROR|\\.IGNORE|\\.LOW_RESOLUTION_TIME|\\.SILENT|\\.EXPORT_ALL_VARIABLES|\\.NOTPARALLEL|\\.ONESHELL|\\.POSIX)\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "^(\\t)([@+-]?)([A-Za-z_./-]+)",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "method"],
+        "state": "recipe"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "includes": ["braceVariableRule", "parenFunctionRule", "parenVariableRule", "autoVariableRule", "urlRule"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "[()=:,]",
+        "style": "punctuation"
+      }
+    ],
+    "recipe": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "recipeDoubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "recipeSingleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(if|then|else|fi|for|do|done|case|esac|while|until|function)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(true|false|echo|printf|cd|cp|mv|rm|mkdir|cat|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|chmod|chown|curl|wget|git|docker|make|cmake)\\b",
+        "style": "builtin"
+      },
+      {
+        "includes": ["braceVariableRule", "parenFunctionRule", "parenVariableRule", "autoVariableRule", "urlRule"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "[|&;()\\[\\]{}><!=+\\-*/%~^:,]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["braceVariableRule", "parenFunctionRule", "parenVariableRule", "autoVariableRule", "urlRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "recipeDoubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "recipe"
+      },
+      {
+        "includes": ["braceVariableRule", "parenFunctionRule", "parenVariableRule", "autoVariableRule", "urlRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "recipeSingleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "recipe"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

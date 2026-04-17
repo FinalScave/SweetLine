@@ -1,0 +1,130 @@
+/* SweetLine CSS demo with docs at https://example.com/css-guide */
+@import url("https://cdn.example.com/base.css") layer(base);
+@layer reset, theme, components, utilities;
+
+@property --progress {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("https://cdn.example.com/fonts/satoshi.woff2") format("woff2"),
+    url("https://cdn.example.com/fonts/satoshi.woff") format("woff");
+  font-display: swap;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; opacity: 0.72; }
+  50% { opacity: 1; }
+  100% { background-position: 200% 0; opacity: 0.72; }
+}
+
+@layer theme {
+  :root {
+    --panel-radius: 18px;
+    --panel-border: color-mix(in srgb, #1d4ed8 24%, white);
+    --panel-shadow: 0 20px 40px rgb(15 23 42 / 0.14);
+    --surface: linear-gradient(135deg, #eff6ff 0%, #f8fafc 48%, #e0f2fe 100%);
+    --accent: hsl(221 83% 53%);
+    --accent-strong: #1e3a8a;
+    --accent-soft: rgb(96 165 250 / 0.18);
+    --status-success: #16a34a;
+    --status-warning: #f59e0b;
+    --quote: "Docs https://example.com/css";
+  }
+
+  [data-theme="night"] {
+    --surface: radial-gradient(circle at top, #172554 0%, #0f172a 54%, #020617 100%);
+    --panel-border: rgb(148 163 184 / 0.28);
+    --accent-soft: rgb(56 189 248 / 0.22);
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .dashboard,
+  .dashboard:has(.card:is(:hover, :focus-visible)) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: clamp(1rem, 3vw, 2rem);
+    background: var(--surface);
+    font-family: "Satoshi", "Avenir Next", sans-serif;
+  }
+
+  .dashboard[data-layout="masonry"] > .card:nth-child(odd) { translate: 0 calc(var(--progress) * 1px); }
+
+  .card,
+  article.card[data-state="active"] {
+    position: relative;
+    overflow: clip;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--panel-shadow);
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.96), rgb(255 255 255 / 0.88)),
+      url("https://images.example.com/noise.webp");
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  .card::before {
+    content: attr(data-label) " " var(--quote);
+    position: absolute;
+    inset: 0 auto auto 0;
+    padding: 0.35rem 0.75rem;
+    color: white;
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  }
+
+  .card:hover,
+  .card:focus-within {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 48px rgb(15 23 42 / 0.2);
+  }
+
+  .card:is(.warning, [data-status="warning"]) .badge { color: var(--status-warning); }
+  .card[data-status="ok"] .badge::marker { content: "•"; }
+  .card :where(h2, h3, p, ul) { margin: 0; }
+  .card a[href^="https://"] { color: var(--accent); text-underline-offset: 0.18em; }
+  .card img[alt*="cover" i] { inline-size: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .card [aria-current="page"]::after { content: "→"; margin-inline-start: 0.35rem; }
+  .card > .meta + .actions > button:not(:disabled) { cursor: pointer; }
+
+  .dashboard__filters input[type="search"],
+  .dashboard__filters select {
+    border: 1px solid rgb(148 163 184 / 0.28);
+    border-radius: 999px;
+    padding: 0.7rem 1rem;
+    background-color: rgb(255 255 255 / 0.88);
+  }
+
+  .dashboard__filters input:focus-visible,
+  .dashboard__filters select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.18);
+  }
+}
+
+@container panel (min-width: 42rem) {
+  .card { grid-template-columns: 2fr 1fr; align-items: start; }
+  .card > .meta { justify-self: end; }
+}
+
+@supports (backdrop-filter: blur(20px)) and (selector(:has(*))) {
+  .glass { backdrop-filter: blur(20px) saturate(1.2); background: rgb(255 255 255 / 0.42); }
+  .glass:is(:hover, :focus-visible)::after {
+    content: "Open https://example.com/overlay";
+    animation: shimmer 1.8s linear infinite;
+  }
+}
+
+@media (width <= 48rem) {
+  .dashboard { grid-template-columns: 1fr; }
+  .card > .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+}
+
+@media print {
+  .dashboard { background: white; }
+  .card { break-inside: avoid; box-shadow: none; }
+}

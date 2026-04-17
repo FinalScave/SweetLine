@@ -8,6 +8,12 @@
     "builtinType": "void|char|short|int|long|float|double|signed|unsigned|bool|BOOL|size_t|ssize_t|id|instancetype|SEL|IMP|Class|NSInteger|NSUInteger|CGFloat|NSTimeInterval|dispatch_queue_t|dispatch_block_t|dispatch_group_t|dispatch_semaphore_t"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
     "builtinTypeKeywordRule": [
       {
         "pattern": "\\b(${builtinType})\\b",
@@ -16,8 +22,23 @@
     ],
     "lineCommentRule": [
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "objcQuotedStringRule": [
+      {
+        "pattern": "(@\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
       }
     ],
     "classIdentifierRule": [
@@ -95,8 +116,7 @@
         "state": "methodRetType"
       },
       {
-        "pattern": "@\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "objcQuotedStringRule"
       },
       {
         "pattern": "(@)(YES|NO|true|false)\\b",
@@ -179,8 +199,7 @@
         "style": "macro"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "'(?:[^'\\\\]|\\\\.)*'",
@@ -451,16 +470,14 @@
         "state": "default"
       },
       {
-        "pattern": "@\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "objcQuotedStringRule"
       },
       {
         "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?[fFlLuU]*)\\b",
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "'(?:[^'\\\\]|\\\\.)*'",
@@ -474,11 +491,36 @@
         "onLineEndState": "default"
       }
     ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
     "longComment": [
       {
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

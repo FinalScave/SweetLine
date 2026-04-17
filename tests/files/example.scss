@@ -1,0 +1,135 @@
+$accent-color: #2563eb;
+$accent-strong: #1e3a8a;
+$surface-color: #f8fafc;
+$docs-url: "https://example.com/scss";
+$spaces: (xs: 0.375rem, sm: 0.75rem, md: 1rem, lg: 1.5rem, xl: 2rem);
+$themes: (
+  primary: (#2563eb, #dbeafe),
+  success: (#16a34a, #dcfce7),
+  warning: (#f59e0b, #fef3c7)
+);
+$breakpoints: (tablet: 48rem, desktop: 72rem);
+@function space($name) { @return map-get($spaces, $name); }
+@function tone($theme, $index) { @return nth(map-get($themes, $theme), $index); }
+@mixin elevated-card($radius, $shadow-color: #0f172a) {
+  border-radius: $radius;
+  border: 1px solid rgba($shadow-color, 0.12);
+  box-shadow: 0 16px 40px rgba($shadow-color, 0.14);
+}
+@mixin focus-ring($color) { outline: none; box-shadow: 0 0 0 3px rgba($color, 0.16); }
+@mixin respond($name) { @media (min-width: map-get($breakpoints, $name)) { @content; } }
+@mixin theme-panel($name) {
+  $text: tone($name, 1);
+  $surface: tone($name, 2);
+  color: $text;
+  background: linear-gradient(180deg, lighten($surface, 3%), $surface);
+  border-color: rgba($text, 0.22);
+}
+%surface-card {
+  @include elevated-card(18px);
+  background: linear-gradient(180deg, white, $surface-color);
+}
+@keyframes float-tag {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+// Visit https://example.com/scss/comments for more theme recipes.
+:root {
+  --hero-url: "#{$docs-url}/hero";
+  --card-padding: #{space(md)};
+}
+.dashboard {
+  display: grid;
+  gap: space(lg);
+  padding: clamp(space(md), 4vw, space(xl));
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  &__panel {
+    @extend %surface-card;
+    @include theme-panel(primary);
+    padding: var(--card-padding);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+    &:hover,
+    &:focus-within { transform: translateY(-2px); box-shadow: 0 24px 48px rgba($accent-strong, 0.18); }
+    &::before {
+      content: "Docs: #{$docs-url}";
+      display: inline-flex;
+      margin-bottom: space(sm);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      color: white;
+      background: linear-gradient(90deg, $accent-color, $accent-strong);
+    }
+    &[data-mode="success"] { @include theme-panel(success); }
+    &[data-mode="warning"] { @include theme-panel(warning); }
+  }
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(sm);
+    > a[href^="https://"] { color: inherit; text-underline-offset: 0.22em; }
+  }
+  &__title { margin: 0; font-size: clamp(1.25rem, 3vw, 1.75rem); }
+  &__metrics {
+    display: grid;
+    gap: space(xs);
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: space(sm) 0;
+      border-bottom: 1px dashed rgba($accent-strong, 0.16);
+      strong { font-variant-numeric: tabular-nums; }
+    }
+  }
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: rgba($accent-color, 0.1);
+    animation: float-tag 1.8s ease-in-out infinite;
+    &--active { background: rgba($accent-color, 0.18); }
+  }
+  &__search {
+    position: relative;
+    input {
+      inline-size: 100%;
+      padding: space(sm) space(md);
+      border: 1px solid rgba($accent-strong, 0.18);
+      border-radius: 999px;
+      &:focus-visible { @include focus-ring($accent-color); }
+    }
+    [data-hint]::after {
+      content: attr(data-hint);
+      position: absolute;
+      inset: auto space(md) space(sm) auto;
+      color: rgba($accent-strong, 0.62);
+    }
+  }
+}
+@each $name, $pair in $themes {
+  .theme-#{$name} { color: nth($pair, 1); background-color: nth($pair, 2); }
+}
+@for $index from 1 through 4 {
+  .stagger-#{$index} { animation-delay: $index * 90ms; }
+}
+@if lightness($surface-color) > 90% {
+  .dashboard__panel--soft { background-image: linear-gradient(135deg, rgba(white, 0.95), rgba($accent-color, 0.06)); }
+}
+@supports (container-type: inline-size) {
+  .dashboard__panel { container-type: inline-size; }
+  @container (min-width: 32rem) { .dashboard__panel { grid-template-columns: 2fr 1fr; } }
+}
+@include respond(tablet) {
+  .dashboard__header { align-items: flex-start; }
+  .dashboard__actions {
+    display: flex;
+    gap: space(sm);
+    button { padding: space(sm) space(md); border-radius: 999px; }
+  }
+}
+@include respond(desktop) {
+  .dashboard__panel { padding: space(xl); }
+}

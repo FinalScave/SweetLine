@@ -1,7 +1,7 @@
 {
   "name": "tiecode",
   "fileExtensions": [".t"],
-  "styles": [{"name": "keyword", "foreground": "#FF569CD6", "tags": ["bold", "italic"]}, {"name": "string", "foreground": "#FFBD63C5"}, {"name": "number", "foreground": "#FFE4FAD5"}, {"name": "comment", "foreground": "#FF60AE6F"}, {"name": "class", "foreground": "#FF4EC9B0"}, {"name": "method", "foreground": "#FF9CDCFE"}, {"name": "variable", "foreground": "#FF9B9BC8"}, {"name": "punctuation", "foreground": "#FFD69D85"}, {"name": "annotation", "foreground": "#FFFFFD9B"}],
+  "styles": [{"name": "keyword", "foreground": "#FF569CD6", "tags": ["bold", "italic"]}, {"name": "string", "foreground": "#FFBD63C5"}, {"name": "number", "foreground": "#FFE4FAD5"}, {"name": "comment", "foreground": "#FF60AE6F"}, {"name": "class", "foreground": "#FF4EC9B0"}, {"name": "method", "foreground": "#FF9CDCFE"}, {"name": "variable", "foreground": "#FF9B9BC8"}, {"name": "punctuation", "foreground": "#FFD69D85"}, {"name": "annotation", "foreground": "#FFFFFD9B"}, {"name": "url", "foreground": "#FF4FC1FF"}],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",

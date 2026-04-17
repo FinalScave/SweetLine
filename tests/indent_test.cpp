@@ -19,6 +19,7 @@ namespace {
     engine->registerStyleName("variable", 7);
     engine->registerStyleName("punctuation", 8);
     engine->registerStyleName("annotation", 9);
+    engine->registerStyleName("url", 16);
     return engine;
   }
 }

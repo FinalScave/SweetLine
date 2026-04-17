@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+// API docs: https://docs.example.com/proto/user
+package com.example.chat.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.example.chat.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ChatProto";
+option go_package = "github.com/example/chat/v1;chatv1";
+option objc_class_prefix = "SLC";
+option csharp_namespace = "SweetLine.Chat.V1";
+
+message User {
+  string id = 1;
+  string display_name = 2 [deprecated = true, json_name = "displayName"];
+  repeated string tags = 3;
+  map<string, string> metadata = 4;
+  Profile profile = 5;
+  oneof contact {
+    string email = 6;
+    string phone = 7;
+    string slack_handle = 12;
+  }
+  optional bool verified = 13;
+  Status status = 14;
+  repeated Device devices = 15;
+  reserved 8, 9 to 11;
+  reserved "legacy_name", "legacy_photo";
+}
+
+message Profile {
+  string avatar_url = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Struct preferences = 3;
+  SocialLinks links = 4;
+
+  message SocialLinks {
+    string website = 1;
+    string github = 2;
+    string x = 3;
+  }
+}
+
+message Device {
+  string id = 1;
+  string name = 2;
+  Platform platform = 3;
+  map<string, string> labels = 4;
+
+  enum Platform {
+    PLATFORM_UNSPECIFIED = 0;
+    PLATFORM_IOS = 1;
+    PLATFORM_ANDROID = 2;
+    PLATFORM_WEB = 3;
+    PLATFORM_DESKTOP = 4;
+  }
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1;
+  STATUS_DISABLED = 2;
+  STATUS_PENDING = 3;
+  STATUS_BANNED = 4;
+}
+
+message Paging {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  map<string, string> context = 3;
+}
+
+message GetUserRequest {
+  string id = 1;
+  bool include_devices = 2;
+  bool include_profile = 3;
+}
+
+message BatchGetUsersRequest {
+  repeated string ids = 1;
+  Paging paging = 2;
+}
+
+message BatchGetUsersResponse {
+  repeated User users = 1;
+  repeated ErrorDetail errors = 2;
+  string next_page_token = 3;
+}
+
+message StreamUsersRequest {
+  Paging paging = 1;
+  repeated Status filter_status = 2;
+}
+
+message UserEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp occurred_at = 2;
+  oneof payload {
+    User created = 3;
+    User updated = 4;
+    string deleted_user_id = 5;
+  }
+}
+
+message UploadAvatarRequest {
+  string user_id = 1;
+  bytes chunk = 2;
+  string content_type = 3;
+}
+
+message UploadAvatarResponse {
+  string url = 1;
+  int64 size = 2;
+}
+
+message WatchUsersRequest {
+  repeated string ids = 1;
+  bool include_presence = 2;
+}
+
+message HealthCheckResponse {
+  string version = 1;
+  bool serving = 2;
+  google.protobuf.Timestamp checked_at = 3;
+}
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc BatchGetUsers (BatchGetUsersRequest) returns (BatchGetUsersResponse);
+  rpc StreamUsers (StreamUsersRequest) returns (stream User);
+  rpc UploadAvatar (stream UploadAvatarRequest) returns (UploadAvatarResponse);
+  rpc WatchUsers (stream WatchUsersRequest) returns (stream UserEvent);
+  rpc Ping (google.protobuf.Empty) returns (HealthCheckResponse);
+}
+
+service AdminService {
+  rpc DisableUser (GetUserRequest) returns (User);
+  rpc DeleteUser (GetUserRequest) returns (google.protobuf.Empty);
+}

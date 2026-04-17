@@ -1,0 +1,489 @@
+{
+  "name": "scss",
+  "fileExtensions": [".scss"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "escape": "\\\\(?:[0-9a-fA-F]{1,6}(?:${whiteSpace}|\\r?\\n)?|.)",
+    "identStart": "(?:[_a-zA-Z]|${escape})",
+    "identChar": "(?:[_a-zA-Z0-9-]|${escape})",
+    "ident": "-?${identStart}${identChar}*",
+    "customProperty": "--${identChar}+",
+    "sassVariable": "\\$${ident}",
+    "number": "[+-]?(?:\\d*\\.\\d+|\\d+\\.\\d*|\\d+)",
+    "dimensionUnit": "%|px|r?em|ex|ch|lh|rlh|vw|vh|vmin|vmax|vb|vi|svw|svh|lvw|lvh|dvw|dvh|cqw|cqh|cqi|cqb|cqmin|cqmax|fr|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx|cm|mm|Q|in|pc|pt",
+    "valueKeyword": "inherit|initial|unset|revert(?:-layer)?|auto|none|normal|transparent|currentColor|block|inline(?:-block|-flex|-grid)?|flex|grid|contents|flow-root|relative|absolute|fixed|sticky|static|solid|dashed|dotted|double|hidden|visible|cover|contain|repeat(?:-x|-y)?|no-repeat|space|round|center|start|end|stretch|space-between|space-around|space-evenly|serif|sans-serif|monospace|disc|circle|square|decimal|inside|outside|uppercase|lowercase|capitalize|bold|bolder|lighter|null|true|false"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "sameLineCommentRule": [
+      {
+        "pattern": "(/\\*)(.*?)(\\*/)",
+        "styles": [1, "comment", 3, "comment"],
+        "subStates": [2, "commentContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "interpolationRule": [
+      {
+        "pattern": "(#\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      }
+    ],
+    "selectorRules": [
+      {
+        "pattern": "(::?)(-?${ident})(\\()",
+        "styles": [1, "punctuation", 2, "selector", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::?)(-?${ident})",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "(\\.)(${ident})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(#)(${ident})",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "(%)(${ident})",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "&",
+        "style": "selector"
+      },
+      {
+        "pattern": "(${ident})(\\|)(\\*)",
+        "styles": [1, "selector", 2, "punctuation", 3, "selector"]
+      },
+      {
+        "pattern": "(${ident})(\\|)(${ident})",
+        "styles": [1, "selector", 2, "punctuation", 3, "selector"]
+      },
+      {
+        "pattern": "\\*",
+        "style": "selector"
+      },
+      {
+        "pattern": "\\b(?:${ident})\\b",
+        "style": "selector"
+      }
+    ],
+    "valueRules": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "!(?:important|default|global|optional)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${sassVariable}",
+        "style": "variable"
+      },
+      {
+        "pattern": "${customProperty}",
+        "style": "variable"
+      },
+      {
+        "pattern": "#[0-9a-fA-F]{3,8}(?=[^A-Za-z0-9_-]|$)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\bU\\+[0-9A-F?]+(?:-[0-9A-F]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${number})(/)(${number})",
+        "styles": [1, "number", 2, "punctuation", 3, "number"]
+      },
+      {
+        "pattern": "(${number})(${dimensionUnit})\\b",
+        "styles": [1, "number", 2, "keyword"]
+      },
+      {
+        "pattern": "(?:${number})\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:${valueKeyword})\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${ident})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "[\\[\\],/:.+\\-*]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "sameLineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockCommentDefault"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleStringDefault"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleStringDefault"
+      },
+      {
+        "pattern": "(@(?:mixin|function))${whiteSpace}+(${ident})(\\()([^)]*)(\\))",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "parameterContent"]
+      },
+      {
+        "pattern": "(@(?:mixin|include|function))${whiteSpace}+(${ident})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "(@extend)${whiteSpace}+(%)(${ident})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "selector"]
+      },
+      {
+        "pattern": "@(?:use|forward|import|at-root|debug|warn|error|return|content|if|else|each|for|while)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(@property)${whiteSpace}+(${customProperty})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(@(?:-[a-zA-Z]+-)?keyframes)${whiteSpace}+(${ident})",
+        "styles": [1, "keyword", 2, "selector"]
+      },
+      {
+        "pattern": "@[a-zA-Z-]+",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(\\()${whiteSpace}*(${customProperty}|${ident}|${sassVariable})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${sassVariable})${whiteSpace}*(:)${whiteSpace}*(#[0-9a-fA-F]{3,8})(?=${whiteSpace}*[;}]|$)",
+        "styles": [1, "variable", 2, "punctuation", 3, "number"],
+        "state": "value"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${sassVariable})${whiteSpace}*(:)",
+        "styles": [1, "variable", 2, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${customProperty})${whiteSpace}*(:)",
+        "styles": [1, "variable", 2, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${ident})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "([;{])${whiteSpace}*(${sassVariable})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "([;{])${whiteSpace}*(${customProperty})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "([;{])${whiteSpace}*(${ident})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"],
+        "state": "value"
+      },
+      {
+        "pattern": "([~|^$*]?=)${whiteSpace}*(${ident}|${sassVariable})",
+        "styles": [1, "punctuation", 2, "string"]
+      },
+      {
+        "pattern": "\\b(?:and|or|not|only)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(\\[)${whiteSpace}*(${customProperty}|${ident}|${sassVariable})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "[iIsS](?=${whiteSpace}*\\])",
+        "style": "builtin"
+      },
+      {
+        "pattern": "[~|^$*]?=",
+        "style": "punctuation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "(${number})(${dimensionUnit})\\b",
+        "styles": [1, "number", 2, "keyword"]
+      },
+      {
+        "pattern": "(?:${number})\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${ident})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "includes": ["interpolationRule", "selectorRules"]
+      },
+      {
+        "pattern": "[{}();:,>+~\\[\\]|=]",
+        "style": "punctuation"
+      }
+    ],
+    "value": [
+      {
+        "include": "sameLineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockCommentValue"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleStringValue"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleStringValue"
+      },
+      {
+        "pattern": ";",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "includes": ["valueRules"]
+      },
+      {
+        "onLineEndState": "value"
+      }
+    ],
+    "commentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "parameterContent": [
+      {
+        "pattern": "${sassVariable}",
+        "style": "variable"
+      },
+      {
+        "pattern": "(${number})(${dimensionUnit})\\b",
+        "styles": [1, "number", 2, "keyword"]
+      },
+      {
+        "pattern": "(?:${number})\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[(),:]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "annotation"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockCommentDefault": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentDefault"
+      }
+    ],
+    "blockCommentValue": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "value"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentValue"
+      }
+    ],
+    "doubleStringDefault": [
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "doubleStringDefault"
+      }
+    ],
+    "singleStringDefault": [
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "singleStringDefault"
+      }
+    ],
+    "doubleStringValue": [
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "value"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "doubleStringValue"
+      }
+    ],
+    "singleStringValue": [
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "value"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "singleStringValue"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "\\{",
+      "end": "\\}"
+    }
+  ]
+}

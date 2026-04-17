@@ -1,0 +1,208 @@
+{
+  "name": "cmake",
+  "fileExtensions": [".cmake"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "ident": "[A-Za-z_][A-Za-z0-9_]*"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "variableRefRule": [
+      {
+        "pattern": "(\\$\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$ENV\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\$CACHE\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "generatorExpressionRule": [
+      {
+        "pattern": "(\\$<)([^>]+)(>)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      }
+    ],
+    "sameLineBracketCommentRule": [
+      {
+        "pattern": "(#\\[=*\\[)(.*?)(\\]=*\\])",
+        "styles": [1, "comment", 3, "comment"],
+        "subStates": [2, "commentContent"]
+      }
+    ],
+    "sameLineBracketStringRule": [
+      {
+        "pattern": "(\\[=*\\[)(.*?)(\\]=*\\])",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "bracketStringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "sameLineBracketCommentRule"
+      },
+      {
+        "pattern": "#\\[=*\\[",
+        "style": "comment",
+        "state": "bracketComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "sameLineBracketStringRule"
+      },
+      {
+        "pattern": "\\[=*\\[",
+        "style": "string",
+        "state": "bracketString"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "^(${whiteSpace}*)(if|elseif|else|endif|foreach|endforeach|function|endfunction|macro|endmacro|while|endwhile|block|endblock|return|break|continue)(${whiteSpace}*)(\\()",
+        "styles": [2, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "^(${whiteSpace}*)(set|option|unset)(${whiteSpace}*)(\\()(${whiteSpace}*)(${ident})",
+        "styles": [2, "method", 4, "punctuation", 6, "variable"]
+      },
+      {
+        "pattern": "^(${whiteSpace}*)(${ident})(${whiteSpace}*)(\\()",
+        "styles": [2, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(^|[^A-Za-z0-9_])(ON|OFF|TRUE|FALSE|YES|NO|Y|N|IGNORE|NOTFOUND|DEFINED|EXISTS|COMMAND|TARGET|POLICY|TEST|AND|OR|NOT|STREQUAL|STRLESS|STRGREATER|VERSION_EQUAL|VERSION_LESS|VERSION_GREATER|MATCHES|LESS|GREATER|EQUAL|IN_LIST|WIN32|UNIX|APPLE|MSVC|CMAKE_[A-Z0-9_]+|PROJECT_[A-Z0-9_]+)(?=[^A-Za-z0-9_]|$)",
+        "styles": [2, "builtin"]
+      },
+      {
+        "pattern": "(ENV\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "includes": ["variableRefRule", "generatorExpressionRule"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "[(){};]",
+        "style": "punctuation"
+      }
+    ],
+    "commentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "bracketComment": [
+      {
+        "pattern": "\\]=*\\]",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "bracketComment"
+      }
+    ],
+    "bracketStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "includes": ["variableRefRule", "generatorExpressionRule"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "bracketString": [
+      {
+        "pattern": "\\]=*\\]",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "includes": ["variableRefRule", "generatorExpressionRule"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "bracketString"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "includes": ["variableRefRule", "generatorExpressionRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "doubleString"
+      }
+    ]
+  }
+}

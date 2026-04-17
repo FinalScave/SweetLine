@@ -1,0 +1,128 @@
+{
+  "name": "nginx",
+  "fileExtensions": [".conf", ".nginx"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "ident": "[A-Za-z_][A-Za-z0-9_\\-]*"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "variableRule": [
+      {
+        "pattern": "(\\$)(${ident})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "bracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)(${ident})(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^(?:${whiteSpace}*)(location)(?:${whiteSpace}+)(=|~\\*|~|\\^~|!~\\*|!~)?(?:${whiteSpace}+)([^\\{;]+)",
+        "styles": [1, "keyword", 2, "annotation", 3, "annotation"]
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)(upstream)(?:${whiteSpace}+)([A-Za-z_][A-Za-z0-9_\\-]*)(?=${whiteSpace}*\\{)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)(?:server_name|listen|root|index|proxy_pass|rewrite|return|set|include|try_files|error_page|access_log|error_log|add_header|add_trailer|expires|client_max_body_size|client_body_buffer_size|gzip|limit_rate|deny|allow|auth_basic|auth_basic_user_file|proxy_set_header|proxy_redirect|proxy_buffering|proxy_read_timeout|proxy_connect_timeout|proxy_send_timeout|resolver|keepalive_timeout|send_timeout|if|map|geo|types|server|http|stream|mail|events|log_format|charset|default_type|types_hash_max_size|types_hash_bucket_size|proxy_http_version|proxy_cookie_path|proxy_cookie_domain|rewrite|return)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "=|~\\*|~|\\^~|!~\\*|!~",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "includes": ["bracedVariableRule", "variableRule"]
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\b\\d+(?:\\.\\d+)?(?:[kKmMgGsSmMhHdD])?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[{}();,\\[\\]]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "bracedVariableRule", "variableRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "bracedVariableRule", "variableRule"]
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

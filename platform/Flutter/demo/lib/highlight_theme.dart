@@ -22,6 +22,8 @@ class HighlightTheme {
   static const int styleLifetime = 12;
   static const int styleSelector = 13;
   static const int styleBuiltin = 14;
+  static const int styleUrl = 15;
+  static const int styleProperty = 16;
 
   final String name;
   final int backgroundColor;
@@ -74,6 +76,8 @@ class HighlightTheme {
       styleLifetime: 0xFF4EC9B0,
       styleSelector: 0xFF4EC9B0,
       styleBuiltin: 0xFF569CD6,
+      styleUrl: 0xFF4FC1FF,
+      styleProperty: 0xFF9CDCFE,
     });
   }
 
@@ -93,6 +97,8 @@ class HighlightTheme {
       styleLifetime: 0xFFFD971F,
       styleSelector: 0xFFA6E22E,
       styleBuiltin: 0xFF66D9EF,
+      styleUrl: 0xFF66D9EF,
+      styleProperty: 0xFFA6E22E,
     });
   }
 
@@ -112,6 +118,8 @@ class HighlightTheme {
       styleLifetime: 0xFFFFB86C,
       styleSelector: 0xFF50FA7B,
       styleBuiltin: 0xFF8BE9FD,
+      styleUrl: 0xFF8BE9FD,
+      styleProperty: 0xFF50FA7B,
     });
   }
 
@@ -131,6 +139,8 @@ class HighlightTheme {
       styleLifetime: 0xFF56B6C2,
       styleSelector: 0xFFE5C07B,
       styleBuiltin: 0xFF56B6C2,
+      styleUrl: 0xFF61AFEF,
+      styleProperty: 0xFF61AFEF,
     });
   }
 
@@ -150,6 +160,8 @@ class HighlightTheme {
       styleLifetime: 0xFFD33682,
       styleSelector: 0xFF268BD2,
       styleBuiltin: 0xFF268BD2,
+      styleUrl: 0xFF268BD2,
+      styleProperty: 0xFF268BD2,
     });
   }
 
@@ -169,6 +181,8 @@ class HighlightTheme {
       styleLifetime: 0xFFEBCB8B,
       styleSelector: 0xFF8FBCBB,
       styleBuiltin: 0xFF5E81AC,
+      styleUrl: 0xFF88C0D0,
+      styleProperty: 0xFF88C0D0,
     });
   }
 
@@ -188,6 +202,8 @@ class HighlightTheme {
       styleLifetime: 0xFFFFA657,
       styleSelector: 0xFF7EE787,
       styleBuiltin: 0xFF79C0FF,
+      styleUrl: 0xFF79C0FF,
+      styleProperty: 0xFF79C0FF,
     });
   }
 

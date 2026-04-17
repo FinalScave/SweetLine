@@ -1,0 +1,240 @@
+{
+  "name": "hcl",
+  "fileExtensions": [".hcl"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_-]*",
+    "attributeName": "[A-Za-z_][A-Za-z0-9_.-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "((?://|#))(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "interpolationRule": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "expression"]
+      }
+    ],
+    "templateDirectiveRule": [
+      {
+        "pattern": "(%\\{~?)([^}]*)(~?\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "expression"]
+      }
+    ],
+    "expressionCoreRules": [
+      {
+        "pattern": "\\b(?:for|in|if|else|endif|endfor)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "([A-Za-z_][A-Za-z0-9_-]*)(\\.)([A-Za-z_][A-Za-z0-9_-]*)(\\.)([A-Za-z_][A-Za-z0-9_-]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property", 4, "punctuation", 5, "property"]
+      },
+      {
+        "pattern": "([A-Za-z_][A-Za-z0-9_-]*)(\\.)([A-Za-z_][A-Za-z0-9_-]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "([A-Za-z_][A-Za-z0-9_-]*)(\\s*)(\\()",
+        "styles": [1, "builtin", 3, "punctuation"]
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[A-Za-z_][A-Za-z0-9_-]*\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "=>|\\.\\.\\.|==|!=|<=|>=|&&|\\|\\||[.()\\[\\]{}?,:+\\-*/%<>!=]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^(\\s*)([A-Za-z_][A-Za-z0-9_-]*)(\\s+)(?=(?:\\{|\"|[A-Za-z_]))",
+        "styles": [2, "keyword"],
+        "state": "blockHeader"
+      },
+      {
+        "pattern": "^(\\s*)([A-Za-z_][A-Za-z0-9_.-]*)(\\s*)(=)",
+        "styles": [2, "property", 4, "punctuation"],
+        "state": "expression"
+      },
+      {
+        "pattern": "<<-?[A-Za-z_][A-Za-z0-9_-]*",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "=>|\\.\\.\\.|==|!=|<=|>=|&&|\\|\\||[.()\\[\\]{}?,:+\\-*/%<>!=]",
+        "style": "punctuation"
+      }
+    ],
+    "blockHeader": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "class"
+      },
+      {
+        "pattern": "\\b[A-Za-z_][A-Za-z0-9_-]*\\b",
+        "style": "class"
+      }
+    ],
+    "expression": [
+      {
+        "pattern": "^(\\s*)([A-Za-z_][A-Za-z0-9_.-]*)(\\s*)(=)",
+        "styles": [2, "property", 4, "punctuation"]
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "<<-?[A-Za-z_][A-Za-z0-9_-]*",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "include": "expressionCoreRules"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "templateDirectiveRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "heredoc": [
+      {
+        "pattern": "^${whiteSpace}*[A-Za-z_][A-Za-z0-9_-]*${whiteSpace}*$",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "templateDirectiveRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

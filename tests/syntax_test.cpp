@@ -24,6 +24,7 @@ namespace {
     engine->registerStyleName("property", 13);
     engine->registerStyleName("lifetime", 14);
     engine->registerStyleName("selector", 15);
+    engine->registerStyleName("url", 16);
     return engine;
   }
 
@@ -39,7 +40,10 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
     "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
-    "scala.json",
+    "scala.json", "css.json", "scss.json", "less.json", "jsonc.json", "json5.json", "cmake.json",
+    "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
+    "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
+    "svelte.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -73,7 +77,10 @@ TEST_CASE("Create analyzers by extension for sample files") {
     "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
     "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
-    "scala.json"
+    "scala.json", "css.json", "scss.json", "less.json", "jsonc.json", "json5.json", "cmake.json",
+    "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
+    "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
+    "svelte.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -115,7 +122,27 @@ TEST_CASE("Create analyzers by extension for sample files") {
     TESTS_DIR"/files/example.vb",
     TESTS_DIR"/files/example.wenyan",
     TESTS_DIR"/files/example.xml",
-    TESTS_DIR"/files/example.yaml"
+    TESTS_DIR"/files/example.yaml",
+    TESTS_DIR"/files/example.css",
+    TESTS_DIR"/files/example.scss",
+    TESTS_DIR"/files/example.less",
+    TESTS_DIR"/files/example.jsonc",
+    TESTS_DIR"/files/example.json5",
+    TESTS_DIR"/files/example.cmake",
+    TESTS_DIR"/files/example.dockerfile",
+    TESTS_DIR"/files/example.mk",
+    TESTS_DIR"/files/example.properties",
+    TESTS_DIR"/files/example.env",
+    TESTS_DIR"/files/example.proto",
+    TESTS_DIR"/files/example.graphql",
+    TESTS_DIR"/files/example.nginx",
+    TESTS_DIR"/files/example.gitignore",
+    TESTS_DIR"/files/example.diff",
+    TESTS_DIR"/files/example.rb",
+    TESTS_DIR"/files/example.hcl",
+    TESTS_DIR"/files/example.tf",
+    TESTS_DIR"/files/example.vue",
+    TESTS_DIR"/files/example.svelte"
   };
 
   for (const U8String& file_path : sample_files) {

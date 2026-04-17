@@ -16,6 +16,8 @@ public partial class Form1 : Form {
 		[".java"] = "java.json",
 		[".js"] = "javascript.json",
 		[".json"] = "json-sweetline.json",
+		[".jsonc"] = "jsonc.json",
+		[".json5"] = "json5.json",
 		[".kt"] = "kotlin.json",
 		[".lua"] = "lua.json",
 		[".m"] = "objc.json",
@@ -34,7 +36,33 @@ public partial class Form1 : Form {
 		[".yaml"] = "yaml.json",
 		[".md"] = "markdown.json",
 		[".wenyan"] = "wenyan.json",
-		[".myu"] = "iapp.json"
+		[".myu"] = "iapp.json",
+		[".css"] = "css.json",
+		[".scss"] = "scss.json",
+		[".less"] = "less.json",
+		[".cmake"] = "cmake.json",
+		[".dockerfile"] = "dockerfile.json",
+		[".mk"] = "makefile.json",
+		[".properties"] = "properties.json",
+		[".env"] = "env.json",
+		[".proto"] = "protobuf.json",
+		[".graphql"] = "graphql.json",
+		[".gql"] = "graphql.json",
+		[".nginx"] = "nginx.json",
+		[".conf"] = "nginx.json",
+		[".gitignore"] = "gitignore.json",
+		[".diff"] = "diff.json",
+		[".patch"] = "diff.json",
+		[".rb"] = "ruby.json",
+		[".rake"] = "ruby.json",
+		[".gemspec"] = "ruby.json",
+		[".ru"] = "ruby.json",
+		[".hcl"] = "hcl.json",
+		[".tf"] = "terraform.json",
+		[".tfvars"] = "terraform.json",
+		[".tfbackend"] = "terraform.json",
+		[".vue"] = "vue.json",
+		[".svelte"] = "svelte.json"
 	};
 
 	private readonly string _syntaxesDir;
@@ -264,6 +292,8 @@ public partial class Form1 : Form {
 		engine.RegisterStyleName("lifetime", HighlightTheme.StyleLifetime);
 		engine.RegisterStyleName("selector", HighlightTheme.StyleSelector);
 		engine.RegisterStyleName("builtin", HighlightTheme.StyleBuiltin);
+		engine.RegisterStyleName("url", HighlightTheme.StyleUrl);
+		engine.RegisterStyleName("property", HighlightTheme.StyleProperty);
 	}
 
 	private static List<string> ListExampleFiles(string examplesDir) {

@@ -17,6 +17,8 @@ internal sealed class HighlightTheme {
 	public const int StyleLifetime = 12;
 	public const int StyleSelector = 13;
 	public const int StyleBuiltin = 14;
+	public const int StyleUrl = 15;
+	public const int StyleProperty = 16;
 
 	public string Name { get; }
 	public int BackgroundColor { get; }
@@ -71,7 +73,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFF9B9BC8),
 			[StyleLifetime] = unchecked((int)0xFF4EC9B0),
 			[StyleSelector] = unchecked((int)0xFF4EC9B0),
-			[StyleBuiltin] = unchecked((int)0xFF569CD6)
+			[StyleBuiltin] = unchecked((int)0xFF569CD6),
+			[StyleUrl] = unchecked((int)0xFF4FC1FF),
+			[StyleProperty] = unchecked((int)0xFF9CDCFE)
 		};
 
 		return new HighlightTheme(
@@ -96,7 +100,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFFAE81FF),
 			[StyleLifetime] = unchecked((int)0xFFFD971F),
 			[StyleSelector] = unchecked((int)0xFFA6E22E),
-			[StyleBuiltin] = unchecked((int)0xFF66D9EF)
+			[StyleBuiltin] = unchecked((int)0xFF66D9EF),
+			[StyleUrl] = unchecked((int)0xFF66D9EF),
+			[StyleProperty] = unchecked((int)0xFFA6E22E)
 		};
 
 		return new HighlightTheme(
@@ -121,7 +127,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFFBD93F9),
 			[StyleLifetime] = unchecked((int)0xFFFFB86C),
 			[StyleSelector] = unchecked((int)0xFF50FA7B),
-			[StyleBuiltin] = unchecked((int)0xFF8BE9FD)
+			[StyleBuiltin] = unchecked((int)0xFF8BE9FD),
+			[StyleUrl] = unchecked((int)0xFF8BE9FD),
+			[StyleProperty] = unchecked((int)0xFF50FA7B)
 		};
 
 		return new HighlightTheme(
@@ -146,7 +154,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFFD19A66),
 			[StyleLifetime] = unchecked((int)0xFF56B6C2),
 			[StyleSelector] = unchecked((int)0xFFE5C07B),
-			[StyleBuiltin] = unchecked((int)0xFF56B6C2)
+			[StyleBuiltin] = unchecked((int)0xFF56B6C2),
+			[StyleUrl] = unchecked((int)0xFF61AFEF),
+			[StyleProperty] = unchecked((int)0xFF61AFEF)
 		};
 
 		return new HighlightTheme(
@@ -171,7 +181,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFFCB4B16),
 			[StyleLifetime] = unchecked((int)0xFFD33682),
 			[StyleSelector] = unchecked((int)0xFF268BD2),
-			[StyleBuiltin] = unchecked((int)0xFF268BD2)
+			[StyleBuiltin] = unchecked((int)0xFF268BD2),
+			[StyleUrl] = unchecked((int)0xFF268BD2),
+			[StyleProperty] = unchecked((int)0xFF268BD2)
 		};
 
 		return new HighlightTheme(
@@ -196,7 +208,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFFB48EAD),
 			[StyleLifetime] = unchecked((int)0xFFEBCB8B),
 			[StyleSelector] = unchecked((int)0xFF8FBCBB),
-			[StyleBuiltin] = unchecked((int)0xFF5E81AC)
+			[StyleBuiltin] = unchecked((int)0xFF5E81AC),
+			[StyleUrl] = unchecked((int)0xFF88C0D0),
+			[StyleProperty] = unchecked((int)0xFF88C0D0)
 		};
 
 		return new HighlightTheme(
@@ -221,7 +235,9 @@ internal sealed class HighlightTheme {
 			[StyleMacro] = unchecked((int)0xFF79C0FF),
 			[StyleLifetime] = unchecked((int)0xFFFFA657),
 			[StyleSelector] = unchecked((int)0xFF7EE787),
-			[StyleBuiltin] = unchecked((int)0xFF79C0FF)
+			[StyleBuiltin] = unchecked((int)0xFF79C0FF),
+			[StyleUrl] = unchecked((int)0xFF79C0FF),
+			[StyleProperty] = unchecked((int)0xFF79C0FF)
 		};
 
 		return new HighlightTheme(

@@ -11,6 +11,12 @@
     "embedCodeRefClass": "(#)(cls|ncls)(<)(${identifier})(>)"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
     "classIdentifierRule": [
       {
         "pattern": "${identifier}",
@@ -22,6 +28,27 @@
         "pattern": "(${identifier})${whiteSpace}*(<)(.*)(>)",
         "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
         "subStates": [3, "genericType"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
       }
     ]
   },
@@ -106,8 +133,7 @@
         "styles": [1, "method", 2, "punctuation"]
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "\\b(?:[0-9]*\\.?[0-9]+(?:[eE][+-]?[0-9]+)?[fFdD]?)\\b",
@@ -124,8 +150,7 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "[.()\\[\\]?@%+\\-*/<>=,{}:]",
@@ -232,8 +257,33 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "${any}",
         "style": "string"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "longComment": [
@@ -241,6 +291,9 @@
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

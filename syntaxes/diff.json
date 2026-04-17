@@ -1,0 +1,105 @@
+{
+  "name": "diff",
+  "fileExtensions": [".diff", ".patch"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "addedLineContentRule": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "removedLineContentRule": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "contextLineContentRule": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^(diff --git)(?:${whiteSpace}+)(.*?)(?:${whiteSpace}+)(.*)$",
+        "styles": [1, "keyword", 2, "selector", 3, "selector"]
+      },
+      {
+        "pattern": "^(index)(?:${whiteSpace}+)([0-9a-fA-F]+)(\\.\\.)([0-9a-fA-F]+)(?:${whiteSpace}+)(\\d+)$",
+        "styles": [1, "annotation", 2, "number", 3, "punctuation", 4, "number", 5, "number"]
+      },
+      {
+        "pattern": "^(new file mode|deleted file mode|old mode|new mode|similarity index|dissimilarity index|rename from|rename to|copy from|copy to)(?:${whiteSpace}+)(.*)$",
+        "styles": [1, "annotation", 2, "selector"]
+      },
+      {
+        "pattern": "^(Binary files)(?:${whiteSpace}+)(.*?)(?:${whiteSpace}+)(and)(?:${whiteSpace}+)(.*?)(?:${whiteSpace}+)(differ)$",
+        "styles": [1, "annotation", 2, "selector", 3, "annotation", 4, "selector", 5, "annotation"]
+      },
+      {
+        "pattern": "^(---|\\+\\+\\+)(?:${whiteSpace}+)(.*)$",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "^(\\@\\@)(?:${whiteSpace}+)(-\\d+(?:,\\d+)?)(?:${whiteSpace}+)(\\+\\d+(?:,\\d+)?)(?:${whiteSpace}+)(\\@\\@)(?:${whiteSpace}*)(.*)$",
+        "styles": [1, "keyword", 2, "number", 3, "number", 4, "keyword", 5, "annotation"]
+      },
+      {
+        "pattern": "^(\\+)(?!\\+)(.*)$",
+        "styles": [1, "keyword", 2, "string"],
+        "subStates": [2, "addedLineContent"]
+      },
+      {
+        "pattern": "^(\\-)(?!\\-)(.*)$",
+        "styles": [1, "annotation", 2, "string"],
+        "subStates": [2, "removedLineContent"]
+      },
+      {
+        "pattern": "^( )(.*)$",
+        "styles": [1, "punctuation", 2, "string"],
+        "subStates": [2, "contextLineContent"]
+      },
+      {
+        "pattern": "^\\\\ No newline at end of file$",
+        "style": "annotation"
+      }
+    ],
+    "addedLineContent": [
+      {
+        "include": "addedLineContentRule"
+      }
+    ],
+    "removedLineContent": [
+      {
+        "include": "removedLineContentRule"
+      }
+    ],
+    "contextLineContent": [
+      {
+        "include": "contextLineContentRule"
+      }
+    ]
+  }
+}

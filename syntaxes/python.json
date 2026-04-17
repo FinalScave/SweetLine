@@ -7,6 +7,33 @@
     "any": "[\\S\\s]"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "([rRbBuU]{0,2}\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "shortStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "([rRbBuU]{0,2}')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "shortStringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
     "stringEscapeRule": [
       {
         "pattern": "\\\\.",
@@ -107,12 +134,7 @@
         "state": "fSingleString"
       },
       {
-        "pattern": "[rRbBuU]{0,2}\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "[rRbBuU]{0,2}'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F_]+[jJ]?\\b",
@@ -131,8 +153,7 @@
         "style": "number"
       },
       {
-        "pattern": "#${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": "->|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
@@ -166,12 +187,7 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
-      },
-      {
-        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
-        "style": "string"
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
         "pattern": "${identifier}",
@@ -192,7 +208,7 @@
         "state": "default"
       },
       {
-        "includes": ["stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
+        "includes": ["urlRule", "stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
       }
     ],
     "tripleSingleString": [
@@ -202,7 +218,7 @@
         "state": "default"
       },
       {
-        "includes": ["stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
+        "includes": ["urlRule", "stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
       }
     ],
     "fDoubleString": [
@@ -212,7 +228,7 @@
         "state": "default"
       },
       {
-        "includes": ["stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
+        "includes": ["urlRule", "stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"
@@ -225,10 +241,27 @@
         "state": "default"
       },
       {
-        "includes": ["stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
+        "includes": ["urlRule", "stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
       },
       {
         "onLineEndState": "default"
+      }
+    ],
+    "shortStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ]
   },

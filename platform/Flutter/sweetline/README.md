@@ -1,4 +1,4 @@
-﻿# sweetline
+# sweetline
 
 SweetLine Flutter/Dart FFI package.
 

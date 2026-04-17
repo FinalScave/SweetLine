@@ -29,6 +29,8 @@ public class HighlightTheme {
     public static final int STYLE_LIFETIME = 12;
     public static final int STYLE_SELECTOR = 13;
     public static final int STYLE_BUILTIN = 14;
+    public static final int STYLE_URL = 15;
+    public static final int STYLE_PROPERTY = 16;
 
     private HighlightTheme(String name, int backgroundColor, int textColor, Map<Integer, Integer> colorMap) {
         this.name = name;
@@ -78,6 +80,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFF4EC9B0);
         map.put(STYLE_SELECTOR,     0xFF4EC9B0);
         map.put(STYLE_BUILTIN,      0xFF569CD6);
+        map.put(STYLE_URL,          0xFF4FC1FF);
+        map.put(STYLE_PROPERTY,     0xFF9CDCFE);
         return new HighlightTheme("SweetLine Dark", 0xFF1E1E1E, 0xFFD4D4D4, map);
     }
 
@@ -97,6 +101,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFFFD971F);
         map.put(STYLE_SELECTOR,     0xFFA6E22E);
         map.put(STYLE_BUILTIN,      0xFF66D9EF);
+        map.put(STYLE_URL,          0xFF66D9EF);
+        map.put(STYLE_PROPERTY,     0xFFA6E22E);
         return new HighlightTheme("Monokai", 0xFF272822, 0xFFF8F8F2, map);
     }
 
@@ -116,6 +122,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFFFFB86C);
         map.put(STYLE_SELECTOR,     0xFF50FA7B);
         map.put(STYLE_BUILTIN,      0xFF8BE9FD);
+        map.put(STYLE_URL,          0xFF8BE9FD);
+        map.put(STYLE_PROPERTY,     0xFF50FA7B);
         return new HighlightTheme("Dracula", 0xFF282A36, 0xFFF8F8F2, map);
     }
 
@@ -135,6 +143,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFF56B6C2);
         map.put(STYLE_SELECTOR,     0xFFE5C07B);
         map.put(STYLE_BUILTIN,      0xFF56B6C2);
+        map.put(STYLE_URL,          0xFF61AFEF);
+        map.put(STYLE_PROPERTY,     0xFF61AFEF);
         return new HighlightTheme("One Dark", 0xFF282C34, 0xFFABB2BF, map);
     }
 
@@ -154,6 +164,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFFD33682);
         map.put(STYLE_SELECTOR,     0xFF268BD2);
         map.put(STYLE_BUILTIN,      0xFF268BD2);
+        map.put(STYLE_URL,          0xFF268BD2);
+        map.put(STYLE_PROPERTY,     0xFF268BD2);
         return new HighlightTheme("Solarized Dark", 0xFF002B36, 0xFF839496, map);
     }
 
@@ -173,6 +185,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFFEBCB8B);
         map.put(STYLE_SELECTOR,     0xFF8FBCBB);
         map.put(STYLE_BUILTIN,      0xFF5E81AC);
+        map.put(STYLE_URL,          0xFF88C0D0);
+        map.put(STYLE_PROPERTY,     0xFF88C0D0);
         return new HighlightTheme("Nord", 0xFF2E3440, 0xFFD8DEE9, map);
     }
 
@@ -192,6 +206,8 @@ public class HighlightTheme {
         map.put(STYLE_LIFETIME,     0xFFFFA657);
         map.put(STYLE_SELECTOR,     0xFF7EE787);
         map.put(STYLE_BUILTIN,      0xFF79C0FF);
+        map.put(STYLE_URL,          0xFF79C0FF);
+        map.put(STYLE_PROPERTY,     0xFF79C0FF);
         return new HighlightTheme("GitHub Dark", 0xFF0D1117, 0xFFC9D1D9, map);
     }
 }

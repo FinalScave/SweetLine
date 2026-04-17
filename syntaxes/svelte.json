@@ -1,0 +1,218 @@
+{
+  "name": "svelte",
+  "fileExtensions": [".svelte"],
+  "variables": {
+    "tagName": "[A-Za-z][A-Za-z0-9:-]*",
+    "directiveName": "(?:bind|class|use|animate|in|out|transition|on|let):[A-Za-z_][A-Za-z0-9_.-]*(?:\\|[A-Za-z_][A-Za-z0-9_-]*)*",
+    "attrName": "[A-Za-z_:][A-Za-z0-9:._-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "entityRule": [
+      {
+        "pattern": "&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;",
+        "style": "annotation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "<!--",
+        "style": "comment",
+        "state": "htmlComment"
+      },
+      {
+        "pattern": "(\\{#)(if|each|await|key|snippet)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "annotation", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\{:)(else(?:${whiteSpace}+if)?|then|catch)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "annotation", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\{@)(html|debug|const|render)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "annotation", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\{/)(if|each|await|key|snippet)(\\})",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\{)([^{}]+)(\\})",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(<)(script)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:ts|tsx|typescript)\"|'(?:ts|tsx|typescript)'))(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "scriptTsContent"
+      },
+      {
+        "pattern": "(<)(script)(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "scriptJsContent"
+      },
+      {
+        "pattern": "(<)(style)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:scss|sass)\"|'(?:scss|sass)'))(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "styleScssContent"
+      },
+      {
+        "pattern": "(<)(style)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"less\"|'less'))(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "styleLessContent"
+      },
+      {
+        "pattern": "(<)(style)(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "styleCssContent"
+      },
+      {
+        "pattern": "(<\\/?)((?:[A-Z][A-Za-z0-9]*|[a-z][A-Za-z0-9]*-[A-Za-z0-9-]*|svelte:[A-Za-z0-9-]+))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tagInner"
+      },
+      {
+        "pattern": "(<\\/?)(${tagName})",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tagInner"
+      },
+      {
+        "include": "entityRule"
+      }
+    ],
+    "tagInner": [
+      {
+        "pattern": "(${directiveName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^}]*)(\\})",
+        "styles": [1, "annotation", 2, "punctuation", 3, "punctuation", 4, "annotation", 5, "punctuation"]
+      },
+      {
+        "pattern": "(${directiveName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "annotation", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrValueContent"]
+      },
+      {
+        "pattern": "(${directiveName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "annotation", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrValueContent"]
+      },
+      {
+        "pattern": "${directiveName}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "annotation", 5, "punctuation"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrValueContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrValueContent"]
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "pattern": "/?>",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "onLineEndState": "tagInner"
+      }
+    ],
+    "attrValueContent": [
+      {
+        "pattern": "(\\{)([^{}]+)(\\})",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "htmlComment": [
+      {
+        "pattern": "-->",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "scriptJsContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "javascript"
+      }
+    ],
+    "scriptTsContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "typescript"
+      }
+    ],
+    "styleCssContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(style)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "css"
+      }
+    ],
+    "styleScssContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(style)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "scss"
+      }
+    ],
+    "styleLessContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(style)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "less"
+      }
+    ]
+  }
+}

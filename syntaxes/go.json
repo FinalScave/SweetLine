@@ -7,6 +7,26 @@
     "any": "[\\S\\s]"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
     "builtinTypeKeywordRule": [
       {
         "pattern": "\\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr|any|comparable)\\b",
@@ -116,8 +136,7 @@
         "state": "rawString"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "'(?:[^'\\\\]|\\\\.)*'",
@@ -145,8 +164,7 @@
         "state": "longComment"
       },
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "include": "lineCommentRule"
       },
       {
         "pattern": ":=|<-|\\.\\.\\.|<=|>=|==|!=|&&|\\|\\||<<|>>|[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
@@ -160,8 +178,37 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
         "pattern": "${any}",
         "style": "string"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "funcParams": [
@@ -198,8 +245,7 @@
         "style": "number"
       },
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "include": "doubleQuotedStringRule"
       },
       {
         "pattern": "\\b(true|false|nil)\\b",
@@ -231,6 +277,9 @@
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

@@ -11,16 +11,24 @@
     "any": "[\\S\\s]"
   },
   "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
     "lineCommentRule": [
       {
-        "pattern": "//${any}*",
-        "style": "comment"
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
       }
     ],
     "doubleQuotedStringRule": [
       {
-        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
-        "style": "string"
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
       }
     ],
     "stringEscapeRule": [
@@ -578,6 +586,9 @@
         "style": "string"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "pattern": "\"",
         "style": "string",
         "state": "default"
@@ -591,6 +602,9 @@
         "pattern": "\"\"\"",
         "style": "string",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "include": "stringAnyCharRule"
@@ -612,7 +626,31 @@
         "state": "default"
       },
       {
+        "include": "urlRule"
+      },
+      {
         "include": "stringAnyCharRule"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
       }
     ],
     "docComment": [
@@ -620,6 +658,9 @@
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "(@param)${whiteSpace}+(${identifier})",
@@ -655,6 +696,9 @@
         "pattern": "\\*/",
         "style": "comment",
         "state": "default"
+      },
+      {
+        "include": "urlRule"
       },
       {
         "pattern": "${any}",

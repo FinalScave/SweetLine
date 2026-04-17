@@ -1,0 +1,141 @@
+# SweetLine nginx sample: https://example.com/docs/nginx
+user nginx;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 4096;
+    multi_accept on;
+}
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+
+    log_format json escape=json
+        '{'
+            '"time":"$time_iso8601",'
+            '"remote_addr":"$remote_addr",'
+            '"request_id":"$request_id",'
+            '"request":"$request",'
+            '"status":$status,'
+            '"bytes_sent":$bytes_sent,'
+            '"referer":"$http_referer",'
+            '"agent":"$http_user_agent"'
+        '}';
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    server_tokens off;
+
+    geo $is_internal {
+        default 0;
+        10.0.0.0/8 1;
+        192.168.0.0/16 1;
+    }
+
+    map $http_upgrade $upgrade_header {
+        default upgrade;
+        ''      close;
+    }
+
+    map $request_method $can_cache {
+        default 0;
+        GET     1;
+        HEAD    1;
+    }
+
+    upstream backend_api {
+        server 127.0.0.1:8080 max_fails=3 fail_timeout=30s;
+        server unix:/tmp/backend.sock backup;
+        keepalive 32;
+    }
+
+    upstream docs_site {
+        least_conn;
+        server 127.0.0.1:9090;
+        server 127.0.0.1:9091;
+        keepalive 16;
+    }
+
+    map $http_upgrade $connection_upgrade {
+        default $upgrade_header;
+        ''      close;
+    }
+
+    server {
+        listen 80;
+        listen 443 ssl http2;
+        server_name example.com www.example.com;
+        root /var/www/example.com/html;
+        set $static_root /srv/site;
+
+        ssl_certificate /etc/nginx/tls/fullchain.pem;
+        ssl_certificate_key /etc/nginx/tls/privkey.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_session_cache shared:SSL:10m;
+
+        location = /healthz {
+            access_log off;
+            return 200 "ok https://status.example.com";
+        }
+
+        location ~* ^/assets/(.*\\.(?:css|js|png|svg))$ {
+            expires 30d;
+            add_header Cache-Control "public, max-age=2592000";
+            try_files $uri @asset_fallback;
+        }
+
+        location @asset_fallback {
+            rewrite ^/assets/(.*)$ /static/$1 break;
+            root $static_root;
+        }
+
+        location /api/ {
+            proxy_pass http://backend_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Request-Id $request_id;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_read_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_buffering off;
+        }
+
+        location ^~ /docs/ {
+            proxy_pass http://docs_site;
+            proxy_set_header Host docs.example.com;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location ~* \.(?:php|pl|py)$ {
+            return 403;
+        }
+
+        location /ws/ {
+            proxy_http_version 1.1;
+            proxy_pass http://backend_api;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
+
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods "GET,POST,OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization,Content-Type";
+            return 204;
+        }
+
+        if ($request_method = POST) {
+            return 405;
+        }
+
+        if ($is_internal) {
+            add_header X-Internal-Network true;
+        }
+    }
+}

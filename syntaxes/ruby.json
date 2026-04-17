@@ -1,0 +1,221 @@
+{
+  "name": "ruby",
+  "fileExtensions": [".rb", ".rake", ".gemspec", ".ru"],
+  "variables": {
+    "identifier": "[a-z_][A-Za-z0-9_]*[!?=]?",
+    "methodName": "[A-Za-z_][A-Za-z0-9_]*[!?=]?|\\[\\]=?|<<|>>|<=|>=|<=>|===|==|!=|=~|!~|\\+@|-@|[+\\-*/%<>&|^~]+",
+    "constant": "[A-Z][A-Za-z0-9_]*",
+    "namespace": "${constant}(?:::${constant})*",
+    "instanceVar": "@@?[A-Za-z_][A-Za-z0-9_]*",
+    "globalVar": "\\$(?:[A-Za-z_][A-Za-z0-9_]*|[0-9]+|[!~?])",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^#!${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "^=begin\\b",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "(class|module)${whiteSpace}+(${namespace})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(self)(\\.)(${methodName})",
+        "styles": [1, "keyword", 2, "builtin", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(${namespace})(\\.)(${methodName})",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "method"]
+      },
+      {
+        "pattern": "(def)${whiteSpace}+(${methodName})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:alias|and|BEGIN|begin|break|case|class|def|defined\\?|do|else|elsif|END|end|ensure|for|if|in|module|next|not|or|redo|rescue|retry|return|super|then|undef|unless|until|when|while|yield)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:self|true|false|nil|__FILE__|__LINE__|__dir__)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "${instanceVar}|${globalVar}",
+        "style": "variable"
+      },
+      {
+        "pattern": ":(?:${identifier}|${constant})",
+        "style": "annotation"
+      },
+      {
+        "pattern": "(?:${identifier}|${constant})(?=${whiteSpace}*:)",
+        "style": "property"
+      },
+      {
+        "pattern": "%[qQ]\\{[^}]*\\}",
+        "style": "string"
+      },
+      {
+        "pattern": "%r\\{[^}]*\\}[imxounse]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "<<[-~]?(?:'|\")?[A-Z_][A-Z0-9_]*(?:'|\")?",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "pattern": "/(?:[^/\\\\\\n]|\\\\.)+/[imxounse]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${namespace})(\\.)(${methodName})(?=${whiteSpace}*\\()",
+        "styles": [1, "class", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "(?:${methodName})(?=${whiteSpace}*\\()",
+        "style": "method"
+      },
+      {
+        "pattern": "\\b${namespace}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "::|=>|\\.\\.\\.|\\.\\.|&\\.|[()\\[\\]{}.,;:|?<>+=\\-*/%!~]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "#\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "heredoc": [
+      {
+        "pattern": "^[ \\t]*[A-Z_][A-Z0-9_]*[ \\t]*$",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "#\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "^=end\\b",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "name": "json5",
+  "fileExtensions": [".json5"],
+  "variables": {
+    "identifier": "[A-Za-z_$][A-Za-z0-9_$]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")${whiteSpace}*(:)",
+        "styles": [1, "keyword", 3, "keyword", 4, "punctuation"],
+        "subStates": [2, "keyDoubleContent"]
+      },
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')${whiteSpace}*(:)",
+        "styles": [1, "keyword", 3, "keyword", 4, "punctuation"],
+        "subStates": [2, "keySingleContent"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "punctuation"]
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "(^|[^A-Za-z0-9_$])(true|false|null)(?=[^A-Za-z0-9_$]|$)",
+        "styles": [2, "keyword"]
+      },
+      {
+        "pattern": "(^|[^A-Za-z0-9_$])(Infinity|NaN)(?=[^A-Za-z0-9_$]|$)",
+        "styles": [2, "builtin"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9a-fA-F]+|(?:[0-9]+\\.[0-9]*|\\.[0-9]+|[0-9]+)(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[\\[\\]{}(),:]",
+        "style": "punctuation"
+      }
+    ],
+    "keyDoubleContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${any}",
+        "style": "keyword"
+      }
+    ],
+    "keySingleContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${any}",
+        "style": "keyword"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+# API docs: https://docs.example.com/graphql
+
+"""GraphQL schema for the demo API: https://docs.example.com/graphql"""
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+extend schema @feature(name: "audit") @feature(name: "preview")
+
+directive @auth(role: Role! = MEMBER) on FIELD_DEFINITION | OBJECT
+directive @feature(name: String!) repeatable on SCHEMA | FIELD_DEFINITION
+directive @cacheControl(maxAge: Int, scope: CacheScope = PUBLIC) on FIELD_DEFINITION
+directive @tag(name: String!) repeatable on FIELD_DEFINITION | FRAGMENT_SPREAD
+
+scalar DateTime
+scalar JSON
+
+enum Status { ACTIVE DISABLED PENDING }
+enum Role { ADMIN MEMBER SUPPORT }
+enum CacheScope { PUBLIC PRIVATE }
+interface Node { id: ID! }
+interface Searchable { score: Float! }
+
+type Query {
+  user(id: ID!): User
+  users(status: Status, limit: Int = 20, after: ID): [User!]! @cacheControl(maxAge: 30)
+  organization(id: ID!): Organization
+  search(text: String!, limit: Int = 10): [SearchResult!]!
+  viewer: User! @auth
+  health: String! @tag(name: "ops")
+}
+
+extend type Query {
+  auditTrail(id: ID!): [AuditEntry!]! @auth(role: SUPPORT)
+}
+
+type Mutation {
+  updateUser(id: ID!, input: UserInput!): User!
+  publishPost(input: PublishPostInput!): Post! @auth(role: MEMBER)
+  setUserStatus(id: ID!, status: Status!): User! @auth(role: ADMIN)
+}
+
+type Subscription {
+  userUpdated(id: ID!): UserEvent!
+  postPublished(orgId: ID): Post! @auth
+}
+
+type User implements Node & Searchable @auth {
+  id: ID!
+  score: Float!
+  name: String!
+  avatarUrl: String
+  profileUrl: String @deprecated(reason: "Use website")
+  website: String
+  status: Status!
+  posts(limit: Int = 10): [Post!]!
+  organization: Organization
+  metadata: JSON
+}
+
+type Organization implements Node & Searchable {
+  id: ID!
+  score: Float!
+  name: String!
+  website: String
+  members(limit: Int = 20): [User!]!
+}
+
+type Post implements Node {
+  id: ID!
+  title: String!
+  body: String!
+  url: String!
+  createdAt: DateTime!
+  author: User!
+}
+
+type AuditEntry implements Node { id: ID! actor: User! action: String! createdAt: DateTime! details: JSON }
+type UserEvent { eventId: ID! kind: String! user: User }
+
+union SearchResult = User | Organization | Post
+
+input UserInput { name: String! website: String active: Boolean = true metadata: JSON }
+input PublishPostInput { orgId: ID! title: String! body: String! tags: [String!] = [] }
+
+fragment UserFields on User {
+  id
+  name
+  profileUrl
+  website
+  status
+}
+
+fragment SearchResultFields on SearchResult {
+  ... on User {
+    id
+    name
+    status
+  }
+  ... on Organization {
+    id
+    name
+    website
+  }
+  ... on Post {
+    id
+    title
+    url
+  }
+}
+
+query GetUser($id: ID!, $withPosts: Boolean = false) {
+  user(id: $id) {
+    ...UserFields
+    primaryName: name
+    posts(limit: 10) @include(if: $withPosts) { title url }
+    organization { id name }
+  }
+}
+
+query SearchEverything($text: String!, $limit: Int = 5) {
+  search(text: $text, limit: $limit) {
+    ...SearchResultFields
+    ... on User { metadata }
+  }
+}
+
+mutation UpdateUser($id: ID!, $input: UserInput!) {
+  updateUser(id: $id, input: $input) { ...UserFields }
+}
+
+subscription OnUserUpdated($id: ID!) {
+  userUpdated(id: $id) { eventId kind user { ...UserFields } }
+}

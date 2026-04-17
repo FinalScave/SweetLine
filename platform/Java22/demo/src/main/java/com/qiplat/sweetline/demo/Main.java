@@ -35,6 +35,8 @@ public class Main extends JFrame {
         EXT_SYNTAX_MAP.put(".java", "java.json");
         EXT_SYNTAX_MAP.put(".js", "javascript.json");
         EXT_SYNTAX_MAP.put(".json", "json-sweetline.json");
+        EXT_SYNTAX_MAP.put(".jsonc", "jsonc.json");
+        EXT_SYNTAX_MAP.put(".json5", "json5.json");
         EXT_SYNTAX_MAP.put(".kt", "kotlin.json");
         EXT_SYNTAX_MAP.put(".lua", "lua.json");
         EXT_SYNTAX_MAP.put(".m", "objc.json");
@@ -54,6 +56,32 @@ public class Main extends JFrame {
         EXT_SYNTAX_MAP.put(".md", "markdown.json");
         EXT_SYNTAX_MAP.put(".wenyan", "wenyan.json");
         EXT_SYNTAX_MAP.put(".myu", "iapp.json");
+        EXT_SYNTAX_MAP.put(".css", "css.json");
+        EXT_SYNTAX_MAP.put(".scss", "scss.json");
+        EXT_SYNTAX_MAP.put(".less", "less.json");
+        EXT_SYNTAX_MAP.put(".cmake", "cmake.json");
+        EXT_SYNTAX_MAP.put(".dockerfile", "dockerfile.json");
+        EXT_SYNTAX_MAP.put(".mk", "makefile.json");
+        EXT_SYNTAX_MAP.put(".properties", "properties.json");
+        EXT_SYNTAX_MAP.put(".env", "env.json");
+        EXT_SYNTAX_MAP.put(".proto", "protobuf.json");
+        EXT_SYNTAX_MAP.put(".graphql", "graphql.json");
+        EXT_SYNTAX_MAP.put(".gql", "graphql.json");
+        EXT_SYNTAX_MAP.put(".nginx", "nginx.json");
+        EXT_SYNTAX_MAP.put(".conf", "nginx.json");
+        EXT_SYNTAX_MAP.put(".gitignore", "gitignore.json");
+        EXT_SYNTAX_MAP.put(".diff", "diff.json");
+        EXT_SYNTAX_MAP.put(".patch", "diff.json");
+        EXT_SYNTAX_MAP.put(".rb", "ruby.json");
+        EXT_SYNTAX_MAP.put(".rake", "ruby.json");
+        EXT_SYNTAX_MAP.put(".gemspec", "ruby.json");
+        EXT_SYNTAX_MAP.put(".ru", "ruby.json");
+        EXT_SYNTAX_MAP.put(".hcl", "hcl.json");
+        EXT_SYNTAX_MAP.put(".tf", "terraform.json");
+        EXT_SYNTAX_MAP.put(".tfvars", "terraform.json");
+        EXT_SYNTAX_MAP.put(".tfbackend", "terraform.json");
+        EXT_SYNTAX_MAP.put(".vue", "vue.json");
+        EXT_SYNTAX_MAP.put(".svelte", "svelte.json");
     }
 
     private Path syntaxesDir;
@@ -252,6 +280,8 @@ public class Main extends JFrame {
         engine.registerStyleName("lifetime", HighlightTheme.STYLE_LIFETIME);
         engine.registerStyleName("selector", HighlightTheme.STYLE_SELECTOR);
         engine.registerStyleName("builtin", HighlightTheme.STYLE_BUILTIN);
+        engine.registerStyleName("url", HighlightTheme.STYLE_URL);
+        engine.registerStyleName("property", HighlightTheme.STYLE_PROPERTY);
     }
 
     private static List<String> listExampleFiles(Path dir) {

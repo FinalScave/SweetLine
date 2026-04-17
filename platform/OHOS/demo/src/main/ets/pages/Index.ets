@@ -21,6 +21,8 @@ const EXT_SYNTAX_MAP: Map<string, string> = new Map([
   [".java", "java.json"],
   [".js", "javascript.json"],
   [".json", "json-sweetline.json"],
+  [".jsonc", "jsonc.json"],
+  [".json5", "json5.json"],
   [".kt", "kotlin.json"],
   [".lua", "lua.json"],
   [".m", "objc.json"],
@@ -39,6 +41,32 @@ const EXT_SYNTAX_MAP: Map<string, string> = new Map([
   [".md", "markdown.json"],
   [".wenyan", "wenyan.json"],
   [".myu", "iapp.json"],
+  [".css", "css.json"],
+  [".scss", "scss.json"],
+  [".less", "less.json"],
+  [".cmake", "cmake.json"],
+  [".dockerfile", "dockerfile.json"],
+  [".mk", "makefile.json"],
+  [".properties", "properties.json"],
+  [".env", "env.json"],
+  [".proto", "protobuf.json"],
+  [".graphql", "graphql.json"],
+  [".gql", "graphql.json"],
+  [".nginx", "nginx.json"],
+  [".conf", "nginx.json"],
+  [".gitignore", "gitignore.json"],
+  [".diff", "diff.json"],
+  [".patch", "diff.json"],
+  [".rb", "ruby.json"],
+  [".rake", "ruby.json"],
+  [".gemspec", "ruby.json"],
+  [".ru", "ruby.json"],
+  [".hcl", "hcl.json"],
+  [".tf", "terraform.json"],
+  [".tfvars", "terraform.json"],
+  [".tfbackend", "terraform.json"],
+  [".vue", "vue.json"],
+  [".svelte", "svelte.json"],
 ]);
 
 @Entry
@@ -73,6 +101,8 @@ struct Index {
     this.commonEngine.registerStyleName("lifetime", 12);
     this.commonEngine.registerStyleName("selector", 13);
     this.commonEngine.registerStyleName("builtin", 14);
+    this.commonEngine.registerStyleName("url", 15);
+    this.commonEngine.registerStyleName("property", 16);
 
     this.commonEngine.defineMacro("OHOS");
     this.inlineStyleEngine.defineMacro("OHOS");

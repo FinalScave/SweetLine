@@ -1,0 +1,148 @@
+{
+  // SweetLine JSONC configuration sample
+  "name": "sweetline-demo",
+  "version": 2,
+  "build": 20260416,
+  "homepage": "https://example.com/docs",
+  "statusPage": "https://status.example.com/incidents/latest",
+  "features": {
+    "inlineStyle": true,
+    "showLineNumbers": false,
+    "theme": "ocean",
+    "urlLinking": true,
+    "diffView": true,
+    "nestedLanguages": true,
+    "betaFlags": {
+      "enableReplayMode": false,
+      "enableTelemetryBanner": true,
+      "enableAIAssist": false
+    }
+  },
+  "branding": {
+    "title": "SweetLine Demo",
+    "subtitle": "Portable syntax highlighting",
+    "logoUrl": "https://cdn.example.com/logo/sweetline.svg",
+    "supportEmail": "support@example.com",
+    "colors": {
+      "primary": "#0f5bd8",
+      "accent": "#ff8a00",
+      "surface": "#f6f8fb",
+      "text": "#1a2230"
+    }
+  },
+  "servers": [
+    "https://api.example.com",
+    "https://cdn.example.com",
+    "https://edge.example.com"
+  ],
+  "paths": {
+    "health": "/internal/healthz",
+    "metrics": "/internal/metrics",
+    "graphql": "/graphql",
+    "assets": "/assets/manifest.json",
+    "docs": "/docs/index.html"
+  },
+  "network": {
+    "httpPort": 8080,
+    "httpsPort": 8443,
+    "grpcPort": 9090,
+    "allowedOrigins": [
+      "https://demo.example.com",
+      "https://preview.example.com"
+    ],
+    "allowedMethods": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    "allowedHeaders": ["Authorization", "Content-Type", "X-Request-Id"]
+  },
+  "timeouts": {
+    "startupMs": 1500,
+    "readMs": 5000,
+    "writeMs": 5000,
+    "idleMs": 30000,
+    "retry": {
+      "maxAttempts": 5,
+      "backoffRatio": 1.75,
+      "jitterRatio": 0.25
+    }
+  },
+  "cache": {
+    "enabled": true,
+    "provider": "redis",
+    "url": "redis://cache.example.com:6379/4",
+    "prefix": "sweetline:demo",
+    "ttlSeconds": 86400,
+    "shards": 16,
+    "warmupKeys": ["session:home", "session:pricing", "session:docs", "project:alpha"]
+  },
+  "databases": {
+    "primary": {
+      "url": "postgres://demo:secret@db.example.com:5432/sweetline",
+      "poolMin": 4,
+      "poolMax": 32,
+      "sslMode": "require"
+    },
+    "replica": {
+      "url": "postgres://readonly:secret@db-replica.example.com:5432/sweetline",
+      "poolMin": 2,
+      "poolMax": 16,
+      "readOnly": true
+    }
+  },
+  "security": {
+    "issuer": "https://auth.example.com/",
+    "audience": "sweetline-demo",
+    "wellKnown": "https://auth.example.com/.well-known/openid-configuration",
+    "jwksUrl": "https://auth.example.com/.well-known/jwks.json",
+    "certificateFingerprint": "4A:7B:9F:12:6D:C2:11:80:AA:0B:CC:DD:EF:10:22:33",
+    "csp": {
+      "defaultSrc": "'self' https://cdn.example.com",
+      "imgSrc": "'self' data: https://images.example.com",
+      "connectSrc": "'self' https://api.example.com wss://stream.example.com"
+    }
+  },
+  "integrations": {
+    "sentry": {
+      "dsn": "https://public@example.ingest.sentry.io/42",
+      "sampleRate": 0.05
+    },
+    "analytics": {
+      "provider": "segment",
+      "writeKey": "write_live_abc123",
+      "batchSize": 500,
+      "flushIntervalMs": 2000
+    },
+    "storage": {
+      "bucket": "s3://sweetline-assets/releases/2026-04-16/",
+      "region": "us-west-2",
+      "cannedAcl": "private"
+    }
+  },
+  "projects": [
+    {
+      "id": "alpha",
+      "name": "Alpha Docs",
+      "owner": "alice",
+      "language": "typescript",
+      "repository": "https://github.com/example/alpha-docs",
+      "archived": false
+    },
+    {
+      "id": "beta",
+      "name": "Beta Worker",
+      "owner": "bob",
+      "language": "rust",
+      "repository": "https://github.com/example/beta-worker",
+      "archived": false
+    },
+    { "id": "legacy", "name": "Legacy Importer", "owner": "carol", "language": "java", "repository": "https://github.com/example/legacy-importer", "archived": true }
+  ],
+  "ui": {
+    "welcomeMessage": "Visit https://docs.example.com/setup for onboarding",
+    "footerMarkdown": "[Changelog](https://example.com/changelog) and `tips`",
+    "examples": ["example.java", "example.scss", "example.graphql", "example.svelte"],
+    "commandPalette": {
+      "placeholder": "Search files, symbols, and actions",
+      "recent": ["Open Project", "Switch Theme", "Toggle Minimap"]
+    }
+  },
+  "notes": ["Escaped quote: \\\"portable\\\" engine", "Windows path: C:\\\\Program Files\\\\SweetLine\\\\bin", "Template marker: ${APP_BUILD}", "Unicode snowman: \\u2603"]
+}
