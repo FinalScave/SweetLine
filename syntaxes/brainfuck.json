@@ -1,0 +1,44 @@
+{
+  "name": "brainfuck",
+  "fileSuffixes": [".bf", ".b"],
+  "variables": {
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "[^\\-\\+\\.><\\[\\],]+",
+        "style": "comment"
+      },
+      {
+        "pattern": "[\\-\\+\\.><,]",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\[",
+        "style": "punctuation",
+        "state": "loop"
+      }
+    ],
+    "loop": [
+      {
+        "pattern": "[^\\-\\+\\.><\\[\\],\\]]+",
+        "style": "comment"
+      },
+      {
+        "pattern": "[\\-\\+\\.><,]",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\[",
+        "style": "punctuation",
+        "state": "loop"
+      },
+      {
+        "pattern": "\\]",
+        "style": "punctuation",
+        "state": "default"
+      }
+    ]
+  }
+}

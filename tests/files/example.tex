@@ -1,0 +1,211 @@
+% LaTeX sample document
+% This is a comment
+
+\documentclass[12pt,a4paper]{article}
+
+% Package imports
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Document metadata
+\title{Sample LaTeX Document}
+\author{John Doe \and Jane Smith}
+\date{\today}
+
+% Custom commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\deriv}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This is a sample LaTeX document demonstrating various features including text formatting, mathematical equations, figures, tables, and references. The document serves as a comprehensive example for learning LaTeX syntax and structure.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+
+This is a sample \LaTeX{} document. LaTeX is a typesetting system commonly used for scientific and technical documents. It provides excellent support for mathematical notation and automatic numbering of sections, equations, figures, and tables.
+
+\subsection{Text Formatting}
+
+LaTeX supports various text formatting options:
+\begin{itemize}
+    \item \textbf{Bold text} using \texttt{\textbackslash textbf}
+    \item \textit{Italic text} using \texttt{\textbackslash textit}
+    \item \underline{Underlined text} using \texttt{\textbackslash underline}
+    \item \emph{Emphasized text} using \texttt{\textbackslash emph}
+    \item \texttt{Monospace text} using \texttt{\textbackslash texttt}
+\end{itemize}
+
+\subsection{Lists}
+
+\begin{enumerate}
+    \item First item
+    \item Second item
+    \item Third item with sub-items:
+    \begin{enumerate}
+        \item Sub-item a
+        \item Sub-item b
+    \end{enumerate}
+\end{enumerate}
+
+\section{Mathematical Expressions}
+
+\subsection{Inline Mathematics}
+
+Inline math can be written using dollar signs: $E = mc^2$, or the equation $a^2 + b^2 = c^2$ for right triangles.
+
+\subsection{Display Mathematics}
+
+The quadratic formula is:
+\[
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+\]
+
+An integral example:
+\[
+\int_{0}^{\infty} e^{-x^2} \, dx = \frac{\sqrt{\pi}}{2}
+\]
+
+A summation example:
+\[
+\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}
+\]
+
+\subsection{Equations with Numbers}
+
+\begin{equation}
+\label{eq:euler}
+e^{i\pi} + 1 = 0
+\end{equation}
+
+Equation \ref{eq:euler} is Euler's identity, which connects five fundamental mathematical constants.
+
+\begin{equation}
+\label{eq:fourier}
+f(x) = \frac{a_0}{2} + \sum_{n=1}^{\infty} \left( a_n \cos(nx) + b_n \sin(nx) \right)
+\end{equation}
+
+\subsection{Matrices}
+
+A matrix can be written as:
+\[
+A = \begin{pmatrix}
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+a_{31} & a_{32} & a_{33}
+\end{pmatrix}
+\]
+
+The determinant:
+\[
+\det(A) = \begin{vmatrix}
+a & b \\
+c & d
+\end{vmatrix} = ad - bc
+\]
+
+\section{Figures and Tables}
+
+\subsection{Figures}
+
+\begin{figure}[h]
+\centering
+% \includegraphics[width=0.8\textwidth]{example-image}
+\caption{An example figure}
+\label{fig:example}
+\end{figure}
+
+Figure \ref{fig:example} shows an example image.
+
+\subsection{Tables}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Column 1} & \textbf{Column 2} & \textbf{Column 3} \\
+\hline
+Row 1, Col 1 & Row 1, Col 2 & Row 1, Col 3 \\
+Row 2, Col 1 & Row 2, Col 2 & Row 2, Col 3 \\
+Row 3, Col 1 & Row 3, Col 2 & Row 3, Col 3 \\
+\hline
+\end{tabular}
+\caption{An example table}
+\label{tab:example}
+\end{table}
+
+Table \ref{tab:example} demonstrates a basic table structure.
+
+\section{Code Listings}
+
+\begin{lstlisting}[language=Python]
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# Calculate the 10th Fibonacci number
+result = fibonacci(10)
+print(f"The 10th Fibonacci number is {result}")
+\end{lstlisting}
+
+\section{References and Citations}
+
+This document cites the work of \cite{knuth1984} and \cite{lamport1994}.
+
+\subsection{Cross-references}
+
+\begin{itemize}
+    \item See Equation \ref{eq:euler} on page \pageref{eq:euler}
+    \item See Figure \ref{fig:example} on page \pageref{fig:example}
+    \item See Table \ref{tab:example} on page \pageref{tab:example}
+\end{itemize}
+
+\section{Theorems and Proofs}
+
+\begin{theorem}[Pythagorean Theorem]
+For a right triangle with legs of length $a$ and $b$ and hypotenuse $c$:
+\[
+a^2 + b^2 = c^2
+\]
+\end{theorem}
+
+\begin{proof}
+Consider a right triangle with legs $a$ and $b$ and hypotenuse $c$. By constructing a square with side $a+b$ and arranging four copies of the triangle, we can prove that the area of the inner square equals $c^2$, which equals $a^2 + b^2$.
+\end{proof}
+
+\section{Conclusion}
+
+This document has demonstrated various LaTeX features including:
+\begin{itemize}
+    \item Document structure and metadata
+    \item Text formatting and lists
+    \item Mathematical expressions
+    \item Figures and tables
+    \item Code listings
+    \item References and citations
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+
+\section{Appendix}
+
+Additional content can be placed in appendices.
+
+\end{document}

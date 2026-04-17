@@ -1,0 +1,263 @@
+{
+  "name": "glsl",
+  "fileSuffixes": [".glsl", ".glsles", ".vert", ".frag", ".geom", ".comp", ".tesc", ".tese"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*include)(\\s*)(<.*?>)",
+        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "string"]
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)[ \\t]*\\S+",
+        "styles": [1, "preprocessor"]
+      },
+      {
+        "pattern": "\\b(break|case|continue|default|do|else|for|if|return|switch|while|struct|discard)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(const|in|out|inout|attribute|uniform|varying|buffer|shared|coherent|volatile|restrict|readonly|writeonly)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(highp|mediump|lowp|precision)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(layout)\\b[ \\t]*\\(",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(void|bool|int|uint|float|double|half)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(vec2|vec3|vec4|dvec2|dvec3|dvec4|bvec2|bvec3|bvec4|ivec2|ivec3|ivec4|uvec2|uvec3|uvec4)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(mat2|mat3|mat4|mat2x2|mat2x3|mat2x4|mat3x2|mat3x3|mat3x4|mat4x2|mat4x3|mat4x4)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(dmat2|dmat3|dmat4|dmat2x2|dmat2x3|dmat2x4|dmat3x2|dmat3x3|dmat3x4|dmat4x2|dmat4x3|dmat4x4)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler1D|sampler2D|sampler3D|samplerCube|sampler1DShadow|sampler2DShadow|samplerCubeShadow)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler1DArray|sampler2DArray|samplerCubeArray|sampler1DArrayShadow|sampler2DArrayShadow)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(isampler1D|isampler2D|isampler3D|isamplerCube|isampler1DArray|isampler2DArray|isamplerCubeArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(usampler1D|usampler2D|usampler3D|usamplerCube|usampler1DArray|usampler2DArray|usamplerCubeArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler2DRect|sampler2DRectShadow|isampler2DRect|usampler2DRect)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(samplerBuffer|isamplerBuffer|usamplerBuffer)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler2DMS|isampler2DMS|usampler2DMS)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler2DMSArray|isampler2DMSArray|usampler2DMSArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(image1D|image2D|image3D|imageCube|image1DArray|image2DArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(iimage1D|iimage2D|iimage3D|iimageCube|iimage1DArray|iimage2DArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(uimage1D|uimage2D|uimage3D|uimageCube|uimage1DArray|uimage2DArray)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(image2DRect|iimage2DRect|uimage2DRect)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(imageBuffer|iimageBuffer|uimageBuffer)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(gl_\\w+)\\b",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "\\b(radians|degrees|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|asinh|acosh|atanh)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(pow|exp|log|exp2|log2|sqrt|inversesqrt)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(abs|sign|floor|trunc|round|roundEven|ceil|fract|mod|modf|min|max|clamp|mix|step|smoothstep|isnan|isinf)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(floatBitsToInt|floatBitsToUint|intBitsToFloat|uintBitsToFloat|fma|frexp|ldexp)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(packDouble2x32|unpackDouble2x32|packSnorm2x16|unpackSnorm2x16|packSnorm4x8|unpackSnorm4x8)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(packUnorm2x16|unpackUnorm2x16|packUnorm4x8|unpackUnorm4x8|packHalf2x16|unpackHalf2x16)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(length|distance|dot|cross|normalize|faceforward|reflect|refract)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(matrixCompMult|outerProduct|transpose|determinant|inverse)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(lessThan|lessThanEqual|greaterThan|greaterThanEqual|equal|notEqual|any|all|not)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(texture|textureOffset|texelFetch|texelFetchOffset|textureProjOffset|textureLodOffset)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(textureProjLod|textureProjLodOffset|textureGrad|textureGradOffset|textureProjGrad|textureProjGradOffset)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(textureGather|textureGatherOffset|textureGatherOffsets|textureSize|textureQueryLod|textureQueryLevels)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(atomicAdd|atomicMin|atomicMax|atomicAnd|atomicOr|atomicXor|atomicExchange|atomicCompSwap)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(imageLoad|imageStore|imageAtomicAdd|imageAtomicMin|imageAtomicMax|imageAtomicAnd|imageAtomicOr|imageAtomicXor|imageAtomicExchange|imageAtomicCompSwap)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(dFdx|dFdy|dFdxFine|dFdyFine|dFdxCoarse|dFdyCoarse|fwidth|fwidthFine|fwidthCoarse)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(interpolateAtCentroid|interpolateAtSample|interpolateAtOffset)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(EmitVertex|EndPrimitive|barrier|memoryBarrier|memoryBarrierAtomicCounter|memoryBarrierBuffer|memoryBarrierShared|memoryBarrierImage|groupMemoryBarrier)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?[fF]?\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[+\\-*/%&|^!<>?=]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

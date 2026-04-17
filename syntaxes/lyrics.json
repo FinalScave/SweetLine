@@ -1,0 +1,23 @@
+{
+  "name": "lyrics",
+  "fileSuffixes": [".lrc"],
+  "variables": {
+    "any": "[\\S\\s]"
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(\\[)(\\d*):(\\d{2})\\.(\\d*)(\\])",
+        "styles": [1, "punctuation", 2, "number", 3, "number", 4, "number", 5, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)([a-zA-Z]+)(:)([^\\]]*)(\\])",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "string", 5, "punctuation"]
+      },
+      {
+        "pattern": "[^\\[\\]]+",
+        "style": "string"
+      }
+    ]
+  }
+}

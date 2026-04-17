@@ -1,0 +1,126 @@
+{
+  "name": "asm",
+  "fileSuffixes": [".s", ".S", ".asm", ".a", ".mac", ".lst", ".nasm", ".masm", ".mar"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_.-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "([;|#|!])(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(\\.)(long|ascii|asciz|byte|double|float|hword|int|octa|quad|short|single|space|string|word|2byte|4byte|8byte)\\b",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\.)(if|iff|if_false|ift|iftf|if_true|if_true_false|iif|else|endif|irp|iprc|repeat|rept|endr)\\b",
+        "styles": [1, "punctuation", 2, "macro"]
+      },
+      {
+        "pattern": "(\\.)(include|library|macro|mexit|endm|mcall|mdelete)\\b",
+        "styles": [1, "punctuation", 2, "macro"]
+      },
+      {
+        "pattern": "(\\.)(${identifier}):?",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(${identifier}):",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "(?m)^\\s*(${identifier})\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "[#!%.@$~?]",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(:)(${identifier})(:)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "[\\[\\]+\\-*/=&<>]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+Name,Age,City,Salary,Department
+John Doe,30,New York,50000,Engineering
+Jane Smith,25,Los Angeles,60000,Marketing
+Bob Johnson,35,Chicago,55000,Sales
+Alice Brown,28,Houston,52000,Engineering
+Charlie Wilson,32,Phoenix,48000,Marketing
+Diana Davis,27,Philadelphia,58000,Sales
+Edward Miller,31,San Antonio,53000,Engineering
+Fiona Garcia,29,San Diego,57000,Marketing
+George Martinez,33,Dallas,51000,Sales
+Hannah Rodriguez,26,San Jose,59000,Engineering
+Ivan Lopez,34,Austin,54000,Marketing
+Julia Gonzalez,30,Jacksonville,56000,Sales
+Kevin Anderson,29,Fort Worth,52000,Engineering
+Laura Thomas,28,Columbus,58000,Marketing
+Michael Jackson,31,Charlotte,55000,Sales
+Nancy White,27,Detroit,53000,Engineering
+Oscar Harris,32,El Paso,57000,Marketing
+Patricia Martin,26,Boston,59000,Sales
+Quinn Thompson,35,Nashville,54000,Engineering
+Rachel Garcia,29,Baltimore,56000,Marketing
+"Complex, Name",33,"City, State",62000,Engineering
+"Quoted ""Value""",28,"Location with, comma",58000,Marketing
+"Another ""quoted"" value",31,"Another, location",55000,Sales
+"Special characters: !@#$%",27,"Test ""city""",52000,Engineering
+"Numbers in text: 123",34,"City 456",59000,Marketing
+"Date: 2023-01-15",26,"Date: 2023-02-20",56000,Sales
+"Time: 14:30:00",29,"Time: 09:15:00",53000,Engineering
+"Email: test@example.com",32,"URL: https://example.com",57000,Marketing
+"Phone: 555-1234",28,"Fax: 555-5678",55000,Sales
+"Empty field follows",30,,58000,Engineering
+"Another empty",27,"",52000,Marketing
+"Last field empty",33,"Last City",,Sales
+"Multiple empties",26,,56000,Engineering
+"Trailing comma",29,"Test City",53000,
+"Leading spaces",31,"  Spaces before",57000,Marketing
+"Trailing spaces  ",28,"Spaces after  ",55000,Sales
+"  Both sides  ",34,"  Both  ",58000,Engineering
+"Tab	separated",27,"Tab	here",52000,Marketing
+"Newline
+in field",30,"Another
+newline",56000,Sales
+"Unicode: 你好世界",33,"日本語テスト",59000,Engineering
+"Emoji: 😀🎉",26,"More: 🚀💻",53000,Marketing
+"Currency: $1,234.56",29,"€987.65",57000,Sales
+"Percentage: 99.9%",32,"Ratio: 3:1",55000,Engineering
+"Scientific: 1.23e10",28,"Negative: -456",58000,Marketing
+"Hex: 0xFF",35,"Octal: 0o77",52000,Sales
+"Binary: 0b1010",27,"Base64: SGVsbG8=",56000,Engineering
+"JSON: {""key"": ""value""}",31,"XML: <tag>value</tag>",59000,Marketing
+"HTML: <div>content</div>",26,"CSS: color: red;",53000,Sales
+"SQL: SELECT * FROM table",30,"Regex: ^[a-z]+$",57000,Engineering
+"Path: /usr/local/bin",29,"Windows: C:\\Users",55000,Marketing
