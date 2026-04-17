@@ -148,11 +148,10 @@ All uppercase with underscores between words. Examples:
 
 If you are adding or refining syntax rules, you can use the repository skills in [`skills/`](../../skills) to speed up the work and keep the output consistent.
 
-Recommended pair:
-- [`syntax-highlighting-authoring`](../../skills/syntax-highlighting-authoring/SKILL.md)
+Recommended entry:
 - [`sweetline-syntax-profile`](../../skills/sweetline-syntax-profile/SKILL.md)
 
-What they help enforce:
+What it helps enforce:
 - deciding whether the task is a refinement, a new syntax, a DSL split, or a dialect split
 - deciding whether the syntax needs exact file names, file suffixes, or file-name patterns
 - keeping tokenization fine-grained instead of using overly broad fallback rules

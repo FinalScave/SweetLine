@@ -143,7 +143,7 @@ import com.qiplat.sweetline.*;
 try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
     engine.compileSyntaxFromFile("syntaxes/java.json");
 
-    try (TextAnalyzer analyzer = engine.createAnalyzerByName("java")) {
+    try (TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java")) {
         DocumentHighlight result = analyzer.analyzeText(sourceCode);
     }
 }
@@ -167,7 +167,7 @@ HighlightEngine engine = new HighlightEngine(new HighlightConfig());
 engine.compileSyntaxFromJson(jsonString);
 
 // Full analysis
-TextAnalyzer analyzer = engine.createAnalyzerByName("java");
+TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java");
 DocumentHighlight result = analyzer.analyzeText(sourceCode);
 
 // Iterate results
@@ -191,7 +191,7 @@ const engine = new sweetline.HighlightEngine(config);
 engine.compileSyntaxFromJson(jsonString);
 
 // Analyze text
-const analyzer = engine.createAnalyzerByName("javascript");
+const analyzer = engine.createAnalyzerBySyntaxName("javascript");
 const highlight = analyzer.analyzeText(sourceCode);
 
 // Iterate results
@@ -208,10 +208,12 @@ for (let i = 0; i < highlight.lines.size(); i++) {
 
 SweetLine uses JSON to define syntax rules. Here is a simple example:
 
+Routing metadata is file-name based. Use `fileName` / `fileNames` for exact base names, `fileSuffix` / `fileSuffixes` for suffix matches, and `fileNamePattern` / `fileNamePatterns` only when exact names and suffixes are not enough.
+
 ```json
 {
   "name": "myLanguage",
-  "fileExtensions": [".mylang"],
+  "fileSuffixes": [".mylang"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*"
   },
@@ -235,9 +237,8 @@ SweetLine uses JSON to define syntax rules. Here is a simple example:
 
 For complete syntax rule configuration, see the [Syntax Rule Configuration Guide](docs/en/syntax_rule.md).
 
-If you want to add or refine syntax rules more quickly, you can also use the skills in [`skills/`](skills). The recommended pair is:
-- [`syntax-highlighting-authoring`](skills/syntax-highlighting-authoring/SKILL.md): a general workflow for writing syntax rules, routing, examples, and validation
-- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md): SweetLine-specific constraints such as file layout, style names, tests, demo registration, and the recommended `120` to `150` line example range
+If you want to add or refine syntax rules more quickly, you can also use the skill in [`skills/`](skills). The recommended entry is:
+- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md): the SweetLine syntax-authoring workflow and repository policy for syntax rules, routing, style vocabulary, examples, tests, and demo registration
 
 ## Documentation
 

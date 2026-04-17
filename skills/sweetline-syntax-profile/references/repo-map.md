@@ -11,7 +11,7 @@ Use this file when wiring a syntax change through the repository.
 
 - `tests/syntax_test.cpp`
   - compile built-in syntaxes
-  - analyzer creation by extension
+  - analyzer creation by file name
   - fragment and import behavior tests
 - `tests/highlight_test.cpp`
   - focused style assertions
@@ -64,7 +64,7 @@ Use this file when wiring a syntax change through the repository.
 
 ## Practical reminders
 
-- Reuse fragments for comments, strings, escapes, and URLs.
-- Keep example files realistic and within `120` to `150` lines.
-- If a syntax reuses an ambiguous extension, verify whether core routing and demo routing both need changes.
-- Watch for extension collisions such as Objective-C versus MATLAB on `.m`.
+- Reuse fragments for comments, strings, escapes, and embedded inline tokens.
+- Keep new or modified example files realistic and within `120` to `250` lines.
+- If a syntax reuses an ambiguous suffix, verify whether core routing and demo routing both need changes.
+- Watch for suffix collisions such as Objective-C versus MATLAB on `.m`.

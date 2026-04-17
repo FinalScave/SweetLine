@@ -143,7 +143,7 @@ import com.qiplat.sweetline.*;
 try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
     engine.compileSyntaxFromFile("syntaxes/java.json");
 
-    try (TextAnalyzer analyzer = engine.createAnalyzerByName("java")) {
+    try (TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java")) {
         DocumentHighlight result = analyzer.analyzeText(sourceCode);
     }
 }
@@ -167,7 +167,7 @@ HighlightEngine engine = new HighlightEngine(new HighlightConfig());
 engine.compileSyntaxFromJson(jsonString);
 
 // 全量分析
-TextAnalyzer analyzer = engine.createAnalyzerByName("java");
+TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java");
 DocumentHighlight result = analyzer.analyzeText(sourceCode);
 
 // 遍历结果
@@ -191,7 +191,7 @@ const engine = new sweetline.HighlightEngine(config);
 engine.compileSyntaxFromJson(jsonString);
 
 // 分析文本
-const analyzer = engine.createAnalyzerByName("javascript");
+const analyzer = engine.createAnalyzerBySyntaxName("javascript");
 const highlight = analyzer.analyzeText(sourceCode);
 
 // 遍历结果
@@ -208,10 +208,12 @@ for (let i = 0; i < highlight.lines.size(); i++) {
 
 SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 
+路由元数据采用基于文件名的匹配模型。优先使用 `fileName` / `fileNames` 做精确 basename 匹配，使用 `fileSuffix` / `fileSuffixes` 做后缀匹配，只有在前两者都不够表达时才使用 `fileNamePattern` / `fileNamePatterns`。
+
 ```json
 {
   "name": "myLanguage",
-  "fileExtensions": [".mylang"],
+  "fileSuffixes": [".mylang"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*"
   },
@@ -235,9 +237,8 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 
 完整语法规则配置说明请参见 [语法规则配置文档](docs/zh/syntax_rule.md)。
 
-如果您希望更快、更规范地新增或完善语法规则，也可以直接使用仓库内的 [`skills/`](skills)。推荐组合是：
-- [`syntax-highlighting-authoring`](skills/syntax-highlighting-authoring/SKILL.md)：通用的语法规则、路由、example 和验证编写流程
-- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md)：SweetLine 仓库专用约束，包括目录结构、style names、测试入口、demo 注册以及 `120~150` 行 example 建议
+如果您希望更快、更规范地新增或完善语法规则，也可以直接使用仓库内的 [`skills/`](skills)。推荐入口是：
+- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md)：SweetLine 语法规则编写与仓库约束总入口，覆盖语法规则、路由、style vocabulary、example、测试和 demo 注册
 
 ## 文档
 

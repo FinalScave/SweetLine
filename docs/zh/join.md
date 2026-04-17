@@ -139,11 +139,10 @@ enum AlternateUrlTableErrors {
 
 如果您要新增或完善语法规则，建议直接使用仓库内的 [`skills/`](../../skills)，这样可以明显提高编写速度，并让产出更一致。
 
-推荐组合：
-- [`syntax-highlighting-authoring`](../../skills/syntax-highlighting-authoring/SKILL.md)
+推荐入口：
 - [`sweetline-syntax-profile`](../../skills/sweetline-syntax-profile/SKILL.md)
 
-它们主要会帮助约束这些内容：
+它主要会帮助约束这些内容：
 - 先判断当前需求是已有语法增强、全新语法、DSL 拆分还是方言拆分
 - 先判断语法是否需要精确文件名、文件后缀或文件名正则路由
 - 保持 token 拆分足够细，而不是用过大的兜底规则
