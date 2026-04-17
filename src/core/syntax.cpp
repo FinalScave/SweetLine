@@ -163,6 +163,9 @@ namespace NS_SWEETLINE {
 
   // ===================================== SyntaxRule ============================================
   bool SyntaxRule::containsInlineStyle(int32_t style_id) {
+    if (style_id <= 0) {
+      return false;
+    }
     return inline_styles.find(style_id) != inline_styles.end();
   }
 

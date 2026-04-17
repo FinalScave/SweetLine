@@ -8,8 +8,8 @@ namespace NS_SWEETLINE {
   struct CaptureGroupMatch {
     /// Matched capture group index
     int32_t group {-1};
-    /// Highlight style
-    int32_t style;
+    /// Highlight style (0 means unstyled)
+    int32_t style {0};
     /// Matched start character position
     size_t start {0};
     /// Matched character length
@@ -30,7 +30,7 @@ namespace NS_SWEETLINE {
     int32_t token_rule_idx {-1};
     /// Matched capture group
     int32_t matched_group {-1};
-    /// Highlight style
+    /// Highlight style (0 means unstyled)
     int32_t style {0};
     /// Target state to transition to
     int32_t goto_state {-1};

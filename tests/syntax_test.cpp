@@ -571,6 +571,73 @@ TEST_CASE("inline style references must be declared in styles") {
   }
 }
 
+TEST_CASE("inline style analysis preserves direct unstyled spans") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine({true, true});
+  SECTION("direct capture groups") {
+    const U8String syntax = R"({
+  "name": "inlineSparseGroups",
+  "fileSuffixes": [".isg"],
+  "styles": [
+    { "name": "keyword", "foreground": "#FF569CD6" },
+    { "name": "punctuation", "foreground": "#FFD69D85" }
+  ],
+  "states": {
+    "default": [
+      { "pattern": "(<)([^>]*)(>)", "styles": [1, "punctuation", 3, "punctuation"] }
+    ]
+  }
+})";
+
+    SharedPtr<SyntaxRule> rule;
+    REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
+    REQUIRE(rule != nullptr);
+
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("inlineSparseGroups");
+    REQUIRE(analyzer != nullptr);
+    SharedPtr<DocumentHighlight> highlight;
+    REQUIRE_NOTHROW(highlight = analyzer->analyzeText("<tag>"));
+    REQUIRE(highlight != nullptr);
+    REQUIRE(highlight->lines.size() == 1);
+    REQUIRE(highlight->lines[0].spans.size() == 3);
+    CHECK(highlight->lines[0].spans[0].style_id > 0);
+    CHECK(highlight->lines[0].spans[1].style_id == 0);
+    CHECK(highlight->lines[0].spans[2].style_id > 0);
+  }
+
+  SECTION("subState-expanded capture groups") {
+    const U8String syntax = R"({
+  "name": "inlineSparseSubState",
+  "fileSuffixes": [".iss"],
+  "styles": [
+    { "name": "keyword", "foreground": "#FF569CD6" },
+    { "name": "punctuation", "foreground": "#FFD69D85" }
+  ],
+  "states": {
+    "default": [
+      { "pattern": ".+", "subState": "inner" }
+    ],
+    "inner": [
+      { "pattern": "(<)([^>]*)(>)", "styles": [1, "punctuation", 3, "punctuation"] }
+    ]
+  }
+})";
+
+    SharedPtr<SyntaxRule> rule;
+    REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
+    REQUIRE(rule != nullptr);
+
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("inlineSparseSubState");
+    REQUIRE(analyzer != nullptr);
+    SharedPtr<DocumentHighlight> highlight;
+    REQUIRE_NOTHROW(highlight = analyzer->analyzeText("<tag>"));
+    REQUIRE(highlight != nullptr);
+    REQUIRE(highlight->lines.size() == 1);
+    REQUIRE(highlight->lines[0].spans.size() == 2);
+    CHECK(highlight->lines[0].spans[0].style_id > 0);
+    CHECK(highlight->lines[0].spans[1].style_id > 0);
+  }
+}
+
 TEST_CASE("importSyntax with #ifdef is controlled by macros") {
   const U8String source_syntax = R"({
   "name": "sourceLang",

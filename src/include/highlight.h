@@ -12,7 +12,7 @@ namespace NS_SWEETLINE {
     TextRange range;
     /// Matched text content
     U8String matched_text;
-    /// Style ID matched by this token span
+    /// Style ID matched by this token span (0 means unstyled)
     int32_t style_id;
     /// Detailed style information for the token span (only available in inline_style mode)
     InlineStyle inline_style;

@@ -529,7 +529,7 @@ namespace NS_SWEETLINE {
       span.state = syntax_state;
       span.matched_text = match_result.matched_text;
       span.style_id = match_result.style;
-      if (m_config_.inline_style) {
+      if (m_config_.inline_style && match_result.style > 0) {
         span.inline_style = m_rule_->getInlineStyle(match_result.style);
       }
       span.goto_state = match_result.goto_state;
@@ -549,7 +549,7 @@ namespace NS_SWEETLINE {
         };
         span.state = syntax_state;
         span.style_id = group_match.style;
-        if (m_config_.inline_style) {
+        if (m_config_.inline_style && group_match.style > 0) {
           span.inline_style = m_rule_->getInlineStyle(group_match.style);
         }
         span.goto_state = match_result.goto_state;
