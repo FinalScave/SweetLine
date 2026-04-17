@@ -258,6 +258,10 @@ namespace NS_SWEETLINE {
     return str.find(prefix) == 0;
   }
 
+  bool StrUtil::endsWith(const U8String& str, const U8String& suffix) {
+    return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+  }
+
   bool StrUtil::contains(const U8String& str, const U8String& partial) {
     return str.find(partial) != U8String::npos;
   }

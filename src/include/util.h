@@ -95,6 +95,11 @@ namespace NS_SWEETLINE {
     /// @param prefix Prefix
     static bool startsWith(const U8String& str, const U8String& prefix);
 
+    /// Check if a string ends with the specified suffix
+    /// @param str Text
+    /// @param suffix Suffix
+    static bool endsWith(const U8String& str, const U8String& suffix);
+
     /// Check if a string contains the specified substring
     /// @param str Text
     /// @param partial Substring to find

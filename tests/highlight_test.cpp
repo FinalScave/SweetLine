@@ -17,6 +17,7 @@ namespace {
   static const char* kCssSyntaxPath = SYNTAX_DIR"/css.json";
   static const char* kScssSyntaxPath = SYNTAX_DIR"/scss.json";
   static const char* kLessSyntaxPath = SYNTAX_DIR"/less.json";
+  static const char* kJsonSyntaxPath = SYNTAX_DIR"/json-sweetline.json";
   static const char* kJsoncSyntaxPath = SYNTAX_DIR"/jsonc.json";
   static const char* kJson5SyntaxPath = SYNTAX_DIR"/json5.json";
   static const char* kCmakeSyntaxPath = SYNTAX_DIR"/cmake.json";
@@ -110,7 +111,7 @@ TEST_CASE("Highlight example.java") {
 TEST_CASE("Kotlin declaration keywords stay keyword style") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kKotlinSyntaxPath));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("kotlin");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("kotlin");
   REQUIRE(analyzer != nullptr);
 
   const U8String code = "enum class Color\n"
@@ -278,7 +279,7 @@ TEST_CASE("Analyze incremental in visible line range") {
 TEST_CASE("URL inside string and comment gets dedicated style") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("java");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("java");
   REQUIRE(analyzer != nullptr);
 
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(
@@ -306,7 +307,7 @@ TEST_CASE("CSS family keeps selectors, properties, variables, and URLs distinct"
   constexpr int32_t kSelector = 15;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> css = engine->createAnalyzerByName("css");
+  SharedPtr<TextAnalyzer> css = engine->createAnalyzerBySyntaxName("css");
   REQUIRE(css != nullptr);
   SharedPtr<DocumentHighlight> cssHighlight = css->analyzeText(
     ".card:hover {\n"
@@ -318,7 +319,7 @@ TEST_CASE("CSS family keeps selectors, properties, variables, and URLs distinct"
   CHECK(styleAtColumn(cssHighlight->lines[1], 2) == kProperty);
   CHECK(styleAtColumn(cssHighlight->lines[1], 12) == kUrl);
 
-  SharedPtr<TextAnalyzer> scss = engine->createAnalyzerByName("scss");
+  SharedPtr<TextAnalyzer> scss = engine->createAnalyzerBySyntaxName("scss");
   REQUIRE(scss != nullptr);
   SharedPtr<DocumentHighlight> scssHighlight = scss->analyzeText(
     "$accent-color: #fff;\n"
@@ -334,7 +335,7 @@ TEST_CASE("CSS family keeps selectors, properties, variables, and URLs distinct"
   CHECK(styleAtColumn(scssHighlight->lines[2], 17) == kVariable);
   CHECK(styleAtColumn(scssHighlight->lines[3], 18) == kAnnotation);
 
-  SharedPtr<TextAnalyzer> less = engine->createAnalyzerByName("less");
+  SharedPtr<TextAnalyzer> less = engine->createAnalyzerBySyntaxName("less");
   REQUIRE(less != nullptr);
   SharedPtr<DocumentHighlight> lessHighlight = less->analyzeText(
     "@brand-color: #409eff;\n"
@@ -351,8 +352,9 @@ TEST_CASE("CSS family keeps selectors, properties, variables, and URLs distinct"
   CHECK(styleAtColumn(lessHighlight->lines[3], 12) == kUrl);
 }
 
-TEST_CASE("JSONC and JSON5 keep keys, values, numbers, comments, and builtins distinct") {
+TEST_CASE("JSON, JSONC, and JSON5 keep keys, values, numbers, comments, and builtins distinct") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJsonSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJsoncSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJson5SyntaxPath));
 
@@ -361,19 +363,33 @@ TEST_CASE("JSONC and JSON5 keep keys, values, numbers, comments, and builtins di
   constexpr int32_t kBuiltin = 10;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> jsonc = engine->createAnalyzerByName("jsonc");
+  SharedPtr<TextAnalyzer> json = engine->createAnalyzerBySyntaxName("json");
+  REQUIRE(json != nullptr);
+  SharedPtr<DocumentHighlight> jsonHighlight = json->analyzeText(
+    "{\n"
+    "  \"enabled\": true,\n"
+    "  \"fallback\": null\n"
+    "}\n");
+  REQUIRE(jsonHighlight != nullptr);
+  CHECK(styleAtColumn(jsonHighlight->lines[1], 3) == kKeyword);
+  CHECK(styleAtColumn(jsonHighlight->lines[1], 13) == kKeyword);
+  CHECK(styleAtColumn(jsonHighlight->lines[2], 14) == kKeyword);
+
+  SharedPtr<TextAnalyzer> jsonc = engine->createAnalyzerBySyntaxName("jsonc");
   REQUIRE(jsonc != nullptr);
   SharedPtr<DocumentHighlight> jsoncHighlight = jsonc->analyzeText(
     "{\n"
     "  \"site\": \"https://example.com\",\n"
+    "  \"enabled\": true,\n"
     "  // mirror https://mirror.example.com\n"
     "}\n");
   REQUIRE(jsoncHighlight != nullptr);
   CHECK(styleAtColumn(jsoncHighlight->lines[1], 3) == kKeyword);
   CHECK(styleAtColumn(jsoncHighlight->lines[1], 11) == kUrl);
-  CHECK(styleAtColumn(jsoncHighlight->lines[2], 12) == kUrl);
+  CHECK(styleAtColumn(jsoncHighlight->lines[2], 13) == kKeyword);
+  CHECK(styleAtColumn(jsoncHighlight->lines[3], 12) == kUrl);
 
-  SharedPtr<TextAnalyzer> json5 = engine->createAnalyzerByName("json5");
+  SharedPtr<TextAnalyzer> json5 = engine->createAnalyzerBySyntaxName("json5");
   REQUIRE(json5 != nullptr);
   SharedPtr<DocumentHighlight> json5Highlight = json5->analyzeText(
     "{\n"
@@ -403,7 +419,7 @@ TEST_CASE("Config syntaxes keep commands, keys, variables, and URLs distinct") {
   constexpr int32_t kUrl = 16;
   constexpr int32_t kSelector = 15;
 
-  SharedPtr<TextAnalyzer> cmake = engine->createAnalyzerByName("cmake");
+  SharedPtr<TextAnalyzer> cmake = engine->createAnalyzerBySyntaxName("cmake");
   REQUIRE(cmake != nullptr);
   SharedPtr<DocumentHighlight> cmakeHighlight = cmake->analyzeText(
     "set(APP_DOCS_URL \"https://example.com\")\n"
@@ -414,7 +430,7 @@ TEST_CASE("Config syntaxes keep commands, keys, variables, and URLs distinct") {
   CHECK(styleAtColumn(cmakeHighlight->lines[0], 18) == kUrl);
   CHECK(styleAtColumn(cmakeHighlight->lines[1], 0) == kKeyword);
 
-  SharedPtr<TextAnalyzer> dockerfile = engine->createAnalyzerByName("dockerfile");
+  SharedPtr<TextAnalyzer> dockerfile = engine->createAnalyzerBySyntaxName("dockerfile");
   REQUIRE(dockerfile != nullptr);
   SharedPtr<DocumentHighlight> dockerHighlight = dockerfile->analyzeText(
     "FROM alpine:3.20 AS base\n"
@@ -426,7 +442,7 @@ TEST_CASE("Config syntaxes keep commands, keys, variables, and URLs distinct") {
   CHECK(styleAtColumn(dockerHighlight->lines[1], 4) == kVariable);
   CHECK(styleAtColumn(dockerHighlight->lines[2], 4) == kUrl);
 
-  SharedPtr<TextAnalyzer> makefile = engine->createAnalyzerByName("makefile");
+  SharedPtr<TextAnalyzer> makefile = engine->createAnalyzerBySyntaxName("makefile");
   REQUIRE(makefile != nullptr);
   SharedPtr<DocumentHighlight> makeHighlight = makefile->analyzeText(
     "APP := app\n"
@@ -438,7 +454,7 @@ TEST_CASE("Config syntaxes keep commands, keys, variables, and URLs distinct") {
   CHECK(styleAtColumn(makeHighlight->lines[2], 2) == kMethod);
   CHECK(styleAtColumn(makeHighlight->lines[2], 8) == kUrl);
 
-  SharedPtr<TextAnalyzer> properties = engine->createAnalyzerByName("properties");
+  SharedPtr<TextAnalyzer> properties = engine->createAnalyzerBySyntaxName("properties");
   REQUIRE(properties != nullptr);
   SharedPtr<DocumentHighlight> propertiesHighlight = properties->analyzeText(
     "app.docs=https://example.com\n"
@@ -448,7 +464,7 @@ TEST_CASE("Config syntaxes keep commands, keys, variables, and URLs distinct") {
   CHECK(styleAtColumn(propertiesHighlight->lines[0], 9) == kUrl);
   CHECK(styleAtColumn(propertiesHighlight->lines[1], 22) == kVariable);
 
-  SharedPtr<TextAnalyzer> env = engine->createAnalyzerByName("env");
+  SharedPtr<TextAnalyzer> env = engine->createAnalyzerBySyntaxName("env");
   REQUIRE(env != nullptr);
   SharedPtr<DocumentHighlight> envHighlight = env->analyzeText(
     "export API_URL=\"https://api.example.com\"\n"
@@ -473,7 +489,7 @@ TEST_CASE("Protobuf keeps options, field metadata, rpc signatures, and URLs dist
   constexpr int32_t kProperty = 13;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> protobuf = engine->createAnalyzerByName("protobuf");
+  SharedPtr<TextAnalyzer> protobuf = engine->createAnalyzerBySyntaxName("protobuf");
   REQUIRE(protobuf != nullptr);
   SharedPtr<DocumentHighlight> highlight = protobuf->analyzeText(
     "option go_package = \"https://example.com/proto\";\n"
@@ -509,7 +525,7 @@ TEST_CASE("GraphQL keeps operation metadata, directives, variables, and URLs dis
   constexpr int32_t kBuiltin = 10;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> graphql = engine->createAnalyzerByName("graphql");
+  SharedPtr<TextAnalyzer> graphql = engine->createAnalyzerBySyntaxName("graphql");
   REQUIRE(graphql != nullptr);
   SharedPtr<DocumentHighlight> highlight = graphql->analyzeText(
     "\"\"\"Docs https://example.com/graphql\"\"\"\n"
@@ -540,7 +556,7 @@ TEST_CASE("Infra syntaxes keep block heads, properties, traversals, and URLs dis
   constexpr int32_t kProperty = 13;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> hcl = engine->createAnalyzerByName("hcl");
+  SharedPtr<TextAnalyzer> hcl = engine->createAnalyzerBySyntaxName("hcl");
   REQUIRE(hcl != nullptr);
   SharedPtr<DocumentHighlight> hclHighlight = hcl->analyzeText(
     "service \"api\" \"primary\" {\n"
@@ -554,7 +570,7 @@ TEST_CASE("Infra syntaxes keep block heads, properties, traversals, and URLs dis
   CHECK(styleAtColumn(hclHighlight->lines[1], 14) == kUrl);
   CHECK(styleAtColumn(hclHighlight->lines[2], 13) == kBuiltin);
 
-  SharedPtr<TextAnalyzer> terraform = engine->createAnalyzerByName("terraform");
+  SharedPtr<TextAnalyzer> terraform = engine->createAnalyzerBySyntaxName("terraform");
   REQUIRE(terraform != nullptr);
   SharedPtr<DocumentHighlight> terraformHighlight = terraform->analyzeText(
     "resource \"aws_s3_bucket\" \"logs\" {\n"
@@ -582,7 +598,7 @@ TEST_CASE("Markup component syntaxes keep directives, bindings, scripts, styles,
   constexpr int32_t kProperty = 13;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> vue = engine->createAnalyzerByName("vue");
+  SharedPtr<TextAnalyzer> vue = engine->createAnalyzerBySyntaxName("vue");
   REQUIRE(vue != nullptr);
   SharedPtr<DocumentHighlight> vueHighlight = vue->analyzeText(
     "<DemoCard :href=\"profileUrl\" title=\"https://example.com\">\n"
@@ -604,7 +620,7 @@ TEST_CASE("Markup component syntaxes keep directives, bindings, scripts, styles,
   CHECK(styleAtColumn(vueHighlight->lines[7], 8) == kProperty);
   CHECK(styleAtColumn(vueHighlight->lines[7], 18) == kUrl);
 
-  SharedPtr<TextAnalyzer> svelte = engine->createAnalyzerByName("svelte");
+  SharedPtr<TextAnalyzer> svelte = engine->createAnalyzerBySyntaxName("svelte");
   REQUIRE(svelte != nullptr);
   SharedPtr<DocumentHighlight> svelteHighlight = svelte->analyzeText(
     "<!-- docs https://example.com -->\n"
@@ -637,7 +653,7 @@ TEST_CASE("Ops syntaxes keep directives, globs, patch metadata, and URLs distinc
   constexpr int32_t kSelector = 15;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> nginx = engine->createAnalyzerByName("nginx");
+  SharedPtr<TextAnalyzer> nginx = engine->createAnalyzerBySyntaxName("nginx");
   REQUIRE(nginx != nullptr);
   SharedPtr<DocumentHighlight> nginxHighlight = nginx->analyzeText(
     "location ~* ^/assets/ {\n"
@@ -649,7 +665,7 @@ TEST_CASE("Ops syntaxes keep directives, globs, patch metadata, and URLs distinc
   CHECK(styleAtColumn(nginxHighlight->lines[1], 2) == kKeyword);
   CHECK(styleAtColumn(nginxHighlight->lines[1], 13) == kUrl);
 
-  SharedPtr<TextAnalyzer> gitignore = engine->createAnalyzerByName("gitignore");
+  SharedPtr<TextAnalyzer> gitignore = engine->createAnalyzerBySyntaxName("gitignore");
   REQUIRE(gitignore != nullptr);
   SharedPtr<DocumentHighlight> gitignoreHighlight = gitignore->analyzeText(
     "!/dist/keep.txt\n"
@@ -660,7 +676,7 @@ TEST_CASE("Ops syntaxes keep directives, globs, patch metadata, and URLs distinc
   CHECK(styleAtColumn(gitignoreHighlight->lines[1], 0) == kBuiltin);
   CHECK(styleAtColumn(gitignoreHighlight->lines[1], 3) == kSelector);
 
-  SharedPtr<TextAnalyzer> diff = engine->createAnalyzerByName("diff");
+  SharedPtr<TextAnalyzer> diff = engine->createAnalyzerBySyntaxName("diff");
   REQUIRE(diff != nullptr);
   SharedPtr<DocumentHighlight> diffHighlight = diff->analyzeText(
     "@@ -1,1 +1,2 @@ title\n"
@@ -680,7 +696,7 @@ TEST_CASE("Ruby keeps operator defs, regexes, heredocs, and URLs distinct") {
   constexpr int32_t kAnnotation = 9;
   constexpr int32_t kUrl = 16;
 
-  SharedPtr<TextAnalyzer> ruby = engine->createAnalyzerByName("ruby");
+  SharedPtr<TextAnalyzer> ruby = engine->createAnalyzerBySyntaxName("ruby");
   REQUIRE(ruby != nullptr);
   SharedPtr<DocumentHighlight> highlight = ruby->analyzeText(
     "class Demo\n"

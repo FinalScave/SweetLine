@@ -189,7 +189,7 @@ public sealed class HighlightEngine : IDisposable {
 	/// </summary>
 	/// <param name="syntaxName">Syntax name (for example, <c>java</c>).</param>
 	/// <returns>Text analyzer, or <see langword="null"/> if syntax is not found.</returns>
-	public TextAnalyzer? CreateAnalyzerByName(string syntaxName) {
+	public TextAnalyzer? CreateAnalyzerBySyntaxName(string syntaxName) {
 		ArgumentNullException.ThrowIfNull(syntaxName);
 		EnsureOpen();
 
@@ -198,15 +198,15 @@ public sealed class HighlightEngine : IDisposable {
 	}
 
 	/// <summary>
-	/// Creates a text analyzer by file extension.
+	/// Creates a text analyzer by file name.
 	/// </summary>
-	/// <param name="extension">File extension (for example, <c>.cs</c>).</param>
+	/// <param name="fileName">File name or basename (for example, <c>main.cs</c> or <c>build.gradle.kts</c>).</param>
 	/// <returns>Text analyzer, or <see langword="null"/> if syntax is not found.</returns>
-	public TextAnalyzer? CreateAnalyzerByExtension(string extension) {
-		ArgumentNullException.ThrowIfNull(extension);
+	public TextAnalyzer? CreateAnalyzerByFileName(string fileName) {
+		ArgumentNullException.ThrowIfNull(fileName);
 		EnsureOpen();
 
-		IntPtr analyzerHandle = SweetLineNative.EngineCreateTextAnalyzerByExtension(_handle, extension);
+		IntPtr analyzerHandle = SweetLineNative.EngineCreateTextAnalyzerByFileName(_handle, fileName);
 		return analyzerHandle == IntPtr.Zero ? null : new TextAnalyzer(this, analyzerHandle);
 	}
 

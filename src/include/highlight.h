@@ -296,9 +296,9 @@ namespace NS_SWEETLINE {
     /// @param name Syntax rule name
     SharedPtr<SyntaxRule> getSyntaxRuleByName(const U8String& name) const;
 
-    /// Get syntax rule by file extension (e.g. .t)
-    /// @param extension File extension
-    SharedPtr<SyntaxRule> getSyntaxRuleByExtension(const U8String& extension) const;
+    /// Get syntax rule by file name or path
+    /// @param file_name File name or path
+    SharedPtr<SyntaxRule> getSyntaxRuleByFileName(const U8String& file_name) const;
 
     /// Register a highlight style for name mapping
     /// @param style_name Style name
@@ -312,12 +312,12 @@ namespace NS_SWEETLINE {
     /// Create a text highlight analyzer by syntax rule name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
     /// @param syntax_name Syntax rule name (e.g. java)
     /// @return TextAnalyzer
-    SharedPtr<TextAnalyzer> createAnalyzerByName(const U8String& syntax_name) const;
+    SharedPtr<TextAnalyzer> createAnalyzerBySyntaxName(const U8String& syntax_name) const;
 
-    /// Create a text highlight analyzer by file extension (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
-    /// @param extension File extension (e.g. .t)
+    /// Create a text highlight analyzer by file name or path (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
+    /// @param file_name File name or path
     /// @return TextAnalyzer
-    SharedPtr<TextAnalyzer> createAnalyzerByExtension(const U8String& extension) const;
+    SharedPtr<TextAnalyzer> createAnalyzerByFileName(const U8String& file_name) const;
 
     /// Load a managed document and get an incremental highlight analyzer
     /// @param document Managed document

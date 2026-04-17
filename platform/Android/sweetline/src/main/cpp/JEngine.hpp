@@ -7,6 +7,17 @@
 
 using namespace NS_SWEETLINE;
 
+template <typename TCollection>
+static jobjectArray makeStringArray(JNIEnv* env, const TCollection& values) {
+  jclass string_class = env->FindClass("java/lang/String");
+  jobjectArray array = env->NewObjectArray(static_cast<jsize>(values.size()), string_class, env->NewStringUTF(""));
+  size_t index = 0;
+  for (const U8String& value: values) {
+    env->SetObjectArrayElement(array, static_cast<jsize>(index++), env->NewStringUTF(value.c_str()));
+  }
+  return array;
+}
+
 // ====================================== DocumentJni ===========================================
 class DocumentJni {
 public:
@@ -116,25 +127,27 @@ public:
     return env->NewStringUTF(rule->name.c_str());
   }
 
-  static jobjectArray getFileExtensions(JNIEnv* env, jclass clazz, jlong handle) {
-    jclass string_class = env->FindClass("java/lang/String");
+  static jobjectArray getFileNames(JNIEnv* env, jclass clazz, jlong handle) {
     SharedPtr<SyntaxRule> rule = getCPtrHolderValue<jlong, SyntaxRule>(handle);
     if (rule == nullptr) {
-      return env->NewObjectArray(0, string_class, NULL);
+      return makeStringArray(env, std::vector<U8String> {});
     }
-    const size_t ext_count = rule->file_extensions.size();
-    jobjectArray array = env->NewObjectArray(ext_count, string_class, env->NewStringUTF(""));
-    size_t index = 0;
-    for (const U8String& extension: rule->file_extensions) {
-      env->SetObjectArrayElement(array, index++, env->NewStringUTF(extension.c_str()));
+    return makeStringArray(env, rule->file_names);
+  }
+
+  static jobjectArray getFileSuffixes(JNIEnv* env, jclass clazz, jlong handle) {
+    SharedPtr<SyntaxRule> rule = getCPtrHolderValue<jlong, SyntaxRule>(handle);
+    if (rule == nullptr) {
+      return makeStringArray(env, std::vector<U8String> {});
     }
-    return array;
+    return makeStringArray(env, rule->file_suffixes);
   }
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/SyntaxRule";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeGetName", "(J)Ljava/lang/String;", (void*) getName},
-      {"nativeGetFileExtensions", "(J)[Ljava/lang/String;", (void*) getFileExtensions},
+      {"nativeGetFileNames", "(J)[Ljava/lang/String;", (void*) getFileNames},
+      {"nativeGetFileSuffixes", "(J)[Ljava/lang/String;", (void*) getFileSuffixes},
   };
 
   static void RegisterMethods(JNIEnv *env) {
@@ -449,25 +462,25 @@ public:
     return asCHandle<jlong>(rule);
   }
 
-  static jlong createAnalyzerByName(JNIEnv* env, jclass clazz, jlong handle, jstring syntax_name) {
+  static jlong createAnalyzerBySyntaxName(JNIEnv* env, jclass clazz, jlong handle, jstring syntax_name) {
     SharedPtr<HighlightEngine> engine = getCPtrHolderValue<jlong, HighlightEngine>(handle);
     if (engine == nullptr) {
       return 0;
     }
     const char* c_syntax_name = env->GetStringUTFChars(syntax_name, JNI_FALSE);
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName(c_syntax_name);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName(c_syntax_name);
     env->ReleaseStringUTFChars(syntax_name, c_syntax_name);
     return asCHandle<jlong>(analyzer);
   }
 
-  static jlong createAnalyzerByExtension(JNIEnv* env, jclass clazz, jlong handle, jstring extension) {
+  static jlong createAnalyzerByFileName(JNIEnv* env, jclass clazz, jlong handle, jstring file_name) {
     SharedPtr<HighlightEngine> engine = getCPtrHolderValue<jlong, HighlightEngine>(handle);
     if (engine == nullptr) {
       return 0;
     }
-    const char* c_extension = env->GetStringUTFChars(extension, JNI_FALSE);
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByExtension(c_extension);
-    env->ReleaseStringUTFChars(extension, c_extension);
+    const char* c_file_name = env->GetStringUTFChars(file_name, JNI_FALSE);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(c_file_name);
+    env->ReleaseStringUTFChars(file_name, c_file_name);
     return asCHandle<jlong>(analyzer);
   }
 
@@ -501,8 +514,8 @@ public:
       {"nativeUndefineMacro", "(JLjava/lang/String;)V", (void*) undefineMacro},
       {"nativeCompileSyntaxFromJson", "(JLjava/lang/String;)J", (void*) compileSyntaxFromJson},
       {"nativeCompileSyntaxFromFile", "(JLjava/lang/String;)J", (void*) compileSyntaxFromFile},
-      {"nativeCreateAnalyzerByName", "(JLjava/lang/String;)J", (void*) createAnalyzerByName},
-      {"nativeCreateAnalyzerByExtension", "(JLjava/lang/String;)J", (void*) createAnalyzerByExtension},
+      {"nativeCreateAnalyzerBySyntaxName", "(JLjava/lang/String;)J", (void*) createAnalyzerBySyntaxName},
+      {"nativeCreateAnalyzerByFileName", "(JLjava/lang/String;)J", (void*) createAnalyzerByFileName},
       {"nativeLoadDocument", "(JJ)J", (void*) loadDocument},
       {"nativeRemoveDocument", "(JLjava/lang/String;)V", (void*) removeDocument},
   };

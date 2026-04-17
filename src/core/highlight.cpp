@@ -11,6 +11,88 @@
 
 namespace NS_SWEETLINE {
   namespace {
+    enum class SyntaxRouteStatus {
+      matched,
+      not_found,
+      ambiguous_suffix,
+      ambiguous_pattern
+    };
+
+    struct SyntaxRouteResult {
+      SyntaxRouteStatus status {SyntaxRouteStatus::not_found};
+      SharedPtr<SyntaxRule> rule {nullptr};
+      U8String detail;
+    };
+
+    SyntaxRouteResult resolveSyntaxByFileName(
+      const HashSet<SharedPtr<SyntaxRule>>& syntax_rules,
+      const U8String& file_name) {
+      if (file_name.empty()) {
+        return {};
+      }
+      const U8String base_name = FileUtil::getPathName(file_name);
+      if (base_name.empty()) {
+        return {};
+      }
+      for (const SharedPtr<SyntaxRule>& rule : syntax_rules) {
+        if (rule->file_names.find(base_name) != rule->file_names.end()) {
+          SyntaxRouteResult result;
+          result.status = SyntaxRouteStatus::matched;
+          result.rule = rule;
+          return result;
+        }
+      }
+
+      SharedPtr<SyntaxRule> suffix_match = nullptr;
+      size_t suffix_length = 0;
+      for (const SharedPtr<SyntaxRule>& rule : syntax_rules) {
+        for (const U8String& suffix : rule->file_suffixes) {
+          if (!StrUtil::endsWith(base_name, suffix)) {
+            continue;
+          }
+          if (suffix_match != nullptr && suffix.size() == suffix_length) {
+            SyntaxRouteResult result;
+            result.status = SyntaxRouteStatus::ambiguous_suffix;
+            result.detail = base_name;
+            return result;
+          }
+          if (suffix.size() > suffix_length) {
+            suffix_match = rule;
+            suffix_length = suffix.size();
+          }
+        }
+      }
+      if (suffix_match != nullptr) {
+        SyntaxRouteResult result;
+        result.status = SyntaxRouteStatus::matched;
+        result.rule = suffix_match;
+        return result;
+      }
+
+      SharedPtr<SyntaxRule> pattern_match = nullptr;
+      for (const SharedPtr<SyntaxRule>& rule : syntax_rules) {
+        for (size_t i = 0; i < rule->file_name_patterns.size(); ++i) {
+          if (!rule->matchesFileNamePattern(base_name, i)) {
+            continue;
+          }
+          if (pattern_match != nullptr) {
+            SyntaxRouteResult result;
+            result.status = SyntaxRouteStatus::ambiguous_pattern;
+            result.detail = base_name;
+            return result;
+          }
+          pattern_match = rule;
+        }
+      }
+      if (pattern_match != nullptr) {
+        SyntaxRouteResult result;
+        result.status = SyntaxRouteStatus::matched;
+        result.rule = pattern_match;
+        return result;
+      }
+      return {};
+    }
+
     SharedPtr<DocumentHighlightSlice> buildHighlightSlice(
       const SharedPtr<Document>& document,
       const SharedPtr<DocumentHighlight>& highlight,
@@ -711,20 +793,9 @@ namespace NS_SWEETLINE {
     return nullptr;
   }
 
-  SharedPtr<SyntaxRule> HighlightEngine::getSyntaxRuleByExtension(const U8String& extension) const {
-    if (extension.empty()) {
-      return nullptr;
-    }
-    U8String fixed_extension = extension;
-    if (fixed_extension[0] != '.') {
-      fixed_extension.insert(0, ".");
-    }
-    for (const SharedPtr<SyntaxRule>& rule : m_syntax_rules_) {
-      if (rule->file_extensions.find(fixed_extension) != rule->file_extensions.end()) {
-        return rule;
-      }
-    }
-    return nullptr;
+  SharedPtr<SyntaxRule> HighlightEngine::getSyntaxRuleByFileName(const U8String& file_name) const {
+    SyntaxRouteResult result = resolveSyntaxByFileName(m_syntax_rules_, file_name);
+    return result.status == SyntaxRouteStatus::matched ? result.rule : nullptr;
   }
 
   void HighlightEngine::registerStyleName(const U8String& style_name, int32_t style_id) const {
@@ -735,7 +806,7 @@ namespace NS_SWEETLINE {
     return m_style_mapping_->getStyleName(style_id);
   }
 
-  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerByName(const U8String& syntax_name) const {
+  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerBySyntaxName(const U8String& syntax_name) const {
     SharedPtr<SyntaxRule> rule = getSyntaxRuleByName(syntax_name);
     if (rule == nullptr) {
       return nullptr;
@@ -743,8 +814,8 @@ namespace NS_SWEETLINE {
     return makeSharedPtr<TextAnalyzer>(rule, m_config_);
   }
 
-  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerByExtension(const U8String& extension) const {
-    SharedPtr<SyntaxRule> rule = getSyntaxRuleByExtension(extension);
+  SharedPtr<TextAnalyzer> HighlightEngine::createAnalyzerByFileName(const U8String& file_name) const {
+    SharedPtr<SyntaxRule> rule = getSyntaxRuleByFileName(file_name);
     if (rule == nullptr) {
       return nullptr;
     }
@@ -755,7 +826,7 @@ namespace NS_SWEETLINE {
     auto it = m_analyzer_map_.find(document->getUri());
     if (it == m_analyzer_map_.end()) {
       U8String uri = document->getUri();
-      SharedPtr<SyntaxRule> rule = getSyntaxRuleByExtension(FileUtil::getExtension(uri));
+      SharedPtr<SyntaxRule> rule = getSyntaxRuleByFileName(uri);
       if (rule == nullptr) {
         return nullptr;
       }

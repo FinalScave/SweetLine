@@ -29,7 +29,9 @@ A complete syntax rule JSON file has the following structure:
 ```json
 {
   "name": "languageName",
-  "fileExtensions": [".ext1", ".ext2"],
+  "fileNames": ["SpecialFile"],
+  "fileSuffixes": [".ext1", ".ext2"],
+  "fileNamePatterns": ["(?:generated|templated)\\.ext1"],
   "variables": { ... },
   "fragments": { ... },
   "styles": [ ... ],
@@ -48,7 +50,12 @@ A complete syntax rule JSON file has the following structure:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | Yes | Syntax rule name, used for `getSyntaxRuleByName()` lookup |
-| `fileExtensions` | string[] | Yes | Supported file extensions, used for `getSyntaxRuleByExtension()` matching |
+| `fileName` | string | No | Exact basename match, shorthand for a single `fileNames` entry |
+| `fileNames` | string[] | No | Exact basenames used for `getSyntaxRuleByFileName()` matching |
+| `fileSuffix` | string | No | Basename suffix match, shorthand for a single `fileSuffixes` entry |
+| `fileSuffixes` | string[] | No | Basename suffix matches such as `.java` or `.gradle.kts` |
+| `fileNamePattern` | string | No | Full-basename regex match, shorthand for a single `fileNamePatterns` entry |
+| `fileNamePatterns` | string[] | No | Full-basename regex matches used only when exact names and suffixes are not enough |
 | `variables` | object | No | Reusable regex pattern variable definitions |
 | `fragments` | object | No | Reusable rule arrays that can be referenced by `include` / `includes` |
 | `styles` | array | No | Inline style definitions (only for `inline_style` mode) |
@@ -56,6 +63,8 @@ A complete syntax rule JSON file has the following structure:
 | `scopeRules` | array | No | Scope rule definitions (for folding/indent guides) |
 
 ---
+
+At least one of `fileName`, `fileNames`, `fileSuffix`, `fileSuffixes`, `fileNamePattern`, or `fileNamePatterns` is required. Routing is basename-based and case-sensitive. The engine resolves exact names first, then suffixes, then file-name patterns.
 
 ## variables - Variable Definitions
 
@@ -528,7 +537,7 @@ Here is a complete simplified Java syntax rule example:
 ```json
 {
   "name": "java",
-  "fileExtensions": [".java"],
+  "fileSuffixes": [".java"],
   "variables": {
     "identifier": "[a-zA-Z_$][\\w$]*",
     "whiteSpace": "[ \\t\\f]",

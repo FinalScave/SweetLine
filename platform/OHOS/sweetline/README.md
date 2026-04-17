@@ -36,7 +36,7 @@ const engine = new sweetline.HighlightEngine(config);
 
 engine.compileSyntaxFromJson(syntaxJson);
 
-const analyzer = engine.createAnalyzerByName('java');
+const analyzer = engine.createAnalyzerBySyntaxName('java');
 if (analyzer) {
   const result = analyzer.analyzeText(sourceCode);
   for (const line of result.lines) {
@@ -103,7 +103,7 @@ const visibleSlice = analyzer?.getHighlightSlice(
 ### 单行分析
 
 ```typescript
-const analyzer = engine.createAnalyzerByName('python');
+const analyzer = engine.createAnalyzerBySyntaxName('python');
 if (analyzer) {
   const lineInfo = new sweetline.TextLineInfo(0, 0, 0);
   const result = analyzer.analyzeLine('def hello():', lineInfo);
@@ -116,7 +116,7 @@ if (analyzer) {
 ### 缩进引导线分析
 
 ```typescript
-const analyzer = engine.createAnalyzerByName('java');
+const analyzer = engine.createAnalyzerBySyntaxName('java');
 if (analyzer) {
   const guideResult = analyzer.analyzeIndentGuides(sourceCode);
   for (const guide of guideResult.guideLines) {

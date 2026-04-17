@@ -226,14 +226,44 @@
       punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14
     };
 
-    const EXT_SYNTAX_MAP = {
+    const EXACT_SYNTAX_MAP = {
+      ".gitignore": "gitignore.json",
+      "CMakeLists.txt": "cmake.json",
+      "Containerfile": "dockerfile.json",
+      "Dockerfile": "dockerfile.json",
+      "GNUmakefile": "makefile.json",
+      "Makefile": "makefile.json",
+      "makefile": "makefile.json"
+    };
+
+    const SUFFIX_SYNTAX_MAP = {
       ".t": "tiecode.json", ".c": "c.json", ".cpp": "cpp.json", ".cs": "csharp.json", ".dart": "dart.json",
       ".go": "go.json", ".groovy": "groovy.json", ".html": "html.json", ".java": "java.json", ".js": "javascript.json",
-      ".json": "json-sweetline.json", ".kt": "kotlin.json", ".lua": "lua.json", ".m": "objc.json", ".php": "php.json",
-      ".ps1": "powershell.json", ".py": "python.json", ".rs": "rust.json", ".scala": "scala.json", ".sh": "shell.json",
-      ".sql": "sql.json", ".swift": "swift.json", ".toml": "toml.json", ".ts": "typescript.json", ".vb": "vb.json",
-      ".xml": "xml.json", ".yaml": "yaml.json", ".md": "markdown.json", ".wenyan": "wenyan.json", ".myu": "iapp.json"
+      ".json": "json-sweetline.json", ".jsonc": "jsonc.json", ".json5": "json5.json", ".kt": "kotlin.json",
+      ".lua": "lua.json", ".m": "objc.json", ".php": "php.json", ".ps1": "powershell.json", ".py": "python.json",
+      ".rs": "rust.json", ".scala": "scala.json", ".sh": "shell.json", ".sql": "sql.json", ".swift": "swift.json",
+      ".toml": "toml.json", ".ts": "typescript.json", ".vb": "vb.json", ".xml": "xml.json", ".yaml": "yaml.json",
+      ".md": "markdown.json", ".wenyan": "wenyan.json", ".myu": "iapp.json", ".css": "css.json",
+      ".scss": "scss.json", ".less": "less.json", ".cmake": "cmake.json", ".dockerfile": "dockerfile.json",
+      ".mk": "makefile.json", ".properties": "properties.json", ".env": "env.json", ".proto": "protobuf.json",
+      ".graphql": "graphql.json", ".gql": "graphql.json", ".nginx": "nginx.json", ".conf": "nginx.json",
+      ".gitignore": "gitignore.json", ".diff": "diff.json", ".patch": "diff.json", ".rb": "ruby.json",
+      ".rake": "ruby.json", ".gemspec": "ruby.json", ".ru": "ruby.json", ".hcl": "hcl.json",
+      ".tf": "terraform.json", ".tfvars": "terraform.json", ".tfbackend": "terraform.json", ".vue": "vue.json",
+      ".svelte": "svelte.json"
     };
+
+    const ROUTED_DOCUMENT_NAMES = {
+      ".gitignore": "example.gitignore",
+      "CMakeLists.txt": "example.cmake",
+      "Containerfile": "example.dockerfile",
+      "Dockerfile": "example.dockerfile",
+      "GNUmakefile": "example.mk",
+      "Makefile": "example.mk",
+      "makefile": "example.mk"
+    };
+
+    const SORTED_SUFFIXES = Object.keys(SUFFIX_SYNTAX_MAP).sort((left, right) => right.length - left.length);
 
     const EXAMPLE_FILES = [
       "example.c", "example.cpp", "example.cs", "example.dart", "example.go", "example.groovy", "example.html", "example.java", "example.js",
@@ -293,6 +323,7 @@
       syntaxJson: "",
       syntaxFile: "",
       fileName: "example.java",
+      documentFileName: "example.java",
       text: "",
       lines: [""],
       lineStarts: [0],
@@ -304,7 +335,21 @@
     };
 
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-    function ext(name) { const i = name.lastIndexOf("."); return i >= 0 ? name.slice(i).toLowerCase() : ""; }
+    function resolveSyntaxFileName(name) {
+      if (Object.prototype.hasOwnProperty.call(EXACT_SYNTAX_MAP, name)) {
+        return EXACT_SYNTAX_MAP[name];
+      }
+      for (const suffix of SORTED_SUFFIXES) {
+        if (name.endsWith(suffix)) {
+          return SUFFIX_SYNTAX_MAP[suffix];
+        }
+      }
+      return "";
+    }
+
+    function resolveDocumentFileName(name) {
+      return ROUTED_DOCUMENT_NAMES[name] || name;
+    }
 
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -496,8 +541,8 @@
     }
 
     function disposeAnalyzer() {
-      if (state.engine && state.fileName) {
-        try { state.engine.removeDocument(`file:///${state.fileName}`); } catch (e) {}
+      if (state.engine && state.documentFileName) {
+        try { state.engine.removeDocument(`file:///${state.documentFileName}`); } catch (e) {}
       }
       if (state.analyzer && typeof state.analyzer.delete === "function") {
         state.analyzer.delete();
@@ -570,7 +615,7 @@
       state.engine.compileSyntaxFromJson(state.syntaxJson);
       const compileMs = performance.now() - t0;
 
-      const doc = new state.sl.Document(`file:///${state.fileName}`, state.text);
+      const doc = new state.sl.Document(`file:///${state.documentFileName}`, state.text);
       state.analyzer = state.engine.loadDocument(doc);
       if (!state.analyzer) {
         setStatus("Failed to create DocumentAnalyzer.", "bad");
@@ -612,7 +657,7 @@
       setStatus(`Incremental: ${ms.toFixed(2)} ms | start ${patch.startIndex} | replaced ${patch.oldEnd - patch.startIndex} | inserted ${patch.inserted.length}`, "good");
     }
     async function loadExample(fileName) {
-      const syntaxFile = EXT_SYNTAX_MAP[ext(fileName)];
+      const syntaxFile = resolveSyntaxFileName(fileName);
       if (!syntaxFile) {
         setStatus(`No syntax mapping for ${fileName}`, "bad");
         return;
@@ -626,6 +671,7 @@
         ]);
         if (token !== state.loadingToken) { return; }
         state.fileName = fileName;
+        state.documentFileName = resolveDocumentFileName(fileName);
         state.syntaxFile = syntaxFile;
         state.syntaxJson = syntax;
         els.syntaxSelect.value = syntaxFile;
@@ -661,7 +707,10 @@
         els.exampleSelect.appendChild(op);
       });
 
-      const syntaxFiles = Array.from(new Set(Object.values(EXT_SYNTAX_MAP))).sort();
+      const syntaxFiles = Array.from(new Set([
+        ...Object.values(EXACT_SYNTAX_MAP),
+        ...Object.values(SUFFIX_SYNTAX_MAP)
+      ])).sort();
       syntaxFiles.forEach((name) => {
         const op = document.createElement("option");
         op.value = name;
@@ -705,9 +754,10 @@
         if (!file) { return; }
         const text = await file.text();
         state.fileName = file.name;
+        state.documentFileName = resolveDocumentFileName(file.name);
         els.editorInput.value = text;
         setTextCaches(text);
-        const mapped = EXT_SYNTAX_MAP[ext(file.name)];
+        const mapped = resolveSyntaxFileName(file.name);
         if (mapped) {
           els.syntaxSelect.value = mapped;
           await loadBuiltinSyntax(mapped);

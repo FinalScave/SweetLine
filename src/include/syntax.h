@@ -76,12 +76,18 @@ namespace NS_SWEETLINE {
 
   struct StateRule;
   struct ScopeRule;
+  struct SyntaxRuleRuntimeData;
+  class SyntaxRuleCompiler;
   /// Syntax rule definition
   struct SyntaxRule {
     /// Name of the syntax rule
     U8String name;
-    /// Supported file extensions
-    HashSet<U8String> file_extensions;
+    /// Supported exact file names
+    HashSet<U8String> file_names;
+    /// Supported file suffixes
+    HashSet<U8String> file_suffixes;
+    /// Supported file name regex patterns
+    List<U8String> file_name_patterns;
     /// Inline styles defined in syntax rules (nullable), style ID -> InlineStyle
     HashMap<int32_t, InlineStyle> inline_styles;
     /// Inline style mapping table (inline_style mode)
@@ -103,7 +109,14 @@ namespace NS_SWEETLINE {
     int32_t getOrCreateStateId(const U8String& state_name);
     bool containsRule(int32_t state_id) const;
     StateRule& getStateRule(int32_t state_id);
+    bool matchesFileNamePattern(const U8String& file_name, size_t index) const;
+
     SyntaxRule();
+    ~SyntaxRule();
+    SyntaxRule(const SyntaxRule&) = delete;
+    SyntaxRule& operator=(const SyntaxRule&) = delete;
+    SyntaxRule(SyntaxRule&&) = delete;
+    SyntaxRule& operator=(SyntaxRule&&) = delete;
 
     constexpr static int32_t kDefaultStateId = 0;
     constexpr static const char* kDefaultStateName = "default";
@@ -112,6 +125,9 @@ namespace NS_SWEETLINE {
 #endif
   private:
     int32_t m_state_id_counter_ {1};
+    UniquePtr<SyntaxRuleRuntimeData> m_runtime_data_;
+
+    friend class SyntaxRuleCompiler;
   };
 }
 

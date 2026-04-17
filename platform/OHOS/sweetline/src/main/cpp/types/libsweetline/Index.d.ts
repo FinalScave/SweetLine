@@ -12,7 +12,8 @@ export const Document_GetText: (handle: number) => string;
 
 // SyntaxRule
 export const SyntaxRule_GetName: (handle: number) => string;
-export const SyntaxRule_GetFileExtensions: (handle: number) => string[];
+export const SyntaxRule_GetFileNames: (handle: number) => string[];
+export const SyntaxRule_GetFileSuffixes: (handle: number) => string[];
 
 // TextAnalyzer
 export const TextAnalyzer_Delete: (handle: number) => void;
@@ -40,6 +41,6 @@ export const HighlightEngine_UndefineMacro: (handle: number, macroName: string) 
 export const HighlightEngine_CompileSyntaxFromJson: (handle: number, json: string) => number;
 export const HighlightEngine_CompileSyntaxFromFile: (handle: number, path: string) => number;
 export const HighlightEngine_CreateAnalyzerByName: (handle: number, syntaxName: string) => number;
-export const HighlightEngine_CreateAnalyzerByExtension: (handle: number, extension: string) => number;
+export const HighlightEngine_CreateAnalyzerByFileName: (handle: number, fileName: string) => number;
 export const HighlightEngine_LoadDocument: (handle: number, documentHandle: number) => number;
 export const HighlightEngine_RemoveDocument: (handle: number, uri: string) => boolean;

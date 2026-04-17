@@ -73,7 +73,7 @@ sl_error_t sl_free_document(sl_document_handle_t document);
 ```c
 // Create text analyzer
 sl_analyzer_handle_t sl_engine_create_text_analyzer(sl_engine_handle_t engine, const char* syntax_name);
-sl_analyzer_handle_t sl_engine_create_text_analyzer2(sl_engine_handle_t engine, const char* extension);
+sl_analyzer_handle_t sl_engine_create_text_analyzer_by_file_name(sl_engine_handle_t engine, const char* file_name);
 
 // Full analysis
 int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer, const char* text);

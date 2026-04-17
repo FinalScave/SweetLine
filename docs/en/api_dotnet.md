@@ -47,6 +47,9 @@ engine.RegisterStyleName("keyword", 1);
 engine.RegisterStyleName("string", 2);
 engine.CompileSyntaxFromFile("syntaxes/csharp.json");
 
+using var textAnalyzer = engine.CreateAnalyzerByFileName("Example.cs");
+DocumentHighlight preview = textAnalyzer!.AnalyzeText("public class Demo {}");
+
 using var document = new Document("file:///example.cs", "public class Demo {}");
 using var analyzer = engine.LoadDocument(document);
 

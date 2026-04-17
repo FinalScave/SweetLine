@@ -75,7 +75,7 @@ class HighlightEngine {
     });
   }
 
-  TextAnalyzer? createAnalyzerByName(String syntaxName) {
+  TextAnalyzer? createAnalyzerBySyntaxName(String syntaxName) {
     _ensureOpen();
     return using((arena) {
       final syntaxNamePtr = _toNativeChar(syntaxName, arena);
@@ -90,13 +90,13 @@ class HighlightEngine {
     });
   }
 
-  TextAnalyzer? createAnalyzerByExtension(String extension) {
+  TextAnalyzer? createAnalyzerByFileName(String fileName) {
     _ensureOpen();
     return using((arena) {
-      final extensionPtr = _toNativeChar(extension, arena);
-      final handle = bindings.sl_engine_create_text_analyzer2(
+      final fileNamePtr = _toNativeChar(fileName, arena);
+      final handle = bindings.sl_engine_create_text_analyzer_by_file_name(
         _handle,
-        extensionPtr,
+        fileNamePtr,
       );
       if (handle == ffi.nullptr) {
         return null;

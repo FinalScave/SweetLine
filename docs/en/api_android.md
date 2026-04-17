@@ -42,8 +42,8 @@ public class HighlightEngine {
     public void undefineMacro(String macroName);
 
     // Create analyzers
-    public TextAnalyzer createAnalyzerByName(String syntaxName);
-    public TextAnalyzer createAnalyzerByExtension(String extension);
+    public TextAnalyzer createAnalyzerBySyntaxName(String syntaxName);
+    public TextAnalyzer createAnalyzerByFileName(String fileName);
     public DocumentAnalyzer loadDocument(Document document);
     public void removeDocument(String uri);
 }
@@ -223,7 +223,7 @@ try {
 }
 
 // Option 1: Full analysis
-TextAnalyzer textAnalyzer = engine.createAnalyzerByName("java");
+TextAnalyzer textAnalyzer = engine.createAnalyzerBySyntaxName("java");
 DocumentHighlight result = textAnalyzer.analyzeText(sourceCode);
 for (LineHighlight line : result.lines) {
     for (TokenSpan span : line.spans) {
@@ -260,4 +260,3 @@ textView.setText(spannable);
 ```
 
 ---
-

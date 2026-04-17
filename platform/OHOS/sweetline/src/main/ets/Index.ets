@@ -434,10 +434,17 @@ export namespace sweetline {
     }
 
     /**
-     * Get the file extensions supported by the syntax rule
+     * Get the exact file names supported by the syntax rule
      */
-    public getFileExtensions(): string[] {
-      return lib.SyntaxRule_GetFileExtensions(this.nativeHandle);
+    public getFileNames(): string[] {
+      return lib.SyntaxRule_GetFileNames(this.nativeHandle);
+    }
+
+    /**
+     * Get the file suffixes supported by the syntax rule
+     */
+    public getFileSuffixes(): string[] {
+      return lib.SyntaxRule_GetFileSuffixes(this.nativeHandle);
     }
 
     public __getNativeHandle(): number {
@@ -717,7 +724,7 @@ export namespace sweetline {
      * Create a text highlight analyzer by syntax rule name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
      * @param syntaxName Syntax rule name (e.g. java)
      */
-    public createAnalyzerByName(syntaxName: string): TextAnalyzer | null {
+    public createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer | null {
       if (this.nativeHandle == 0) {
         return null;
       }
@@ -729,14 +736,14 @@ export namespace sweetline {
     }
 
     /**
-     * Create a text highlight analyzer by file extension (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
-     * @param extension File extension (e.g. .t)
+     * Create a text highlight analyzer by file name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
+     * @param fileName File name or basename used for syntax routing
      */
-    public createAnalyzerByExtension(extension: string): TextAnalyzer | null {
+    public createAnalyzerByFileName(fileName: string): TextAnalyzer | null {
       if (this.nativeHandle == 0) {
         return null;
       }
-      let analyzerHandle: number = lib.HighlightEngine_CreateAnalyzerByExtension(this.nativeHandle, extension);
+      let analyzerHandle: number = lib.HighlightEngine_CreateAnalyzerByFileName(this.nativeHandle, fileName);
       if (analyzerHandle == 0) {
         return null;
       }

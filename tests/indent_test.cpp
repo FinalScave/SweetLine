@@ -45,7 +45,7 @@ TEST_CASE("ScopeRules ignores markers in string/comment for style id mode") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "toy",
-  "fileExtensions": [".toy"],
+  "fileSuffixes": [".toy"],
   "states": {
     "default": [
       { "pattern": "//[^\\n]*", "style": "comment" },
@@ -79,7 +79,7 @@ TEST_CASE("ScopeRules closes innermost block when end token is shared") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "luaLike",
-  "fileExtensions": [".ll"],
+  "fileSuffixes": [".ll"],
   "states": {
     "default": [
       { "pattern": "\\b(function|then|else|end)\\b", "style": "keyword" }
@@ -125,7 +125,7 @@ TEST_CASE("ScopeRules keeps nesting level for unclosed blocks at EOF") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "brace",
-  "fileExtensions": [".br"],
+  "fileSuffixes": [".br"],
   "states": {
     "default": [
       { "pattern": "[{}]", "style": "punctuation" }
@@ -165,7 +165,7 @@ TEST_CASE("ScopeRules guide column uses min of start and end columns") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "braceCol",
-  "fileExtensions": [".bc"],
+  "fileSuffixes": [".bc"],
   "states": {
     "default": [
       { "pattern": "[{}]", "style": "punctuation" }
@@ -192,7 +192,7 @@ TEST_CASE("TextAnalyzer reuses cached highlight for scope indent guides") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "braceCached",
-  "fileExtensions": [".bc2"],
+  "fileSuffixes": [".bc2"],
   "states": {
     "default": [
       { "pattern": "[{}]", "style": "punctuation" }
@@ -204,7 +204,7 @@ TEST_CASE("TextAnalyzer reuses cached highlight for scope indent guides") {
 })";
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("braceCached");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("braceCached");
   REQUIRE(analyzer != nullptr);
 
   const U8String text = "{\n    x\n}";
@@ -223,7 +223,7 @@ TEST_CASE("TextAnalyzer falls back to indentation guides without cached highligh
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "braceFallback",
-  "fileExtensions": [".bf"],
+  "fileSuffixes": [".bf"],
   "states": {
     "default": [
       { "pattern": "[{}]", "style": "punctuation" }
@@ -235,7 +235,7 @@ TEST_CASE("TextAnalyzer falls back to indentation guides without cached highligh
 })";
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("braceFallback");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("braceFallback");
   REQUIRE(analyzer != nullptr);
 
   const U8String text = "{\n    x\n}";

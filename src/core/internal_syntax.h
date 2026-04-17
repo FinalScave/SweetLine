@@ -62,7 +62,7 @@ namespace NS_SWEETLINE {
     /// Merged pattern combining all token patterns
     U8String merged_pattern;
     /// Compiled regex pointer
-    OnigRegex regex;
+    OnigRegex regex {nullptr};
     /// Total capture group count of the merged pattern
     int32_t group_count {0};
     /// importSyntax request list
@@ -110,7 +110,10 @@ namespace NS_SWEETLINE {
     HighlightEngine* m_engine_ {nullptr};
 
     static void parseSyntaxName(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
-    static void parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseFileNames(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseFileSuffixes(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseFileNamePatterns(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void compileFileNamePatterns(const SharedPtr<SyntaxRule>& rule);
     static void parseVariables(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void parseInlineStyles(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static U8String makeJsonPath(const U8String& parent_path, size_t index);

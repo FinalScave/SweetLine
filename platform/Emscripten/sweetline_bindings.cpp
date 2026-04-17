@@ -31,6 +31,30 @@ void throwJsException(const U8String& msg) {
   err_obj.throw_();
 }
 
+emscripten::val inferFileNamesAsArray(const SharedPtr<SyntaxRule>& rule) {
+  emscripten::val array = emscripten::val::array();
+  if (!rule) {
+    return array;
+  }
+  uint32_t index = 0;
+  for (const U8String& file_name : rule->file_names) {
+    array.set(index++, emscripten::val(file_name));
+  }
+  return array;
+}
+
+emscripten::val fileSuffixesAsArray(const SharedPtr<SyntaxRule>& rule) {
+  emscripten::val array = emscripten::val::array();
+  if (!rule) {
+    return array;
+  }
+  uint32_t index = 0;
+  for (const U8String& suffix : rule->file_suffixes) {
+    array.set(index++, emscripten::val(suffix));
+  }
+  return array;
+}
+
 extern "C" {
 
 EMSCRIPTEN_BINDINGS(foundation) {
@@ -218,9 +242,9 @@ EMSCRIPTEN_BINDINGS(highlight) {
       })
     )
     .function("getSyntaxRuleByName", &HighlightEngine::getSyntaxRuleByName)
-    .function("getSyntaxRuleByExtension", &HighlightEngine::getSyntaxRuleByExtension)
-    .function("createAnalyzerByName", &HighlightEngine::createAnalyzerByName)
-    .function("createAnalyzerByExtension", &HighlightEngine::createAnalyzerByExtension)
+    .function("getSyntaxRuleByFileName", &HighlightEngine::getSyntaxRuleByFileName)
+    .function("createAnalyzerBySyntaxName", &HighlightEngine::createAnalyzerBySyntaxName)
+    .function("createAnalyzerByFileName", &HighlightEngine::createAnalyzerByFileName)
     .function("loadDocument", &HighlightEngine::loadDocument)
     .function("removeDocument", &HighlightEngine::removeDocument);
 }

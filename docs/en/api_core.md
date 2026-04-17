@@ -75,8 +75,8 @@ public:
     // Get compiled syntax rule by name
     SharedPtr<SyntaxRule> getSyntaxRuleByName(const U8String& name) const;
 
-    // Get syntax rule by file extension
-    SharedPtr<SyntaxRule> getSyntaxRuleByExtension(const U8String& extension) const;
+    // Get syntax rule by file name
+    SharedPtr<SyntaxRule> getSyntaxRuleByFileName(const U8String& file_name) const;
 
     // Register style name-to-ID mapping
     void registerStyleName(const U8String& style_name, int32_t style_id) const;
@@ -90,8 +90,8 @@ public:
     bool isMacroDefined(const U8String& macro_name) const;
 
     // Create TextAnalyzer (no incremental support)
-    SharedPtr<TextAnalyzer> createAnalyzerByName(const U8String& syntax_name) const;
-    SharedPtr<TextAnalyzer> createAnalyzerByExtension(const U8String& extension) const;
+    SharedPtr<TextAnalyzer> createAnalyzerBySyntaxName(const U8String& syntax_name) const;
+    SharedPtr<TextAnalyzer> createAnalyzerByFileName(const U8String& file_name) const;
 
     // Load managed document, create DocumentAnalyzer (incremental support)
     SharedPtr<DocumentAnalyzer> loadDocument(const SharedPtr<Document>& document);
@@ -100,6 +100,8 @@ public:
     void removeDocument(const U8String& uri);
 };
 ```
+
+File-name-based routing uses the document base name and resolves syntaxes in this order: `fileName` / `fileNames`, then `fileSuffix` / `fileSuffixes`, then `fileNamePattern` / `fileNamePatterns`.
 
 #### Usage Example
 
@@ -208,7 +210,7 @@ public:
 #### Full Analysis
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("java");
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
 auto highlight = analyzer->analyzeText(source_code);
 
 for (auto& line : highlight->lines) {
@@ -223,7 +225,7 @@ for (auto& line : highlight->lines) {
 #### Single Line Analysis
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("java");
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
 
 TextLineInfo info;
 info.line = 0;
@@ -241,7 +243,7 @@ analyzer->analyzeLine("public class Hello {", info, result);
 #### Indent Guide Analysis
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("python");
+auto analyzer = engine->createAnalyzerBySyntaxName("python");
 auto highlight = analyzer->analyzeText(source_code);
 
 // Explicitly pass highlight
@@ -251,7 +253,7 @@ auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
 auto guides2 = analyzer->analyzeIndentGuides(source_code);
 
 // If no cache is available, it falls back to indentation-only analysis
-auto fresh_analyzer = engine->createAnalyzerByName("python");
+auto fresh_analyzer = engine->createAnalyzerBySyntaxName("python");
 auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
 ```
 
@@ -380,4 +382,3 @@ struct InlineStyle {
 ```
 
 ---
-

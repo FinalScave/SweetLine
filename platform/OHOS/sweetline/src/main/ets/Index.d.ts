@@ -335,9 +335,13 @@ export declare namespace sweetline {
      */
     public getName(): string;
     /**
-     * Get the file extensions supported by the syntax rule
+     * Get the exact file names supported by the syntax rule
      */
-    public getFileExtensions(): string[];
+    public getFileNames(): string[];
+    /**
+     * Get the file suffixes supported by the syntax rule
+     */
+    public getFileSuffixes(): string[];
   }
 
   /**
@@ -458,12 +462,12 @@ export declare namespace sweetline {
      * Create a text highlight analyzer by syntax rule name
      * @param syntaxName Syntax rule name (e.g. java)
      */
-    public createAnalyzerByName(syntaxName: string): TextAnalyzer | null;
+    public createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer | null;
     /**
-     * Create a text highlight analyzer by file extension
-     * @param extension File extension (e.g. .t)
+     * Create a text highlight analyzer by file name
+     * @param fileName File name or basename (e.g. main.dart)
      */
-    public createAnalyzerByExtension(extension: string): TextAnalyzer | null;
+    public createAnalyzerByFileName(fileName: string): TextAnalyzer | null;
     /**
      * Load a managed document and get a document highlight analyzer
      * @param document Managed document

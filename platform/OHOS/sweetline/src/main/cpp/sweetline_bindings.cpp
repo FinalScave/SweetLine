@@ -330,21 +330,45 @@ static napi_value SyntaxRule_GetName(napi_env env, napi_callback_info info) {
   return createNapiString(env, rule->name);
 }
 
-/// Get the file extensions supported by the syntax rule
-static napi_value SyntaxRule_GetFileExtensions(napi_env env, napi_callback_info info) {
+/// Get the exact file names supported by the syntax rule
+static napi_value SyntaxRule_GetFileNames(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   SharedPtr<SyntaxRule> rule = getNapiCPtrHolderValue<SyntaxRule>(env, args[0]);
   if (rule == nullptr) {
-    return getNapiUndefined(env);
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
   }
   napi_value result;
-  napi_create_array_with_length(env, rule->file_extensions.size(), &result);
+  napi_create_array_with_length(env, rule->file_names.size(), &result);
   size_t i = 0;
-  for (const U8String& ext : rule->file_extensions) {
-    napi_set_element(env, result, i, createNapiString(env, ext));
+  for (const U8String& file_name : rule->file_names) {
+    napi_set_element(env, result, i, createNapiString(env, file_name));
+    ++i;
+  }
+  return result;
+}
+
+/// Get the file suffixes supported by the syntax rule
+static napi_value SyntaxRule_GetFileSuffixes(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<SyntaxRule> rule = getNapiCPtrHolderValue<SyntaxRule>(env, args[0]);
+  if (rule == nullptr) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  napi_value result;
+  napi_create_array_with_length(env, rule->file_suffixes.size(), &result);
+  size_t i = 0;
+  for (const U8String& suffix : rule->file_suffixes) {
+    napi_set_element(env, result, i, createNapiString(env, suffix));
     ++i;
   }
   return result;
@@ -786,13 +810,13 @@ static napi_value HighlightEngine_CreateAnalyzerByName(napi_env env, napi_callba
   if (!getStdStringFromNapiValue(env, args[1], syntax_name)) {
     return createNapiInt64(env, 0);
   }
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName(syntax_name);
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName(syntax_name);
   int64_t handle = asCHandle<int64_t>(analyzer);
   return createNapiInt64(env, handle);
 }
 
-/// Create a text highlight analyzer by file extension (no incremental analysis)
-static napi_value HighlightEngine_CreateAnalyzerByExtension(napi_env env, napi_callback_info info) {
+/// Create a text highlight analyzer by file name (no incremental analysis)
+static napi_value HighlightEngine_CreateAnalyzerByFileName(napi_env env, napi_callback_info info) {
   size_t argc = 2;
   napi_value args[2] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
@@ -801,11 +825,11 @@ static napi_value HighlightEngine_CreateAnalyzerByExtension(napi_env env, napi_c
   if (engine == nullptr) {
     return createNapiInt64(env, 0);
   }
-  U8String extension;
-  if (!getStdStringFromNapiValue(env, args[1], extension)) {
+  U8String file_name;
+  if (!getStdStringFromNapiValue(env, args[1], file_name)) {
     return createNapiInt64(env, 0);
   }
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByExtension(extension);
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_name);
   int64_t handle = asCHandle<int64_t>(analyzer);
   return createNapiInt64(env, handle);
 }
@@ -863,7 +887,8 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"Document_GetText", nullptr, Document_GetText, nullptr, nullptr, nullptr, napi_default, nullptr},
     // SyntaxRule
     {"SyntaxRule_GetName", nullptr, SyntaxRule_GetName, nullptr, nullptr, nullptr, napi_default, nullptr},
-    {"SyntaxRule_GetFileExtensions", nullptr, SyntaxRule_GetFileExtensions, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"SyntaxRule_GetFileNames", nullptr, SyntaxRule_GetFileNames, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"SyntaxRule_GetFileSuffixes", nullptr, SyntaxRule_GetFileSuffixes, nullptr, nullptr, nullptr, napi_default, nullptr},
     // TextAnalyzer
     {"TextAnalyzer_Delete", nullptr, TextAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"TextAnalyzer_AnalyzeText", nullptr, TextAnalyzer_AnalyzeText, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -888,7 +913,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"HighlightEngine_CompileSyntaxFromJson", nullptr, HighlightEngine_CompileSyntaxFromJson, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_CompileSyntaxFromFile", nullptr, HighlightEngine_CompileSyntaxFromFile, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_CreateAnalyzerByName", nullptr, HighlightEngine_CreateAnalyzerByName, nullptr, nullptr, nullptr, napi_default, nullptr},
-    {"HighlightEngine_CreateAnalyzerByExtension", nullptr, HighlightEngine_CreateAnalyzerByExtension, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"HighlightEngine_CreateAnalyzerByFileName", nullptr, HighlightEngine_CreateAnalyzerByFileName, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_LoadDocument", nullptr, HighlightEngine_LoadDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"HighlightEngine_RemoveDocument", nullptr, HighlightEngine_RemoveDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
   };

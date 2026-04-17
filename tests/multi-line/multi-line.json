@@ -1,6 +1,6 @@
 {
   "name": "multi-line",
-  "fileExtensions": [".test"],
+  "fileSuffixes": [".test"],
   "states": {
     "default": [
       {

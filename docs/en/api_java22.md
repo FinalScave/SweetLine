@@ -86,8 +86,8 @@ public class HighlightEngine implements AutoCloseable {
     public void compileSyntaxFromJson(String syntaxJson) throws SyntaxCompileError;
     public void compileSyntaxFromFile(String path) throws SyntaxCompileError;
 
-    public TextAnalyzer createAnalyzerByName(String syntaxName);
-    public TextAnalyzer createAnalyzerByExtension(String extension);
+    public TextAnalyzer createAnalyzerBySyntaxName(String syntaxName);
+    public TextAnalyzer createAnalyzerByFileName(String fileName);
     public DocumentAnalyzer loadDocument(Document document);
 
     public void close();
@@ -166,7 +166,7 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
     engine.registerStyleName("string", 2);
     engine.compileSyntaxFromFile("syntaxes/java.json");
 
-    try (TextAnalyzer textAnalyzer = engine.createAnalyzerByName("java")) {
+    try (TextAnalyzer textAnalyzer = engine.createAnalyzerBySyntaxName("java")) {
         if (textAnalyzer != null) {
             DocumentHighlight full = textAnalyzer.analyzeText(sourceCode);
         }

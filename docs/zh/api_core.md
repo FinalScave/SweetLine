@@ -75,8 +75,8 @@ public:
     // 根据名称获取已编译的语法规则
     SharedPtr<SyntaxRule> getSyntaxRuleByName(const U8String& name) const;
 
-    // 根据文件扩展名获取语法规则
-    SharedPtr<SyntaxRule> getSyntaxRuleByExtension(const U8String& extension) const;
+    // 根据文件名获取语法规则
+    SharedPtr<SyntaxRule> getSyntaxRuleByFileName(const U8String& file_name) const;
 
     // 注册样式名称到 ID 的映射
     void registerStyleName(const U8String& style_name, int32_t style_id) const;
@@ -90,8 +90,8 @@ public:
     bool isMacroDefined(const U8String& macro_name) const;
 
     // 创建 TextAnalyzer (不支持增量分析)
-    SharedPtr<TextAnalyzer> createAnalyzerByName(const U8String& syntax_name) const;
-    SharedPtr<TextAnalyzer> createAnalyzerByExtension(const U8String& extension) const;
+    SharedPtr<TextAnalyzer> createAnalyzerBySyntaxName(const U8String& syntax_name) const;
+    SharedPtr<TextAnalyzer> createAnalyzerByFileName(const U8String& file_name) const;
 
     // 加载托管文档，创建 DocumentAnalyzer (支持增量分析)
     SharedPtr<DocumentAnalyzer> loadDocument(const SharedPtr<Document>& document);
@@ -100,6 +100,8 @@ public:
     void removeDocument(const U8String& uri);
 };
 ```
+
+基于文件名的路由使用文档的 basename，并按以下顺序解析语法：先看 `fileName` / `fileNames`，再看 `fileSuffix` / `fileSuffixes`，最后才看 `fileNamePattern` / `fileNamePatterns`。
 
 #### 使用示例
 
@@ -208,7 +210,7 @@ public:
 #### 全量分析
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("java");
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
 auto highlight = analyzer->analyzeText(source_code);
 
 for (auto& line : highlight->lines) {
@@ -223,7 +225,7 @@ for (auto& line : highlight->lines) {
 #### 单行分析
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("java");
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
 
 TextLineInfo info;
 info.line = 0;
@@ -241,7 +243,7 @@ analyzer->analyzeLine("public class Hello {", info, result);
 #### 缩进划线分析
 
 ```cpp
-auto analyzer = engine->createAnalyzerByName("python");
+auto analyzer = engine->createAnalyzerBySyntaxName("python");
 auto highlight = analyzer->analyzeText(source_code);
 
 // 显式传入高亮结果
@@ -251,7 +253,7 @@ auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
 auto guides2 = analyzer->analyzeIndentGuides(source_code);
 
 // 如果没有可用缓存，则自动回退到按缩进分析
-auto fresh_analyzer = engine->createAnalyzerByName("python");
+auto fresh_analyzer = engine->createAnalyzerBySyntaxName("python");
 auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
 ```
 
@@ -380,4 +382,3 @@ struct InlineStyle {
 ```
 
 ---
-

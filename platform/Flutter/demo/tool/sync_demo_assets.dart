@@ -1,6 +1,16 @@
 import 'dart:io';
 
-const Map<String, String> _extensionToSyntax = <String, String>{
+const Map<String, String> _exactNameToSyntax = <String, String>{
+  '.gitignore': 'gitignore.json',
+  'CMakeLists.txt': 'cmake.json',
+  'Containerfile': 'dockerfile.json',
+  'Dockerfile': 'dockerfile.json',
+  'GNUmakefile': 'makefile.json',
+  'Makefile': 'makefile.json',
+  'makefile': 'makefile.json',
+};
+
+const Map<String, String> _suffixToSyntax = <String, String>{
   '.t': 'tiecode.json',
   '.c': 'c.json',
   '.cpp': 'cpp.json',
@@ -61,6 +71,9 @@ const Map<String, String> _extensionToSyntax = <String, String>{
   '.svelte': 'svelte.json',
 };
 
+final List<String> _sortedSuffixes = _suffixToSyntax.keys.toList(growable: false)
+  ..sort((left, right) => right.length.compareTo(left.length));
+
 const String _syntaxSampleName = 'json-sweetline.json';
 
 void main() {
@@ -90,7 +103,10 @@ void main() {
   }
 
   final syntaxFiles = _listFiles(syntaxesSourceDir, (file) => file.path.toLowerCase().endsWith('.json'));
-  final exampleFiles = _listFiles(examplesSourceDir, (file) => file.uri.pathSegments.last.startsWith('example.'));
+  final exampleFiles = _listFiles(examplesSourceDir, (file) {
+    final fileName = file.uri.pathSegments.last;
+    return _resolveSyntaxFileName(fileName) != null;
+  });
 
   _syncDirectory(sourceFiles: syntaxFiles, destinationDir: syntaxAssetsDir);
   _syncDirectory(sourceFiles: exampleFiles, destinationDir: exampleAssetsDir);
@@ -154,9 +170,7 @@ void _syncDirectory({required List<File> sourceFiles, required Directory destina
 
 _DemoSampleData _buildExampleSample(File file) {
   final fileName = file.uri.pathSegments.last;
-  final extensionIndex = fileName.indexOf('.');
-  final extension = extensionIndex >= 0 ? fileName.substring(extensionIndex) : '';
-  final syntaxFileName = _extensionToSyntax[extension];
+  final syntaxFileName = _resolveSyntaxFileName(fileName);
   if (syntaxFileName == null) {
     throw StateError('No syntax mapping for example file: $fileName');
   }
@@ -165,6 +179,19 @@ _DemoSampleData _buildExampleSample(File file) {
     sourceAssetPath: 'assets/examples/$fileName',
     syntaxAssetPath: 'assets/syntaxes/$syntaxFileName',
   );
+}
+
+String? _resolveSyntaxFileName(String fileName) {
+  final exact = _exactNameToSyntax[fileName];
+  if (exact != null) {
+    return exact;
+  }
+  for (final suffix in _sortedSuffixes) {
+    if (fileName.endsWith(suffix)) {
+      return _suffixToSyntax[suffix];
+    }
+  }
+  return null;
 }
 
 String _buildGeneratedSource(List<_DemoSampleData> samples) {

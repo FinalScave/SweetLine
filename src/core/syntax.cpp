@@ -8,11 +8,49 @@
 #include "util.h"
 
 namespace NS_SWEETLINE {
+  struct SyntaxRuleRuntimeData {
+    List<OnigRegex> file_name_pattern_regexes;
+  };
+
   namespace {
     bool isScopeSkipStyleName(const U8String& style_name) {
       return style_name.find("string") != U8String::npos
         || style_name.find("comment") != U8String::npos
         || style_name.find("char") != U8String::npos;
+    }
+
+    OnigRegex compileRegexOrThrow(const U8String& pattern_text, const U8String& error_context) {
+      OnigRegex regex = nullptr;
+      OnigErrorInfo error_info;
+      OnigUChar error_buf[ONIG_MAX_ERROR_MESSAGE_LEN];
+      OnigUChar* pattern = reinterpret_cast<OnigUChar*>(const_cast<char*>(pattern_text.c_str()));
+      OnigUChar* pattern_end = pattern + pattern_text.size();
+      int status = onig_new(&regex, pattern, pattern_end,
+        ONIG_OPTION_DEFAULT, ONIG_ENCODING_UTF8, ONIG_SYNTAX_DEFAULT, &error_info);
+      if (status != ONIG_NORMAL) {
+        onig_error_code_to_str(error_buf, status, &error_info);
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID,
+          error_context + " (" + reinterpret_cast<const char*>(error_buf) + ")");
+      }
+      return regex;
+    }
+
+    bool matchesRegex(OnigRegex regex, const U8String& text) {
+      if (regex == nullptr) {
+        return false;
+      }
+      OnigRegion* region = onig_region_new();
+      OnigUChar* text_ptr = reinterpret_cast<OnigUChar*>(const_cast<char*>(text.c_str()));
+      OnigUChar* text_end = text_ptr + text.size();
+      int status = onig_search(regex, text_ptr, text_end, text_ptr, text_end, region, ONIG_OPTION_NONE);
+      onig_region_free(region, 1);
+      return status >= 0;
+    }
+
+    void freeRegex(OnigRegex regex) {
+      if (regex != nullptr) {
+        onig_free(regex);
+      }
     }
   }
 
@@ -116,12 +154,34 @@ namespace NS_SWEETLINE {
     return state_rules_map[state_id];
   }
 
-  SyntaxRule::SyntaxRule() {
+  bool SyntaxRule::matchesFileNamePattern(const U8String& file_name, size_t index) const {
+    if (m_runtime_data_ == nullptr || index >= m_runtime_data_->file_name_pattern_regexes.size()) {
+      return false;
+    }
+    return matchesRegex(m_runtime_data_->file_name_pattern_regexes[index], file_name);
+  }
+
+  SyntaxRule::SyntaxRule(): m_runtime_data_(makeUniquePtr<SyntaxRuleRuntimeData>()) {
     state_id_map.insert_or_assign(kDefaultStateName, kDefaultStateId);
   }
 
+  SyntaxRule::~SyntaxRule() {
+    for (auto& [state_id, state_rule] : state_rules_map) {
+      freeRegex(state_rule.regex);
+      state_rule.regex = nullptr;
+    }
+    if (m_runtime_data_ == nullptr) {
+      return;
+    }
+    for (OnigRegex regex : m_runtime_data_->file_name_pattern_regexes) {
+      freeRegex(regex);
+    }
+    m_runtime_data_->file_name_pattern_regexes.clear();
+  }
+
 #ifdef SWEETLINE_DEBUG
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SyntaxRule, name, file_extensions, variables_map, state_rules_map, state_id_map);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SyntaxRule, name, file_names, file_suffixes, file_name_patterns,
+    variables_map, state_rules_map, state_id_map);
   void SyntaxRule::dump() const {
     nlohmann::json json = *this;
     std::cout << json.dump(2) << std::endl;
@@ -183,7 +243,9 @@ namespace NS_SWEETLINE {
       throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_INVALID, e.what());
     }
     parseSyntaxName(syntax_rule, root);
-    parseFileExtensions(syntax_rule, root);
+    parseFileNames(syntax_rule, root);
+    parseFileSuffixes(syntax_rule, root);
+    parseFileNamePatterns(syntax_rule, root);
     if (m_inline_style_) {
       syntax_rule->style_mapping = makeUniquePtr<StyleMapping>();
       parseInlineStyles(syntax_rule, root);
@@ -192,6 +254,7 @@ namespace NS_SWEETLINE {
     parseStates(syntax_rule, root);
     // Process importSyntax requests (after state id parsing, before compiling merged patterns)
     processImportSyntaxRequests(syntax_rule);
+    compileFileNamePatterns(syntax_rule);
     // Compile each state into a single merged regex pattern
     for (std::pair<const int32_t, StateRule>& pair : syntax_rule->state_rules_map) {
       compileStatePattern(pair.second);
@@ -227,30 +290,101 @@ namespace NS_SWEETLINE {
     }
   }
 
-  void SyntaxRuleCompiler::parseFileExtensions(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
-    if (root.contains("fileExtensions")) {
-      nlohmann::json extensions_json = root["fileExtensions"];
-      if (!extensions_json.is_array()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileExtensions");
+  void SyntaxRuleCompiler::parseFileNames(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    if (root.contains("fileNames")) {
+      nlohmann::json file_names_json = root["fileNames"];
+      if (!file_names_json.is_array()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNames");
       }
-      for (const nlohmann::json& element_json : extensions_json) {
+      for (const nlohmann::json& element_json : file_names_json) {
         if (element_json.is_string()) {
-          rule->file_extensions.emplace(element_json);
+          rule->file_names.emplace(element_json);
         } else {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileExtensions");
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNames");
         }
       }
-    } else {
-      if (root.contains("fileExtension")) {
-        nlohmann::json extensions_json = root["fileExtension"];
-        if (extensions_json.is_string()) {
-          rule->file_extensions.emplace(extensions_json);
-        } else {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileExtension");
-        }
+    }
+    if (root.contains("fileName")) {
+      nlohmann::json file_name_json = root["fileName"];
+      if (file_name_json.is_string()) {
+        rule->file_names.emplace(file_name_json);
       } else {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "fileExtensions or fileExtension");
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileName");
       }
+    }
+  }
+
+  void SyntaxRuleCompiler::parseFileSuffixes(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    if (root.contains("fileSuffixes")) {
+      nlohmann::json suffixes_json = root["fileSuffixes"];
+      if (!suffixes_json.is_array()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+      }
+      for (const nlohmann::json& element_json : suffixes_json) {
+        if (!element_json.is_string()) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+        }
+        U8String suffix = element_json;
+        if (suffix.empty()) {
+          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+        }
+        rule->file_suffixes.emplace(suffix);
+      }
+    }
+    if (root.contains("fileSuffix")) {
+      nlohmann::json suffix_json = root["fileSuffix"];
+      if (!suffix_json.is_string()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
+      }
+      U8String suffix = suffix_json;
+      if (suffix.empty()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
+      }
+      rule->file_suffixes.emplace(suffix);
+    }
+  }
+
+  void SyntaxRuleCompiler::parseFileNamePatterns(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    auto append_pattern = [&rule](const U8String& property_name, const nlohmann::json& pattern_json) {
+      if (!pattern_json.is_string()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, property_name);
+      }
+      U8String pattern_text = pattern_json;
+      U8String error;
+      PatternUtil::countCaptureGroups("\\A(?:" + pattern_text + ")\\z", error);
+      if (!error.empty()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID,
+          property_name + ": " + pattern_text + " (" + error + ")");
+      }
+      rule->file_name_patterns.emplace_back(pattern_text);
+    };
+    if (root.contains("fileNamePatterns")) {
+      nlohmann::json patterns_json = root["fileNamePatterns"];
+      if (!patterns_json.is_array()) {
+        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNamePatterns");
+      }
+      for (const nlohmann::json& element_json : patterns_json) {
+        append_pattern("fileNamePatterns", element_json);
+      }
+    }
+    if (root.contains("fileNamePattern")) {
+      append_pattern("fileNamePattern", root["fileNamePattern"]);
+    }
+    if (rule->file_names.empty() && rule->file_suffixes.empty() && rule->file_name_patterns.empty()) {
+      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED,
+        "fileName/fileNames or fileSuffix/fileSuffixes or fileNamePattern/fileNamePatterns");
+    }
+  }
+
+  void SyntaxRuleCompiler::compileFileNamePatterns(const SharedPtr<SyntaxRule>& rule) {
+    if (rule == nullptr || rule->m_runtime_data_ == nullptr) {
+      return;
+    }
+    rule->m_runtime_data_->file_name_pattern_regexes.clear();
+    for (const U8String& pattern_text : rule->file_name_patterns) {
+      const U8String full_pattern = "\\A(?:" + pattern_text + ")\\z";
+      rule->m_runtime_data_->file_name_pattern_regexes.push_back(
+        compileRegexOrThrow(full_pattern, "fileNamePattern: " + pattern_text));
     }
   }
 
@@ -659,21 +793,7 @@ namespace NS_SWEETLINE {
       merged_pattern += ")";
     }
     state_rule.group_count = total_group_count;
-    // Compile the merged pattern
-    OnigErrorInfo error;
-    OnigRegion* region = onig_region_new();
-    int status = onig_new(&state_rule.regex,
-      (OnigUChar*)merged_pattern.c_str(),
-      (OnigUChar*)(merged_pattern.c_str() + merged_pattern.length()),
-      ONIG_OPTION_DEFAULT,
-      ONIG_ENCODING_UTF8,
-      ONIG_SYNTAX_DEFAULT,
-      &error);
-    if (status != ONIG_NORMAL) {
-      onig_region_free(region, 1);
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID, merged_pattern);
-    }
-    onig_region_free(region, 1);
+    state_rule.regex = compileRegexOrThrow(merged_pattern, merged_pattern);
     state_rule.merged_pattern = std::move(merged_pattern);
   }
 

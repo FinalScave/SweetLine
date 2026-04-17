@@ -33,7 +33,7 @@ class HighlightEngine {
 
     // Find syntax rules
     getSyntaxRuleByName(name: string): SyntaxRule;
-    getSyntaxRuleByExtension(extension: string): SyntaxRule;
+    getSyntaxRuleByFileName(fileName: string): SyntaxRule;
 
     // Style management
     registerStyleName(styleName: string, styleId: number): void;
@@ -44,8 +44,8 @@ class HighlightEngine {
     undefineMacro(macroName: string): void;
 
     // Create analyzers
-    createAnalyzerByName(syntaxName: string): TextAnalyzer;
-    createAnalyzerByExtension(extension: string): TextAnalyzer;
+    createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer;
+    createAnalyzerByFileName(fileName: string): TextAnalyzer;
     loadDocument(document: Document): DocumentAnalyzer;
     removeDocument(uri: string): void;
 }
@@ -145,7 +145,7 @@ async function main() {
     // Compile syntax rules
     const jsonRule = `{
         "name": "demo",
-        "fileExtensions": [".demo"],
+        "fileSuffixes": [".demo"],
         "states": {
             "default": [
                 { "pattern": "\\\\b(if|else|while)\\\\b", "styles": [1, "keyword"] },
@@ -156,7 +156,7 @@ async function main() {
     engine.compileSyntaxFromJson(jsonRule);
 
     // Full analysis
-    const analyzer = engine.createAnalyzerByName("demo");
+    const analyzer = engine.createAnalyzerBySyntaxName("demo");
     const code = 'if (x > 0) { return "hello"; }';
     const highlight = analyzer.analyzeText(code);
 
@@ -200,4 +200,3 @@ main();
 ```
 
 ---
-

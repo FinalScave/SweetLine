@@ -154,7 +154,7 @@ Recommended pair:
 
 What they help enforce:
 - deciding whether the task is a refinement, a new syntax, a DSL split, or a dialect split
-- checking whether extension-only routing is sufficient
+- deciding whether the syntax needs exact file names, file suffixes, or file-name patterns
 - keeping tokenization fine-grained instead of using overly broad fallback rules
 - expanding or creating example files with realistic syntax coverage
 - keeping new or heavily revised examples in the recommended `120` to `150` line range

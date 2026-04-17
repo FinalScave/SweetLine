@@ -62,12 +62,12 @@ public final class HighlightEngine {
         return TextAnalyzer(nativeHandle: analyzer)
     }
 
-    public func createAnalyzer(forExtension pathExtension: String) throws -> TextAnalyzer {
-        let analyzer = NativeInterop.withCString(pathExtension) { cExtension in
-            sl_engine_create_text_analyzer2(nativeHandle, cExtension)
+    public func createAnalyzer(forFileName fileName: String) throws -> TextAnalyzer {
+        let analyzer = NativeInterop.withCString(fileName) { cFileName in
+            sl_engine_create_text_analyzer_by_file_name(nativeHandle, cFileName)
         }
         guard let analyzer else {
-            throw SweetLineError.unsupportedSyntax(pathExtension)
+            throw SweetLineError.unsupportedSyntax(fileName)
         }
         return TextAnalyzer(nativeHandle: analyzer)
     }

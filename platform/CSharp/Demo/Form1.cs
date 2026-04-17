@@ -4,7 +4,16 @@ using SweetLine;
 namespace Demo;
 
 public partial class Form1 : Form {
-	private static readonly Dictionary<string, string> ExtSyntaxMap = new(StringComparer.OrdinalIgnoreCase) {
+	private static readonly Dictionary<string, string> ExactSyntaxMap = new(StringComparer.Ordinal) {
+		[".gitignore"] = "gitignore.json",
+		["CMakeLists.txt"] = "cmake.json",
+		["Containerfile"] = "dockerfile.json",
+		["Dockerfile"] = "dockerfile.json",
+		["GNUmakefile"] = "makefile.json",
+		["Makefile"] = "makefile.json",
+		["makefile"] = "makefile.json"
+	};
+	private static readonly Dictionary<string, string> SuffixSyntaxMap = new(StringComparer.Ordinal) {
 		[".t"] = "tiecode.json",
 		[".c"] = "c.json",
 		[".cpp"] = "cpp.json",
@@ -64,6 +73,18 @@ public partial class Form1 : Form {
 		[".vue"] = "vue.json",
 		[".svelte"] = "svelte.json"
 	};
+	private static readonly Dictionary<string, string> RoutedDocumentNames = new(StringComparer.Ordinal) {
+		[".gitignore"] = "example.gitignore",
+		["CMakeLists.txt"] = "example.cmake",
+		["Containerfile"] = "example.dockerfile",
+		["Dockerfile"] = "example.dockerfile",
+		["GNUmakefile"] = "example.mk",
+		["Makefile"] = "example.mk",
+		["makefile"] = "example.mk"
+	};
+	private static readonly List<string> SortedSuffixes = SuffixSyntaxMap.Keys
+		.OrderByDescending(static suffix => suffix.Length)
+		.ToList();
 
 	private readonly string _syntaxesDir;
 	private readonly string _examplesDir;
@@ -194,9 +215,9 @@ public partial class Form1 : Form {
 		}
 
 		string fileName = _exampleFiles[idx];
-		string ext = GetFileExtension(fileName);
-		if (!ExtSyntaxMap.TryGetValue(ext, out string? syntaxFileName)) {
-			_statusLabel.Text = $"No syntax mapping for extension: {ext}";
+		string? syntaxFileName = ResolveSyntaxFileName(fileName);
+		if (syntaxFileName is null) {
+			_statusLabel.Text = $"No syntax mapping for file: {fileName}";
 			return;
 		}
 
@@ -208,13 +229,13 @@ public partial class Form1 : Form {
 		}
 
 		try {
-			HighlightFile(examplePath, syntaxPath);
+			HighlightFile(examplePath, syntaxPath, ResolveDocumentFileName(fileName));
 		} catch (Exception ex) {
 			_statusLabel.Text = $"Error: {ex.Message}";
 		}
 	}
 
-	private void HighlightFile(string filePath, string syntaxPath) {
+	private void HighlightFile(string filePath, string syntaxPath, string documentFileName) {
 		string sourceCode = File.ReadAllText(filePath);
 		string syntaxJson = File.ReadAllText(syntaxPath);
 		string fileName = Path.GetFileName(filePath);
@@ -224,7 +245,7 @@ public partial class Form1 : Form {
 		compileWatch.Stop();
 		long compileUs = (long)(compileWatch.Elapsed.TotalMilliseconds * 1000);
 
-		using Document doc = new(fileName, sourceCode);
+		using Document doc = new(documentFileName, sourceCode);
 		using DocumentAnalyzer? analyzer = _engine.LoadDocument(doc);
 		if (analyzer is null) {
 			_statusLabel.Text = "Failed to load document.";
@@ -245,7 +266,7 @@ public partial class Form1 : Form {
 
 	private void OpenExternalFile() {
 		using OpenFileDialog dialog = new() {
-			Filter = $"Source Files|{BuildExtensionFilter()}|All Files|*.*",
+			Filter = "Supported Files|*.*|All Files|*.*",
 			FilterIndex = 1,
 			Title = "Open Source File"
 		};
@@ -255,9 +276,10 @@ public partial class Form1 : Form {
 		}
 
 		string filePath = dialog.FileName;
-		string ext = GetFileExtension(filePath);
-		if (!ExtSyntaxMap.TryGetValue(ext, out string? syntaxFileName)) {
-			_statusLabel.Text = $"Unsupported file extension: {ext}";
+		string fileName = Path.GetFileName(filePath);
+		string? syntaxFileName = ResolveSyntaxFileName(fileName);
+		if (syntaxFileName is null) {
+			_statusLabel.Text = $"Unsupported file name: {fileName}";
 			return;
 		}
 
@@ -271,7 +293,7 @@ public partial class Form1 : Form {
 			_suppressComboEvents = true;
 			_fileCombo.SelectedIndex = -1;
 			_suppressComboEvents = false;
-			HighlightFile(filePath, syntaxPath);
+			HighlightFile(filePath, syntaxPath, ResolveDocumentFileName(fileName));
 		} catch (Exception ex) {
 			_statusLabel.Text = $"Error: {ex.Message}";
 		}
@@ -306,11 +328,11 @@ public partial class Form1 : Form {
 			string name = Path.GetFileName(path);
 			if (!name.StartsWith("example", StringComparison.OrdinalIgnoreCase) &&
 				!name.Equals("json-sweetline.json", StringComparison.OrdinalIgnoreCase)) {
-				continue;
+				if (ResolveSyntaxFileName(name) is null) {
+					continue;
+				}
 			}
-
-			string ext = GetFileExtension(name);
-			if (ExtSyntaxMap.ContainsKey(ext)) {
+			if (ResolveSyntaxFileName(name) is not null) {
 				files.Add(name);
 			}
 		}
@@ -319,11 +341,23 @@ public partial class Form1 : Form {
 		return files;
 	}
 
-	private static string GetFileExtension(string fileName) {
-		return Path.GetExtension(fileName).ToLowerInvariant();
+	private static string? ResolveSyntaxFileName(string fileName) {
+		if (ExactSyntaxMap.TryGetValue(fileName, out string? exactSyntaxFileName)) {
+			return exactSyntaxFileName;
+		}
+
+		foreach (string suffix in SortedSuffixes) {
+			if (fileName.EndsWith(suffix, StringComparison.Ordinal)) {
+				return SuffixSyntaxMap[suffix];
+			}
+		}
+
+		return null;
 	}
 
-	private static string BuildExtensionFilter() {
-		return string.Join(";", ExtSyntaxMap.Keys.Select(ext => $"*{ext}"));
+	private static string ResolveDocumentFileName(string fileName) {
+		return RoutedDocumentNames.TryGetValue(fileName, out string? routedDocumentName)
+			? routedDocumentName
+			: fileName;
 	}
 }

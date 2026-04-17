@@ -56,21 +56,13 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     REQUIRE_FALSE(rule->name.empty());
   }
 
-  // markdown 依赖 importSyntax="c++"，此处注入一个 "name=c++" 的别名语法后再编译 markdown
-  U8String cpp_alias_json = FileUtil::readString(syntaxPath("cpp.json"));
-  REQUIRE_FALSE(cpp_alias_json.empty());
-  REQUIRE(StrUtil::replaceFirst(cpp_alias_json, "\"name\": \"cpp\"", "\"name\": \"c++\""));
-  SharedPtr<SyntaxRule> cpp_alias;
-  REQUIRE_NOTHROW(cpp_alias = engine->compileSyntaxFromJson(cpp_alias_json));
-  REQUIRE(cpp_alias != nullptr);
-
   SharedPtr<SyntaxRule> markdown_rule;
   REQUIRE_NOTHROW(markdown_rule = engine->compileSyntaxFromFile(syntaxPath("markdown.json")));
   REQUIRE(markdown_rule != nullptr);
   REQUIRE(markdown_rule->containsRule(SyntaxRule::kDefaultStateId));
 }
 
-TEST_CASE("Create analyzers by extension for sample files") {
+TEST_CASE("Create analyzers by file name for sample files") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
     "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json", "iapp.json",
@@ -87,10 +79,6 @@ TEST_CASE("Create analyzers by extension for sample files") {
     REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath(file_name)));
   }
 
-  U8String cpp_alias_json = FileUtil::readString(syntaxPath("cpp.json"));
-  REQUIRE_FALSE(cpp_alias_json.empty());
-  REQUIRE(StrUtil::replaceFirst(cpp_alias_json, "\"name\": \"cpp\"", "\"name\": \"c++\""));
-  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(cpp_alias_json));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("markdown.json")));
 
   const List<U8String> sample_files = {
@@ -147,17 +135,102 @@ TEST_CASE("Create analyzers by extension for sample files") {
 
   for (const U8String& file_path : sample_files) {
     CAPTURE(file_path);
-    U8String extension = FileUtil::getExtension(file_path);
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByExtension(extension);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_path);
     REQUIRE(analyzer != nullptr);
   }
+}
+
+TEST_CASE("Exact file names take priority over suffix routing") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("cmake.json")));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("dockerfile.json")));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("makefile.json")));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("gitignore.json")));
+
+  CHECK(engine->createAnalyzerByFileName("CMakeLists.txt") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("Dockerfile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("Containerfile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("Makefile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("GNUmakefile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName(".gitignore") != nullptr);
+}
+
+TEST_CASE("File name patterns are full matches and can create analyzers") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "patternLang",
+  "fileNamePattern": "(?:generated|templated)\\.route",
+  "states": {
+    "default": [
+      { "pattern": "\\b(route)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  CHECK(engine->createAnalyzerByFileName("generated.route") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("templated.route") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("generated.route.bak") == nullptr);
+  CHECK(engine->createAnalyzerByFileName("prefix-generated.route") == nullptr);
+}
+
+TEST_CASE("Ambiguous file suffix routing returns no analyzer") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax_a = R"({
+  "name": "dupSuffixA",
+  "fileSuffix": ".dup",
+  "states": {
+    "default": [
+      { "pattern": "\\b(a)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+  const U8String syntax_b = R"({
+  "name": "dupSuffixB",
+  "fileSuffix": ".dup",
+  "states": {
+    "default": [
+      { "pattern": "\\b(b)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_a));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_b));
+  CHECK(engine->createAnalyzerByFileName("sample.dup") == nullptr);
+}
+
+TEST_CASE("Ambiguous file name pattern routing returns no analyzer") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax_a = R"({
+  "name": "patternA",
+  "fileNamePattern": ".*\\.route",
+  "states": {
+    "default": [
+      { "pattern": "\\b(a)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+  const U8String syntax_b = R"({
+  "name": "patternB",
+  "fileNamePattern": "example\\.route",
+  "states": {
+    "default": [
+      { "pattern": "\\b(b)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_a));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_b));
+  CHECK(engine->createAnalyzerByFileName("example.route") == nullptr);
 }
 
 TEST_CASE("importSyntax merges rules from source syntax") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String source_syntax = R"({
   "name": "sourceLang",
-  "fileExtensions": [".src"],
+  "fileSuffixes": [".src"],
   "states": {
     "default": [
       { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
@@ -166,7 +239,7 @@ TEST_CASE("importSyntax merges rules from source syntax") {
 })";
   const U8String host_syntax = R"({
   "name": "hostLang",
-  "fileExtensions": [".host"],
+  "fileSuffixes": [".host"],
   "states": {
     "default": [
       { "pattern": "\\b(bar)\\b", "styles": [1, "number"] },
@@ -178,7 +251,7 @@ TEST_CASE("importSyntax merges rules from source syntax") {
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(source_syntax));
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(host_syntax));
 
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("hostLang");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("hostLang");
   REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo bar");
   REQUIRE(highlight != nullptr);
@@ -197,7 +270,7 @@ TEST_CASE("fragments include and includes expand reusable rules") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "fragmentLang",
-  "fileExtensions": [".frag"],
+  "fileSuffixes": [".frag"],
   "fragments": {
     "keywordRule": [
       { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
@@ -219,7 +292,7 @@ TEST_CASE("fragments include and includes expand reusable rules") {
   REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
   REQUIRE(rule != nullptr);
 
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("fragmentLang");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("fragmentLang");
   REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo 42");
   REQUIRE(highlight != nullptr);
@@ -238,7 +311,7 @@ TEST_CASE("fragments includes keeps declared order") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "fragmentOrder",
-  "fileExtensions": [".fgo"],
+  "fileSuffixes": [".fgo"],
   "fragments": {
     "first": [
       { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
@@ -257,7 +330,7 @@ TEST_CASE("fragments includes keeps declared order") {
   REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
   REQUIRE(rule != nullptr);
 
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("fragmentOrder");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("fragmentOrder");
   REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo");
   REQUIRE(highlight != nullptr);
@@ -270,7 +343,7 @@ TEST_CASE("fragments include rejects missing fragment") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "fragmentMissing",
-  "fileExtensions": [".fgm"],
+  "fileSuffixes": [".fgm"],
   "states": {
     "default": [
       { "include": "notExists" }
@@ -290,7 +363,7 @@ TEST_CASE("fragments include rejects circular references") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "fragmentCycle",
-  "fileExtensions": [".fgc"],
+  "fileSuffixes": [".fgc"],
   "fragments": {
     "a": [
       { "include": "b" }
@@ -317,7 +390,7 @@ TEST_CASE("fragments include rejects circular references") {
 TEST_CASE("importSyntax with #ifdef is controlled by macros") {
   const U8String source_syntax = R"({
   "name": "sourceLang",
-  "fileExtensions": [".src"],
+  "fileSuffixes": [".src"],
   "states": {
     "default": [
       { "pattern": "\\b(foo)\\b", "styles": [1, "keyword"] }
@@ -326,7 +399,7 @@ TEST_CASE("importSyntax with #ifdef is controlled by macros") {
 })";
   const U8String host_syntax = R"({
   "name": "hostIfdef",
-  "fileExtensions": [".hid"],
+  "fileSuffixes": [".hid"],
   "states": {
     "default": [
       { "pattern": "\\b(bar)\\b", "styles": [1, "number"] },
@@ -339,7 +412,7 @@ TEST_CASE("importSyntax with #ifdef is controlled by macros") {
     SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
     REQUIRE_NOTHROW(engine->compileSyntaxFromJson(source_syntax));
     REQUIRE_NOTHROW(engine->compileSyntaxFromJson(host_syntax));
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("hostIfdef");
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("hostIfdef");
     REQUIRE(analyzer != nullptr);
     SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo bar");
     REQUIRE(highlight != nullptr);
@@ -359,7 +432,7 @@ TEST_CASE("importSyntax with #ifdef is controlled by macros") {
     engine->defineMacro("FEATURE_X");
     REQUIRE_NOTHROW(engine->compileSyntaxFromJson(source_syntax));
     REQUIRE_NOTHROW(engine->compileSyntaxFromJson(host_syntax));
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("hostIfdef");
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("hostIfdef");
     REQUIRE(analyzer != nullptr);
     SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("foo bar");
     REQUIRE(highlight != nullptr);
@@ -384,7 +457,7 @@ TEST_CASE("Inline-style syntax produces inline style spans") {
   REQUIRE_NOTHROW(rule = engine->compileSyntaxFromFile(syntaxPath("tiecode-inlineStyle.json")));
   REQUIRE(rule != nullptr);
 
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByName("tiecode");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("tiecode");
   REQUIRE(analyzer != nullptr);
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText("类 示例\n");
   REQUIRE(highlight != nullptr);

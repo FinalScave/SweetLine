@@ -100,15 +100,16 @@ sl_analyzer_handle_t sl_engine_create_text_analyzer(sl_engine_handle_t engine_ha
   if (engine == nullptr) {
     return nullptr;
   }
-  return asCHandle<sl_analyzer_handle_t>(engine->createAnalyzerByName(syntax_name));
+  return asCHandle<sl_analyzer_handle_t>(engine->createAnalyzerBySyntaxName(syntax_name));
 }
 
-sl_analyzer_handle_t sl_engine_create_text_analyzer2(sl_engine_handle_t engine_handle, const char* extension) {
+sl_analyzer_handle_t sl_engine_create_text_analyzer_by_file_name(
+  sl_engine_handle_t engine_handle, const char* file_name) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<sl_engine_handle_t, HighlightEngine>(engine_handle);
   if (engine == nullptr) {
     return nullptr;
   }
-  return asCHandle<sl_analyzer_handle_t>(engine->createAnalyzerByExtension(extension));
+  return asCHandle<sl_analyzer_handle_t>(engine->createAnalyzerByFileName(file_name));
 }
 
 int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer_handle, const char* text) {

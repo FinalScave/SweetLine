@@ -126,6 +126,64 @@ public enum DemoSampleSupport {
     private static let styleBuiltin: Int32 = 14
     private static let styleUrl: Int32 = 15
     private static let styleProperty: Int32 = 16
+    private static let exactSyntaxMap: [String: String] = [
+        ".gitignore": "gitignore.json",
+        "CMakeLists.txt": "cmake.json",
+        "Containerfile": "dockerfile.json",
+        "Dockerfile": "dockerfile.json",
+        "GNUmakefile": "makefile.json",
+        "Makefile": "makefile.json",
+        "makefile": "makefile.json",
+    ]
+    private static let suffixSyntaxMap: [String: String] = [
+        ".swift": "swift.json",
+        ".css": "css.json",
+        ".scss": "scss.json",
+        ".less": "less.json",
+        ".jsonc": "jsonc.json",
+        ".json5": "json5.json",
+        ".cmake": "cmake.json",
+        ".dockerfile": "dockerfile.json",
+        ".mk": "makefile.json",
+        ".properties": "properties.json",
+        ".env": "env.json",
+        ".proto": "protobuf.json",
+        ".graphql": "graphql.json",
+        ".nginx": "nginx.json",
+        ".gitignore": "gitignore.json",
+        ".diff": "diff.json",
+        ".rb": "ruby.json",
+        ".hcl": "hcl.json",
+        ".tf": "terraform.json",
+        ".vue": "vue.json",
+        ".svelte": "svelte.json",
+    ]
+    private static let sortedSuffixes: [String] = suffixSyntaxMap.keys.sorted { left, right in
+        left.count > right.count
+    }
+    private static let builtinSampleFileNames: [String] = [
+        "example.swift",
+        "example.css",
+        "example.scss",
+        "example.less",
+        "example.jsonc",
+        "example.json5",
+        "example.cmake",
+        "example.dockerfile",
+        "example.mk",
+        "example.properties",
+        "example.env",
+        "example.proto",
+        "example.graphql",
+        "example.nginx",
+        "example.gitignore",
+        "example.diff",
+        "example.rb",
+        "example.hcl",
+        "example.tf",
+        "example.vue",
+        "example.svelte",
+    ]
 
     public static let placeholderMessage = "SweetLine Apple demo skeleton is ready for integration."
 
@@ -300,29 +358,12 @@ public enum DemoSampleSupport {
         ),
     ]
 
-    public static let builtinSamples: [DemoSample] = [
-        DemoSample(fileName: "example.swift", syntaxFileName: "swift.json"),
-        DemoSample(fileName: "example.css", syntaxFileName: "css.json"),
-        DemoSample(fileName: "example.scss", syntaxFileName: "scss.json"),
-        DemoSample(fileName: "example.less", syntaxFileName: "less.json"),
-        DemoSample(fileName: "example.jsonc", syntaxFileName: "jsonc.json"),
-        DemoSample(fileName: "example.json5", syntaxFileName: "json5.json"),
-        DemoSample(fileName: "example.cmake", syntaxFileName: "cmake.json"),
-        DemoSample(fileName: "example.dockerfile", syntaxFileName: "dockerfile.json"),
-        DemoSample(fileName: "example.mk", syntaxFileName: "makefile.json"),
-        DemoSample(fileName: "example.properties", syntaxFileName: "properties.json"),
-        DemoSample(fileName: "example.env", syntaxFileName: "env.json"),
-        DemoSample(fileName: "example.proto", syntaxFileName: "protobuf.json"),
-        DemoSample(fileName: "example.graphql", syntaxFileName: "graphql.json"),
-        DemoSample(fileName: "example.nginx", syntaxFileName: "nginx.json"),
-        DemoSample(fileName: "example.gitignore", syntaxFileName: "gitignore.json"),
-        DemoSample(fileName: "example.diff", syntaxFileName: "diff.json"),
-        DemoSample(fileName: "example.rb", syntaxFileName: "ruby.json"),
-        DemoSample(fileName: "example.hcl", syntaxFileName: "hcl.json"),
-        DemoSample(fileName: "example.tf", syntaxFileName: "terraform.json"),
-        DemoSample(fileName: "example.vue", syntaxFileName: "vue.json"),
-        DemoSample(fileName: "example.svelte", syntaxFileName: "svelte.json"),
-    ]
+    public static let builtinSamples: [DemoSample] = builtinSampleFileNames.compactMap { fileName in
+        guard let syntaxFileName = resolveSyntaxFileName(for: fileName) else {
+            return nil
+        }
+        return DemoSample(fileName: fileName, syntaxFileName: syntaxFileName)
+    }
 
     public static func defaultConfig() -> HighlightConfig {
         HighlightConfig(showIndex: true, inlineStyle: false)
@@ -371,6 +412,16 @@ public enum DemoSampleSupport {
 
     public static func makeDefaultRenderModel() throws -> DemoRenderModel {
         try makeRenderModel(sample: builtinSamples[0], selectedTheme: builtinThemes[0])
+    }
+
+    private static func resolveSyntaxFileName(for fileName: String) -> String? {
+        if let exactSyntaxFileName = exactSyntaxMap[fileName] {
+            return exactSyntaxFileName
+        }
+        for suffix in sortedSuffixes where fileName.hasSuffix(suffix) {
+            return suffixSyntaxMap[suffix]
+        }
+        return nil
     }
 
     private static func makeRenderModel(sample: DemoSample, selectedTheme: DemoTheme) throws -> DemoRenderModel {

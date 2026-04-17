@@ -9,7 +9,17 @@ interface SpanItem {
   color: number;
 }
 
-const EXT_SYNTAX_MAP: Map<string, string> = new Map([
+const EXACT_SYNTAX_MAP: Map<string, string> = new Map([
+  [".gitignore", "gitignore.json"],
+  ["CMakeLists.txt", "cmake.json"],
+  ["Containerfile", "dockerfile.json"],
+  ["Dockerfile", "dockerfile.json"],
+  ["GNUmakefile", "makefile.json"],
+  ["Makefile", "makefile.json"],
+  ["makefile", "makefile.json"],
+]);
+
+const SUFFIX_SYNTAX_MAP: Map<string, string> = new Map([
   [".t", "tiecode.json"],
   [".c", "c.json"],
   [".cpp", "cpp.json"],
@@ -68,6 +78,46 @@ const EXT_SYNTAX_MAP: Map<string, string> = new Map([
   [".vue", "vue.json"],
   [".svelte", "svelte.json"],
 ]);
+
+const ROUTED_DOCUMENT_NAMES: Map<string, string> = new Map([
+  [".gitignore", "example.gitignore"],
+  ["CMakeLists.txt", "example.cmake"],
+  ["Containerfile", "example.dockerfile"],
+  ["Dockerfile", "example.dockerfile"],
+  ["GNUmakefile", "example.mk"],
+  ["Makefile", "example.mk"],
+  ["makefile", "example.mk"],
+]);
+
+const EXACT_SAMPLE_FILES: string[] = [
+  ".gitignore",
+  "CMakeLists.txt",
+  "Containerfile",
+  "Dockerfile",
+  "GNUmakefile",
+  "Makefile",
+  "makefile",
+];
+
+const SORTED_SUFFIXES: string[] = Array.from(SUFFIX_SYNTAX_MAP.keys()).sort((left, right) => right.length - left.length);
+
+function resolveSyntaxFileName(fileName: string): string | undefined {
+  const exact = EXACT_SYNTAX_MAP.get(fileName);
+  if (exact !== undefined) {
+    return exact;
+  }
+  for (const suffix of SORTED_SUFFIXES) {
+    if (fileName.endsWith(suffix)) {
+      return SUFFIX_SYNTAX_MAP.get(suffix);
+    }
+  }
+  return undefined;
+}
+
+function resolveDocumentFileName(fileName: string): string {
+  const routed = ROUTED_DOCUMENT_NAMES.get(fileName);
+  return routed !== undefined ? routed : fileName;
+}
 
 @Entry
 @Component
@@ -216,11 +266,10 @@ struct Index {
       const rawFileList = context.resourceManager.getRawFileListSync("");
       let files: string[] = [];
       for (const name of rawFileList) {
-        if (!name.startsWith("example") && name !== "json-sweetline.json") {
+        if (!name.startsWith("example") && !EXACT_SAMPLE_FILES.includes(name) && name !== "json-sweetline.json") {
           continue;
         }
-        const ext = this.getFileExtension(name);
-        if (EXT_SYNTAX_MAP.has(ext)) {
+        if (resolveSyntaxFileName(name) !== undefined) {
           files.push(name);
         }
       }
@@ -247,19 +296,18 @@ struct Index {
    * Highlight the specified file
    */
   private highlightFile(testFileName: string): void {
-    const ext = this.getFileExtension(testFileName);
-    const syntaxFileName = EXT_SYNTAX_MAP.get(ext);
+    const syntaxFileName = resolveSyntaxFileName(testFileName);
     if (!syntaxFileName) {
       console.warn(TAG, `Syntax rule file not found for the given test file`);
       return;
     }
-    this.highlight(testFileName, syntaxFileName, false);
+    this.highlight(testFileName, syntaxFileName, resolveDocumentFileName(testFileName), false);
   }
 
   /**
    * Perform highlight analysis
    */
-  private async highlight(testFileName: string, syntaxFileName: string, inlineStyle: boolean): Promise<void> {
+  private async highlight(testFileName: string, syntaxFileName: string, documentFileName: string, inlineStyle: boolean): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext();
       const syntaxJson = await ResourceUtils.readRawTextFile(context, syntaxFileName);
@@ -274,7 +322,7 @@ struct Index {
       let compileTime = Date.now() - compileStart;
       console.info(TAG, `====compileSyntaxFromJson: ${compileTime}ms`);
 
-      const document = new sweetline.Document(testFileName, testCode);
+      const document = new sweetline.Document(documentFileName, testCode);
 
       let loadStart = Date.now();
       if (inlineStyle) {
@@ -374,18 +422,6 @@ struct Index {
     this.renderVersion++;
     this.highlightSpans = items;
   }
-
-  /**
-   * Get file extension
-   */
-  private getFileExtension(fileName: string): string {
-    const dotIndex = fileName.lastIndexOf('.');
-    if (dotIndex >= 0) {
-      return fileName.substring(dotIndex);
-    }
-    return '';
-  }
-
   /**
    * Convert ARGB integer color value to ArkTS Color
    */

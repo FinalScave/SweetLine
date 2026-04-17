@@ -20,15 +20,25 @@ public class SyntaxRule {
     }
 
     /**
-     * Get the file extensions supported by the syntax rule
-     * @return Array of file extensions
+     * Get the exact file names supported by the syntax rule.
+     * @return Array of file names
      */
-    public String[] getFileExtensions() {
-        return nativeGetFileExtensions(nativeHandle);
+    public String[] getFileNames() {
+        return nativeGetFileNames(nativeHandle);
+    }
+
+    /**
+     * Get the file suffixes supported by the syntax rule.
+     * @return Array of file suffixes
+     */
+    public String[] getFileSuffixes() {
+        return nativeGetFileSuffixes(nativeHandle);
     }
 
     @FastNative
     private static native String nativeGetName(long handle);
     @FastNative
-    private static native String[] nativeGetFileExtensions(long handle);
+    private static native String[] nativeGetFileNames(long handle);
+    @FastNative
+    private static native String[] nativeGetFileSuffixes(long handle);
 }

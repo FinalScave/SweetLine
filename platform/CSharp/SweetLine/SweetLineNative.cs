@@ -276,12 +276,12 @@ internal static class SweetLineNative {
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string syntaxName);
 
 	/// <summary>
-	/// <c>sl_engine_create_text_analyzer2(sl_engine_handle_t, const char*)</c>
+	/// <c>sl_engine_create_text_analyzer_by_file_name(sl_engine_handle_t, const char*)</c>
 	/// </summary>
-	[DllImport(NativeLibraryName, EntryPoint = "sl_engine_create_text_analyzer2", CallingConvention = CallingConvention.Cdecl)]
-	internal static extern IntPtr EngineCreateTextAnalyzerByExtension(
+	[DllImport(NativeLibraryName, EntryPoint = "sl_engine_create_text_analyzer_by_file_name", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr EngineCreateTextAnalyzerByFileName(
 		IntPtr engineHandle,
-		[MarshalAs(UnmanagedType.LPUTF8Str)] string extension);
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string fileName);
 
 	/// <summary>
 	/// <c>sl_text_analyze(sl_analyzer_handle_t, const char*)</c>

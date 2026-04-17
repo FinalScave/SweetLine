@@ -1,6 +1,6 @@
 {
   "name": "multi-group",
-  "fileExtensions": [".test"],
+  "fileSuffixes": [".test"],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",

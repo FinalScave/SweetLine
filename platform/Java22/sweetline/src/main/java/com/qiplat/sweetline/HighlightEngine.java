@@ -14,7 +14,7 @@ import java.lang.foreign.MemorySegment;
  * <pre>{@code
  * try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
  *     engine.compileSyntaxFromFile("/path/to/java.json");
- *     try (TextAnalyzer analyzer = engine.createAnalyzerByName("java")) {
+ *     try (TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java")) {
  *         DocumentHighlight result = analyzer.analyzeText("public class Foo {}");
  *     }
  * }
@@ -158,7 +158,7 @@ public class HighlightEngine implements AutoCloseable {
      * @param syntaxName Syntax rule name (e.g. "java")
      * @return Text analyzer, or null if syntax not found
      */
-    public TextAnalyzer createAnalyzerByName(String syntaxName) {
+    public TextAnalyzer createAnalyzerBySyntaxName(String syntaxName) {
         ensureOpen();
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment nameSeg = arena.allocateFrom(syntaxName);
@@ -174,24 +174,24 @@ public class HighlightEngine implements AutoCloseable {
     }
 
     /**
-     * Create a text highlight analyzer by file extension.
+     * Create a text highlight analyzer by file name.
      * The returned analyzer does not support incremental analysis.
      *
-     * @param extension File extension (e.g. ".java")
+     * @param fileName File name or basename used for syntax routing
      * @return Text analyzer, or null if syntax not found
      */
-    public TextAnalyzer createAnalyzerByExtension(String extension) {
+    public TextAnalyzer createAnalyzerByFileName(String fileName) {
         ensureOpen();
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment extSeg = arena.allocateFrom(extension);
-            MemorySegment analyzerHandle = (MemorySegment) SweetLineNative.sl_engine_create_text_analyzer2
-                    .invoke(handle, extSeg);
+            MemorySegment fileNameSeg = arena.allocateFrom(fileName);
+            MemorySegment analyzerHandle = (MemorySegment) SweetLineNative.sl_engine_create_text_analyzer_by_file_name
+                    .invoke(handle, fileNameSeg);
             if (analyzerHandle.equals(MemorySegment.NULL)) {
                 return null;
             }
             return new TextAnalyzer(analyzerHandle);
         } catch (Throwable e) {
-            throw new RuntimeException("Failed to create text analyzer by extension", e);
+            throw new RuntimeException("Failed to create text analyzer by file name", e);
         }
     }
 

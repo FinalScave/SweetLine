@@ -97,23 +97,23 @@ public class HighlightEngine {
      * Create a text highlight analyzer by syntax rule name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
      * @param syntaxName Syntax rule name (e.g. java)
      */
-    public TextAnalyzer createAnalyzerByName(String syntaxName) {
+    public TextAnalyzer createAnalyzerBySyntaxName(String syntaxName) {
         if (nativeHandle == 0) {
             return null;
         }
-        long analyzerHandle = nativeCreateAnalyzerByName(nativeHandle, syntaxName);
+        long analyzerHandle = nativeCreateAnalyzerBySyntaxName(nativeHandle, syntaxName);
         return new TextAnalyzer(analyzerHandle);
     }
 
     /**
-     * Create a text highlight analyzer by file extension (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
-     * @param extension File extension (e.g. .t)
+     * Create a text highlight analyzer by file name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
+     * @param fileName File name or basename used for syntax routing
      */
-    public TextAnalyzer createAnalyzerByExtension(String extension) {
+    public TextAnalyzer createAnalyzerByFileName(String fileName) {
         if (nativeHandle == 0) {
             return null;
         }
-        long analyzerHandle = nativeCreateAnalyzerByExtension(nativeHandle, extension);
+        long analyzerHandle = nativeCreateAnalyzerByFileName(nativeHandle, fileName);
         return new TextAnalyzer(analyzerHandle);
     }
 
@@ -167,9 +167,9 @@ public class HighlightEngine {
     @FastNative
     private static native long nativeCompileSyntaxFromFile(long handle, String path) throws SyntaxCompileError;
     @FastNative
-    private static native long nativeCreateAnalyzerByName(long handle, String syntaxName);
+    private static native long nativeCreateAnalyzerBySyntaxName(long handle, String syntaxName);
     @FastNative
-    private static native long nativeCreateAnalyzerByExtension(long handle, String extension);
+    private static native long nativeCreateAnalyzerByFileName(long handle, String fileName);
     @CriticalNative
     private static native long nativeLoadDocument(long handle, long documentHandle);
     @FastNative

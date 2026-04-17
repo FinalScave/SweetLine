@@ -3,7 +3,6 @@ package com.qiplat.sweetline.demo;
 import com.qiplat.sweetline.*;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -21,67 +20,109 @@ import java.util.Map;
  */
 public class Main extends JFrame {
 
-    private static final Map<String, String> EXT_SYNTAX_MAP = new LinkedHashMap<>();
+    private static final Map<String, String> EXACT_SYNTAX_MAP = new LinkedHashMap<>();
+    private static final Map<String, String> SUFFIX_SYNTAX_MAP = new LinkedHashMap<>();
+    private static final Map<String, String> ROUTED_DOCUMENT_NAMES = new LinkedHashMap<>();
+    private static final List<String> SORTED_SUFFIXES = new ArrayList<>();
 
     static {
-        EXT_SYNTAX_MAP.put(".t", "tiecode.json");
-        EXT_SYNTAX_MAP.put(".c", "c.json");
-        EXT_SYNTAX_MAP.put(".cpp", "cpp.json");
-        EXT_SYNTAX_MAP.put(".cs", "csharp.json");
-        EXT_SYNTAX_MAP.put(".dart", "dart.json");
-        EXT_SYNTAX_MAP.put(".go", "go.json");
-        EXT_SYNTAX_MAP.put(".groovy", "groovy.json");
-        EXT_SYNTAX_MAP.put(".html", "html.json");
-        EXT_SYNTAX_MAP.put(".java", "java.json");
-        EXT_SYNTAX_MAP.put(".js", "javascript.json");
-        EXT_SYNTAX_MAP.put(".json", "json-sweetline.json");
-        EXT_SYNTAX_MAP.put(".jsonc", "jsonc.json");
-        EXT_SYNTAX_MAP.put(".json5", "json5.json");
-        EXT_SYNTAX_MAP.put(".kt", "kotlin.json");
-        EXT_SYNTAX_MAP.put(".lua", "lua.json");
-        EXT_SYNTAX_MAP.put(".m", "objc.json");
-        EXT_SYNTAX_MAP.put(".php", "php.json");
-        EXT_SYNTAX_MAP.put(".ps1", "powershell.json");
-        EXT_SYNTAX_MAP.put(".py", "python.json");
-        EXT_SYNTAX_MAP.put(".rs", "rust.json");
-        EXT_SYNTAX_MAP.put(".scala", "scala.json");
-        EXT_SYNTAX_MAP.put(".sh", "shell.json");
-        EXT_SYNTAX_MAP.put(".sql", "sql.json");
-        EXT_SYNTAX_MAP.put(".swift", "swift.json");
-        EXT_SYNTAX_MAP.put(".toml", "toml.json");
-        EXT_SYNTAX_MAP.put(".ts", "typescript.json");
-        EXT_SYNTAX_MAP.put(".vb", "vb.json");
-        EXT_SYNTAX_MAP.put(".xml", "xml.json");
-        EXT_SYNTAX_MAP.put(".yaml", "yaml.json");
-        EXT_SYNTAX_MAP.put(".md", "markdown.json");
-        EXT_SYNTAX_MAP.put(".wenyan", "wenyan.json");
-        EXT_SYNTAX_MAP.put(".myu", "iapp.json");
-        EXT_SYNTAX_MAP.put(".css", "css.json");
-        EXT_SYNTAX_MAP.put(".scss", "scss.json");
-        EXT_SYNTAX_MAP.put(".less", "less.json");
-        EXT_SYNTAX_MAP.put(".cmake", "cmake.json");
-        EXT_SYNTAX_MAP.put(".dockerfile", "dockerfile.json");
-        EXT_SYNTAX_MAP.put(".mk", "makefile.json");
-        EXT_SYNTAX_MAP.put(".properties", "properties.json");
-        EXT_SYNTAX_MAP.put(".env", "env.json");
-        EXT_SYNTAX_MAP.put(".proto", "protobuf.json");
-        EXT_SYNTAX_MAP.put(".graphql", "graphql.json");
-        EXT_SYNTAX_MAP.put(".gql", "graphql.json");
-        EXT_SYNTAX_MAP.put(".nginx", "nginx.json");
-        EXT_SYNTAX_MAP.put(".conf", "nginx.json");
-        EXT_SYNTAX_MAP.put(".gitignore", "gitignore.json");
-        EXT_SYNTAX_MAP.put(".diff", "diff.json");
-        EXT_SYNTAX_MAP.put(".patch", "diff.json");
-        EXT_SYNTAX_MAP.put(".rb", "ruby.json");
-        EXT_SYNTAX_MAP.put(".rake", "ruby.json");
-        EXT_SYNTAX_MAP.put(".gemspec", "ruby.json");
-        EXT_SYNTAX_MAP.put(".ru", "ruby.json");
-        EXT_SYNTAX_MAP.put(".hcl", "hcl.json");
-        EXT_SYNTAX_MAP.put(".tf", "terraform.json");
-        EXT_SYNTAX_MAP.put(".tfvars", "terraform.json");
-        EXT_SYNTAX_MAP.put(".tfbackend", "terraform.json");
-        EXT_SYNTAX_MAP.put(".vue", "vue.json");
-        EXT_SYNTAX_MAP.put(".svelte", "svelte.json");
+        registerExactRoute(".gitignore", "gitignore.json", "example.gitignore");
+        registerExactRoute("CMakeLists.txt", "cmake.json", "example.cmake");
+        registerExactRoute("Containerfile", "dockerfile.json", "example.dockerfile");
+        registerExactRoute("Dockerfile", "dockerfile.json", "example.dockerfile");
+        registerExactRoute("GNUmakefile", "makefile.json", "example.mk");
+        registerExactRoute("Makefile", "makefile.json", "example.mk");
+        registerExactRoute("makefile", "makefile.json", "example.mk");
+
+        registerSuffixRoute(".t", "tiecode.json");
+        registerSuffixRoute(".c", "c.json");
+        registerSuffixRoute(".cpp", "cpp.json");
+        registerSuffixRoute(".cs", "csharp.json");
+        registerSuffixRoute(".dart", "dart.json");
+        registerSuffixRoute(".go", "go.json");
+        registerSuffixRoute(".groovy", "groovy.json");
+        registerSuffixRoute(".html", "html.json");
+        registerSuffixRoute(".java", "java.json");
+        registerSuffixRoute(".js", "javascript.json");
+        registerSuffixRoute(".json", "json-sweetline.json");
+        registerSuffixRoute(".jsonc", "jsonc.json");
+        registerSuffixRoute(".json5", "json5.json");
+        registerSuffixRoute(".kt", "kotlin.json");
+        registerSuffixRoute(".lua", "lua.json");
+        registerSuffixRoute(".m", "objc.json");
+        registerSuffixRoute(".php", "php.json");
+        registerSuffixRoute(".ps1", "powershell.json");
+        registerSuffixRoute(".py", "python.json");
+        registerSuffixRoute(".rs", "rust.json");
+        registerSuffixRoute(".scala", "scala.json");
+        registerSuffixRoute(".sh", "shell.json");
+        registerSuffixRoute(".sql", "sql.json");
+        registerSuffixRoute(".swift", "swift.json");
+        registerSuffixRoute(".toml", "toml.json");
+        registerSuffixRoute(".ts", "typescript.json");
+        registerSuffixRoute(".vb", "vb.json");
+        registerSuffixRoute(".xml", "xml.json");
+        registerSuffixRoute(".yaml", "yaml.json");
+        registerSuffixRoute(".md", "markdown.json");
+        registerSuffixRoute(".wenyan", "wenyan.json");
+        registerSuffixRoute(".myu", "iapp.json");
+        registerSuffixRoute(".css", "css.json");
+        registerSuffixRoute(".scss", "scss.json");
+        registerSuffixRoute(".less", "less.json");
+        registerSuffixRoute(".cmake", "cmake.json");
+        registerSuffixRoute(".dockerfile", "dockerfile.json");
+        registerSuffixRoute(".mk", "makefile.json");
+        registerSuffixRoute(".properties", "properties.json");
+        registerSuffixRoute(".env", "env.json");
+        registerSuffixRoute(".proto", "protobuf.json");
+        registerSuffixRoute(".graphql", "graphql.json");
+        registerSuffixRoute(".gql", "graphql.json");
+        registerSuffixRoute(".nginx", "nginx.json");
+        registerSuffixRoute(".conf", "nginx.json");
+        registerSuffixRoute(".gitignore", "gitignore.json");
+        registerSuffixRoute(".diff", "diff.json");
+        registerSuffixRoute(".patch", "diff.json");
+        registerSuffixRoute(".rb", "ruby.json");
+        registerSuffixRoute(".rake", "ruby.json");
+        registerSuffixRoute(".gemspec", "ruby.json");
+        registerSuffixRoute(".ru", "ruby.json");
+        registerSuffixRoute(".hcl", "hcl.json");
+        registerSuffixRoute(".tf", "terraform.json");
+        registerSuffixRoute(".tfvars", "terraform.json");
+        registerSuffixRoute(".tfbackend", "terraform.json");
+        registerSuffixRoute(".vue", "vue.json");
+        registerSuffixRoute(".svelte", "svelte.json");
+
+        SORTED_SUFFIXES.sort((left, right) -> Integer.compare(right.length(), left.length()));
+    }
+
+    private static void registerExactRoute(String fileName, String syntaxFileName, String routedDocumentName) {
+        EXACT_SYNTAX_MAP.put(fileName, syntaxFileName);
+        if (routedDocumentName != null && !routedDocumentName.isEmpty()) {
+            ROUTED_DOCUMENT_NAMES.put(fileName, routedDocumentName);
+        }
+    }
+
+    private static void registerSuffixRoute(String suffix, String syntaxFileName) {
+        SUFFIX_SYNTAX_MAP.put(suffix, syntaxFileName);
+        SORTED_SUFFIXES.add(suffix);
+    }
+
+    private static String resolveSyntaxFileName(String fileName) {
+        String exact = EXACT_SYNTAX_MAP.get(fileName);
+        if (exact != null) {
+            return exact;
+        }
+        for (String suffix : SORTED_SUFFIXES) {
+            if (fileName.endsWith(suffix)) {
+                return SUFFIX_SYNTAX_MAP.get(suffix);
+            }
+        }
+        return null;
+    }
+
+    private static String resolveDocumentFileName(String fileName) {
+        return ROUTED_DOCUMENT_NAMES.getOrDefault(fileName, fileName);
     }
 
     private Path syntaxesDir;
@@ -176,10 +217,9 @@ public class Main extends JFrame {
             return;
         }
         String fileName = exampleFiles.get(idx);
-        String ext = getFileExtension(fileName);
-        String syntaxFileName = EXT_SYNTAX_MAP.get(ext);
+        String syntaxFileName = resolveSyntaxFileName(fileName);
         if (syntaxFileName == null) {
-            statusLabel.setText("No syntax mapping for extension: " + ext);
+            statusLabel.setText("No syntax mapping for file: " + fileName);
             return;
         }
 
@@ -192,13 +232,13 @@ public class Main extends JFrame {
         }
 
         try {
-            highlightFile(examplePath, syntaxPath);
+            highlightFile(examplePath, syntaxPath, resolveDocumentFileName(fileName));
         } catch (Exception ex) {
             statusLabel.setText("Error: " + ex.getMessage());
         }
     }
 
-    private void highlightFile(Path filePath, Path syntaxPath) throws IOException, SyntaxCompileError {
+    private void highlightFile(Path filePath, Path syntaxPath, String documentFileName) throws IOException, SyntaxCompileError {
         String sourceCode = Files.readString(filePath);
         String syntaxJson = Files.readString(syntaxPath);
         String fileName = filePath.getFileName().toString();
@@ -207,7 +247,7 @@ public class Main extends JFrame {
         engine.compileSyntaxFromJson(syntaxJson);
         long compileUs = (System.nanoTime() - compileStart) / 1000;
 
-        try (Document doc = new Document(fileName, sourceCode)) {
+        try (Document doc = new Document(documentFileName, sourceCode)) {
             DocumentAnalyzer analyzer = engine.loadDocument(doc);
             if (analyzer == null) {
                 statusLabel.setText("Failed to load document.");
@@ -234,17 +274,15 @@ public class Main extends JFrame {
 
     private void openExternalFile() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setFileFilter(new FileNameExtensionFilter("Source files", EXT_SYNTAX_MAP.keySet().stream()
-                .map(ext -> ext.substring(1)).toArray(String[]::new)));
         if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
             return;
         }
 
         Path filePath = chooser.getSelectedFile().toPath();
-        String ext = getFileExtension(filePath.getFileName().toString());
-        String syntaxFileName = EXT_SYNTAX_MAP.get(ext);
+        String fileName = filePath.getFileName().toString();
+        String syntaxFileName = resolveSyntaxFileName(fileName);
         if (syntaxFileName == null) {
-            statusLabel.setText("Unsupported file extension: " + ext);
+            statusLabel.setText("Unsupported file name: " + fileName);
             return;
         }
 
@@ -259,7 +297,7 @@ public class Main extends JFrame {
             fileCombo.setSelectedIndex(-1);
             suppressComboEvents = false;
 
-            highlightFile(filePath, syntaxPath);
+            highlightFile(filePath, syntaxPath, resolveDocumentFileName(fileName));
         } catch (Exception ex) {
             statusLabel.setText("Error: " + ex.getMessage());
         }
@@ -289,11 +327,10 @@ public class Main extends JFrame {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
             for (Path entry : stream) {
                 String name = entry.getFileName().toString();
-                if (!name.startsWith("example") && !name.equals("json-sweetline.json")) {
+                if (!name.equals("json-sweetline.json") && resolveSyntaxFileName(name) == null) {
                     continue;
                 }
-                String ext = getFileExtension(name);
-                if (EXT_SYNTAX_MAP.containsKey(ext)) {
+                if (resolveSyntaxFileName(name) != null) {
                     files.add(name);
                 }
             }
@@ -302,14 +339,6 @@ public class Main extends JFrame {
         }
         files.sort(Comparator.naturalOrder());
         return files;
-    }
-
-    private static String getFileExtension(String fileName) {
-        int dotIndex = fileName.lastIndexOf('.');
-        if (dotIndex >= 0) {
-            return fileName.substring(dotIndex);
-        }
-        return "";
     }
 
     private static Path resolveDir(String[] args, int index, String defaultRelative) {

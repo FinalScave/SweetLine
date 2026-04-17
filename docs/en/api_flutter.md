@@ -49,8 +49,8 @@ engine.registerStyleName('keyword', 1);
 engine.getStyleName(1);
 engine.defineMacro('ANDROID');
 engine.undefineMacro('ANDROID');
-engine.createAnalyzerByName('dart');
-engine.createAnalyzerByExtension('.dart');
+engine.createAnalyzerBySyntaxName('dart');
+engine.createAnalyzerByFileName('main.dart');
 engine.loadDocument(document);
 engine.close();
 ```
@@ -58,7 +58,7 @@ engine.close();
 ### TextAnalyzer
 
 ```dart
-final analyzer = engine.createAnalyzerByName('dart');
+final analyzer = engine.createAnalyzerBySyntaxName('dart');
 final full = analyzer!.analyzeText(source);
 final line = analyzer.analyzeLine(
   'final int value = 1;',

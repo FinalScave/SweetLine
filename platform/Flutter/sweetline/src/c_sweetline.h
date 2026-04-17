@@ -114,11 +114,11 @@ SL_API const char* sl_engine_get_style_name(sl_engine_handle_t engine_handle, in
 /// @return Plain text highlight analyzer handle
 SL_API sl_analyzer_handle_t sl_engine_create_text_analyzer(sl_engine_handle_t engine_handle, const char* syntax_name);
 
-/// Create a plain text highlight analyzer by file extension (no incremental analysis support)
+/// Create a plain text highlight analyzer by file name (no incremental analysis support)
 /// @param engine_handle Highlight engine handle
-/// @param extension File extension
+/// @param file_name File name or basename used for syntax routing
 /// @return Plain text highlight analyzer handle
-SL_API sl_analyzer_handle_t sl_engine_create_text_analyzer2(sl_engine_handle_t engine_handle, const char* extension);
+SL_API sl_analyzer_handle_t sl_engine_create_text_analyzer_by_file_name(sl_engine_handle_t engine_handle, const char* file_name);
 
 /// Perform full highlight analysis on a text
 /// @param analyzer_handle Plain text highlight analyzer handle

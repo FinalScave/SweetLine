@@ -477,22 +477,22 @@ export namespace sweetline {
         getSyntaxRuleByName(syntaxName: string): SyntaxRule;
 
         /**
-         * Get syntax rule by file extension (e.g. .t)
-         * @param extension File extension
+         * Get syntax rule by file name or path
+         * @param fileName File name or path
          */
-        getSyntaxRuleByExtension(extension: string): SyntaxRule;
+        getSyntaxRuleByFileName(fileName: string): SyntaxRule;
 
         /**
          * Create a text highlight analyzer by syntax rule name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
          * @param syntaxName Syntax rule name (e.g. java)
          */
-        createAnalyzerByName(syntaxName: string): TextAnalyzer;
+        createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer;
 
         /**
-         * Create a text highlight analyzer by file extension (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
-         * @param extension File extension (e.g. .t)
+         * Create a text highlight analyzer by file name or path (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
+         * @param fileName File name or path
          */
-        createAnalyzerByExtension(extension: string): TextAnalyzer;
+        createAnalyzerByFileName(fileName: string): TextAnalyzer;
 
         /**
          * Load a managed document and get a document highlight analyzer

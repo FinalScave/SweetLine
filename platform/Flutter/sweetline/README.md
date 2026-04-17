@@ -94,7 +94,7 @@ Future<void> main() async {
     final syntaxJson = await rootBundle.loadString('assets/syntaxes/dart.json');
     engine.compileSyntaxFromJson(syntaxJson);
 
-    final analyzer = engine.createAnalyzerByName('dart');
+    final analyzer = engine.createAnalyzerBySyntaxName('dart');
     if (analyzer == null) {
       throw StateError('dart syntax is not available');
     }
@@ -163,8 +163,8 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `getStyleName(int styleId)`
 - `defineMacro(String macroName)`
 - `undefineMacro(String macroName)`
-- `createAnalyzerByName(String syntaxName)`
-- `createAnalyzerByExtension(String extension)`
+- `createAnalyzerBySyntaxName(String syntaxName)`
+- `createAnalyzerByFileName(String fileName)`
 - `loadDocument(Document document)`
 
 ### `TextAnalyzer`
@@ -236,4 +236,5 @@ Inline style contains:
 
 - `showIndex: true` makes `TextPosition.index` available in returned spans
 - `inlineStyle: true` returns inline color/font style instead of `styleId`
-- `createAnalyzerByExtension(...)` only works after loading syntax rules that declare matching `fileExtensions`
+- `createAnalyzerByFileName(...)` only works after loading syntax rules that declare matching `fileNames` or `fileSuffixes`
+- `createAnalyzerByFileName(...)` should be given a basename such as `main.dart`, `Dockerfile`, or `build.gradle.kts`

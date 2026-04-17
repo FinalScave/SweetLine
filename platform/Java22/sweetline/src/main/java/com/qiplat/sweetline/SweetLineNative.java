@@ -149,8 +149,9 @@ final class SweetLineNative {
     static final MethodHandle sl_engine_create_text_analyzer = downcall("sl_engine_create_text_analyzer",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
 
-    // sl_engine_create_text_analyzer2(pointer, const char*) -> pointer
-    static final MethodHandle sl_engine_create_text_analyzer2 = downcall("sl_engine_create_text_analyzer2",
+    // sl_engine_create_text_analyzer_by_file_name(pointer, const char*) -> pointer
+    static final MethodHandle sl_engine_create_text_analyzer_by_file_name = downcall(
+            "sl_engine_create_text_analyzer_by_file_name",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
 
     // sl_text_analyze(pointer, const char*) -> int32_t*
