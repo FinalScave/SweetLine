@@ -1,0 +1,45 @@
+{
+  "name": "csv",
+  "fileSuffixes": [".csv"],
+  "variables": {
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"]|\"\")*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(,)",
+        "styles": [1, "punctuation"]
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b[0-9]+(\\.[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[^,\"]+",
+        "style": "string"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\"\"",
+        "style": "string"
+      },
+      {
+        "pattern": "[^\"]+",
+        "style": "string"
+      }
+    ]
+  }
+}

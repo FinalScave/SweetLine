@@ -1,0 +1,160 @@
+{
+  "name": "zig",
+  "fileSuffixes": [".zig", ".zon"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "docCommentRule": [
+      {
+        "pattern": "(///)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(c?\")((?:[^\"]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?m)^////",
+        "styles": [1, "comment"]
+      },
+      {
+        "include": "docCommentRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b_\\b",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(undefined|unreachable)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(var|const|comptime|threadlocal)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(if|else|switch|while|for|and|or|orelse|error|fn|try|test|pub|usingnamespace|return|break|continue)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(struct|enum|union|error|packed|opaque)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(defer|errdefer|async|nosuspend|await|suspend|resume|export|extern|catch|inline|noinline|asm|callconv|noalias)\\b",
+        "styles": [1, "macro"]
+      },
+      {
+        "pattern": "\\b(align)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b([iu][1-9][0-9]*)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(allowzero|anyerror|anyframe|anyopaque|anytype|bool|c_char|c_int|c_long|c_longdouble|c_longlong|c_short|c_uint|c_ulong|c_ulonglong|c_ushort|comptime_float|comptime_int|f128|f16|f32|f64|f80|i0|u0|isize|linksection|noreturn|type|usize|void|volatile)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(@)(Frame|OpaqueType|TagType|This|Type|TypeOf|Vector|abs|addWithOverflow|alignCast|alignOf|as|asyncCall|atomicLoad|atomicRmw|atomicStore|bitCast|bitOffsetOf|bitReverse|bitSizeOf|breakpoint|byteOffsetOf|byteSwap|cDefine|cImport|cInclude|cUndef|call|ceil|clz|cmpxchgStrong|cmpxchgWeak|compileError|compileLog|constCast|cos|ctz|divExact|divFloor|divTrunc|embedFile|enumFromInt|errorCast|errorFromInt|errorName|errorReturnTrace|exp|exp2|export|extern|fence|field|fieldParentPtr|floatCast|floatFromInt|floor|frame|frameAddress|frameSize|hasDecl|hasField|import|inComptime|intCast|intFromBool|intFromEnum|intFromError|intFromFloat|intFromPtr|log|log10|log2|max|memcpy|memset|min|mod|mulAdd|mulWithOverflow|newStackCall|offsetOf|panic|popCount|prefetch|ptrCast|ptrFromInt|reduce|rem|returnAddress|round|select|setAlignStack|setCold|setEvalBranchQuota|setFloatMode|setRuntimeSafety|shlExact|shlWithOverflow|shrExact|shuffle|sin|sizeOf|splat|sqrt|src|subWithOverflow|tagName|tan|trap|trunc|truncate|typeInfo|typeName|unionInit|volatileCast|wasmMemoryGrow|wasmMemorySize)\\b",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "(b?')((?:[^'\\\\]|\\\\.)*?)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "charContent"]
+      },
+      {
+        "pattern": "(c?\\\\.*)",
+        "styles": [1, "string"]
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(\\.[0-9_]+)?([eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(->|[-+/*=^&?|!<>%~])",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\([nrt\\\\'\"]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{6})",
+        "style": "string"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "charContent": [
+      {
+        "pattern": "\\\\([nrt\\\\']|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{6})",
+        "style": "string"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "[^']",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "name": "svg",
+  "fileSuffixes": [".svg"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_.\\-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"]|&)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "attributeValue"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(<!--)",
+        "styles": [1, "comment"],
+        "state": "comment"
+      },
+      {
+        "pattern": "(<\\?)(xml)(.*?)(\\?>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation", 4, "punctuation"]
+      },
+      {
+        "pattern": "(<\\?)(.*?)(\\?>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"]
+      },
+      {
+        "pattern": "(<!DOCTYPE)(.*?)(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"]
+      },
+      {
+        "pattern": "(<!\\[CDATA\\[)(.*?)(\\]\\]>)",
+        "styles": [1, "punctuation", 2, "string", 3, "punctuation"]
+      },
+      {
+        "pattern": "(<)(/?)(${identifier})",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "keyword"],
+        "state": "tagContent"
+      },
+      {
+        "pattern": "(&)([a-zA-Z_][a-zA-Z0-9_.\\-]*|#\\d+|#x[0-9a-fA-F]+)(;)",
+        "styles": [1, "punctuation", 2, "string", 3, "punctuation"]
+      },
+      {
+        "pattern": "(&)",
+        "styles": [1, "punctuation"]
+      }
+    ],
+    "tagContent": [
+      {
+        "pattern": "(/?>)",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(xmlns:)([a-zA-Z_][a-zA-Z0-9_.\\-]*)",
+        "styles": [1, "property", 2, "variable"]
+      },
+      {
+        "pattern": "([a-zA-Z_][a-zA-Z0-9_.\\-]*)(:)([a-zA-Z_][a-zA-Z0-9_.\\-]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "attributeValueStart"
+      },
+      {
+        "pattern": "\\s+",
+        "style": "punctuation"
+      }
+    ],
+    "attributeValueStart": [
+      {
+        "pattern": "(\")((?:[^\"]|&)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "attributeValue"],
+        "state": "tagContent"
+      },
+      {
+        "pattern": "(')((?:[^']|&)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "attributeValue"],
+        "state": "tagContent"
+      },
+      {
+        "pattern": "\\s+",
+        "style": "punctuation",
+        "state": "tagContent"
+      }
+    ],
+    "attributeValue": [
+      {
+        "pattern": "(#[0-9a-fA-F]{3,8})\\b",
+        "styles": [1, "number"]
+      },
+      {
+        "pattern": "(&)([a-zA-Z_][a-zA-Z0-9_.\\-]*|#\\d+|#x[0-9a-fA-F]+)(;)",
+        "styles": [1, "punctuation", 2, "string", 3, "punctuation"]
+      },
+      {
+        "pattern": "[^&\"]+",
+        "style": "string"
+      }
+    ],
+    "comment": [
+      {
+        "pattern": "(-->)",
+        "styles": [1, "comment"],
+        "state": "default"
+      },
+      {
+        "pattern": "[^-]+",
+        "style": "comment"
+      },
+      {
+        "pattern": "-",
+        "style": "comment"
+      }
+    ]
+  }
+}

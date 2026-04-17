@@ -1,0 +1,195 @@
+{
+  "name": "hlsl",
+  "fileSuffixes": [".hlsl", ".fx", ".fxh", ".vsh", ".psh", ".csh", ".gsh", ".hsh", ".dsh"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*include)(\\s*)(<.*?>)",
+        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "string"]
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)[ \\t]*\\S+",
+        "styles": [1, "preprocessor"]
+      },
+      {
+        "pattern": "\\b(break|case|continue|default|do|else|for|if|return|switch|while|struct|discard|clip)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(const|static|inline|in|out|inout|extern|nointerpolation|precise|shared|groupshared|uniform|volatile)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(void|bool|int|uint|half|float|double|min10float|min16float|min12int|min16int|min16uint)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(bool[1-4]|int[1-4]|uint[1-4]|half[1-4]|float[1-4]|double[1-4])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b((bool|int|float|uint|double)[1-4]x[1-4])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(matrix|texture|Texture1D|Texture1DArray|Texture2D|Texture2DArray|Texture3D|TextureCube)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(RWTexture1D|RWTexture1DArray|RWTexture2D|RWTexture2DArray|RWTexture3D)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(Buffer|StructuredBuffer|AppendStructuredBuffer|ConsumeStructuredBuffer)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(RWBuffer|RWStructuredBuffer|ByteAddressBuffer|RWByteAddressBuffer)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(PointStream|LineStream|TriangleStream|InputPatch|OutputPatch)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(sampler|sampler1D|sampler2D|sampler3D|samplerCUBE|SamplerState|SamplerComparisonState)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(cbuffer|tbuffer)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(register|packoffset)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(:)(\\s*)(SV_\\w+|[A-Z][A-Z0-9_]*)",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation"]
+      },
+      {
+        "pattern": "\\b(SV_\\w+)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "\\b(technique|pass)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(\\[)(\\s*)(${identifier})(\\s*)(\\])",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "(<)(\\s*)(${identifier})(\\s*)(>)",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(abs|acos|all|any|asin|atan|atan2|ceil|clamp|clip|cos|cosh|cross|ddx|ddy|degrees|determinant|distance|dot|exp|exp2|floor|fmod|frac|frexp|fwidth|isfinite|isinf|isnan|ldexp|length|lerp|lit|log|log10|log2|max|min|modf|mul|normalize|pow|radians|reflect|refract|round|rsqrt|saturate|sign|sin|sincos|sinh|smoothstep|sqrt|step|tan|tanh|transpose|trunc)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(InterlockedAdd|InterlockedAnd|InterlockedCompareExchange|InterlockedCompareStore|InterlockedExchange|InterlockedMax|InterlockedMin|InterlockedOr|InterlockedXor)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(CalculateLevelOfDetail|CalculateLevelOfDetailUnclamped|Gather|GatherRed|GatherGreen|GatherBlue|GatherAlpha|GetDimensions|GetSamplePosition|Load|Sample|SampleBias|SampleCmp|SampleCmpLevelZero|SampleGrad|SampleLevel)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(Append|Consume|IncrementCounter|DecrementCounter)\\b",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+[uU]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?[fFhH]?\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[+\\-*/%&|^!<>?=]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

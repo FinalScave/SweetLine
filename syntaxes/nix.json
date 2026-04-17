@@ -1,0 +1,143 @@
+{
+  "name": "nix",
+  "fileSuffixes": [".nix"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_'-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "indentedStringRule": [
+      {
+        "pattern": "('')([\\S\\s]*?)('')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "indentedStringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(<)([^>]+)(>)",
+        "styles": [1, "string", 2, "string", 3, "string"]
+      },
+      {
+        "pattern": "(\\.\\.?\\/)[\\w.\\/-]*",
+        "styles": [1, "string"]
+      },
+      {
+        "pattern": "[a-z+]+:\\/\\/\\S+",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(let|in|with|rec|inherit|if|then|else|assert|or|import)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(builtins|map|filter|derivation|toString)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(:)",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\s+)(?=[^\\s])",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(\\.[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "include": "indentedStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[+\\-*/%&|^!<>?=]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\\\[nt\\\\\"]",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "indentedStringContent": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "'''",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

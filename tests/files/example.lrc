@@ -1,0 +1,113 @@
+[ti:Sample Song]
+[ar:Artist Name]
+[al:Album Title]
+[au:Songwriter]
+[length:03:45]
+[by:Lyrics Creator]
+[offset:+500]
+[re:Player Name]
+[ve:1.0]
+
+[00:00.00]Sample Song Lyrics
+[00:05.50]This is the first line of the song
+[00:10.25]The second line follows here
+[00:15.75]And this is the third line
+[00:21.00]Music plays in the background
+
+[00:26.50]Now we enter the first verse
+[00:31.25]Words are flowing like a river
+[00:36.75]Melodies fill the air
+[00:42.00]Rhythm moves the soul
+
+[00:47.50]This is the chorus section
+[00:52.25]Everyone sings along
+[00:57.75]Hands are clapping together
+[01:03.00]Voices unite as one
+
+[01:08.50]Back to the verse again
+[01:13.25]Story continues to unfold
+[01:18.75]Emotions rise and fall
+[01:24.00]Like waves upon the shore
+
+[01:29.50]Bridge section starts here
+[01:34.25]Building up the tension
+[01:39.75]Preparing for the climax
+[01:45.00]The moment of release
+
+[01:50.50]Final chorus begins
+[01:55.25]Louder than before
+[02:00.75]Energy fills the room
+[02:06.00]The crowd goes wild
+
+[02:11.50]Instrumental break
+[02:16.25]
+[02:21.75]Guitar solo plays
+[02:27.00]Drums keep the beat
+
+[02:32.50]Outro section starts
+[02:37.25]Fading slowly away
+[02:42.75]The song comes to an end
+[02:48.00]Silence fills the air
+
+[02:53.50]Thank you for listening
+[02:58.25]This was a sample song
+[03:03.75]Created for demonstration
+[03:09.00]Of LRC format
+
+[03:14.50]End of file
+[03:19.25]Goodbye
+[03:24.75]
+[03:30.00]
+
+[al:Another Album]
+[ar:Different Artist]
+[ti:Second Song]
+
+[00:00.00]This is a second song
+[00:04.50]Demonstrating multiple songs
+[00:09.00]In a single LRC file
+[00:13.50]Each song has its own metadata
+
+[00:18.00]The format supports
+[00:22.50]Multiple time stamps
+[00:27.00]Per line of lyrics
+[00:31.50]For karaoke style
+
+[00:36.00]<00:36.00>This
+[00:37.00]<00:37.00>is
+[00:38.00]<00:38.00>word
+[00:39.00]<00:39.00>by
+[00:40.00]<00:40.00>word
+[00:41.00]<00:41.00>timing
+
+[00:46.50]Enhanced LRC format
+[00:51.00]Supports word-level timing
+[00:55.50]For better synchronization
+[01:00.00]With the music
+
+[01:04.50]Different players
+[01:09.00]May support different features
+[01:13.50]Of the LRC format
+[01:18.00]Check your player's documentation
+
+[01:22.50]Time format variations:
+[01:27.00][mm:ss.xx] - Standard format
+[01:31.50][mm:ss:xx] - Alternative format
+[01:36.00][mm:ss.xx0] - Extended precision
+[01:40.50]All are valid LRC formats
+
+[01:45.00]Metadata tags:
+[01:49.50][ti:Title] - Song title
+[01:54.00][ar:Artist] - Artist name
+[01:58.50][al:Album] - Album name
+[02:03.00][au:Author] - Songwriter
+[02:07.50][length:mm:ss] - Song length
+[02:12.00][by:Creator] - LRC creator
+[02:16.50][offset:+/-ms] - Time offset
+[02:21.00][re:Player] - Player software
+[02:25.50][ve:version] - LRC version
+
+[02:30.00]End of second song
+[02:34.50]And end of demonstration
+[02:39.00]Thank you for reading
+[02:43.50]This LRC sample file

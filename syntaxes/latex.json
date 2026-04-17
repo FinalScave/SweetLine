@@ -1,0 +1,290 @@
+{
+  "name": "latex",
+  "fileSuffixes": [".tex", ".latex", ".sty", ".cls"],
+  "variables": {
+    "identifier": "[a-zA-Z@][a-zA-Z0-9@]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(%)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(\\\\begin)(\\{)(document)(\\})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\\\end)(\\{)(document)(\\})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\\\begin)(\\{)(${identifier})(\\})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\\\end)(\\{)(${identifier})(\\})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(\\\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph))(\\*?)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "punctuation"],
+        "state": "sectionTitle"
+      },
+      {
+        "pattern": "(\\\\(?:documentclass|usepackage|title|author|date|maketitle|abstract|cite|ref|label|bibliographystyle|bibliography|includegraphics|caption|newcommand|renewcommand|newenvironment|input|include))\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(\\\\textbf)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "boldText"
+      },
+      {
+        "pattern": "(\\\\textit)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "italicText"
+      },
+      {
+        "pattern": "(\\\\underline)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "underlineText"
+      },
+      {
+        "pattern": "(\\\\emph)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "italicText"
+      },
+      {
+        "pattern": "(\\\\texttt)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "monoText"
+      },
+      {
+        "pattern": "(\\$)([^$]*)(\\$)",
+        "styles": [1, "string", 2, "string", 3, "string"]
+      },
+      {
+        "pattern": "(\\$\\$)",
+        "styles": [1, "string"],
+        "state": "displayMath"
+      },
+      {
+        "pattern": "(\\\\\\[)",
+        "styles": [1, "string"],
+        "state": "displayMathBracket"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\[)",
+        "styles": [1, "punctuation"],
+        "state": "optionalArg"
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "requiredArg"
+      },
+      {
+        "pattern": "[()\\[\\]{}]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "sectionTitle": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "[^}]+",
+        "style": "class"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "boldText": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "boldText"
+      },
+      {
+        "pattern": "[^{}]+",
+        "style": "class"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "italicText": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "italicText"
+      },
+      {
+        "pattern": "[^{}]+",
+        "style": "variable"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "underlineText": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "underlineText"
+      },
+      {
+        "pattern": "[^{}]+",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "monoText": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "[^{}]+",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "displayMath": [
+      {
+        "pattern": "(\\$\\$)",
+        "styles": [1, "string"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "[^$]+",
+        "style": "string"
+      }
+    ],
+    "displayMathBracket": [
+      {
+        "pattern": "(\\\\\\])",
+        "styles": [1, "string"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "[^\\]]+",
+        "style": "string"
+      }
+    ],
+    "optionalArg": [
+      {
+        "pattern": "(\\])",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "requiredArg"
+      },
+      {
+        "pattern": "[^\\]{}]+",
+        "style": "annotation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "requiredArg": [
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(\\\\)([a-zA-Z]+|.)",
+        "styles": [1, "punctuation", 2, "keyword"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "requiredArg"
+      },
+      {
+        "pattern": "[^}]+",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}
