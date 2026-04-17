@@ -1,0 +1,256 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Device Tree Source sample
+ */
+
+/dts-v1/;
+
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/memreserve/ 0x80000000 0x10000000;
+
+/ {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "vendor,board";
+    model = "Vendor Development Board";
+
+    chosen {
+        bootargs = "console=ttyS0,115200 root=/dev/mmcblk0p2";
+        stdout-path = &uart0;
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x40000000>;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,cortex-a53";
+            reg = <0x0>;
+            enable-method = "psci";
+            clocks = <&clk_core>;
+            clock-frequency = <1200000000>;
+        };
+
+        cpu@1 {
+            device_type = "cpu";
+            compatible = "arm,cortex-a53";
+            reg = <0x1>;
+            enable-method = "psci";
+        };
+    };
+
+    psci {
+        compatible = "arm,psci-1.0";
+        method = "smc";
+    };
+
+    timer {
+        compatible = "arm,armv8-timer";
+        interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+                     <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+                     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+                     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>;
+    };
+
+    clocks {
+        clk_core: core-clk {
+            compatible = "fixed-clock";
+            #clock-cells = <0>;
+            clock-frequency = <1200000000>;
+            clock-output-names = "core";
+        };
+
+        clk_peri: peri-clk {
+            compatible = "fixed-clock";
+            #clock-cells = <0>;
+            clock-frequency = <200000000>;
+        };
+    };
+
+    soc {
+        compatible = "simple-bus";
+        #address-cells = <2>;
+        #size-cells = <2>;
+        ranges;
+
+        uart0: serial@9000000 {
+            compatible = "vendor,uart-16550";
+            reg = <0x0 0x9000000 0x0 0x1000>;
+            interrupts = <GIC_SPI 10 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            clock-names = "apb";
+            status = "okay";
+        };
+
+        uart1: serial@9001000 {
+            compatible = "vendor,uart-16550";
+            reg = <0x0 0x9001000 0x0 0x1000>;
+            interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            status = "disabled";
+        };
+
+        gpio0: gpio@9100000 {
+            compatible = "vendor,gpio";
+            reg = <0x0 0x9100000 0x0 0x1000>;
+            interrupts = <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
+            gpio-controller;
+            #gpio-cells = <2>;
+            interrupt-controller;
+            #interrupt-cells = <2>;
+            ngpios = <32>;
+            gpio-ranges = <&pinctrl 0 0 32>;
+        };
+
+        i2c0: i2c@9200000 {
+            compatible = "vendor,i2c";
+            reg = <0x0 0x9200000 0x0 0x1000>;
+            interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            clock-frequency = <400000>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            eeprom@50 {
+                compatible = "atmel,24c64";
+                reg = <0x50>;
+                pagesize = <32>;
+            };
+
+            rtc@68 {
+                compatible = "dallas,ds3232";
+                reg = <0x68>;
+            };
+        };
+
+        spi0: spi@9300000 {
+            compatible = "vendor,spi";
+            reg = <0x0 0x9300000 0x0 0x1000>;
+            interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            flash@0 {
+                compatible = "jedec,spi-nor";
+                reg = <0>;
+                spi-max-frequency = <100000000>;
+                spi-tx-bus-width = <4>;
+                spi-rx-bus-width = <4>;
+                m25p,fast-read;
+            };
+        };
+
+        mmc0: mmc@9400000 {
+            compatible = "vendor,sdhci";
+            reg = <0x0 0x9400000 0x0 0x1000>;
+            interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            bus-width = <8>;
+            non-removable;
+            cap-mmc-highspeed;
+            mmc-ddr-1_8v;
+            status = "okay";
+        };
+
+        ethernet0: ethernet@9500000 {
+            compatible = "vendor,ethernet";
+            reg = <0x0 0x9500000 0x0 0x10000>;
+            interrupts = <GIC_SPI 60 IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&clk_peri>;
+            phy-mode = "rgmii";
+            phy-handle = <&phy0>;
+            status = "okay";
+
+            mdio {
+                #address-cells = <1>;
+                #size-cells = <0>;
+
+                phy0: ethernet-phy@0 {
+                    reg = <0>;
+                    reset-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+                };
+            };
+        };
+
+        gic: interrupt-controller@a000000 {
+            compatible = "arm,gic-v3";
+            reg = <0x0 0xa000000 0x0 0x10000>,
+                  <0x0 0xa100000 0x0 0x100000>;
+            interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
+            interrupt-controller;
+            #interrupt-cells = <3>;
+        };
+
+        pinctrl: pinctrl@b000000 {
+            compatible = "vendor,pinctrl";
+            reg = <0x0 0xb000000 0x0 0x1000>;
+
+            uart0_pins: uart0-pins {
+                pins = "PIN0", "PIN1";
+                function = "uart0";
+                bias-pull-up;
+            };
+
+            i2c0_pins: i2c0-pins {
+                pins = "PIN2", "PIN3";
+                function = "i2c0";
+                bias-pull-up;
+                drive-strength = <4>;
+            };
+        };
+    };
+
+    leds {
+        compatible = "gpio-leds";
+
+        led0 {
+            label = "status";
+            gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+            default-state = "on";
+            linux,default-trigger = "heartbeat";
+        };
+
+        led1 {
+            label = "user";
+            gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+            default-state = "off";
+        };
+    };
+
+    buttons {
+        compatible = "gpio-keys";
+
+        button0 {
+            label = "reset";
+            gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+            linux,code = <KEY_RESTART>;
+            debounce-interval = <100>;
+        };
+    };
+};
+
+/delete-node/ &uart1;
+/delete-property/ /chosen/bootargs;
+
+&uart0 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&uart0_pins>;
+};
+
+&i2c0 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&i2c0_pins>;
+};

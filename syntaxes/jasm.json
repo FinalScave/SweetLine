@@ -1,0 +1,139 @@
+{
+  "name": "jasm",
+  "fileSuffixes": [".jasm", ".class"],
+  "variables": {
+    "identifier": "[a-zA-Z_$][a-zA-Z0-9_$]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(?m)^\\s*(package)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)(\\s*;)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^\\s*(class|interface|module)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(?m)^\\s*(extends|implements|throws|uses|provides|to|with|exports|opens)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(?m)^\\s*(const)(\\s+)(#\\d+)(\\s*=\\s*)([a-zA-Z][a-zA-Z0-9]*)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "number", 4, "punctuation", 5, "keyword"]
+      },
+      {
+        "pattern": "(?m)^\\s*(Field|Method|Component)(\\s+)(?:\"[^\"]+\"|([a-zA-Z_$][a-zA-Z0-9_$<>$]*))(?=:)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "(?m)^\\s*(?:(\\d+):\\s*)?([a-zA-Z_$][a-zA-Z0-9_$]*):",
+        "styles": [1, "number", 2, "method"]
+      },
+      {
+        "pattern": "(?m)^\\s*(?:(\\d+):\\s*)?([a-zA-Z_$][a-zA-Z0-9_$]*):\\s*([a-zA-Z][a-zA-Z0-9_]*)(?=\\s|$|;|\\{)",
+        "styles": [1, "number", 2, "method", 3, "keyword"]
+      },
+      {
+        "pattern": "(#\\d+)",
+        "styles": [1, "number"]
+      },
+      {
+        "pattern": "(@[+-]?T?)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(#\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(public|private|protected|static|final|super|interface|abstract|synthetic|annotation|enum|native|synchronized|bridge|varargs|strict|volatile|transient|open|transitive|mandated|deprecated|identity|value)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(package|class|interface|module|const|Field|Method|InnerClass|BootstrapMethod|NestHost|NestMembers|Signature|Record|Component|PermittedSubclasses|SourceFile|EnclosingMethod|SourceDebugExtension|LoadableDescriptors|StackMapTable|StackMap|LineTable|LocalVariables|LocalVariableTypes|extends|implements|throws|stack|locals|version|requires|exports|opens|uses|provides|to|with|of|line|Start|Slot|Name|Descriptor|number_of_entries|frame_type|entry_type|offset_delta|offset|stack_map|locals_map|unset_fields|Arguments|bits|default|this_class|super_class)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(Utf8|Asciz|Integer|int|Byte|byte|Char|char|Short|short|Boolean|boolean|Float|float|Long|long|Double|double|Class|class|String|string|Field|Fieldref|Method|Methodref|InterfaceMethod|InterfaceMethodref|NameAndType|MethodHandle|MethodType|Dynamic|InvokeDynamic|Module|Package)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(REF_getField|REF_getStatic|REF_putField|REF_putStatic|REF_invokeVirtual|REF_invokeStatic|REF_invokeSpecial|REF_newInvokeSpecial|REF_invokeInterface)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(true|false|null|Inf|Infinity|NaN|same|stack1|stack1_ex|same_ex|append|full|chop1|chop2|chop3|early_larval|ARRAY|INNER_TYPE|WILDCARD|TYPE_ARGUMENT|TYPEPARAM|SUPERTYPE|TYPEPARAM_BOUND|EMPTY|METHODPARAM|EXCEPTION|LOCALVAR|CATCH|OFFSET|TYPEARG|CLASS_TYPE_PARAMETER|METHOD_TYPE_PARAMETER|CLASS_EXTENDS|CLASS_TYPE_PARAMETER_BOUND|METHOD_TYPE_PARAMETER_BOUND|FIELD|METHOD_RETURN|METHOD_RECEIVER|METHOD_FORMAL_PARAMETER|THROWS|LOCAL_VARIABLE|RESOURCE_VARIABLE|EXCEPTION_PARAM|INSTANCEOF|NEW|CONSTRUCTOR_REFERENCE_RECEIVER|METHOD_REFERENCE_RECEIVER|CAST|CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT|METHOD_INVOCATION_TYPE_ARGUMENT|CONSTRUCTOR_REFERENCE_TYPE_ARGUMENT|METHOD_REFERENCE_TYPE_ARGUMENT)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b[vp][0-9]+\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[()\\[\\]{};:.,=]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

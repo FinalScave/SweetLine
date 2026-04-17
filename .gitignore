@@ -17,3 +17,4 @@ tests/build
 CMakeSettings.json
 
 .tmp
+.trae/

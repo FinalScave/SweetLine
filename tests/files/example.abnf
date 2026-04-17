@@ -1,0 +1,129 @@
+; ABNF (Augmented Backus-Naur Form) sample
+; RFC 5234 and RFC 7405 examples
+
+; Basic rule definition
+rule = "literal"
+
+; Repetition
+repeat1 = 1*DIGIT
+repeat2 = *DIGIT
+repeat3 = 1DIGIT
+repeat4 = 3*3DIGIT
+
+; Optional sequence
+optional = [optional-part]
+
+; Alternatives
+alternative = "option1" / "option2" / "option3"
+
+; Grouping
+group = (part1 part2 part3)
+
+; Numeric values
+binary = %b01
+octal = %o07
+decimal = %d99
+hexadecimal = %xFF
+
+; Numeric range
+range = %d48-57
+
+; Concatenation of numeric values
+concat = %d97.98.99
+
+; Case-sensitive string
+case-sensitive = %s"CaseSensitive"
+
+; Case-insensitive string (default)
+case-insensitive = "CaseInsensitive"
+
+; Prose value
+prose = <descriptive text here>
+
+; Combined example
+uri = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+
+scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+
+hier-part = "//" authority path-abempty
+          / path-absolute
+          / path-rootless
+          / path-empty
+
+authority = [ userinfo "@" ] host [ ":" port ]
+userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
+host = IP-literal / IPv4address / reg-name
+port = *DIGIT
+
+IP-literal = "[" ( IPv6address / IPvFuture ) "]"
+
+IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+
+IPv6address =                            6( h16 ":" ) ls32
+            /                       "::" 5( h16 ":" ) ls32
+            / [               h16 ] "::" 4( h16 ":" ) ls32
+            / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+            / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+            / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+            / [ *4( h16 ":" ) h16 ] "::"              ls32
+            / [ *5( h16 ":" ) h16 ] "::"              h16
+            / [ *6( h16 ":" ) h16 ] "::"
+
+h16 = 1*4HEXDIG
+ls32 = ( h16 ":" h16 ) / IPv4address
+IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet
+
+dec-octet = DIGIT                 ; 0-9
+           / %x31-39 DIGIT         ; 10-99
+           / "1" 2DIGIT            ; 100-199
+           / "2" %x30-34 DIGIT     ; 200-249
+           / "25" %x30-35          ; 250-255
+
+reg-name = *( unreserved / pct-encoded / sub-delims )
+
+pct-encoded = "%" HEXDIG HEXDIG
+
+unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+reserved = gen-delims / sub-delims
+gen-delims = ":" / "/" / "?" / "#" / "[" / "]" / "@"
+sub-delims = "!" / "$" / "&" / "'" / "(" / ")"
+           / "*" / "+" / "," / ";" / "="
+
+; Core rules (RFC 5234)
+ALPHA = %x41-5A / %x61-7A   ; A-Z / a-z
+BIT = "0" / "1"
+CHAR = %x01-7F
+CR = %x0D
+CRLF = CR LF
+CTL = %x00-1F / %x7F
+DIGIT = %x30-39             ; 0-9
+DQUOTE = %x22
+HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+HTAB = %x09
+LF = %x0A
+LWSP = *( WSP / CRLF WSP )
+OCTET = %x00-FF
+SP = %x20
+VCHAR = %x21-7E
+WSP = SP / HTAB
+
+; Email address example
+email = local-part "@" domain
+local-part = 1*atext *( "." 1*atext )
+domain = 1*label *( "." 1*label )
+label = let-dig [ [ ld-str ] let-dig ]
+ld-str = *( let-dig / "-" ) let-dig
+let-dig = ALPHA / DIGIT
+atext = ALPHA / DIGIT / "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "/" / "=" / "?" / "^" / "_" / "`" / "{" / "|" / "}" / "~"
+
+; HTTP header example
+http-header = field-name ":" OWS field-value OWS
+field-name = token
+field-value = *( field-content / obs-fold )
+field-content = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+field-vchar = VCHAR / obs-text
+obs-text = %x80-FF
+obs-fold = CRLF 1*( SP / HTAB )
+token = 1*tchar
+tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA
+OWS = *( SP / HTAB )

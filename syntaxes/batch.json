@@ -1,0 +1,156 @@
+{
+  "name": "batch",
+  "fileSuffixes": [".bat", ".cmd"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(::)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      },
+      {
+        "pattern": "(?i)(rem)(\\s+.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"]|\"\")*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?i)\\b(echo|set|call|exit|goto|if|else|not|exist|defined|errorlevel)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(for|in|do|shift|choice)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(copy|xcopy|move|del|erase|ren|rename|mkdir|md|rmdir|rd|type|find|findstr|more|attrib)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(cd|chdir|dir|pushd|popd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(cls|color|date|time|ver|vol|path|prompt|start|cmd|pause|timeout)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(tasklist|taskkill|ping|telnet|ipconfig|netstat|reg|regedit)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(setlocal|endlocal|assoc|ftype|mklink|shutdown)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)(goto)\\s+(:?)(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "(?m)^\\s*(:)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "(%)(~[fpdnxsatz]*[0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(%)([0-9*])",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(%)([\\w:,~\\-=]+)(%)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(!)(${identifier})(!)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(%%)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(%)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(?i)\\b(EQU|NEQ|LSS|LEQ|GTR|GEQ)\\b",
+        "styles": [1, "punctuation"]
+      },
+      {
+        "pattern": "==",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "@",
+        "style": "annotation"
+      },
+      {
+        "pattern": "[<>|&]+",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[a-zA-Z]:[\\\\\\/][\\w\\-\\u0080-\\uffff#$.,\\\\\\/]*",
+        "style": "string"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "(\\^.)",
+        "styles": [1, "string"]
+      },
+      {
+        "pattern": "(%)([\\w:,~\\-=]+)(%)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(!)(${identifier})(!)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(%%)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

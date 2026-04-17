@@ -1,0 +1,197 @@
+// JASM (Java Assembly) sample
+// This demonstrates Java bytecode in JASM format
+
+package com/example/demo;
+
+// Class definition
+public class Main {
+    // Field definition
+    Field "message":"Ljava/lang/String;";
+    
+    // Constant pool
+    const #1 = Utf8 "com/example/demo/Main";
+    const #2 = Class #1;
+    const #3 = Utf8 "java/lang/Object";
+    const #4 = Class #3;
+    const #5 = Utf8 "message";
+    const #6 = Utf8 "Ljava/lang/String;";
+    const #7 = Utf8 "<init>";
+    const #8 = Utf8 "()V";
+    const #9 = NameAndType #5:#6;
+    const #10 = Field #2.#9;
+    
+    // Default constructor
+    Method "<init>":"()V" {
+        0: aload_0;
+        1: invokespecial #11; // Method java/lang/Object."<init>":()V
+        4: return;
+    }
+    
+    // Main method
+    Method "main":"([Ljava/lang/String;)V" public static {
+        0: getstatic #12; // Field java/lang/System.out:"Ljava/io/PrintStream;";
+        3: ldc #13; // String Hello, World!
+        5: invokevirtual #14; // Method java/io/PrintStream.println:"(Ljava/lang/String;)V"
+        8: return;
+    }
+    
+    // Method with parameters
+    Method "add":"(II)I" public static {
+        0: iload_0;
+        1: iload_1;
+        2: iadd;
+        3: ireturn;
+    }
+    
+    // Method with control flow
+    Method "factorial":"(I)I" public static {
+        0: iload_0;
+        1: iconst_1;
+        2: if_icmple 12;
+        5: iload_0;
+        6: iload_0;
+        7: iconst_1;
+        8: isub;
+        9: invokestatic #15; // Method factorial:(I)I
+        12: imul;
+        13: ireturn;
+        14: iconst_1;
+        15: ireturn;
+    }
+    
+    // Method with exception handling
+    Method "divide":"(II)I" public static {
+        0: iload_0;
+        1: iload_1;
+        2: idiv;
+        3: ireturn;
+        4: astore_2;
+        5: iconst_m1;
+        6: ireturn;
+        exception table:
+            from: 0
+            to: 3
+            target: 4
+            type: java/lang/ArithmeticException;
+    }
+    
+    // Method with loop
+    Method "sum":"([I)I" public static {
+        0: iconst_0;
+        1: istore_1;
+        2: iconst_0;
+        3: istore_2;
+        4: iload_2;
+        5: aload_0;
+        6: arraylength;
+        7: if_icmpge 20;
+        10: iload_1;
+        11: aload_0;
+        12: iload_2;
+        13: iaload;
+        14: iadd;
+        15: istore_1;
+        16: iinc 2, 1;
+        19: goto 4;
+        20: iload_1;
+        21: ireturn;
+    }
+    
+    // Method with object creation
+    Method "createString":"()Ljava/lang/String;" public static {
+        0: new #16; // class java/lang/StringBuilder
+        3: dup;
+        4: invokespecial #17; // Method java/lang/StringBuilder."<init>":()V
+        7: ldc #18; // String Hello
+        9: invokevirtual #19; // Method java/lang/StringBuilder.append:"(Ljava/lang/String;)Ljava/lang/StringBuilder;"
+        12: ldc #20; // String World
+        14: invokevirtual #19; // Method java/lang/StringBuilder.append:"(Ljava/lang/String;)Ljava/lang/StringBuilder;"
+        17: invokevirtual #21; // Method java/lang/StringBuilder.toString:"()Ljava/lang/String;"
+        20: areturn;
+    }
+    
+    // Method with array
+    Method "createArray":"()[I" public static {
+        0: iconst_5;
+        1: newarray int;
+        3: dup;
+        4: iconst_0;
+        5: iconst_1;
+        6: iastore;
+        7: dup;
+        8: iconst_1;
+        9: iconst_2;
+        10: iastore;
+        11: dup;
+        12: iconst_2;
+        13: iconst_3;
+        14: iastore;
+        15: areturn;
+    }
+    
+    // Method with instanceof and checkcast
+    Method "processObject":"(Ljava/lang/Object;)Ljava/lang/String;" public static {
+        0: aload_0;
+        1: instanceof #22; // class java/lang/String
+        4: ifeq 12;
+        7: aload_0;
+        8: checkcast #22; // class java/lang/String
+        11: areturn;
+        12: ldc #23; // String Not a string
+        14: areturn;
+    }
+    
+    // Synchronized method
+    Method "synchronizedMethod":"()V" public synchronized {
+        0: getstatic #12; // Field java/lang/System.out:"Ljava/io/PrintStream;";
+        3: ldc #24; // String Synchronized
+        5: invokevirtual #14; // Method java/io/PrintStream.println:"(Ljava/lang/String;)V"
+        8: return;
+    }
+    
+    // Native method
+    Method "nativeMethod":"()V" public native;
+    
+    // Abstract method
+    Method "abstractMethod":"()V" public abstract;
+    
+    // Annotation
+    @Ljava/lang/Deprecated;
+    Method "deprecatedMethod":"()V" public {
+        0: return;
+    }
+    
+    // Generic method signature
+    Method "genericMethod":"(Ljava/util/List;)V" public static {
+        0: return;
+    }
+    Signature: "(Ljava/util/List<Ljava/lang/String;>;)V";
+    
+    // Stack map
+    Method "withStackMap":"(I)V" public static {
+        0: iload_0;
+        1: ifne 10;
+        4: getstatic #12; // Field java/lang/System.out:"Ljava/io/PrintStream;";
+        7: ldc #25; // String Zero
+        9: invokevirtual #14; // Method java/io/PrintStream.println:"(Ljava/lang/String;)V"
+        12: getstatic #12; // Field java/lang/System.out:"Ljava/io/PrintStream;";
+        15: ldc #26; // String Non-zero
+        17: invokevirtual #14; // Method java/io/PrintStream.println:"(Ljava/lang/String;)V"
+        20: return;
+        stack_map frame_type: 252;
+        frame_type offset: 10;
+        locals: [int];
+        stack: [];
+    }
+}
+
+// Interface definition
+interface MyInterface {
+    Method "interfaceMethod":"()V" public abstract;
+}
+
+// Annotation definition
+@interface MyAnnotation {
+    Method "value":"()Ljava/lang/String;" public abstract;
+    Method "count":"()I" public abstract;
+}
