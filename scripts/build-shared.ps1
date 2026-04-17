@@ -263,7 +263,6 @@ function Build-Emscripten {
         "-G", "Ninja",
         "-DCMAKE_CXX_FLAGS=-std=c++17",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DBUILD_STATIC_LIB=OFF",
         "-DBUILD_TESTING=OFF"
     )
 
