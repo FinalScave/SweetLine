@@ -284,12 +284,12 @@ namespace NS_SWEETLINE {
 
     /// Compile syntax rule from JSON
     /// @param json JSON content of the syntax rule file
-    /// @throws SyntaxRuleParseError Throws SyntaxRuleParseError on compilation error
+    /// @throws SyntaxCompileError Throws SyntaxCompileError on compilation error
     SharedPtr<SyntaxRule> compileSyntaxFromJson(const U8String& json);
 
     /// Compile syntax rule from file
     /// @param file Syntax rule definition file (JSON)
-    /// @throws SyntaxRuleParseError Throws SyntaxRuleParseError on compilation error
+    /// @throws SyntaxCompileError Throws SyntaxCompileError on compilation error
     SharedPtr<SyntaxRule> compileSyntaxFromFile(const U8String& file);
 
     /// Get syntax rule by name (e.g. java)

@@ -58,7 +58,7 @@ sl_syntax_error_t sl_engine_compile_json(sl_engine_handle_t engine_handle, const
   try {
     engine->compileSyntaxFromJson(syntax_json);
     return {SL_OK};
-  } catch (SyntaxRuleParseError& err) {
+  } catch (SyntaxCompileError& err) {
     StringKeepAlive::getInstance().clear();
     return {static_cast<sl_error_t>(err.code()), StringKeepAlive::getInstance().getAliveCString(err.message())};
   }
@@ -72,7 +72,7 @@ sl_syntax_error_t sl_engine_compile_file(sl_engine_handle_t engine_handle, const
   try {
     engine->compileSyntaxFromFile(syntax_file);
     return {SL_OK};
-  } catch (SyntaxRuleParseError& err) {
+  } catch (SyntaxCompileError& err) {
     StringKeepAlive::getInstance().clear();
     return {static_cast<sl_error_t>(err.code()), StringKeepAlive::getInstance().getAliveCString(err.message())};
   }

@@ -18,6 +18,26 @@ static jobjectArray makeStringArray(JNIEnv* env, const TCollection& values) {
   return array;
 }
 
+static void throwSyntaxCompileError(JNIEnv* env, const SyntaxCompileError& error) {
+  jclass ex_class = env->FindClass("com/qiplat/sweetline/SyntaxCompileError");
+  if (ex_class == nullptr) {
+    return;
+  }
+  jmethodID ctor = env->GetMethodID(ex_class, "<init>", "(ILjava/lang/String;)V");
+  if (ctor == nullptr) {
+    env->DeleteLocalRef(ex_class);
+    return;
+  }
+  jstring message = env->NewStringUTF(error.message().c_str());
+  jobject throwable = env->NewObject(ex_class, ctor, static_cast<jint>(error.code()), message);
+  env->DeleteLocalRef(message);
+  if (throwable != nullptr) {
+    env->Throw(static_cast<jthrowable>(throwable));
+    env->DeleteLocalRef(throwable);
+  }
+  env->DeleteLocalRef(ex_class);
+}
+
 // ====================================== DocumentJni ===========================================
 class DocumentJni {
 public:
@@ -437,9 +457,8 @@ public:
     SharedPtr<SyntaxRule> rule;
     try {
       rule = engine->compileSyntaxFromJson(json_str);
-    } catch (SyntaxRuleParseError& error) {
-      jclass ex_class = env->FindClass("com/qiplat/sweetline/SyntaxCompileError");
-      env->ThrowNew(ex_class, StrUtil::formatString("%s: %s", error.what(), error.message().c_str()).c_str());
+    } catch (const SyntaxCompileError& error) {
+      throwSyntaxCompileError(env, error);
     }
     env->ReleaseStringUTFChars(json, json_str);
     return asCHandle<jlong>(rule);
@@ -454,9 +473,8 @@ public:
     SharedPtr<SyntaxRule> rule;
     try {
       rule = engine->compileSyntaxFromFile(path_str);
-    } catch (SyntaxRuleParseError& error) {
-      jclass ex_class = env->FindClass("com/qiplat/sweetline/SyntaxCompileError");
-      env->ThrowNew(ex_class, StrUtil::formatString("%s: %s", error.what(), error.message().c_str()).c_str());
+    } catch (const SyntaxCompileError& error) {
+      throwSyntaxCompileError(env, error);
     }
     env->ReleaseStringUTFChars(path, path_str);
     return asCHandle<jlong>(rule);

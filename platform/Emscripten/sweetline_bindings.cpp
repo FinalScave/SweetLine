@@ -25,9 +25,11 @@ using namespace NS_SWEETLINE;
     .function("isEmpty", &List<element_type>::empty) \
     .function("size", &List<element_type>::size);
 
-void throwJsException(const U8String& msg) {
+void throwSyntaxCompileError(const SyntaxCompileError& error) {
   emscripten::val err = emscripten::val::global("Error");
-  emscripten::val err_obj = err.new_(msg);
+  emscripten::val err_obj = err.new_(error.message());
+  err_obj.set("name", emscripten::val("SyntaxCompileError"));
+  err_obj.set("errorCode", emscripten::val(error.code()));
   err_obj.throw_();
 }
 
@@ -228,16 +230,16 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("compileSyntaxFromJson", emscripten::optional_override([](const SharedPtr<HighlightEngine>& self, const U8String& json) {
         try {
           self->compileSyntaxFromJson(json);
-        } catch (const SyntaxRuleParseError& err) {
-          throwJsException(err.what() + U8String(",") + err.message());
+        } catch (const SyntaxCompileError& err) {
+          throwSyntaxCompileError(err);
         }
       })
     )
     .function("compileSyntaxFromFile", emscripten::optional_override([](const SharedPtr<HighlightEngine>& self, const U8String& file) {
         try {
           self->compileSyntaxFromFile(file);
-        } catch (const SyntaxRuleParseError& err) {
-          throwJsException(err.what() + U8String(",") + err.message());
+        } catch (const SyntaxCompileError& err) {
+          throwSyntaxCompileError(err);
         }
       })
     )

@@ -4,8 +4,8 @@
 #include "macro.h"
 
 namespace NS_SWEETLINE {
-  /// Error thrown during syntax rule JSON parsing
-  class SyntaxRuleParseError : public std::exception {
+  /// Error thrown during syntax rule compilation
+  class SyntaxCompileError : public std::exception {
   public:
     /// Missing property
     static constexpr int ERR_JSON_PROPERTY_MISSED = -1;
@@ -21,10 +21,14 @@ namespace NS_SWEETLINE {
     static constexpr int ERR_FILE_NOT_EXISTS = -6;
     /// Empty file content
     static constexpr int ERR_FILE_INVALID = -7;
+    /// Imported syntax rule not found
+    static constexpr int ERR_IMPORT_SYNTAX_NOT_FOUND = -8;
+    /// Referenced state/subState/onLineEndState not found
+    static constexpr int ERR_STATE_REFERENCE_NOT_FOUND = -9;
 
-    explicit SyntaxRuleParseError(int err_code);
-    explicit SyntaxRuleParseError(int err_code, const U8String& message);
-    explicit SyntaxRuleParseError(int err_code, const char* message);
+    explicit SyntaxCompileError(int err_code);
+    explicit SyntaxCompileError(int err_code, const U8String& message);
+    explicit SyntaxCompileError(int err_code, const char* message);
 
     const char* what() const noexcept override;
     const U8String& message() const noexcept;

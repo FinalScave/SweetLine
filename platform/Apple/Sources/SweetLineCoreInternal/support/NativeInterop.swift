@@ -31,8 +31,8 @@ enum NativeInterop {
 
     static func syntaxError(_ error: sl_syntax_error_t) throws {
         guard error.err_code == SL_OK else {
-            throw SweetLineError.nativeError(
-                code: Int(error.err_code.rawValue),
+            throw SyntaxCompileError(
+                errorCode: Int(error.err_code.rawValue),
                 message: stringResult(error.err_msg) ?? "Syntax compilation failed."
             )
         }

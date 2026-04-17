@@ -45,6 +45,26 @@ export namespace sweetline {
     }
   }
 
+  export class SyntaxCompileError extends Error {
+    public static readonly ERR_JSON_PROPERTY_MISSED: number = -1;
+    public static readonly ERR_JSON_PROPERTY_INVALID: number = -2;
+    public static readonly ERR_PATTERN_INVALID: number = -3;
+    public static readonly ERR_STATE_INVALID: number = -4;
+    public static readonly ERR_JSON_INVALID: number = -5;
+    public static readonly ERR_FILE_NOT_EXISTS: number = -6;
+    public static readonly ERR_FILE_INVALID: number = -7;
+    public static readonly ERR_IMPORT_SYNTAX_NOT_FOUND: number = -8;
+    public static readonly ERR_STATE_REFERENCE_NOT_FOUND: number = -9;
+
+    public errorCode: number = 0;
+
+    public constructor(errorCode: number, message: string) {
+      super(message);
+      this.name = 'SyntaxCompileError';
+      this.errorCode = errorCode;
+    }
+  }
+
   /**
    * Inline style definition embedded in syntax rules
    */
@@ -693,6 +713,7 @@ export namespace sweetline {
     /**
      * Compile syntax rule from JSON
      * @param syntaxJson JSON content of the syntax rule
+     * @throws SyntaxCompileError on compilation error
      */
     public compileSyntaxFromJson(syntaxJson: string): SyntaxRule | null {
       if (this.nativeHandle == 0) {
@@ -708,6 +729,7 @@ export namespace sweetline {
     /**
      * Compile syntax rule
      * @param path Syntax rule definition file path (JSON)
+     * @throws SyntaxCompileError on compilation error
      */
     public compileSyntaxFromFile(path: string): SyntaxRule | null {
       if (this.nativeHandle == 0) {

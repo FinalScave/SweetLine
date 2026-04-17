@@ -40,7 +40,7 @@ internal static class SweetLineNative {
 	/// Throws <see cref="InvalidOperationException"/> when native error code is non-zero.
 	/// </summary>
 	internal static void ThrowIfError(int errorCode, string action) {
-		if (errorCode == (int)SweetLineErrorCode.Ok) {
+		if (errorCode == 0) {
 			return;
 		}
 
@@ -51,7 +51,7 @@ internal static class SweetLineNative {
 	/// Throws <see cref="SyntaxCompileError"/> when syntax compile result contains error.
 	/// </summary>
 	internal static void ThrowIfSyntaxError(SyntaxErrorNative syntaxError) {
-		if (syntaxError.ErrorCode == (int)SweetLineErrorCode.Ok) {
+		if (syntaxError.ErrorCode == SyntaxCompileError.Ok) {
 			return;
 		}
 

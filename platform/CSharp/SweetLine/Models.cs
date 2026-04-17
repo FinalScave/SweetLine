@@ -1,30 +1,6 @@
 namespace SweetLine;
 
 /// <summary>
-/// Error codes from SweetLine C API (<c>sl_error_t</c>).
-/// </summary>
-public enum SweetLineErrorCode {
-	/// <summary>No error.</summary>
-	Ok = 0,
-	/// <summary>Invalid native handle.</summary>
-	HandleInvalid = 1,
-	/// <summary>Missing property in syntax rule JSON.</summary>
-	JsonPropertyMissed = -1,
-	/// <summary>Invalid property value in syntax rule JSON.</summary>
-	JsonPropertyInvalid = -2,
-	/// <summary>Invalid regex pattern in syntax rule JSON.</summary>
-	PatternInvalid = -3,
-	/// <summary>Invalid state in syntax rule JSON.</summary>
-	StateInvalid = -4,
-	/// <summary>Malformed syntax rule JSON.</summary>
-	JsonInvalid = -5,
-	/// <summary>File IO error while reading syntax file.</summary>
-	FileIoError = -6,
-	/// <summary>Syntax file content is empty.</summary>
-	FileEmpty = -7
-}
-
-/// <summary>
 /// Highlight configuration.
 /// </summary>
 /// <param name="ShowIndex">Whether analysis result includes character index.</param>
@@ -261,6 +237,27 @@ public sealed class IndentGuideResult {
 /// Exception thrown when syntax rule compilation fails.
 /// </summary>
 public sealed class SyntaxCompileError : Exception {
+	/// <summary>No error.</summary>
+	public const int Ok = 0;
+	/// <summary>Missing property in syntax rule JSON.</summary>
+	public const int ErrJsonPropertyMissed = -1;
+	/// <summary>Invalid property value in syntax rule JSON.</summary>
+	public const int ErrJsonPropertyInvalid = -2;
+	/// <summary>Invalid regex pattern in syntax rule JSON.</summary>
+	public const int ErrPatternInvalid = -3;
+	/// <summary>Invalid syntax state reference.</summary>
+	public const int ErrStateInvalid = -4;
+	/// <summary>Malformed syntax rule JSON.</summary>
+	public const int ErrJsonInvalid = -5;
+	/// <summary>Syntax file does not exist.</summary>
+	public const int ErrFileNotExists = -6;
+	/// <summary>Syntax file content is empty or invalid.</summary>
+	public const int ErrFileInvalid = -7;
+	/// <summary>Referenced importSyntax target is not compiled yet.</summary>
+	public const int ErrImportSyntaxNotFound = -8;
+	/// <summary>Referenced state/subState/onLineEndState target is not defined.</summary>
+	public const int ErrStateReferenceNotFound = -9;
+
 	/// <summary>Error code from native compile result.</summary>
 	public int ErrorCode { get; }
 

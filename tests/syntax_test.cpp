@@ -352,9 +352,9 @@ TEST_CASE("fragments include rejects missing fragment") {
 })";
   try {
     engine->compileSyntaxFromJson(syntax);
-    FAIL("Expected SyntaxRuleParseError");
-  } catch (const SyntaxRuleParseError& e) {
-    CHECK(e.code() == SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID);
+    FAIL("Expected SyntaxCompileError");
+  } catch (const SyntaxCompileError& e) {
+    CHECK(e.code() == SyntaxCompileError::ERR_JSON_PROPERTY_INVALID);
     CHECK(e.message().find("fragment not found") != U8String::npos);
   }
 }
@@ -380,10 +380,93 @@ TEST_CASE("fragments include rejects circular references") {
 })";
   try {
     engine->compileSyntaxFromJson(syntax);
-    FAIL("Expected SyntaxRuleParseError");
-  } catch (const SyntaxRuleParseError& e) {
-    CHECK(e.code() == SyntaxRuleParseError::ERR_STATE_INVALID);
+    FAIL("Expected SyntaxCompileError");
+  } catch (const SyntaxCompileError& e) {
+    CHECK(e.code() == SyntaxCompileError::ERR_STATE_INVALID);
     CHECK(e.message().find("circular fragments include") != U8String::npos);
+  }
+}
+
+TEST_CASE("importSyntax missing dependency reports dedicated error code") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String host_syntax = R"({
+  "name": "hostMissingImport",
+  "fileSuffixes": [".hmi"],
+  "states": {
+    "default": [
+      { "importSyntax": "sourceLang" }
+    ]
+  }
+})";
+
+  try {
+    engine->compileSyntaxFromJson(host_syntax);
+    FAIL("Expected SyntaxCompileError");
+  } catch (const SyntaxCompileError& e) {
+    CHECK(e.code() == SyntaxCompileError::ERR_IMPORT_SYNTAX_NOT_FOUND);
+    CHECK(e.message().find("importSyntax not found") != U8String::npos);
+  }
+}
+
+TEST_CASE("missing state references report dedicated error code") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+
+  SECTION("missing state target") {
+    const U8String syntax = R"({
+  "name": "missingState",
+  "fileSuffixes": [".mst"],
+  "states": {
+    "default": [
+      { "pattern": "\\b(foo)\\b", "style": "keyword", "state": "unknownState" }
+    ]
+  }
+})";
+    try {
+      engine->compileSyntaxFromJson(syntax);
+      FAIL("Expected SyntaxCompileError");
+    } catch (const SyntaxCompileError& e) {
+      CHECK(e.code() == SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND);
+      CHECK(e.message().find("state: unknownState") != U8String::npos);
+    }
+  }
+
+  SECTION("missing subState target") {
+    const U8String syntax = R"({
+  "name": "missingSubState",
+  "fileSuffixes": [".mss"],
+  "states": {
+    "default": [
+      { "pattern": "\\b(foo)\\b", "subState": "unknownSubState" }
+    ]
+  }
+})";
+    try {
+      engine->compileSyntaxFromJson(syntax);
+      FAIL("Expected SyntaxCompileError");
+    } catch (const SyntaxCompileError& e) {
+      CHECK(e.code() == SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND);
+      CHECK(e.message().find("subState: unknownSubState") != U8String::npos);
+    }
+  }
+
+  SECTION("missing onLineEndState target") {
+    const U8String syntax = R"({
+  "name": "missingLineEndState",
+  "fileSuffixes": [".mle"],
+  "states": {
+    "default": [
+      { "onLineEndState": "unknownLineEndState" },
+      { "pattern": "\\b(foo)\\b", "style": "keyword" }
+    ]
+  }
+})";
+    try {
+      engine->compileSyntaxFromJson(syntax);
+      FAIL("Expected SyntaxCompileError");
+    } catch (const SyntaxCompileError& e) {
+      CHECK(e.code() == SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND);
+      CHECK(e.message().find("onLineEndState: unknownLineEndState") != U8String::npos);
+    }
   }
 }
 

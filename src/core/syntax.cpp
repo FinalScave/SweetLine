@@ -29,7 +29,7 @@ namespace NS_SWEETLINE {
         ONIG_OPTION_DEFAULT, ONIG_ENCODING_UTF8, ONIG_SYNTAX_DEFAULT, &error_info);
       if (status != ONIG_NORMAL) {
         onig_error_code_to_str(error_buf, status, &error_info);
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID,
+        throw SyntaxCompileError(SyntaxCompileError::ERR_PATTERN_INVALID,
           error_context + " (" + reinterpret_cast<const char*>(error_buf) + ")");
       }
       return regex;
@@ -54,17 +54,17 @@ namespace NS_SWEETLINE {
     }
   }
 
- // ===================================== SyntaxRuleParseError ============================================
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code): m_err_code_(err_code) {
+ // ===================================== SyntaxCompileError ============================================
+  SyntaxCompileError::SyntaxCompileError(const int err_code): m_err_code_(err_code) {
   }
 
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const U8String& message): m_err_code_(err_code), m_message_(message) {
+  SyntaxCompileError::SyntaxCompileError(const int err_code, const U8String& message): m_err_code_(err_code), m_message_(message) {
   }
 
-  SyntaxRuleParseError::SyntaxRuleParseError(const int err_code, const char* message): m_err_code_(err_code), m_message_(message) {
+  SyntaxCompileError::SyntaxCompileError(const int err_code, const char* message): m_err_code_(err_code), m_message_(message) {
   }
 
-  const char* SyntaxRuleParseError::what() const noexcept {
+  const char* SyntaxCompileError::what() const noexcept {
     switch (m_err_code_) {
     case ERR_JSON_PROPERTY_MISSED:
       return "Miss property";
@@ -76,16 +76,24 @@ namespace NS_SWEETLINE {
       return "State invalid";
     case ERR_JSON_INVALID:
       return "Json invalid";
+    case ERR_FILE_NOT_EXISTS:
+      return "File not exists";
+    case ERR_FILE_INVALID:
+      return "File invalid";
+    case ERR_IMPORT_SYNTAX_NOT_FOUND:
+      return "Import syntax not found";
+    case ERR_STATE_REFERENCE_NOT_FOUND:
+      return "State reference not found";
     default:
       return "Unknown error";
     }
   }
 
-  const U8String& SyntaxRuleParseError::message() const noexcept {
+  const U8String& SyntaxCompileError::message() const noexcept {
     return m_message_;
   }
 
-  int SyntaxRuleParseError::code() const noexcept {
+  int SyntaxCompileError::code() const noexcept {
     return m_err_code_;
   }
 
@@ -240,7 +248,7 @@ namespace NS_SWEETLINE {
     try {
       root = nlohmann::json::parse(json);
     } catch (nlohmann::json::parse_error& e) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_INVALID, e.what());
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_INVALID, e.what());
     }
     parseSyntaxName(syntax_rule, root);
     parseFileNames(syntax_rule, root);
@@ -269,24 +277,24 @@ namespace NS_SWEETLINE {
 
   SharedPtr<SyntaxRule> SyntaxRuleCompiler::compileSyntaxFromFile(const U8String& file) {
     if (!FileUtil::isFile(file)) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_FILE_NOT_EXISTS, "File does not exist: " + file);
+      throw SyntaxCompileError(SyntaxCompileError::ERR_FILE_NOT_EXISTS, "File does not exist: " + file);
     }
     U8String content = FileUtil::readString(file);
     if (content.empty()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_FILE_INVALID, "File invalid: " + file);
+      throw SyntaxCompileError(SyntaxCompileError::ERR_FILE_INVALID, "File invalid: " + file);
     }
     return compileSyntaxFromJson(content);
   }
 
   void SyntaxRuleCompiler::parseSyntaxName(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("name")) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "name");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "name");
     }
     nlohmann::json name_json = root["name"];
     if (name_json.is_string()) {
       rule->name = name_json;
     } else {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "name");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "name");
     }
   }
 
@@ -294,13 +302,13 @@ namespace NS_SWEETLINE {
     if (root.contains("fileNames")) {
       nlohmann::json file_names_json = root["fileNames"];
       if (!file_names_json.is_array()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNames");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileNames");
       }
       for (const nlohmann::json& element_json : file_names_json) {
         if (element_json.is_string()) {
           rule->file_names.emplace(element_json);
         } else {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNames");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileNames");
         }
       }
     }
@@ -309,7 +317,7 @@ namespace NS_SWEETLINE {
       if (file_name_json.is_string()) {
         rule->file_names.emplace(file_name_json);
       } else {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileName");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileName");
       }
     }
   }
@@ -318,15 +326,15 @@ namespace NS_SWEETLINE {
     if (root.contains("fileSuffixes")) {
       nlohmann::json suffixes_json = root["fileSuffixes"];
       if (!suffixes_json.is_array()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
       }
       for (const nlohmann::json& element_json : suffixes_json) {
         if (!element_json.is_string()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
         }
         U8String suffix = element_json;
         if (suffix.empty()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileSuffixes");
         }
         rule->file_suffixes.emplace(suffix);
       }
@@ -334,11 +342,11 @@ namespace NS_SWEETLINE {
     if (root.contains("fileSuffix")) {
       nlohmann::json suffix_json = root["fileSuffix"];
       if (!suffix_json.is_string()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
       }
       U8String suffix = suffix_json;
       if (suffix.empty()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileSuffix");
       }
       rule->file_suffixes.emplace(suffix);
     }
@@ -347,13 +355,13 @@ namespace NS_SWEETLINE {
   void SyntaxRuleCompiler::parseFileNamePatterns(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     auto append_pattern = [&rule](const U8String& property_name, const nlohmann::json& pattern_json) {
       if (!pattern_json.is_string()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, property_name);
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, property_name);
       }
       U8String pattern_text = pattern_json;
       U8String error;
       PatternUtil::countCaptureGroups("\\A(?:" + pattern_text + ")\\z", error);
       if (!error.empty()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID,
+        throw SyntaxCompileError(SyntaxCompileError::ERR_PATTERN_INVALID,
           property_name + ": " + pattern_text + " (" + error + ")");
       }
       rule->file_name_patterns.emplace_back(pattern_text);
@@ -361,7 +369,7 @@ namespace NS_SWEETLINE {
     if (root.contains("fileNamePatterns")) {
       nlohmann::json patterns_json = root["fileNamePatterns"];
       if (!patterns_json.is_array()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fileNamePatterns");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fileNamePatterns");
       }
       for (const nlohmann::json& element_json : patterns_json) {
         append_pattern("fileNamePatterns", element_json);
@@ -371,7 +379,7 @@ namespace NS_SWEETLINE {
       append_pattern("fileNamePattern", root["fileNamePattern"]);
     }
     if (rule->file_names.empty() && rule->file_suffixes.empty() && rule->file_name_patterns.empty()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED,
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED,
         "fileName/fileNames or fileSuffix/fileSuffixes or fileNamePattern/fileNamePatterns");
     }
   }
@@ -394,13 +402,13 @@ namespace NS_SWEETLINE {
     }
     nlohmann::json variables_json = root["variables"];
     if (!variables_json.is_object()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "variables");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "variables");
     }
     for (const auto& item : variables_json.items()) {
       const U8String& key = item.key();
       const nlohmann::json& variable_json = item.value();
       if (!variable_json.is_string()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, key);
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, key);
       }
       rule->variables_map.insert_or_assign(key, variable_json);
     }
@@ -412,18 +420,18 @@ namespace NS_SWEETLINE {
 
   void SyntaxRuleCompiler::parseInlineStyles(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("styles")) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "styles");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "styles");
     }
     const nlohmann::json& styles_json = root["styles"];
     if (!styles_json.is_array()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles");
     }
     for (const nlohmann::json& style_json : styles_json) {
       if (!style_json.is_object()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles[i]");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles[i]");
       }
       if (!style_json.contains("name")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "styles[i].name");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "styles[i].name");
       }
       U8String style_name = style_json["name"];
       InlineStyle style;
@@ -438,11 +446,11 @@ namespace NS_SWEETLINE {
       if (style_json.contains("tags")) {
         const nlohmann::json& tags_json = style_json["tags"];
         if (!tags_json.is_array()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles[i].tags");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles[i].tags");
         }
         for (const nlohmann::json& tag_json : tags_json) {
           if (!tag_json.is_string()) {
-            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles[i].tags[i]");
+            throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles[i].tags[i]");
           }
           if (tag_json == "bold") {
             style.is_bold = true;
@@ -468,8 +476,8 @@ namespace NS_SWEETLINE {
     const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries) {
     auto it = fragments.find(fragment_name);
     if (it == fragments.end()) {
-      throw SyntaxRuleParseError(
-        SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+      throw SyntaxCompileError(
+        SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
         "fragment not found: " + fragment_name + " at " + reference_path);
     }
     auto stack_it = std::find(include_stack.begin(), include_stack.end(), fragment_name);
@@ -485,8 +493,8 @@ namespace NS_SWEETLINE {
         chain += " -> ";
       }
       chain += fragment_name;
-      throw SyntaxRuleParseError(
-        SyntaxRuleParseError::ERR_STATE_INVALID,
+      throw SyntaxCompileError(
+        SyntaxCompileError::ERR_STATE_INVALID,
         "circular fragments include: " + chain);
     }
     include_stack.push_back(fragment_name);
@@ -497,16 +505,16 @@ namespace NS_SWEETLINE {
   void SyntaxRuleCompiler::resolveIncludesInEntries(const nlohmann::json& entries_json, const U8String& source_path,
     const FragmentMap& fragments, List<U8String>& include_stack, nlohmann::json& expanded_entries) {
     if (!entries_json.is_array()) {
-      throw SyntaxRuleParseError(
-        SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+      throw SyntaxCompileError(
+        SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
         source_path + " must be an array");
     }
     for (size_t i = 0; i < entries_json.size(); ++i) {
       const nlohmann::json& entry_json = entries_json[i];
       const U8String entry_path = makeJsonPath(source_path, i);
       if (!entry_json.is_object()) {
-        throw SyntaxRuleParseError(
-          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        throw SyntaxCompileError(
+          SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
           entry_path + " must be an object");
       }
       const bool has_include = entry_json.contains("include");
@@ -516,20 +524,20 @@ namespace NS_SWEETLINE {
         continue;
       }
       if (has_include && has_includes) {
-        throw SyntaxRuleParseError(
-          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        throw SyntaxCompileError(
+          SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
           entry_path + " cannot contain both include and includes");
       }
       if (entry_json.size() != 1) {
-        throw SyntaxRuleParseError(
-          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        throw SyntaxCompileError(
+          SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
           entry_path + " include/includes rule must not contain other fields");
       }
       if (has_include) {
         const nlohmann::json& include_json = entry_json["include"];
         if (!include_json.is_string()) {
-          throw SyntaxRuleParseError(
-            SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          throw SyntaxCompileError(
+            SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
             entry_path + ".include must be a string");
         }
         appendFragmentEntries(include_json.get<U8String>(), entry_path + ".include", fragments, include_stack, expanded_entries);
@@ -537,14 +545,14 @@ namespace NS_SWEETLINE {
       }
       const nlohmann::json& includes_json = entry_json["includes"];
       if (!includes_json.is_array()) {
-        throw SyntaxRuleParseError(
-          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        throw SyntaxCompileError(
+          SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
           entry_path + ".includes must be an array");
       }
       for (size_t j = 0; j < includes_json.size(); ++j) {
         if (!includes_json[j].is_string()) {
-          throw SyntaxRuleParseError(
-            SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          throw SyntaxCompileError(
+            SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
             makeJsonPath(entry_path + ".includes", j) + " must be a string");
         }
         appendFragmentEntries(includes_json[j].get<U8String>(),
@@ -560,12 +568,12 @@ namespace NS_SWEETLINE {
     }
     const nlohmann::json& fragments_json = root["fragments"];
     if (!fragments_json.is_object()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "fragments");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "fragments");
     }
     for (const auto& item : fragments_json.items()) {
       if (!item.value().is_array()) {
-        throw SyntaxRuleParseError(
-          SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+        throw SyntaxCompileError(
+          SyntaxCompileError::ERR_JSON_PROPERTY_INVALID,
           "fragments." + item.key());
       }
       fragments.insert_or_assign(item.key(), item.value());
@@ -575,18 +583,18 @@ namespace NS_SWEETLINE {
 
   void SyntaxRuleCompiler::parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
     if (!root.contains("states")) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "states");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "states");
     }
     FragmentMap fragments = collectFragments(root);
     const nlohmann::json& states_json = root["states"];
     if (!states_json.is_object()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "states");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "states");
     }
     for (const auto& item : states_json.items()) {
       const U8String& key = item.key();
       const nlohmann::json& state_json = item.value();
       if (!state_json.is_array()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, key);
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, key);
       }
       StateRule state_rule;
       state_rule.name = key;
@@ -604,7 +612,7 @@ namespace NS_SWEETLINE {
         if (!token_rule.goto_state_str.empty()) {
           token_rule.goto_state = rule->getOrCreateStateId(token_rule.goto_state_str);
           if (!rule->containsRule(token_rule.goto_state)) {
-            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+            throw SyntaxCompileError(SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND,
               "state: " + token_rule.goto_state_str);
           }
         }
@@ -612,7 +620,7 @@ namespace NS_SWEETLINE {
         for (const auto& [group, state_name] : token_rule.sub_state_strs) {
           int32_t sub_state_id = rule->getOrCreateStateId(state_name);
           if (!rule->containsRule(sub_state_id)) {
-            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+            throw SyntaxCompileError(SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND,
               "subState: " + state_name);
           }
           token_rule.sub_states.insert_or_assign(group, sub_state_id);
@@ -621,7 +629,7 @@ namespace NS_SWEETLINE {
       if (!state_rule.line_end_state_str.empty()) {
         state_rule.line_end_state = rule->getOrCreateStateId(state_rule.line_end_state_str);
         if (!rule->containsRule(state_rule.line_end_state)) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID,
+          throw SyntaxCompileError(SyntaxCompileError::ERR_STATE_REFERENCE_NOT_FOUND,
             "onLineEndState: " + state_rule.line_end_state_str);
         }
       }
@@ -631,12 +639,12 @@ namespace NS_SWEETLINE {
   void SyntaxRuleCompiler::parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json) {
     for (const nlohmann::json& token_json : state_json) {
       if (!token_json.is_object()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "state element");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "state element");
       }
       if (token_json.contains("onLineEndState")) {
         const nlohmann::json& line_end_json = token_json["onLineEndState"];
         if (!line_end_json.is_string()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "onLineEndState");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "onLineEndState");
         }
         state_rule.line_end_state_str = token_json["onLineEndState"];
         continue;
@@ -652,7 +660,7 @@ namespace NS_SWEETLINE {
         continue;
       }
       if (!token_json.contains("pattern")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "pattern");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "pattern");
       }
       TokenRule token_rule;
       token_rule.pattern = token_json["pattern"];
@@ -678,11 +686,11 @@ namespace NS_SWEETLINE {
       } else if (token_json.contains("styles")) {
         const nlohmann::json& styles_json = token_json["styles"];
         if (!styles_json.is_array()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles");
         }
         size_t size = styles_json.size();
         if (size % 2 != 0) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "styles elements count % 2 != 0");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "styles elements count % 2 != 0");
         }
         for (size_t i = 0; i < size; i += 2) {
           U8String style_name = styles_json[i + 1];
@@ -705,11 +713,11 @@ namespace NS_SWEETLINE {
       } else if (token_json.contains("subStates")) {
         const nlohmann::json& sub_states_json = token_json["subStates"];
         if (!sub_states_json.is_array()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "subStates");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "subStates");
         }
         size_t sub_size = sub_states_json.size();
         if (sub_size % 2 != 0) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "subStates elements count % 2 != 0");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "subStates elements count % 2 != 0");
         }
         for (size_t i = 0; i < sub_size; i += 2) {
           U8String sub_state_name = sub_states_json[i + 1];
@@ -718,7 +726,7 @@ namespace NS_SWEETLINE {
       }
       // Must have at least one of style or subState
       if (token_rule.style_ids.empty() && token_rule.sub_state_strs.empty()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "must have style/styles or subState/subStates");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "must have style/styles or subState/subStates");
       }
       state_rule.token_rules.push_back(std::move(token_rule));
     }
@@ -730,35 +738,35 @@ namespace NS_SWEETLINE {
     }
     const nlohmann::json& scope_rules_json = root["scopeRules"];
     if (!scope_rules_json.is_array()) {
-      throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules");
     }
     int32_t rule_id_counter = 0;
     for (const nlohmann::json& scope_rule_json : scope_rules_json) {
       if (!scope_rule_json.is_object()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[]");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules[]");
       }
       ScopeRule scope_rule;
       if (!scope_rule_json.contains("start")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].start");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].start");
       }
       if (!scope_rule_json["start"].is_string()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].start");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].start");
       }
       scope_rule.start = scope_rule_json["start"];
       if (!scope_rule_json.contains("end")) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].end");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "scopeRules[].end");
       }
       if (!scope_rule_json["end"].is_string()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].end");
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].end");
       }
       scope_rule.end = scope_rule_json["end"];
       if (scope_rule_json.contains("branches")) {
         if (!scope_rule_json["branches"].is_array()) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches");
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches");
         }
         for (const nlohmann::json& branch_json : scope_rule_json["branches"]) {
           if (!branch_json.is_string()) {
-            throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches[]");
+            throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules[].branches[]");
           }
           scope_rule.branch_keywords.emplace(branch_json);
         }
@@ -780,7 +788,7 @@ namespace NS_SWEETLINE {
       U8String err;
       int group_count = PatternUtil::countCaptureGroups(token_rule.pattern, err);
       if (!err.empty()) {
-        throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_PATTERN_INVALID, err + ": " + token_rule.pattern);
+        throw SyntaxCompileError(SyntaxCompileError::ERR_PATTERN_INVALID, err + ": " + token_rule.pattern);
       }
       token_rule.group_count = group_count;
       token_rule.group_offset_start = 1 + total_group_count;
@@ -810,12 +818,12 @@ namespace NS_SWEETLINE {
           }
         }
         if (m_engine_ == nullptr) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_STATE_INVALID,
+          throw SyntaxCompileError(SyntaxCompileError::ERR_STATE_INVALID,
             "importSyntax requires HighlightEngine, syntax: " + request.syntax_name);
         }
         SharedPtr<SyntaxRule> source_rule = m_engine_->getSyntaxRuleByName(request.syntax_name);
         if (source_rule == nullptr) {
-          throw SyntaxRuleParseError(SyntaxRuleParseError::ERR_STATE_INVALID,
+          throw SyntaxCompileError(SyntaxCompileError::ERR_IMPORT_SYNTAX_NOT_FOUND,
             "importSyntax not found: " + request.syntax_name);
         }
         importSyntaxRule(rule, state_id, source_rule);

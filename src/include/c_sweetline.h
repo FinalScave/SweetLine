@@ -27,8 +27,10 @@ typedef enum sl_error {
   SL_PATTERN_INVALID = -3, // Invalid regex pattern in syntax rule JSON
   SL_STATE_INVALID = -4, // Invalid state in syntax rule JSON
   SL_JSON_INVALID = -5, // Invalid syntax rule JSON
-  SL_FILE_IO_ERR = -6, // File IO error
-  SL_FILE_EMPTY = -7, // Empty file content
+  SL_FILE_NOT_EXISTS = -6, // Syntax rule file does not exist
+  SL_FILE_INVALID = -7, // Syntax rule file content is invalid or empty
+  SL_IMPORT_SYNTAX_NOT_FOUND = -8, // importSyntax target syntax is not compiled yet
+  SL_STATE_REFERENCE_NOT_FOUND = -9, // state/subState/onLineEndState target does not exist
 } sl_error_t;
 
 /// Syntax rule error information

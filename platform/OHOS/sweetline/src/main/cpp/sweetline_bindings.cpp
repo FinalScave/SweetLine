@@ -6,6 +6,24 @@
 
 using namespace NS_SWEETLINE;
 
+static void ThrowSyntaxCompileError(napi_env env, const SyntaxCompileError& error) {
+  napi_value message;
+  napi_create_string_utf8(env, error.message().c_str(), NAPI_AUTO_LENGTH, &message);
+
+  napi_value js_error;
+  napi_create_error(env, nullptr, message, &js_error);
+
+  napi_value name;
+  napi_create_string_utf8(env, "SyntaxCompileError", NAPI_AUTO_LENGTH, &name);
+  napi_set_named_property(env, js_error, "name", name);
+
+  napi_value code;
+  napi_create_int32(env, error.code(), &code);
+  napi_set_named_property(env, js_error, "errorCode", code);
+
+  napi_throw(env, js_error);
+}
+
 /// Convert document highlight result to Int32Array for ArkTS layer
 /// Returned array structure:
 /// buffer[0] = span payload flags(bit0: hasStartIndex, bit1: inlineStyle)
@@ -764,9 +782,8 @@ static napi_value HighlightEngine_CompileSyntaxFromJson(napi_env env, napi_callb
     SharedPtr<SyntaxRule> rule = engine->compileSyntaxFromJson(json);
     int64_t handle = asCHandle<int64_t>(rule);
     return createNapiInt64(env, handle);
-  } catch (SyntaxRuleParseError& error) {
-    U8String msg = U8String(error.what()) + ": " + error.message();
-    napi_throw_error(env, nullptr, msg.c_str());
+  } catch (const SyntaxCompileError& error) {
+    ThrowSyntaxCompileError(env, error);
     return createNapiInt64(env, 0);
   }
 }
@@ -789,9 +806,8 @@ static napi_value HighlightEngine_CompileSyntaxFromFile(napi_env env, napi_callb
     SharedPtr<SyntaxRule> rule = engine->compileSyntaxFromFile(path);
     int64_t handle = asCHandle<int64_t>(rule);
     return createNapiInt64(env, handle);
-  } catch (SyntaxRuleParseError& error) {
-    U8String msg = U8String(error.what()) + ": " + error.message();
-    napi_throw_error(env, nullptr, msg.c_str());
+  } catch (const SyntaxCompileError& error) {
+    ThrowSyntaxCompileError(env, error);
     return createNapiInt64(env, 0);
   }
 }

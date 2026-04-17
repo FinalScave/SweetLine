@@ -26,34 +26,15 @@ bool _isValidSpanStride(int stride, bool hasStartIndex, bool inlineStyle) {
   return stride == expected;
 }
 
-SweetLineErrorCode _mapErrorCode(bindings.sl_error code) {
-  switch (code) {
-    case bindings.sl_error.SL_OK:
-      return SweetLineErrorCode.ok;
-    case bindings.sl_error.SL_HANDLE_INVALID:
-      return SweetLineErrorCode.handleInvalid;
-    case bindings.sl_error.SL_JSON_PROPERTY_MISSED:
-      return SweetLineErrorCode.jsonPropertyMissed;
-    case bindings.sl_error.SL_JSON_PROPERTY_INVALID:
-      return SweetLineErrorCode.jsonPropertyInvalid;
-    case bindings.sl_error.SL_PATTERN_INVALID:
-      return SweetLineErrorCode.patternInvalid;
-    case bindings.sl_error.SL_STATE_INVALID:
-      return SweetLineErrorCode.stateInvalid;
-    case bindings.sl_error.SL_JSON_INVALID:
-      return SweetLineErrorCode.jsonInvalid;
-    case bindings.sl_error.SL_FILE_IO_ERR:
-      return SweetLineErrorCode.fileIoError;
-    case bindings.sl_error.SL_FILE_EMPTY:
-      return SweetLineErrorCode.fileEmpty;
-  }
+int _mapErrorCode(bindings.sl_error code) {
+  return code.value;
 }
 
 void _throwIfNativeError(bindings.sl_error code, String action) {
   if (code == bindings.sl_error.SL_OK) {
     return;
   }
-  throw SweetLineException('$action failed', code: _mapErrorCode(code));
+  throw SweetLineException('$action failed', errorCode: _mapErrorCode(code));
 }
 
 void _throwIfSyntaxError(bindings.sl_syntax_error_t error, String action) {
@@ -63,7 +44,7 @@ void _throwIfSyntaxError(bindings.sl_syntax_error_t error, String action) {
   final message = _readNativeString(error.err_msg);
   throw SyntaxCompileError(
     message.isEmpty ? '$action failed' : message,
-    code: _mapErrorCode(error.err_code),
+    errorCode: _mapErrorCode(error.err_code),
   );
 }
 

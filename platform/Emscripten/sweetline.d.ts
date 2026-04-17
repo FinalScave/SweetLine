@@ -31,6 +31,20 @@ export namespace sweetline {
         end: TextPosition;
     }
 
+    export class SyntaxCompileError extends Error {
+        static readonly ERR_JSON_PROPERTY_MISSED: number;
+        static readonly ERR_JSON_PROPERTY_INVALID: number;
+        static readonly ERR_PATTERN_INVALID: number;
+        static readonly ERR_STATE_INVALID: number;
+        static readonly ERR_JSON_INVALID: number;
+        static readonly ERR_FILE_NOT_EXISTS: number;
+        static readonly ERR_FILE_INVALID: number;
+        static readonly ERR_IMPORT_SYNTAX_NOT_FOUND: number;
+        static readonly ERR_STATE_REFERENCE_NOT_FOUND: number;
+        errorCode: number;
+        constructor(errorCode: number, message: string);
+    }
+
     /**
      * Managed document with incremental update support
      */
@@ -459,14 +473,14 @@ export namespace sweetline {
         /**
          * Compile syntax rule from JSON
          * @param json JSON content of the syntax rule
-         * @throws SyntaxRuleParseError on compilation error
+         * @throws SyntaxCompileError on compilation error
          */
         compileSyntaxFromJson(json: string): SyntaxRule;
 
         /**
          * Compile syntax rule
          * @param path Syntax rule definition file path (JSON)
-         * @throws SyntaxRuleParseError on compilation error
+         * @throws SyntaxCompileError on compilation error
          */
         compileSyntaxFromFile(path: string): SyntaxRule;
 
