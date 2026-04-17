@@ -383,7 +383,8 @@ enum sl_error {
   SL_FILE_NOT_EXISTS(-6),
   SL_FILE_INVALID(-7),
   SL_IMPORT_SYNTAX_NOT_FOUND(-8),
-  SL_STATE_REFERENCE_NOT_FOUND(-9);
+  SL_STATE_REFERENCE_NOT_FOUND(-9),
+  SL_INLINE_STYLE_REFERENCE_NOT_FOUND(-10);
 
   final int value;
   const sl_error(this.value);
@@ -400,6 +401,7 @@ enum sl_error {
     -7 => SL_FILE_INVALID,
     -8 => SL_IMPORT_SYNTAX_NOT_FOUND,
     -9 => SL_STATE_REFERENCE_NOT_FOUND,
+    -10 => SL_INLINE_STYLE_REFERENCE_NOT_FOUND,
     _ => throw ArgumentError('Unknown value for sl_error: $value'),
   };
 }

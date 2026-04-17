@@ -66,6 +66,17 @@ namespace NS_SWEETLINE {
         resetCompiledTokenRuleRuntime(token_rule);
       }
     }
+
+    int32_t resolveInlineStyleIdOrThrow(const SharedPtr<SyntaxRule>& rule,
+      const U8String& style_name, const U8String& property_name) {
+      auto it = rule->style_mapping->style_name_id_map.find(style_name);
+      if (it == rule->style_mapping->style_name_id_map.end()
+        || rule->inline_styles.find(it->second) == rule->inline_styles.end()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_INLINE_STYLE_REFERENCE_NOT_FOUND,
+          property_name + ": undefined inline style " + style_name);
+      }
+      return it->second;
+    }
   }
 
  // ===================================== SyntaxCompileError ============================================
@@ -98,6 +109,8 @@ namespace NS_SWEETLINE {
       return "Import syntax not found";
     case ERR_STATE_REFERENCE_NOT_FOUND:
       return "State reference not found";
+    case ERR_INLINE_STYLE_REFERENCE_NOT_FOUND:
+      return "Inline style reference not found";
     default:
       return "Unknown error";
     }
@@ -689,7 +702,7 @@ namespace NS_SWEETLINE {
         U8String style_name = token_json["style"];
         int32_t style_id;
         if (m_inline_style_) {
-          style_id = rule->style_mapping->getOrCreateStyleId(style_name);
+          style_id = resolveInlineStyleIdOrThrow(rule, style_name, "style");
         } else {
           style_id = m_style_mapping_->getOrCreateStyleId(style_name);
         }
@@ -710,7 +723,7 @@ namespace NS_SWEETLINE {
           U8String style_name = styles_json[i + 1];
           int32_t style_id;
           if (m_inline_style_) {
-            style_id = rule->style_mapping->getOrCreateStyleId(style_name);
+            style_id = resolveInlineStyleIdOrThrow(rule, style_name, "styles");
           } else {
             style_id = m_style_mapping_->getOrCreateStyleId(style_name);
           }

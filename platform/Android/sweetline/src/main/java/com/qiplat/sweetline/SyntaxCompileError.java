@@ -10,6 +10,7 @@ public class SyntaxCompileError extends Exception {
     public static final int ERR_FILE_INVALID = -7;
     public static final int ERR_IMPORT_SYNTAX_NOT_FOUND = -8;
     public static final int ERR_STATE_REFERENCE_NOT_FOUND = -9;
+    public static final int ERR_INLINE_STYLE_REFERENCE_NOT_FOUND = -10;
 
     private final int errorCode;
 

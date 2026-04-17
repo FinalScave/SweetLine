@@ -25,6 +25,8 @@ namespace NS_SWEETLINE {
     static constexpr int ERR_IMPORT_SYNTAX_NOT_FOUND = -8;
     /// Referenced state/subState/onLineEndState not found
     static constexpr int ERR_STATE_REFERENCE_NOT_FOUND = -9;
+    /// Referenced inline style name not found in styles[]
+    static constexpr int ERR_INLINE_STYLE_REFERENCE_NOT_FOUND = -10;
 
     explicit SyntaxCompileError(int err_code);
     explicit SyntaxCompileError(int err_code, const U8String& message);

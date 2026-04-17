@@ -10,6 +10,7 @@ public struct SyntaxCompileError: Error, Equatable {
     public static let errFileInvalid = -7
     public static let errImportSyntaxNotFound = -8
     public static let errStateReferenceNotFound = -9
+    public static let errInlineStyleReferenceNotFound = -10
 
     public let errorCode: Int
     public let message: String

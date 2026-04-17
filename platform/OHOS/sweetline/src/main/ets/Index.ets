@@ -55,6 +55,7 @@ export namespace sweetline {
     public static readonly ERR_FILE_INVALID: number = -7;
     public static readonly ERR_IMPORT_SYNTAX_NOT_FOUND: number = -8;
     public static readonly ERR_STATE_REFERENCE_NOT_FOUND: number = -9;
+    public static readonly ERR_INLINE_STYLE_REFERENCE_NOT_FOUND: number = -10;
 
     public errorCode: number = 0;
 

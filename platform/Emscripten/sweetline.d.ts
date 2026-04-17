@@ -41,6 +41,7 @@ export namespace sweetline {
         static readonly ERR_FILE_INVALID: number;
         static readonly ERR_IMPORT_SYNTAX_NOT_FOUND: number;
         static readonly ERR_STATE_REFERENCE_NOT_FOUND: number;
+        static readonly ERR_INLINE_STYLE_REFERENCE_NOT_FOUND: number;
         errorCode: number;
         constructor(errorCode: number, message: string);
     }

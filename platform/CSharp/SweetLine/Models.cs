@@ -257,6 +257,8 @@ public sealed class SyntaxCompileError : Exception {
 	public const int ErrImportSyntaxNotFound = -8;
 	/// <summary>Referenced state/subState/onLineEndState target is not defined.</summary>
 	public const int ErrStateReferenceNotFound = -9;
+	/// <summary>Referenced inline style name is not declared in styles[].</summary>
+	public const int ErrInlineStyleReferenceNotFound = -10;
 
 	/// <summary>Error code from native compile result.</summary>
 	public int ErrorCode { get; }

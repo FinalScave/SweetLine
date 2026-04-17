@@ -547,6 +547,30 @@ TEST_CASE("missing state references report dedicated error code") {
   }
 }
 
+TEST_CASE("inline style references must be declared in styles") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine({true, true});
+  const U8String syntax = R"({
+  "name": "inlineMissingStyle",
+  "fileSuffixes": [".ims"],
+  "styles": [
+    { "name": "keyword", "foreground": "#FF569CD6" }
+  ],
+  "states": {
+    "default": [
+      { "pattern": "\\b(true)\\b", "styles": [1, "builtin"] }
+    ]
+  }
+})";
+
+  try {
+    engine->compileSyntaxFromJson(syntax);
+    FAIL("Expected SyntaxCompileError");
+  } catch (const SyntaxCompileError& e) {
+    CHECK(e.code() == SyntaxCompileError::ERR_INLINE_STYLE_REFERENCE_NOT_FOUND);
+    CHECK(e.message().find("undefined inline style builtin") != U8String::npos);
+  }
+}
+
 TEST_CASE("importSyntax with #ifdef is controlled by macros") {
   const U8String source_syntax = R"({
   "name": "sourceLang",

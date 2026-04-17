@@ -48,6 +48,7 @@ export declare namespace sweetline {
     public static readonly ERR_FILE_INVALID: number;
     public static readonly ERR_IMPORT_SYNTAX_NOT_FOUND: number;
     public static readonly ERR_STATE_REFERENCE_NOT_FOUND: number;
+    public static readonly ERR_INLINE_STYLE_REFERENCE_NOT_FOUND: number;
 
     public errorCode: number;
 

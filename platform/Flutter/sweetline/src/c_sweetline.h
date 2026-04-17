@@ -31,6 +31,7 @@ typedef enum sl_error {
   SL_FILE_INVALID = -7, // Syntax rule file content is invalid or empty
   SL_IMPORT_SYNTAX_NOT_FOUND = -8, // importSyntax target syntax is not compiled yet
   SL_STATE_REFERENCE_NOT_FOUND = -9, // state/subState/onLineEndState target does not exist
+  SL_INLINE_STYLE_REFERENCE_NOT_FOUND = -10, // inline style name is not declared in styles[]
 } sl_error_t;
 
 /// Syntax rule error information

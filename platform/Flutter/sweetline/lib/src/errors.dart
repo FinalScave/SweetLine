@@ -25,6 +25,7 @@ class SyntaxCompileError extends SweetLineException {
   static const int errFileInvalid = -7;
   static const int errImportSyntaxNotFound = -8;
   static const int errStateReferenceNotFound = -9;
+  static const int errInlineStyleReferenceNotFound = -10;
 
   SyntaxCompileError(super.message, {required super.errorCode});
 
