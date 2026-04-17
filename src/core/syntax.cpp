@@ -838,11 +838,26 @@ namespace NS_SWEETLINE {
   }
 
   void SyntaxRuleCompiler::processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule) {
+    struct PendingImportState {
+      int32_t state_id {SyntaxRule::kDefaultStateId};
+      List<ImportSyntaxRequest> requests;
+    };
+
+    List<PendingImportState> pending_states;
+    pending_states.reserve(rule->state_rules_map.size());
     for (auto& [state_id, state_rule] : rule->state_rules_map) {
       if (state_rule.import_requests.empty()) {
         continue;
       }
-      for (const ImportSyntaxRequest& request : state_rule.import_requests) {
+      PendingImportState pending_state;
+      pending_state.state_id = state_id;
+      pending_state.requests = state_rule.import_requests;
+      pending_states.push_back(std::move(pending_state));
+      state_rule.import_requests.clear();
+    }
+
+    for (const PendingImportState& pending_state : pending_states) {
+      for (const ImportSyntaxRequest& request : pending_state.requests) {
         // #ifdef
         if (!request.ifdef_macro.empty()) {
           if (m_engine_ == nullptr || !m_engine_->isMacroDefined(request.ifdef_macro)) {
@@ -858,9 +873,8 @@ namespace NS_SWEETLINE {
           throw SyntaxCompileError(SyntaxCompileError::ERR_IMPORT_SYNTAX_NOT_FOUND,
             "importSyntax not found: " + request.syntax_name);
         }
-        importSyntaxRule(rule, state_id, source_rule);
+        importSyntaxRule(rule, pending_state.state_id, source_rule);
       }
-      state_rule.import_requests.clear();
     }
   }
 
