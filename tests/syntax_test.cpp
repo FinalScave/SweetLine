@@ -408,6 +408,83 @@ TEST_CASE("importSyntax missing dependency reports dedicated error code") {
   }
 }
 
+TEST_CASE("failed importSyntax retry does not invalidate imported source states") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String source_syntax = R"({
+  "name": "sourceRetry",
+  "fileSuffixes": [".srt"],
+  "states": {
+    "default": [
+      { "pattern": "\"", "style": "punctuation", "state": "string" }
+    ],
+    "string": [
+      { "pattern": "\"", "style": "punctuation", "state": "default" },
+      { "pattern": ".", "style": "string" }
+    ]
+  }
+})";
+  const U8String host_syntax = R"({
+  "name": "hostRetry",
+  "fileSuffixes": [".hrt"],
+  "states": {
+    "default": [
+      { "importSyntax": "sourceRetry" },
+      { "importSyntax": "missingRetry" }
+    ]
+  }
+})";
+  const U8String missing_syntax = R"({
+  "name": "missingRetry",
+  "fileSuffixes": [".mrs"],
+  "states": {
+    "default": [
+      { "pattern": "\\b(bar)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(source_syntax));
+  try {
+    engine->compileSyntaxFromJson(host_syntax);
+    FAIL("Expected SyntaxCompileError");
+  } catch (const SyntaxCompileError& e) {
+    CHECK(e.code() == SyntaxCompileError::ERR_IMPORT_SYNTAX_NOT_FOUND);
+    CHECK(e.message().find("missingRetry") != U8String::npos);
+  }
+
+  SharedPtr<TextAnalyzer> source_analyzer = engine->createAnalyzerBySyntaxName("sourceRetry");
+  REQUIRE(source_analyzer != nullptr);
+  SharedPtr<DocumentHighlight> source_highlight = source_analyzer->analyzeText("\"x\"");
+  REQUIRE(source_highlight != nullptr);
+
+  std::unordered_set<int32_t> source_style_ids;
+  for (const LineHighlight& line : source_highlight->lines) {
+    for (const TokenSpan& span : line.spans) {
+      source_style_ids.insert(span.style_id);
+    }
+  }
+  CHECK(source_style_ids.find(8) != source_style_ids.end()); // punctuation
+  CHECK(source_style_ids.find(2) != source_style_ids.end()); // string
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(missing_syntax));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(host_syntax));
+
+  SharedPtr<TextAnalyzer> host_analyzer = engine->createAnalyzerBySyntaxName("hostRetry");
+  REQUIRE(host_analyzer != nullptr);
+  SharedPtr<DocumentHighlight> host_highlight = host_analyzer->analyzeText("\"x\" bar");
+  REQUIRE(host_highlight != nullptr);
+
+  std::unordered_set<int32_t> host_style_ids;
+  for (const LineHighlight& line : host_highlight->lines) {
+    for (const TokenSpan& span : line.spans) {
+      host_style_ids.insert(span.style_id);
+    }
+  }
+  CHECK(host_style_ids.find(8) != host_style_ids.end()); // punctuation from imported source
+  CHECK(host_style_ids.find(2) != host_style_ids.end()); // string from imported source state
+  CHECK(host_style_ids.find(1) != host_style_ids.end()); // keyword from newly resolved import
+}
+
 TEST_CASE("missing state references report dedicated error code") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
 

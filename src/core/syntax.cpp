@@ -52,6 +52,20 @@ namespace NS_SWEETLINE {
         onig_free(regex);
       }
     }
+
+    void resetCompiledTokenRuleRuntime(TokenRule& token_rule) {
+      token_rule.group_count = 0;
+      token_rule.group_offset_start = 0;
+    }
+
+    void clearCompiledStateRuntime(StateRule& state_rule) {
+      state_rule.regex = nullptr;
+      state_rule.group_count = 0;
+      state_rule.merged_pattern.clear();
+      for (TokenRule& token_rule : state_rule.token_rules) {
+        resetCompiledTokenRuleRuntime(token_rule);
+      }
+    }
   }
 
  // ===================================== SyntaxCompileError ============================================
@@ -778,6 +792,8 @@ namespace NS_SWEETLINE {
   }
 
   void SyntaxRuleCompiler::compileStatePattern(StateRule& state_rule) {
+    freeRegex(state_rule.regex);
+    state_rule.regex = nullptr;
     U8String merged_pattern;
     int32_t total_group_count {0};
     size_t token_size = state_rule.token_rules.size();
@@ -871,6 +887,7 @@ namespace NS_SWEETLINE {
       StateRule& target_state = target_rule->getStateRule(target_state_id);
       for (const TokenRule& src_token : source_default.token_rules) {
         TokenRule new_token = src_token;
+        resetCompiledTokenRuleRuntime(new_token);
         // goto_state offset
         if (new_token.goto_state >= 0) {
           if (new_token.goto_state == SyntaxRule::kDefaultStateId) {
@@ -907,6 +924,7 @@ namespace NS_SWEETLINE {
       }
       int32_t new_state_id = source_state_id + state_id_offset;
       StateRule new_state = source_state_rule;
+      clearCompiledStateRuntime(new_state);
       for (TokenRule& token_rule : new_state.token_rules) {
         // Fix goto_state for each TokenRule
         if (token_rule.goto_state >= 0) {
