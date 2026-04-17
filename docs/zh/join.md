@@ -134,3 +134,25 @@ enum AlternateUrlTableErrors {
 #define ROUND(x) ...
 #define PI_ROUNDED 3.0
 ```
+
+# 使用 Skills 快速编写语法规则
+
+如果您要新增或完善语法规则，建议直接使用仓库内的 [`skills/`](../../skills)，这样可以明显提高编写速度，并让产出更一致。
+
+推荐组合：
+- [`syntax-highlighting-authoring`](../../skills/syntax-highlighting-authoring/SKILL.md)
+- [`sweetline-syntax-profile`](../../skills/sweetline-syntax-profile/SKILL.md)
+
+它们主要会帮助约束这些内容：
+- 先判断当前需求是已有语法增强、全新语法、DSL 拆分还是方言拆分
+- 先检查是否需要文件名路由，而不只是看扩展名
+- 保持 token 拆分足够细，而不是用过大的兜底规则
+- 为语法补齐覆盖度更高的 example 文件
+- 将新增或大幅修改的 example 控制在推荐的 `120~150` 行范围
+- 补齐语法编译覆盖、analyzer 路由覆盖以及精确的高亮断言
+- 当语法需要在 demo 中展示时，同步更新 demo 侧注册
+
+推荐流程：
+1. 先阅读通用的语法编写 skill。
+2. 再阅读 SweetLine 专用 profile，了解仓库目录和约束。
+3. 按照其中的路由、example 和验证要求完成修改后再提交。

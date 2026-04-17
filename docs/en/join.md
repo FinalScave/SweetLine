@@ -143,3 +143,25 @@ All uppercase with underscores between words. Examples:
 #define ROUND(x) ...
 #define PI_ROUNDED 3.0
 ```
+
+# Using Skills for Syntax Work
+
+If you are adding or refining syntax rules, you can use the repository skills in [`skills/`](../../skills) to speed up the work and keep the output consistent.
+
+Recommended pair:
+- [`syntax-highlighting-authoring`](../../skills/syntax-highlighting-authoring/SKILL.md)
+- [`sweetline-syntax-profile`](../../skills/sweetline-syntax-profile/SKILL.md)
+
+What they help enforce:
+- deciding whether the task is a refinement, a new syntax, a DSL split, or a dialect split
+- checking whether extension-only routing is sufficient
+- keeping tokenization fine-grained instead of using overly broad fallback rules
+- expanding or creating example files with realistic syntax coverage
+- keeping new or heavily revised examples in the recommended `120` to `150` line range
+- adding syntax compilation coverage, analyzer-routing coverage, and focused highlight assertions
+- updating demo-side syntax registration when the syntax should appear in demos
+
+Recommended workflow:
+1. Read the general authoring skill first.
+2. Read the SweetLine profile for repository-specific paths and constraints.
+3. Follow the routing, example, and validation requirements before submitting changes.

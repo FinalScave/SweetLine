@@ -235,6 +235,10 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 
 完整语法规则配置说明请参见 [语法规则配置文档](docs/zh/syntax_rule.md)。
 
+如果您希望更快、更规范地新增或完善语法规则，也可以直接使用仓库内的 [`skills/`](skills)。推荐组合是：
+- [`syntax-highlighting-authoring`](skills/syntax-highlighting-authoring/SKILL.md)：通用的语法规则、路由、example 和验证编写流程
+- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md)：SweetLine 仓库专用约束，包括目录结构、style names、测试入口、demo 注册以及 `120~150` 行 example 建议
+
 ## 文档
 
 | 文档 | 说明 |
@@ -249,7 +253,7 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [WebAssembly API](docs/zh/api_wasm.md) | JavaScript/TypeScript API |
 | [HarmonyOS API](docs/zh/api_ohos.md) | ArkTS/NAPI API 使用说明 |
 | [构建文档](docs/zh/api_build.md) | 多平台构建命令与参数 |
-| [项目协作说明](docs/zh/join.md) | 参与项目共建指南 |
+| [项目协作说明](docs/zh/join.md) | 参与项目共建指南，包含使用仓库 skills 快速编写语法规则的说明 |
 
 ## 内置语言支持
 
@@ -276,4 +280,4 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 
 ## 共建
 
-欢迎一起共建 SweetLine 高亮引擎！如果您有参与项目的想法，可直接拉分支修改并提交合并请求，详见 [项目协作说明](docs/zh/join.md)。
+欢迎一起共建 SweetLine 高亮引擎！如果您有参与项目的想法，可直接拉分支修改并提交合并请求。对于语法规则相关工作，建议结合仓库中的 [`skills/`](skills) 与 [项目协作说明](docs/zh/join.md) 一起使用。

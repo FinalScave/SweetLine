@@ -235,6 +235,10 @@ SweetLine uses JSON to define syntax rules. Here is a simple example:
 
 For complete syntax rule configuration, see the [Syntax Rule Configuration Guide](docs/en/syntax_rule.md).
 
+If you want to add or refine syntax rules more quickly, you can also use the skills in [`skills/`](skills). The recommended pair is:
+- [`syntax-highlighting-authoring`](skills/syntax-highlighting-authoring/SKILL.md): a general workflow for writing syntax rules, routing, examples, and validation
+- [`sweetline-syntax-profile`](skills/sweetline-syntax-profile/SKILL.md): SweetLine-specific constraints such as file layout, style names, tests, demo registration, and the recommended `120` to `150` line example range
+
 ## Documentation
 
 | Document | Description |
@@ -249,7 +253,7 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 | [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |
 | [HarmonyOS API](docs/en/api_ohos.md) | ArkTS/NAPI API usage |
 | [Build Guide](docs/en/api_build.md) | Multi-platform build commands and options |
-| [Contributing Guide](docs/en/join.md) | How to participate in the project |
+| [Contributing Guide](docs/en/join.md) | How to participate in the project, including using repository skills for faster syntax authoring |
 
 ## Built-in Language Support
 
@@ -276,4 +280,4 @@ For complete syntax rule configuration, see the [Syntax Rule Configuration Guide
 
 ## Contributing
 
-We welcome contributions to the SweetLine highlighting engine! If you'd like to participate, feel free to fork the repository, make changes, and submit merge requests. See the [Contributing Guide](docs/en/join.md) for details.
+We welcome contributions to the SweetLine highlighting engine! If you'd like to participate, feel free to fork the repository, make changes, and submit merge requests. For syntax-related work, we recommend using the skills in [`skills/`](skills) together with the [Contributing Guide](docs/en/join.md).
