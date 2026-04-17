@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SweetLine Demo (macOS)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/demo",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "deviceId": "macos"
+    },
+    {
+      "name": "SweetLine Demo (iOS)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/demo",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "deviceId": "ios"
+    },
+    {
+      "name": "SweetLine Demo (Windows)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/demo",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "deviceId": "windows"
+    },
+    {
+      "name": "SweetLine Demo (Android)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/demo",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "deviceId": "android"
+    }
+  ]
+}
