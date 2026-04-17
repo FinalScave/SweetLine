@@ -92,6 +92,13 @@ namespace NS_SWEETLINE {
     return m_lines_[line];
   }
 
+  U8String Document::getLineTextWithEnding(size_t line) const {
+    const DocumentLine& doc_line = getLine(line);
+    U8String result = doc_line.text;
+    appendLineEnding(result, doc_line.ending);
+    return result;
+  }
+
   int32_t Document::patch(const TextRange& range, const U8String& new_text) {
     if (range.start.line >= m_lines_.size()) {
     // Append to end

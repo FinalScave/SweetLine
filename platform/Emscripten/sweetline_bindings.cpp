@@ -82,7 +82,10 @@ EMSCRIPTEN_BINDINGS(foundation) {
     .function("totalChars", &Document::totalChars)
     .function("getLineCharCount", &Document::getLineCharCount)
     .function("getLineCount", &Document::getLineCount)
-    .function("getLine", &Document::getLine)
+    .function("getLineText", emscripten::optional_override([](const SharedPtr<Document>& self, size_t index) {
+        return self->getLineTextWithEnding(index);
+      })
+     )
     .function("charIndexOfLine", &Document::charIndexOfLine)
     .function("charIndexToPosition", &Document::charIndexToPosition);
 }

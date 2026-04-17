@@ -1,4 +1,4 @@
-export namespace sweetline {
+export namespace SweetLineBindings {
     /**
      * Text position descriptor
      */
@@ -61,6 +61,45 @@ export namespace sweetline {
          * Get the URI of the managed document
          */
         getUri(): string;
+
+        /**
+         * Get the full text content
+         */
+        getText(): string;
+
+        /**
+         * Get total character count
+         */
+        totalChars(): number;
+
+        /**
+         * Get the character count of a specific line
+         * @param line Line index
+         */
+        getLineCharCount(line: number): number;
+
+        /**
+         * Get total line count
+         */
+        getLineCount(): number;
+
+        /**
+         * Get the text content of a specific line (including line ending)
+         * @param line Line index
+         */
+        getLineText(line: number): string;
+
+        /**
+         * Get the character index of the line start
+         * @param line Line index
+         */
+        charIndexOfLine(line: number): number;
+
+        /**
+         * Convert a character index to a line/column position
+         * @param index Character index
+         */
+        charIndexToPosition(index: number): TextPosition;
     }
 
     /**
@@ -107,13 +146,19 @@ export namespace sweetline {
         inlineStyle: InlineStyle;
     }
 
-    export class TokenSpanList {
-        get(index: number): TokenSpan;
-        set(index: number, element: TokenSpan): void;
-        add(element: TokenSpan): void;
-        remove(element: TokenSpan): void;
-        isEmpty(): boolean;
-        size(): number;
+    /**
+     * Native c++ `std::vector(typedef List)` interface binding
+     */
+    export interface NativeList<T> {
+        get(index: number): T
+        set(index: number, element: T): void
+        add(element: T): void
+        remove(element: T): void
+        isEmpty(): boolean
+        size(): number
+    }
+
+    export interface TokenSpanList extends NativeList<TokenSpan> {
     }
 
     /**
@@ -131,13 +176,7 @@ export namespace sweetline {
         toJson(): string;
     }
 
-    export class LineHighlightList {
-        get(index: number): LineHighlight;
-        set(index: number, element: LineHighlight): void;
-        add(element: LineHighlight): void;
-        remove(element: LineHighlight): void;
-        isEmpty(): boolean;
-        size(): number;
+    export interface LineHighlightList extends NativeList<LineHighlight> {
     }
 
     /**
@@ -247,40 +286,13 @@ export namespace sweetline {
         column: number;
     }
 
-    export class BranchPointList {
-        get(index: number): BranchPoint;
-        set(index: number, element: BranchPoint): void;
-        add(element: BranchPoint): void;
-        remove(element: BranchPoint): void;
-        isEmpty(): boolean;
-        size(): number;
+    export interface BranchPointList extends NativeList<BranchPoint> {
     }
 
-    export class Int32List {
-        get(index: number): number;
-        set(index: number, element: number): void;
-        add(element: number): void;
-        remove(element: number): void;
-        isEmpty(): boolean;
-        size(): number;
+    export interface IndentGuideLineList extends NativeList<IndentGuideLine> {
     }
 
-    export class IndentGuideLineList {
-        get(index: number): IndentGuideLine;
-        set(index: number, element: IndentGuideLine): void;
-        add(element: IndentGuideLine): void;
-        remove(element: IndentGuideLine): void;
-        isEmpty(): boolean;
-        size(): number;
-    }
-
-    export class LineScopeStateList {
-        get(index: number): LineScopeState;
-        set(index: number, element: LineScopeState): void;
-        add(element: LineScopeState): void;
-        remove(element: LineScopeState): void;
-        isEmpty(): boolean;
-        size(): number;
+    export interface LineScopeStateList extends NativeList<LineScopeState> {
     }
 
     /**
@@ -357,7 +369,7 @@ export namespace sweetline {
         analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
 
         /**
-         * Perform indent guide analysis on a text (performs highlight analysis internally)）
+         * Perform indent guide analysis on a text (performs highlight analysis internally)
          * @param text Full text content
          * @return Indent guide analysis result
          */
@@ -401,6 +413,18 @@ export namespace sweetline {
         analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
 
         /**
+         * Get the highlight result slice for the specified visible line range
+         * @param visibleRange Visible line range
+         * @return Highlight slice
+         */
+        getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
+
+        /**
+         * Get the managed document instance
+         */
+        getDocument(): Document;
+
+        /**
          * Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
          * @return Indent guide analysis result
          */
@@ -420,7 +444,7 @@ export namespace sweetline {
          */
         inlineStyle: boolean;
         /**
-         * Tab width, used for indent guide level calculation (1 tab = tabSize spaces))
+         * Tab width, used for indent guide level calculation (1 tab = tabSize spaces)
          */
         tabSize: number;
     }
@@ -476,45 +500,45 @@ export namespace sweetline {
          * @param json JSON content of the syntax rule
          * @throws SyntaxCompileError on compilation error
          */
-        compileSyntaxFromJson(json: string): SyntaxRule;
+        compileSyntaxFromJson(json: string): void;
 
         /**
          * Compile syntax rule
          * @param path Syntax rule definition file path (JSON)
          * @throws SyntaxCompileError on compilation error
          */
-        compileSyntaxFromFile(path: string): SyntaxRule;
+        compileSyntaxFromFile(path: string): void;
 
         /**
          * Get syntax rule by name (e.g. java)
          * @param syntaxName Syntax rule name
          */
-        getSyntaxRuleByName(syntaxName: string): SyntaxRule;
+        getSyntaxRuleByName(syntaxName: string): SyntaxRule | null;
 
         /**
          * Get syntax rule by file name or path
          * @param fileName File name or path
          */
-        getSyntaxRuleByFileName(fileName: string): SyntaxRule;
+        getSyntaxRuleByFileName(fileName: string): SyntaxRule | null;
 
         /**
          * Create a text highlight analyzer by syntax rule name (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
          * @param syntaxName Syntax rule name (e.g. java)
          */
-        createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer;
+        createAnalyzerBySyntaxName(syntaxName: string): TextAnalyzer | null;
 
         /**
          * Create a text highlight analyzer by file name or path (no incremental analysis support, but supports single-line analysis with line state for custom incremental analysis)
          * @param fileName File name or path
          */
-        createAnalyzerByFileName(fileName: string): TextAnalyzer;
+        createAnalyzerByFileName(fileName: string): TextAnalyzer | null;
 
         /**
          * Load a managed document and get a document highlight analyzer
          * @param document Managed document
          * @return Document highlight analyzer
          */
-        loadDocument(document: Document): DocumentAnalyzer;
+        loadDocument(document: Document): DocumentAnalyzer | null;
 
         /**
          * Remove a managed document
@@ -523,3 +547,114 @@ export namespace sweetline {
         removeDocument(uri: string): void;
     }
 }
+
+/**
+ * Filesystem backend descriptor used by Emscripten FS.
+ * For SweetLine's handwritten typings, only NODEFS is modeled explicitly.
+ */
+export interface SweetLineFSBackend {
+    mount(mount: SweetLineFSMount): unknown;
+}
+
+/**
+ * Mounted filesystem record returned by Emscripten FS.
+ */
+export interface SweetLineFSMount {
+    type: SweetLineFSBackend;
+    mountpoint: string;
+    opts: Record<string, unknown> | null;
+}
+
+/**
+ * Mount options for NODEFS.
+ */
+export interface SweetLineNodeFSOptions {
+    root: string;
+}
+
+export interface SweetLineFileSystems {
+    /**
+     * Node.js-backed filesystem bridge.
+     * Only available in Node-capable Emscripten environments.
+     */
+    NODEFS: SweetLineFSBackend;
+}
+
+export interface SweetLineFS {
+    /**
+     * Registered filesystem backends.
+     */
+    filesystems: SweetLineFileSystems;
+
+    /**
+     * Get current working directory.
+     */
+    cwd(): string;
+
+    /**
+     * Change current working directory.
+     */
+    chdir(path: string): void;
+
+    /**
+     * Create a single directory.
+     */
+    mkdir(path: string): void;
+
+    /**
+     * Create a directory tree recursively.
+     */
+    mkdirTree(path: string): void;
+
+    /**
+     * Mount a filesystem backend at the given mount point.
+     */
+    mount(type: SweetLineFSBackend, opts: SweetLineNodeFSOptions | Record<string, unknown> | null, mountpoint: string): SweetLineFSMount;
+
+    /**
+     * Unmount a mounted filesystem.
+     */
+    unmount(mountpoint: string): void;
+
+    readFile(path: string, options?: { encoding?: "utf8" | "binary"; flags?: string }): string | Uint8Array;
+    writeFile(path: string, data: string | ArrayBufferView | ArrayBuffer, options?: { encoding?: "utf8" | "binary"; flags?: string }): void;
+    unlink(path: string): void;
+}
+
+/**
+ * Runtime module object returned by the default factory.
+ * It contains all embind-exposed constructors plus selected Emscripten runtime helpers.
+ */
+export type SweetLineModule = typeof SweetLineBindings & {
+    FS: SweetLineFS;
+    addRunDependency(id: string): void;
+    removeRunDependency(id: string): void;
+    calledRun: boolean;
+};
+
+export interface SweetLineModuleFactoryOptions {
+    locateFile?(path: string, prefix: string): string;
+    print?(message?: unknown, ...optionalParams: unknown[]): void;
+    printErr?(message?: unknown, ...optionalParams: unknown[]): void;
+    onAbort?(reason: unknown): void;
+    onRuntimeInitialized?(): void;
+    preInit?: Array<() => void> | (() => void);
+    preRun?: Array<(module: SweetLineModule) => void> | ((module: SweetLineModule) => void);
+    postRun?: Array<(module: SweetLineModule) => void> | ((module: SweetLineModule) => void);
+    monitorRunDependencies?(left: number): void;
+    instantiateWasm?(
+        imports: WebAssembly.Imports,
+        successCallback: (instance: WebAssembly.Instance, module?: WebAssembly.Module) => void,
+    ): void;
+    preloadPlugins?: unknown[];
+    wasmBinary?: ArrayBuffer | Uint8Array;
+    arguments?: string[];
+    thisProgram?: string;
+    noFSInit?: boolean;
+    noExitRuntime?: boolean;
+    setStatus?(text: string): void;
+}
+
+declare function createSweetLine(module?: SweetLineModuleFactoryOptions): Promise<SweetLineModule>;
+
+export default createSweetLine;

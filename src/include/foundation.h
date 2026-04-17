@@ -80,7 +80,12 @@ namespace NS_SWEETLINE {
     size_t getLineCount() const;
 
     /// Get the text information of a specific line
+    /// @param line Line index
     const DocumentLine& getLine(size_t line) const;
+
+    /// Get the text content of a specific line (including line ending)
+    /// @param line Line index
+    U8String getLineTextWithEnding(size_t line) const;
 
     /// Perform an incremental update on the specified line/column range
     /// @param range The range to update

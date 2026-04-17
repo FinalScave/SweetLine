@@ -53,15 +53,19 @@ elseif (WIN32)
     add_definitions(-DWINDOWS -D_POSIX -D_POSIX_THREAD_SAFE_FUNCTIONS)
 elseif (EMSCRIPTEN)
     add_definitions(-DWASM)
+    add_compile_options("-fexceptions")
     set(BUILD_SHARED_LIB OFF)
     file(GLOB_RECURSE WASM_FILES ${CMAKE_PROJECT_DIR}/platform/Emscripten/*.cpp)
     message(STATUS "add target: sweetline for wasm")
     add_executable("sweetline" ${WASM_FILES})
     target_link_libraries("sweetline" PRIVATE ${STATIC_LIB_NAME}
             "--bind"
+            "-fexceptions"
+            "-lNODEFS.js"
             "-s WASM=1"
             "-s MODULARIZE=1"
-            "-s EXPORT_NAME='sweetline'"
+            "-s NO_DISABLE_EXCEPTION_CATCHING=1"
+            "-s EXPORT_NAME='createSweetLine'"
             "-s EXPORT_ES6=1"
             "-s FORCE_FILESYSTEM=1"
             "-s ALLOW_MEMORY_GROWTH=1"
