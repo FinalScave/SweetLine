@@ -1,0 +1,135 @@
+@ AArch64/ARM64 assembly example
+@ This demonstrates ARM64 assembly syntax
+
+.section .data
+    message: .ascii "Hello, World!\n"
+    len = . - message
+    hex_num: .xword 0xDEADBEEFCAFEBABE
+    bin_num: .xword 0b1010101010101010
+
+.section .bss
+    .lcomm buffer, 64
+
+.section .text
+    .globl _start
+    .type _start, @function
+
+_start:
+    @ Linux AArch64 syscall to write
+    mov x0, #1              @ stdout
+    ldr x1, =message        @ message address
+    ldr x2, =len            @ message length
+    mov x8, #64             @ sys_write
+    svc #0
+
+    @ Exit syscall
+    mov x0, #0              @ exit code 0
+    mov x8, #93             @ sys_exit
+    svc #0
+
+    .size _start, .-_start
+
+@ Function example
+calculate_sum:
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+    
+    @ Add two numbers
+    ldr w0, [x29, #16]      @ first argument
+    ldr w1, [x29, #24]      @ second argument
+    add w0, w0, w1
+    
+    ldp x29, x30, [sp], #16
+    ret
+    .size calculate_sum, .-calculate_sum
+
+@ SIMD/NEON example
+simd_operations:
+    ldr q0, [x0]            @ load 128-bit from address in x0
+    ldr q1, [x1]            @ load 128-bit from address in x1
+    fadd v2.4s, v0.4s, v1.4s @ add single-precision floats
+    str q2, [x2]            @ store result
+    ret
+    .size simd_operations, .-simd_operations
+
+@ Load/Store pair example
+load_store_pair:
+    stp x0, x1, [sp, #-16]! @ push x0, x1 to stack
+    ldp x0, x1, [sp], #16   @ pop x0, x1 from stack
+    ret
+
+@ Conditional branch example
+conditional_branch:
+    cmp x0, #0
+    beq .Lzero
+    bgt .Lpositive
+    blt .Lnegative
+    ret
+
+.Lzero:
+    mov x0, #0
+    ret
+
+.Lpositive:
+    mov x0, #1
+    ret
+
+.Lnegative:
+    mov x0, #-1
+    ret
+
+@ Bit manipulation
+bit_operations:
+    clz x0, x1              @ count leading zeros
+    rbit x0, x1             @ reverse bits
+    rev x0, x1              @ reverse bytes
+    ret
+
+@ CRC32 example
+crc_example:
+    crc32b w0, w1, w2       @ CRC32 byte
+    crc32h w0, w1, w2       @ CRC32 halfword
+    crc32w w0, w1, w2       @ CRC32 word
+    crc32x w0, w1, x2       @ CRC32 doubleword
+    ret
+
+@ Pointer authentication (PAC)
+pac_example:
+    pacia x0, x1            @ sign with PAC
+    autia x0, x1            @ authenticate with PAC
+    ret
+
+@ Memory barriers
+barrier_example:
+    dmb sy                  @ data memory barrier
+    dsb sy                  @ data synchronization barrier
+    isb                     @ instruction synchronization barrier
+    ret
+
+@ System register access
+system_regs:
+    mrs x0, currentel       @ read current exception level
+    msr daifset, #0xf       @ disable all interrupts
+    msr daifclr, #0xf       @ enable all interrupts
+    ret
+
+@ Macro example
+.macro PRINT msg, len
+    mov x0, #1
+    ldr x1, =\msg
+    ldr x2, =\len
+    mov x8, #64
+    svc #0
+.endm
+
+@ Conditional assembly
+#ifdef DEBUG
+    .warning "Debug mode enabled"
+#endif
+
+@ Align directive
+    .align 4
+
+@ Section with flags
+    .section .rodata
+    format_string: .asciz "Value: %d\n"

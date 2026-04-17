@@ -1,0 +1,241 @@
+{
+  "name": "asm-aarch64",
+  "fileSuffixes": [".s", ".S"],
+  "fileNamePatterns": [".*\\.aarch64", ".*\\.arm64", ".*\\.arm"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      },
+      {
+        "pattern": "(;)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      },
+      {
+        "pattern": "(@)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(\\.)(text|data|bss|section|globl|global|extern|align|balign|p2align|ascii|asciz|string|byte|hword|word|xword|dword|quad|octa|float|double|space|skip|fill|size|type|ident|weak|hidden|protected|internal|local|comm|lcomm|abort|if|else|endif|ifdef|ifndef|elif|include|incbin|error|warning|print|macro|endm|altmacro|noaltmacro|line|file|loc|fnstart|fnend|cantunwind|personality|handlerdata|set|cpu|arch|fpu|arch_extension|inst|tlsdescseq)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(\\.)([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)\\b(mov|movz|movk|movn|movi|mvn|mrs|msr|movf|movd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(add|adds|adc|adcs|sub|subs|sbc|sbcs|neg|negs|ngc|ngcs|cmp|cmn|ccmp|ccmn)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(and|ands|orr|orrs|eor|eors|eon|orns|bic|bics|bif|bit|bsl|mov|mvn|tst)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(lsl|lsr|asr|ror|lslv|lsrv|asrv|rorv|shl|shr|sar)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(uxtb|uxth|uxtw|uxtx|sxtb|sxth|sxtw|sxtx|sbfx|ubfx|bfi|bfxil|extr)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(mul|madd|msub|smull|umull|smulh|umulh|smaddl|umaddl|smsubl|umsubl|smul|umul|smnegl|umnegl|smull|umull)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(sdiv|udiv|sdvi|udvi|asr|lsr|lsl|ror)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ldr|ldrb|ldrh|ldrsb|ldrsh|ldrsw|ldur|ldurb|ldurh|ldursb|ldursh|ldursw|ldp|ldpsw|ldxp|ldaxp|ldxr|ldaxr|ldxrb|ldaxrb|ldxrh|ldaxrh|ldar|ldlar|ldarb|ldlarb|ldarh|ldlarh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(str|strb|strh|stur|sturb|sturh|stp|stxp|stlxp|stxr|stlxr|stxrb|stlxrb|stxrh|stlxrh|stlr|stllr|stlrb|stllrb|stlrh|stllrh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ldr|ldrb|ldrh|ldrsb|ldrsh|ldrsw|str|strb|strh|ldp|stp|ldnp|stnp|ldtr|ldtrb|ldtrh|ldtrsb|ldtrsh|ldtrsw|sttr|sttrb|sttrh)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(b|bl|blr|br|ret|eret|drps|b\\.eq|b\\.ne|b\\.cs|b\\.hs|b\\.cc|b\\.lo|b\\.mi|b\\.pl|b\\.vs|b\\.vc|b\\.hi|b\\.ls|b\\.ge|b\\.lt|b\\.gt|b\\.le|b\\.al|cbz|cbnz|tbz|tbnz)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(csel|csinc|csinv|csneg|cset|csetm|cinc|cinv|cneg)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(bfm|bfi|bfxil|sbfm|sbfi|sbfx|ubfm|ubfi|ubfx|extr)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(clz|cls|rev|rev16|rev32|rev64|rbit)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(ld1|ld2|ld3|ld4|st1|st2|st3|st4|ld1r|ld2r|ld3r|ld4r|ldnp|stnp|ldp|stp)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(fmov|fmovz|fmovi|fabs|fneg|fsqrt|fadd|fsub|fdiv|fmul|fmadd|fmsub|fnmadd|fnmsub|fmax|fmin|fmaxnm|fminnm|fcmp|fccmp|fccmpe|fcmpe|fcsel|fcvt|fcvtzs|fcvtzu|scvtf|ucvtf|fjcvtzs)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(frinta|frintm|frintn|frintp|frintx|frintz|frinti|frint32x|frint32z|frint64x|frint64z)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(nop|yield|wfe|wfi|sev|sevl|dmb|dsb|isb|hint|clrex|dsb|dmb|isb)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(mrs|msr|sys|sysl|ic|dc|at|tlbi|vmalle1is|vmalle1|alle2is|alle2|alle3is|alle3)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(svc|hvc|smc|brk|hlt|eret|drps|dcps1|dcps2|dcps3)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(crc32b|crc32h|crc32w|crc32x|crc32cb|crc32ch|crc32cw|crc32cx)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(pacia|pacib|paciza|pacizb|pacdza|pacdzb|autia|autib|autiza|autizb|autdza|autdzb|pacda|pacdb|xpaci|xpacd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(x[0-9]|x1[0-9]|x2[0-9]|x30|sp|lr|fp|xzr|wzr)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(w[0-9]|w1[0-9]|w30)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(q[0-9]|q1[0-9]|q2[0-9]|q3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(v[0-9]|v1[0-9]|v2[0-9]|v3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(d[0-9]|d1[0-9]|d2[0-9]|d3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(s[0-9]|s1[0-9]|s2[0-9]|s3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(b[0-9]|b1[0-9]|b2[0-9]|b3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(h[0-9]|h1[0-9]|h2[0-9]|h3[0-1])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(el0|el1|el2|el3|currentel|spsel|daifset|daifclr|pan|uao|dit|ssbs|tco|mrs|msr)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier}):",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "[+\\-*/=&<>!~|^]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

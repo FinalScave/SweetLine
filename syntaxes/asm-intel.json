@@ -1,0 +1,206 @@
+{
+  "name": "asm-intel",
+  "fileSuffixes": [".asm", ".nasm", ".masm", ".inc", ".mac"],
+  "variables": {
+    "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(;)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      },
+      {
+        "pattern": "(?i)\\b(mov|movzx|movsx|movsxd|lea|xchg|cmpxchg|cmpxchg8b|cmpxchg16b)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(add|sub|mul|imul|div|idiv|inc|dec|neg|adc|sbb)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(and|or|xor|not|shl|shr|sal|sar|rol|ror|rcl|rcr)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(push|pop|pushad|popad|pushfd|popfd|pushfq|popfq)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(jmp|je|jne|jz|jnz|jg|jge|jl|jle|ja|jae|jb|jbe|jo|jno|js|jns|jc|jnc|jp|jnp|jcxz|jecxz|jrcxz)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(call|ret|retn|iret|iretd|iretq|loop|loope|loopne|loopz|loopnz)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(cmp|test|nop|cpuid|pause|lfence|mfence|sfence)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(int|into|into|bound|enter|leave|syscall|sysenter|sysexit)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(in|out|ins|outs|insb|insw|insd|outsb|outsw|outsd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(lodsb|lodsw|lodsd|lodsq|stosb|stosw|stosd|stosq|movsb|movsw|movsd|movsq|cmpsb|cmpsw|cmpsd|cmpsq|scasb|scasw|scasd|scasq)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(rep|repe|repz|repne|repnz|lock|wait)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(cld|std|cli|sti|clc|stc|cmc|lahf|sahf|set\\w+)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(cpu|mmx|sse|sse2|sse3|ssse3|sse4\\.1|sse4\\.2|avx|avx2|avx512)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(?i)\\b(vmovapd|vmovaps|vmovdqa|vmovdqu|vmovupd|vmovups|vaddpd|vaddps|vmulpd|vmulps|vdivpd|vdivps|vsqrtpd|vsqrtps)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(rax|rbx|rcx|rdx|rsi|rdi|rbp|rsp|r8|r9|r10|r11|r12|r13|r14|r15|rip)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(eax|ebx|ecx|edx|esi|edi|ebp|esp|r8d|r9d|r10d|r11d|r12d|r13d|r14d|r15d|eip)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(ax|bx|cx|dx|si|di|bp|sp|r8w|r9w|r10w|r11w|r12w|r13w|r14w|r15w)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(al|ah|bl|bh|cl|ch|dl|dh|sil|dil|bpl|spl|r8b|r9b|r10b|r11b|r12b|r13b|r14b|r15b)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(cs|ds|es|fs|gs|ss|cr0|cr2|cr3|cr4|dr0|dr1|dr2|dr3|dr6|dr7)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(xmm0|xmm1|xmm2|xmm3|xmm4|xmm5|xmm6|xmm7|xmm8|xmm9|xmm10|xmm11|xmm12|xmm13|xmm14|xmm15)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(ymm0|ymm1|ymm2|ymm3|ymm4|ymm5|ymm6|ymm7|ymm8|ymm9|ymm10|ymm11|ymm12|ymm13|ymm14|ymm15)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(zmm0|zmm1|zmm2|zmm3|zmm4|zmm5|zmm6|zmm7|zmm8|zmm9|zmm10|zmm11|zmm12|zmm13|zmm14|zmm15)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(st0|st1|st2|st3|st4|st5|st6|st7|mm0|mm1|mm2|mm3|mm4|mm5|mm6|mm7)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(\\[)(.*)(\\])",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier}):",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "(\\.)(${identifier})\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(%)(\\w+)",
+        "styles": [1, "punctuation", 2, "macro"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+[hHoObBdD]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "[+\\-*/=&<>!~|^]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}
