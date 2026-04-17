@@ -1,6 +1,6 @@
 {
   "name": "java",
-  "fileExtensions": [".java"],
+  "fileSuffixes": [".java"],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",

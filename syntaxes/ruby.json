@@ -1,6 +1,6 @@
 {
   "name": "ruby",
-  "fileExtensions": [".rb", ".rake", ".gemspec", ".ru"],
+  "fileSuffixes": [".rb", ".rake", ".gemspec", ".ru"],
   "variables": {
     "identifier": "[a-z_][A-Za-z0-9_]*[!?=]?",
     "methodName": "[A-Za-z_][A-Za-z0-9_]*[!?=]?|\\[\\]=?|<<|>>|<=|>=|<=>|===|==|!=|=~|!~|\\+@|-@|[+\\-*/%<>&|^~]+",

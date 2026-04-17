@@ -1,6 +1,6 @@
 {
   "name": "scala",
-  "fileExtensions": [".scala", ".sc", ".sbt"],
+  "fileSuffixes": [".scala", ".sc", ".sbt"],
   "variables": {
     "identifier": "(?:`[^`]+`|[A-Za-z_][A-Za-z0-9_$]*)",
     "typeIdentifier": "(?:`[^`]+`|[A-Z][A-Za-z0-9_$]*)",

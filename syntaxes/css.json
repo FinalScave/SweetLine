@@ -1,6 +1,6 @@
 {
   "name": "css",
-  "fileExtensions": [".css"],
+  "fileSuffixes": [".css"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

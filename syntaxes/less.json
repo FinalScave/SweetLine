@@ -1,6 +1,6 @@
 {
   "name": "less",
-  "fileExtensions": [".less"],
+  "fileSuffixes": [".less"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

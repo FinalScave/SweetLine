@@ -1,6 +1,6 @@
 {
   "name": "diff",
-  "fileExtensions": [".diff", ".patch"],
+  "fileSuffixes": [".diff", ".patch"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"

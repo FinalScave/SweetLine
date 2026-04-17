@@ -1,6 +1,6 @@
 {
   "name": "php",
-  "fileExtensions": [".php", ".phtml", ".php3", ".php4", ".php5", ".phps"],
+  "fileSuffixes": [".php", ".phtml", ".php3", ".php4", ".php5", ".phps"],
   "variables": {
     "identifier": "[a-zA-Z_\\p{L}][a-zA-Z0-9_\\p{L}]*",
     "variable": "\\$[a-zA-Z_\\p{L}][a-zA-Z0-9_\\p{L}]*",

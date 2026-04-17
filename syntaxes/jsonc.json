@@ -1,6 +1,6 @@
 {
   "name": "jsonc",
-  "fileExtensions": [".jsonc"],
+  "fileSuffixes": [".jsonc"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
@@ -33,8 +33,8 @@
         "state": "doubleString"
       },
       {
-        "pattern": "\\b(true|false|null)\\b",
-        "style": "keyword"
+        "pattern": "(^|[^A-Za-z0-9_$])(true|false|null)(?=[^A-Za-z0-9_$]|$)",
+        "styles": [2, "keyword"]
       },
       {
         "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",

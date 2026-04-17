@@ -1,6 +1,6 @@
 {
   "name": "graphql",
-  "fileExtensions": [".graphql", ".gql", ".graphqls"],
+  "fileSuffixes": [".graphql", ".gql", ".graphqls"],
   "variables": {
     "identifier": "[_A-Za-z][_0-9A-Za-z]*",
     "typeIdentifier": "[A-Z][_0-9A-Za-z]*",

@@ -1,6 +1,7 @@
 {
   "name": "makefile",
-  "fileExtensions": [".mk", ".make", ".mak"],
+  "fileNames": ["Makefile", "makefile", "GNUmakefile", "BSDmakefile"],
+  "fileSuffixes": [".mk", ".make", ".mak"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

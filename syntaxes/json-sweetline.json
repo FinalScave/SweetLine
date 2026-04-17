@@ -1,6 +1,6 @@
 {
   "name": "json",
-  "fileExtensions": [".json"],
+  "fileSuffixes": [".json"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
@@ -17,8 +17,8 @@
         "state": "stringValue"
       },
       {
-        "pattern": "\\b(true|false|null)\\b",
-        "style": "keyword"
+        "pattern": "(^|[^A-Za-z0-9_$])(true|false|null)(?=[^A-Za-z0-9_$]|$)",
+        "styles": [2, "keyword"]
       },
       {
         "pattern": "\\b(?:[0-9]*\\.?[0-9]+(?:[eE][+-]?[0-9]+)?)\\b",

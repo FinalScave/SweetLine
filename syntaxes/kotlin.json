@@ -1,6 +1,6 @@
 {
   "name": "kotlin",
-  "fileExtensions": [".kt", ".kts"],
+  "fileSuffixes": [".kt", ".kts"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

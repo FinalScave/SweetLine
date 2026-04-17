@@ -1,6 +1,7 @@
 {
   "name": "cmake",
-  "fileExtensions": [".cmake"],
+  "fileNames": ["CMakeLists.txt"],
+  "fileSuffixes": [".cmake"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

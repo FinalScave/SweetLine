@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "fileExtensions": [".svelte"],
+  "fileSuffixes": [".svelte"],
   "variables": {
     "tagName": "[A-Za-z][A-Za-z0-9:-]*",
     "directiveName": "(?:bind|class|use|animate|in|out|transition|on|let):[A-Za-z_][A-Za-z0-9_.-]*(?:\\|[A-Za-z_][A-Za-z0-9_-]*)*",

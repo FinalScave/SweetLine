@@ -1,6 +1,6 @@
 {
   "name": "yaml",
-  "fileExtensions": [".yml", ".yaml"],
+  "fileSuffixes": [".yml", ".yaml"],
   "variables": {
     "identifier": "[a-zA-Z_][a-zA-Z0-9_\\-]*",
     "whiteSpace": "[ \\t\\f]",

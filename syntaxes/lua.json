@@ -1,6 +1,6 @@
 {
   "name": "lua",
-  "fileExtensions": [".lua"],
+  "fileSuffixes": [".lua"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

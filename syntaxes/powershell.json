@@ -1,6 +1,6 @@
 {
   "name": "powershell",
-  "fileExtensions": [".ps1", ".psm1", ".psd1"],
+  "fileSuffixes": [".ps1", ".psm1", ".psd1"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

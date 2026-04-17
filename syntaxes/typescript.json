@@ -1,6 +1,6 @@
 {
   "name": "typescript",
-  "fileExtensions": [".ts", ".tsx", ".mts", ".cts"],
+  "fileSuffixes": [".ts", ".tsx", ".mts", ".cts"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",

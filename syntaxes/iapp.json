@@ -1,6 +1,6 @@
 {
   "name": "iapp",
-  "fileExtensions": [".iyu", ".myu"],
+  "fileSuffixes": [".iyu", ".myu"],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",

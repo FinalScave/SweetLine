@@ -1,6 +1,6 @@
 {
   "name": "wenyan",
-  "fileExtensions": [".wenyan", ".wy", ".文言"],
+  "fileSuffixes": [".wenyan", ".wy", ".文言"],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",

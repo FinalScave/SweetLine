@@ -1,6 +1,6 @@
 {
   "name": "python",
-  "fileExtensions": [".py", ".pyi", ".pyw"],
+  "fileSuffixes": [".py", ".pyi", ".pyw"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

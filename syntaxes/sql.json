@@ -1,6 +1,6 @@
 {
   "name": "sql",
-  "fileExtensions": [".sql", ".ddl", ".dml"],
+  "fileSuffixes": [".sql", ".ddl", ".dml"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

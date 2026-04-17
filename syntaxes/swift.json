@@ -1,6 +1,6 @@
 {
   "name": "swift",
-  "fileExtensions": [".swift"],
+  "fileSuffixes": [".swift"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

@@ -1,6 +1,6 @@
 {
   "name": "vb",
-  "fileExtensions": [".vb"],
+  "fileSuffixes": [".vb"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

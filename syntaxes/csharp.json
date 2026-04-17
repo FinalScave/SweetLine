@@ -1,6 +1,6 @@
 {
   "name": "csharp",
-  "fileExtensions": [".cs"],
+  "fileSuffixes": [".cs"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

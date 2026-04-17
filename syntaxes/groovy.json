@@ -1,6 +1,6 @@
 {
   "name": "groovy",
-  "fileExtensions": [".groovy", ".gradle", ".gvy", ".gy", ".gsh"],
+  "fileSuffixes": [".groovy", ".gradle", ".gvy", ".gy", ".gsh"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",

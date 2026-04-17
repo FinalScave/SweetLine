@@ -1,6 +1,6 @@
 {
   "name": "json5",
-  "fileExtensions": [".json5"],
+  "fileSuffixes": [".json5"],
   "variables": {
     "identifier": "[A-Za-z_$][A-Za-z0-9_$]*",
     "whiteSpace": "[ \\t\\f]",

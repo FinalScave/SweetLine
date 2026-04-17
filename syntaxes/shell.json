@@ -1,6 +1,6 @@
 {
   "name": "shell",
-  "fileExtensions": [".sh", ".bash", ".zsh", ".ksh", ".csh", ".fish"],
+  "fileSuffixes": [".sh", ".bash", ".zsh", ".ksh", ".csh", ".fish"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

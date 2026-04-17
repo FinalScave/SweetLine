@@ -1,6 +1,7 @@
 {
   "name": "gitignore",
-  "fileExtensions": [".gitignore"],
+  "fileNames": [".gitignore"],
+  "fileSuffixes": [".gitignore"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"

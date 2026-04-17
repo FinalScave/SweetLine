@@ -1,6 +1,6 @@
 {
   "name": "rust",
-  "fileExtensions": [".rs"],
+  "fileSuffixes": [".rs"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

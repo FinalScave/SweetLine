@@ -1,6 +1,6 @@
 {
   "name": "vue",
-  "fileExtensions": [".vue"],
+  "fileSuffixes": [".vue"],
   "variables": {
     "tagName": "[A-Za-z][A-Za-z0-9:-]*",
     "directiveName": "v-[A-Za-z][A-Za-z0-9-]*(?::[A-Za-z_][A-Za-z0-9_.-]*)?",

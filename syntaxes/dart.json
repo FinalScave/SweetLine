@@ -1,6 +1,6 @@
 {
   "name": "dart",
-  "fileExtensions": [".dart"],
+  "fileSuffixes": [".dart"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",

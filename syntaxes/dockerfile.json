@@ -1,6 +1,7 @@
 {
   "name": "dockerfile",
-  "fileExtensions": [".dockerfile", ".containerfile"],
+  "fileNames": ["Dockerfile", "Containerfile"],
+  "fileSuffixes": [".dockerfile", ".containerfile"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

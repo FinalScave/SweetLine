@@ -1,6 +1,6 @@
 {
   "name": "tiecode",
-  "fileExtensions": [".t"],
+  "fileSuffixes": [".t"],
   "variables": {
     "identifierStart": "[\\p{Han}\\w_$]+",
     "identifierPart": "[\\p{Han}\\w_$0-9]*",
@@ -314,7 +314,7 @@
         "#ifdef": "ANDROID"
       },
       {
-        "importSyntax": "c++",
+        "importSyntax": "cpp",
         "#ifdef": "WINDOWS"
       },
       {
@@ -335,7 +335,7 @@
         "#ifdef": "ANDROID"
       },
       {
-        "importSyntax": "c++",
+        "importSyntax": "cpp",
         "#ifdef": "WINDOWS"
       },
       {

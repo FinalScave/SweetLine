@@ -1,6 +1,6 @@
 {
   "name": "go",
-  "fileExtensions": [".go"],
+  "fileSuffixes": [".go"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",

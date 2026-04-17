@@ -1,6 +1,6 @@
 {
   "name": "properties",
-  "fileExtensions": [".properties"],
+  "fileSuffixes": [".properties"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"

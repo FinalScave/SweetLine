@@ -1,6 +1,6 @@
 {
   "name": "scss",
-  "fileExtensions": [".scss"],
+  "fileSuffixes": [".scss"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

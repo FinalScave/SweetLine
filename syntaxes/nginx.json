@@ -1,6 +1,6 @@
 {
   "name": "nginx",
-  "fileExtensions": [".conf", ".nginx"],
+  "fileSuffixes": [".conf", ".nginx"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

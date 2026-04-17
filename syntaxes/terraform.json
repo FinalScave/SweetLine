@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "fileExtensions": [".tf", ".tfvars", ".tfbackend", ".tfrc", ".terraformrc"],
+  "fileSuffixes": [".tf", ".tfvars", ".tfbackend", ".tfrc", ".terraformrc"],
   "variables": {
     "identifier": "[A-Za-z_][A-Za-z0-9_-]*",
     "whiteSpace": "[ \\t\\f]",

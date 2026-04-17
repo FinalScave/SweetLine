@@ -1,6 +1,6 @@
 {
   "name": "hcl",
-  "fileExtensions": [".hcl"],
+  "fileSuffixes": [".hcl"],
   "variables": {
     "identifier": "[A-Za-z_][A-Za-z0-9_-]*",
     "attributeName": "[A-Za-z_][A-Za-z0-9_.-]*",

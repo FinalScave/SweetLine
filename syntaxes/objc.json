@@ -1,6 +1,6 @@
 {
   "name": "objc",
-  "fileExtensions": [".m", ".mm"],
+  "fileSuffixes": [".m", ".mm"],
   "variables": {
     "identifier": "[a-zA-Z_]\\w*",
     "whiteSpace": "[ \\t\\f]",
