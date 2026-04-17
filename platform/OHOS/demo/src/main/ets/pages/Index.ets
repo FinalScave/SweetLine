@@ -9,125 +9,31 @@ interface SpanItem {
   color: number;
 }
 
-const EXACT_SYNTAX_MAP: Map<string, string> = new Map([
-  [".gitignore", "gitignore.json"],
-  ["CMakeLists.txt", "cmake.json"],
-  ["Containerfile", "dockerfile.json"],
-  ["Dockerfile", "dockerfile.json"],
-  ["GNUmakefile", "makefile.json"],
-  ["Makefile", "makefile.json"],
-  ["makefile", "makefile.json"],
-]);
-
-const SUFFIX_SYNTAX_MAP: Map<string, string> = new Map([
-  [".t", "tiecode.json"],
-  [".c", "c.json"],
-  [".cpp", "cpp.json"],
-  [".cs", "csharp.json"],
-  [".dart", "dart.json"],
-  [".go", "go.json"],
-  [".groovy", "groovy.json"],
-  [".html", "html.json"],
-  [".java", "java.json"],
-  [".js", "javascript.json"],
-  [".json", "json-sweetline.json"],
-  [".jsonc", "jsonc.json"],
-  [".json5", "json5.json"],
-  [".kt", "kotlin.json"],
-  [".lua", "lua.json"],
-  [".m", "objc.json"],
-  [".php", "php.json"],
-  [".ps1", "powershell.json"],
-  [".py", "python.json"],
-  [".rs", "rust.json"],
-  [".sh", "shell.json"],
-  [".sql", "sql.json"],
-  [".swift", "swift.json"],
-  [".toml", "toml.json"],
-  [".ts", "typescript.json"],
-  [".vb", "vb.json"],
-  [".xml", "xml.json"],
-  [".yaml", "yaml.json"],
-  [".md", "markdown.json"],
-  [".wenyan", "wenyan.json"],
-  [".myu", "iapp.json"],
-  [".css", "css.json"],
-  [".scss", "scss.json"],
-  [".less", "less.json"],
-  [".cmake", "cmake.json"],
-  [".dockerfile", "dockerfile.json"],
-  [".mk", "makefile.json"],
-  [".properties", "properties.json"],
-  [".env", "env.json"],
-  [".proto", "protobuf.json"],
-  [".graphql", "graphql.json"],
-  [".gql", "graphql.json"],
-  [".nginx", "nginx.json"],
-  [".conf", "nginx.json"],
-  [".gitignore", "gitignore.json"],
-  [".diff", "diff.json"],
-  [".patch", "diff.json"],
-  [".rb", "ruby.json"],
-  [".rake", "ruby.json"],
-  [".gemspec", "ruby.json"],
-  [".ru", "ruby.json"],
-  [".hcl", "hcl.json"],
-  [".tf", "terraform.json"],
-  [".tfvars", "terraform.json"],
-  [".tfbackend", "terraform.json"],
-  [".vue", "vue.json"],
-  [".svelte", "svelte.json"],
-]);
-
-const ROUTED_DOCUMENT_NAMES: Map<string, string> = new Map([
-  [".gitignore", "example.gitignore"],
-  ["CMakeLists.txt", "example.cmake"],
-  ["Containerfile", "example.dockerfile"],
-  ["Dockerfile", "example.dockerfile"],
-  ["GNUmakefile", "example.mk"],
-  ["Makefile", "example.mk"],
-  ["makefile", "example.mk"],
-]);
-
-const EXACT_SAMPLE_FILES: string[] = [
-  ".gitignore",
-  "CMakeLists.txt",
-  "Containerfile",
-  "Dockerfile",
-  "GNUmakefile",
-  "Makefile",
-  "makefile",
+const EXCLUDED_COMMON_SYNTAX_FILES: string[] = [
+  "yaml(non zero width).json",
 ];
 
-const SORTED_SUFFIXES: string[] = Array.from(SUFFIX_SYNTAX_MAP.keys()).sort((left, right) => right.length - left.length);
-
-function resolveSyntaxFileName(fileName: string): string | undefined {
-  const exact = EXACT_SYNTAX_MAP.get(fileName);
-  if (exact !== undefined) {
-    return exact;
-  }
-  for (const suffix of SORTED_SUFFIXES) {
-    if (fileName.endsWith(suffix)) {
-      return SUFFIX_SYNTAX_MAP.get(suffix);
-    }
-  }
-  return undefined;
+function isDemoSampleFile(fileName: string): boolean {
+  return fileName.startsWith("example") || fileName === "json-sweetline.json";
 }
 
-function resolveDocumentFileName(fileName: string): string {
-  const routed = ROUTED_DOCUMENT_NAMES.get(fileName);
-  return routed !== undefined ? routed : fileName;
+function isCommonSyntaxFile(fileName: string): boolean {
+  return fileName.endsWith(".json")
+    && !fileName.startsWith("example")
+    && !fileName.endsWith("-inlineStyle.json")
+    && !EXCLUDED_COMMON_SYNTAX_FILES.includes(fileName);
 }
 
 @Entry
 @Component
 struct Index {
-  private inlineStyleEngine: sweetline.HighlightEngine =
-    new sweetline.HighlightEngine(new sweetline.HighlightConfig(true, true));
   private commonEngine: sweetline.HighlightEngine =
     new sweetline.HighlightEngine(new sweetline.HighlightConfig(true, false));
   private documentAnalyzer: sweetline.DocumentAnalyzer | null = null;
   private themes: HighlightTheme[] = HighlightTheme.builtinThemes();
+  private hasPreparedSyntaxes: boolean = false;
+  private isPreparingSyntaxes: boolean = false;
+  private syntaxWarmupSummary: string = '';
   @State currentThemeIndex: number = 0;
   @State currentTheme: HighlightTheme = HighlightTheme.sweetLineDark();
   @State exampleFiles: string[] = [];
@@ -137,27 +43,14 @@ struct Index {
   private renderVersion: number = 0;
 
   aboutToAppear(): void {
-    this.commonEngine.registerStyleName("keyword", 1);
-    this.commonEngine.registerStyleName("string", 2);
-    this.commonEngine.registerStyleName("number", 3);
-    this.commonEngine.registerStyleName("comment", 4);
-    this.commonEngine.registerStyleName("class", 5);
-    this.commonEngine.registerStyleName("method", 6);
-    this.commonEngine.registerStyleName("variable", 7);
-    this.commonEngine.registerStyleName("punctuation", 8);
-    this.commonEngine.registerStyleName("annotation", 9);
-    this.commonEngine.registerStyleName("preprocessor", 10);
-    this.commonEngine.registerStyleName("macro", 11);
-    this.commonEngine.registerStyleName("lifetime", 12);
-    this.commonEngine.registerStyleName("selector", 13);
-    this.commonEngine.registerStyleName("builtin", 14);
-    this.commonEngine.registerStyleName("url", 15);
-    this.commonEngine.registerStyleName("property", 16);
-
+    if (this.hasPreparedSyntaxes || this.isPreparingSyntaxes) {
+      return;
+    }
+    this.registerStyleNames(this.commonEngine);
     this.commonEngine.defineMacro("OHOS");
-    this.inlineStyleEngine.defineMacro("OHOS");
-
-    this.loadExampleFiles();
+    this.isPreparingSyntaxes = true;
+    this.analyzeTime = 'Compiling demo syntaxes...';
+    void this.prepareDemoSyntaxes();
   }
 
   build() {
@@ -254,28 +147,124 @@ struct Index {
     });
   }
 
-  /**
-   * Load example file list
-   */
-  private loadExampleFiles(): void {
+  private registerStyleNames(engine: sweetline.HighlightEngine): void {
+    engine.registerStyleName("keyword", 1);
+    engine.registerStyleName("string", 2);
+    engine.registerStyleName("number", 3);
+    engine.registerStyleName("comment", 4);
+    engine.registerStyleName("class", 5);
+    engine.registerStyleName("method", 6);
+    engine.registerStyleName("variable", 7);
+    engine.registerStyleName("punctuation", 8);
+    engine.registerStyleName("annotation", 9);
+    engine.registerStyleName("preprocessor", 10);
+    engine.registerStyleName("macro", 11);
+    engine.registerStyleName("lifetime", 12);
+    engine.registerStyleName("selector", 13);
+    engine.registerStyleName("builtin", 14);
+    engine.registerStyleName("url", 15);
+    engine.registerStyleName("property", 16);
+  }
+
+  private async prepareDemoSyntaxes(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext();
       if (context == undefined) {
+        this.analyzeTime = 'Failed to access demo resources';
         return;
       }
       const rawFileList = context.resourceManager.getRawFileListSync("");
-      let files: string[] = [];
-      for (const name of rawFileList) {
-        if (!name.startsWith("example") && !EXACT_SAMPLE_FILES.includes(name) && name !== "json-sweetline.json") {
-          continue;
+      const syntaxFiles: string[] = [];
+      for (const fileName of rawFileList) {
+        if (isCommonSyntaxFile(fileName)) {
+          syntaxFiles.push(fileName);
         }
-        if (resolveSyntaxFileName(name) !== undefined) {
+      }
+      syntaxFiles.sort();
+
+      const startedAt = Date.now();
+      const compiledCount = await this.precompileCommonSyntaxes(context, syntaxFiles);
+      const elapsed = Date.now() - startedAt;
+      this.syntaxWarmupSummary = `Compiled ${compiledCount} syntax rule files in ${elapsed}ms`;
+      this.analyzeTime = this.syntaxWarmupSummary;
+      this.hasPreparedSyntaxes = true;
+      this.loadExampleFiles(rawFileList);
+    } catch (error) {
+      const detail = this.describeError(error);
+      this.analyzeTime = `Failed to compile demo syntaxes: ${detail}`;
+      console.error(TAG, `Failed to precompile demo syntaxes: ${detail}`);
+    } finally {
+      this.isPreparingSyntaxes = false;
+    }
+  }
+
+  private async precompileCommonSyntaxes(context: Context | undefined, syntaxFiles: string[]): Promise<number> {
+    let syntaxJsonMap: Map<string, string> = new Map();
+    for (const syntaxFile of syntaxFiles) {
+      syntaxJsonMap.set(syntaxFile, await ResourceUtils.readRawTextFile(context, syntaxFile));
+    }
+
+    let pending: string[] = syntaxFiles.slice();
+    let compiledCount = 0;
+    while (pending.length > 0) {
+      let nextPending: string[] = [];
+      let madeProgress = false;
+
+      for (const syntaxFile of pending) {
+        try {
+          const syntaxJson = syntaxJsonMap.get(syntaxFile);
+          this.commonEngine.compileSyntaxFromJson(syntaxJson !== undefined ? syntaxJson : '');
+          compiledCount++;
+          madeProgress = true;
+        } catch (error) {
+          if (error instanceof sweetline.SyntaxCompileError
+            && error.errorCode === sweetline.SyntaxCompileError.ERR_IMPORT_SYNTAX_NOT_FOUND) {
+            nextPending.push(syntaxFile);
+            continue;
+          }
+          throw new Error(`${syntaxFile}: ${this.describeError(error)}`);
+        }
+      }
+
+      if (!madeProgress && nextPending.length > 0) {
+        throw new Error(`Unresolved syntax imports: ${nextPending.join(', ')}`);
+      }
+      pending = nextPending;
+    }
+    return compiledCount;
+  }
+
+  private describeError(error: Object): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return `${error}`;
+  }
+
+  /**
+   * Load example file list
+   */
+  private loadExampleFiles(rawFileList?: string[]): void {
+    try {
+      let files: string[] = [];
+      let sourceFiles: string[] = [];
+      if (rawFileList !== undefined) {
+        sourceFiles = rawFileList;
+      } else {
+        const context = this.getUIContext().getHostContext();
+        if (context != undefined) {
+          sourceFiles = context.resourceManager.getRawFileListSync("");
+        }
+      }
+      for (const name of sourceFiles) {
+        if (isDemoSampleFile(name)) {
           files.push(name);
         }
       }
       files.sort();
       this.exampleFiles = files;
       if (files.length > 0) {
+        this.selectedFileIndex = 0;
         this.highlightFile(files[0]);
       }
     } catch (error) {
@@ -296,52 +285,44 @@ struct Index {
    * Highlight the specified file
    */
   private highlightFile(testFileName: string): void {
-    const syntaxFileName = resolveSyntaxFileName(testFileName);
-    if (!syntaxFileName) {
-      console.warn(TAG, `Syntax rule file not found for the given test file`);
+    if (!this.hasPreparedSyntaxes) {
       return;
     }
-    this.highlight(testFileName, syntaxFileName, resolveDocumentFileName(testFileName), false);
+    void this.highlight(testFileName);
   }
 
   /**
    * Perform highlight analysis
    */
-  private async highlight(testFileName: string, syntaxFileName: string, documentFileName: string, inlineStyle: boolean): Promise<void> {
+  private async highlight(testFileName: string): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext();
-      const syntaxJson = await ResourceUtils.readRawTextFile(context, syntaxFileName);
       const testCode = await ResourceUtils.readRawTextFile(context, testFileName);
-
-      let compileStart = Date.now();
-      if (inlineStyle) {
-        this.inlineStyleEngine.compileSyntaxFromJson(syntaxJson);
-      } else {
-        this.commonEngine.compileSyntaxFromJson(syntaxJson);
-      }
-      let compileTime = Date.now() - compileStart;
-      console.info(TAG, `====compileSyntaxFromJson: ${compileTime}ms`);
-
-      const document = new sweetline.Document(documentFileName, testCode);
+      const document = new sweetline.Document(testFileName, testCode);
 
       let loadStart = Date.now();
-      if (inlineStyle) {
-        this.documentAnalyzer = this.inlineStyleEngine.loadDocument(document);
-      } else {
-        this.documentAnalyzer = this.commonEngine.loadDocument(document);
-      }
+      this.documentAnalyzer = this.commonEngine.loadDocument(document);
       let loadTime = Date.now() - loadStart;
       console.info(TAG, `====loadDocument: ${loadTime}ms`);
+      if (this.documentAnalyzer == null) {
+        this.analyzeTime = this.syntaxWarmupSummary.length > 0
+          ? `${this.syntaxWarmupSummary} | No matching syntax for ${testFileName}`
+          : `No matching syntax for ${testFileName}`;
+        this.renderVersion++;
+        this.highlightSpans = testCode.length > 0 ? [{ text: testCode, color: this.currentTheme.textColor }] : [];
+        return;
+      }
 
       let analyzeStart = Date.now();
-      const highlight = this.documentAnalyzer?.analyze();
+      const highlight = this.documentAnalyzer.analyze();
       let analyzeElapsed = Date.now() - analyzeStart;
       console.info(TAG, `====analyze: ${analyzeElapsed}ms`);
-
-      this.analyzeTime = `Compile: ${compileTime}ms | Load: ${loadTime}ms | Analyze: ${analyzeElapsed}ms`;
+      this.analyzeTime = this.syntaxWarmupSummary.length > 0
+        ? `${this.syntaxWarmupSummary} | Load: ${loadTime}ms | Analyze: ${analyzeElapsed}ms`
+        : `Load: ${loadTime}ms | Analyze: ${analyzeElapsed}ms`;
 
       if (highlight) {
-        this.buildSpanItems(testCode, highlight, inlineStyle);
+        this.buildSpanItems(testCode, highlight);
       }
     } catch (e) {
       console.error(TAG, `Highlight analysis error: ${e}`);
@@ -351,7 +332,7 @@ struct Index {
   /**
    * Build highlight results into SpanItem array for rendering
    */
-  private buildSpanItems(fullText: string, highlight: sweetline.DocumentHighlight, inlineStyle: boolean): void {
+  private buildSpanItems(fullText: string, highlight: sweetline.DocumentHighlight): void {
     let items: SpanItem[] = [];
     const lines = fullText.split('\n');
 
@@ -397,16 +378,9 @@ struct Index {
           });
         }
 
-        let color: number;
-        if (inlineStyle && span.inlineStyle != null) {
-          color = span.inlineStyle.foreground != 0 ? span.inlineStyle.foreground : this.currentTheme.textColor;
-        } else {
-          color = this.currentTheme.getColor(span.styleId);
-        }
-
         items.push({
           text: lineText.substring(startCol, endCol),
-          color: color
+          color: this.currentTheme.getColor(span.styleId)
         });
         lastCol = endCol;
       }

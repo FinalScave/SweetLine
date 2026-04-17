@@ -35,9 +35,10 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
-  static final Map<String, DemoAssetEntry> _samplesByFileName = <String, DemoAssetEntry>{
-    for (final sample in demoAssetEntries) sample.fileName: sample,
-  };
+  static final Map<String, DemoAssetEntry> _samplesByFileName =
+      <String, DemoAssetEntry>{
+        for (final sample in demoAssetEntries) sample.fileName: sample,
+      };
 
   late final HighlightEngine _engine;
   late final List<HighlightTheme> _themes;
@@ -47,6 +48,7 @@ class _DemoPageState extends State<DemoPage> {
   bool _isLoading = false;
   String? _error;
   String _statusText = 'Ready';
+  String? _warmupSummary;
   String _sourceCode = '';
   DocumentHighlight? _highlight;
   IndentGuideResult? _indentGuides;
@@ -56,12 +58,14 @@ class _DemoPageState extends State<DemoPage> {
     super.initState();
     _themes = HighlightTheme.builtinThemes();
     _currentTheme = _themes.first;
-    _engine = HighlightEngine(const HighlightConfig(showIndex: true, inlineStyle: false));
+    _engine = HighlightEngine(
+      const HighlightConfig(showIndex: true, inlineStyle: false),
+    );
     _registerStyleNames(_engine);
     _definePlatformMacros(_engine);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _highlightFile(_selectedFile);
+      _warmUpAndHighlightInitialSample();
     });
   }
 
@@ -91,20 +95,14 @@ class _DemoPageState extends State<DemoPage> {
 
     try {
       final sourceCode = await rootBundle.loadString(sample.sourceAssetPath);
-      final syntaxJson = await rootBundle.loadString(sample.syntaxAssetPath);
-
-      final compileWatch = Stopwatch()..start();
-      _engine.compileSyntaxFromJson(syntaxJson);
-      compileWatch.stop();
-
-      final document = Document('asset://$fileName', sourceCode);
+      final document = Document(fileName, sourceCode);
       DocumentAnalyzer? analyzer;
       try {
         final loadWatch = Stopwatch()..start();
         analyzer = _engine.loadDocument(document);
         loadWatch.stop();
         if (analyzer == null) {
-          throw StateError('Failed to load document');
+          throw StateError('No matching syntax for $fileName');
         }
 
         final analyzeWatch = Stopwatch()..start();
@@ -121,12 +119,13 @@ class _DemoPageState extends State<DemoPage> {
           _highlight = highlight;
           _indentGuides = indentGuides;
           _isLoading = false;
-          _statusText =
-              'Compile: ${compileWatch.elapsedMicroseconds}us | '
-              'Load: ${loadWatch.elapsedMicroseconds}us | '
-              'Analyze: ${analyzeWatch.elapsedMicroseconds}us | '
-              'Lines: ${sourceCode.split('\n').length} | '
-              'File: $fileName';
+          _statusText = <String>[
+            ...?_warmupSummary == null ? null : <String>[_warmupSummary!],
+            'Load: ${loadWatch.elapsedMicroseconds}us',
+            'Analyze: ${analyzeWatch.elapsedMicroseconds}us',
+            'Lines: ${sourceCode.split('\n').length}',
+            'File: $fileName',
+          ].join(' | ');
         });
       } finally {
         analyzer?.close();
@@ -144,6 +143,89 @@ class _DemoPageState extends State<DemoPage> {
     }
   }
 
+  Future<void> _warmUpAndHighlightInitialSample() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _statusText =
+          'Preparing ${demoCommonSyntaxAssetPaths.length} syntax rule files...';
+    });
+
+    try {
+      final warmupWatch = Stopwatch()..start();
+      final compiledCount = await _precompileCommonSyntaxes();
+      warmupWatch.stop();
+
+      if (!mounted) {
+        return;
+      }
+
+      final warmupSummary =
+          'Warmup: $compiledCount syntaxes in ${warmupWatch.elapsedMilliseconds} ms';
+      setState(() {
+        _warmupSummary = warmupSummary;
+        _statusText =
+            'Compiled $compiledCount syntax rule files in ${warmupWatch.elapsedMilliseconds} ms';
+      });
+
+      await _highlightFile(_selectedFile);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _error = '$error';
+        _statusText = 'Error: $_error';
+      });
+    }
+  }
+
+  Future<int> _precompileCommonSyntaxes() async {
+    final syntaxJsonByAssetPath = <String, String>{};
+    for (final assetPath in demoCommonSyntaxAssetPaths) {
+      syntaxJsonByAssetPath[assetPath] = await rootBundle.loadString(assetPath);
+    }
+
+    var pendingAssetPaths = syntaxJsonByAssetPath.keys.toList(growable: true)
+      ..sort((left, right) => left.compareTo(right));
+    var compiledCount = 0;
+
+    while (pendingAssetPaths.isNotEmpty) {
+      var progressed = false;
+      final nextPending = <String>[];
+
+      for (final assetPath in pendingAssetPaths) {
+        try {
+          _engine.compileSyntaxFromJson(syntaxJsonByAssetPath[assetPath]!);
+          compiledCount += 1;
+          progressed = true;
+        } on SyntaxCompileError catch (error) {
+          if (error.errorCode == SyntaxCompileError.errImportSyntaxNotFound) {
+            nextPending.add(assetPath);
+            continue;
+          }
+          throw StateError(
+            'Failed to compile ${_assetFileName(assetPath)}: $error',
+          );
+        }
+      }
+
+      if (!progressed) {
+        final unresolved = nextPending.map(_assetFileName).join(', ');
+        throw StateError('Unresolved syntax dependencies: $unresolved');
+      }
+
+      pendingAssetPaths = nextPending;
+    }
+
+    return compiledCount;
+  }
+
+  String _assetFileName(String assetPath) {
+    return assetPath.split('/').last;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = _currentTheme;
@@ -154,11 +236,19 @@ class _DemoPageState extends State<DemoPage> {
           padding: const EdgeInsets.all(14),
           child: Container(
             decoration: BoxDecoration(
-              color: HighlightTheme.blend(theme.background, Colors.white, 0.015),
+              color: HighlightTheme.blend(
+                theme.background,
+                Colors.white,
+                0.015,
+              ),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: theme.separator),
               boxShadow: <BoxShadow>[
-                BoxShadow(color: Colors.black.withAlpha(46), blurRadius: 18, offset: const Offset(0, 10)),
+                BoxShadow(
+                  color: Colors.black.withAlpha(46),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
               ],
             ),
             clipBehavior: Clip.antiAlias,
@@ -168,11 +258,16 @@ class _DemoPageState extends State<DemoPage> {
                   theme: theme,
                   selectedFile: _selectedFile,
                   exampleFiles: demoAssetFileNames,
-                  themeNames: _themes.map((theme) => theme.name).toList(growable: false),
+                  themeNames: _themes
+                      .map((theme) => theme.name)
+                      .toList(growable: false),
                   selectedThemeName: theme.name,
+                  fileSelectionEnabled: !_isLoading,
                   onFileSelected: _highlightFile,
                   onThemeSelected: (themeName) {
-                    final nextTheme = _themes.firstWhere((item) => item.name == themeName);
+                    final nextTheme = _themes.firstWhere(
+                      (item) => item.name == themeName,
+                    );
                     setState(() {
                       _currentTheme = nextTheme;
                     });
@@ -188,20 +283,30 @@ class _DemoPageState extends State<DemoPage> {
                           sourceCode: _sourceCode,
                           highlight: _highlight,
                           indentGuides: _indentGuides,
-                          placeholder: _isLoading ? 'Analyzing...' : (_error ?? 'Select a file'),
+                          placeholder: _isLoading
+                              ? 'Analyzing...'
+                              : (_error ?? 'Select a file'),
                         ),
                       ),
                       if (_isLoading)
                         const Positioned(
                           top: 18,
                           right: 18,
-                          child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2)),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2.2),
+                          ),
                         ),
                     ],
                   ),
                 ),
                 Container(height: 1, color: theme.separator),
-                _StatusBar(theme: theme, statusText: _statusText, errorText: _error),
+                _StatusBar(
+                  theme: theme,
+                  statusText: _statusText,
+                  errorText: _error,
+                ),
               ],
             ),
           ),
@@ -254,6 +359,7 @@ class _HeaderBar extends StatelessWidget {
     required this.exampleFiles,
     required this.themeNames,
     required this.selectedThemeName,
+    required this.fileSelectionEnabled,
     required this.onFileSelected,
     required this.onThemeSelected,
   });
@@ -263,6 +369,7 @@ class _HeaderBar extends StatelessWidget {
   final List<String> exampleFiles;
   final List<String> themeNames;
   final String selectedThemeName;
+  final bool fileSelectionEnabled;
   final ValueChanged<String> onFileSelected;
   final ValueChanged<String> onThemeSelected;
 
@@ -279,14 +386,19 @@ class _HeaderBar extends StatelessWidget {
         children: <Widget>[
           Text(
             'SweetLine Flutter Demo',
-            style: TextStyle(color: theme.text, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+            style: TextStyle(
+              color: theme.text,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
           ),
           _LabeledDropdown(
             label: 'File',
             value: selectedFile,
             items: exampleFiles,
             theme: theme,
-            onChanged: onFileSelected,
+            onChanged: fileSelectionEnabled ? onFileSelected : null,
             width: 220,
           ),
           _LabeledDropdown(
@@ -317,7 +429,7 @@ class _LabeledDropdown extends StatelessWidget {
   final String value;
   final List<String> items;
   final HighlightTheme theme;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
   final double width;
 
   @override
@@ -330,7 +442,12 @@ class _LabeledDropdown extends StatelessWidget {
         children: <Widget>[
           Text(
             label.toUpperCase(),
-            style: TextStyle(color: theme.lineNumber, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.1),
+            style: TextStyle(
+              color: theme.lineNumber,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
           ),
           const SizedBox(height: 6),
           DecoratedBox(
@@ -347,7 +464,11 @@ class _LabeledDropdown extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 borderRadius: BorderRadius.circular(12),
                 iconEnabledColor: theme.accent,
-                style: TextStyle(color: theme.text, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: theme.text,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
                 items: items
                     .map(
                       (item) => DropdownMenuItem<String>(
@@ -357,8 +478,8 @@ class _LabeledDropdown extends StatelessWidget {
                     )
                     .toList(growable: false),
                 onChanged: (value) {
-                  if (value != null) {
-                    onChanged(value);
+                  if (value != null && onChanged != null) {
+                    onChanged!.call(value);
                   }
                 },
               ),
@@ -371,7 +492,11 @@ class _LabeledDropdown extends StatelessWidget {
 }
 
 class _StatusBar extends StatelessWidget {
-  const _StatusBar({required this.theme, required this.statusText, required this.errorText});
+  const _StatusBar({
+    required this.theme,
+    required this.statusText,
+    required this.errorText,
+  });
 
   final HighlightTheme theme;
   final String statusText;

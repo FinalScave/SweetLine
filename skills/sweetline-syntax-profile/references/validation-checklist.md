@@ -8,13 +8,18 @@ Do not finish syntax work until you have checked the items that apply.
 - The syntax compiles from file.
 - Imported syntaxes are available before the dependent syntax is compiled.
 - New fragments and states are actually reachable.
-- Grouping intent is explicit: structural regex groups are non-capturing, and any capturing group is intentionally consumed by `styles` or `subStates`.
+- Group numbering intent is explicit: `styles` and `subStates` use token-local capture indices, helper captures are preserved when needed to stabilize numbering, and non-capturing groups are used everywhere else.
+- `include` / `includes`, `importSyntax`, and `onLineEndState` directive objects are written as standalone objects rather than mixed with token fields.
+- For inline-style syntaxes, every referenced inline style name exists in top-level `styles[]`.
+- If the syntax uses `scopeRules`, `start` / `end` are strings, `branches` is a string array when present, and delimiter or branch tokens are not accidentally hidden behind scope-skip styles such as names containing `string`, `comment`, or `char`.
 
 ## Routing checks
 
-- Analyzer selection works for every intended exact file name, file suffix, or file-name pattern.
+- Analyzer selection works for every intended exact file name, file suffix, or basename-level file-name pattern.
 - Ambiguous file names, suffixes, or patterns do not route to the wrong syntax.
-- Sample-file routing and demo-side routing remain aligned when both exist.
+- Exact-name duplicates and duplicate syntax names have not been introduced.
+- File-name patterns were validated as full matches rather than substring matches.
+- Analyzer-selection tests cover the intended core routing path with the real routed file names, and sample files or demo assets remain aligned with the syntax family they are meant to exercise.
 
 ## Example checks
 
@@ -34,4 +39,5 @@ Do not finish syntax work until you have checked the items that apply.
 
 - Syntax-related tests compile.
 - The relevant test subset passes when the environment permits it.
-- Demo registration or asset sync is updated when the project exposes examples in a demo.
+- Macro-gated imports are verified with the intended macro definitions when the syntax uses `#ifdef`.
+- Demo asset sync, generated manifest, or built-in syntax/example list is updated when the project exposes examples in a demo.

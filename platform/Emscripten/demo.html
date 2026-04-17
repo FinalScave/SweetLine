@@ -173,7 +173,7 @@
     <h1 class="title">SweetLine Web Demo</h1>
     <section class="toolbar">
       <div class="control"><label for="exampleSelect">Example File</label><select id="exampleSelect"></select></div>
-      <div class="control"><label for="syntaxSelect">Syntax Rule</label><select id="syntaxSelect"></select></div>
+      <div class="control"><label for="syntaxSelect">Manual Syntax</label><select id="syntaxSelect"></select></div>
       <div class="control"><label for="themeSelect">Theme</label><select id="themeSelect"></select></div>
       <div class="control"><label>&nbsp;</label><button id="loadExampleBtn" class="accent">Load Example</button></div>
       <div class="control"><label>&nbsp;</label><button id="openCodeBtn">Open Local Code</button></div>
@@ -220,56 +220,37 @@
     const OVERSCAN = 40;
     const DEMO_SYNTAX_BASE = "../../syntaxes/";
     const DEMO_EXAMPLE_BASE = "../../tests/files/";
+    const SYNTAX_COMPILE_ERROR_CODES = {
+      IMPORT_SYNTAX_NOT_FOUND: -8
+    };
+    const BUILTIN_COMMON_SYNTAX_FILES = [
+      "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json",
+      "c.json", "cmake.json", "cpp.json", "csharp.json", "css.json", "csv.json", "dart.json", "diff.json",
+      "dockerfile.json", "dts.json", "env.json", "gitignore.json", "glsl.json", "go.json", "graphql.json",
+      "groovy.json", "hcl.json", "hlsl.json", "html.json", "iapp.json", "jasm.json", "java.json",
+      "javascript.json", "json5.json", "json-sweetline.json", "jsonc.json", "kotlin.json", "latex.json",
+      "less.json", "lua.json", "lyrics.json", "makefile.json", "markdown.json", "nginx.json", "nix.json",
+      "objc.json", "php.json", "powershell.json", "properties.json", "protobuf.json", "python.json",
+      "ruby.json", "rust.json", "scala.json", "scss.json", "shell.json", "smali.json", "sql.json",
+      "svelte.json", "svg.json", "swift.json", "terraform.json", "tiecode.json", "toml.json",
+      "typescript.json", "vb.json", "vue.json", "wenyan.json", "xml.json", "yaml.json", "zig.json"
+    ];
 
     const STYLE_IDS = {
       keyword: 1, string: 2, number: 3, comment: 4, class: 5, method: 6, variable: 7,
       punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14
     };
 
-    const EXACT_SYNTAX_MAP = {
-      ".gitignore": "gitignore.json",
-      "CMakeLists.txt": "cmake.json",
-      "Containerfile": "dockerfile.json",
-      "Dockerfile": "dockerfile.json",
-      "GNUmakefile": "makefile.json",
-      "Makefile": "makefile.json",
-      "makefile": "makefile.json"
-    };
-
-    const SUFFIX_SYNTAX_MAP = {
-      ".t": "tiecode.json", ".c": "c.json", ".cpp": "cpp.json", ".cs": "csharp.json", ".dart": "dart.json",
-      ".go": "go.json", ".groovy": "groovy.json", ".html": "html.json", ".java": "java.json", ".js": "javascript.json",
-      ".json": "json-sweetline.json", ".jsonc": "jsonc.json", ".json5": "json5.json", ".kt": "kotlin.json",
-      ".lua": "lua.json", ".m": "objc.json", ".php": "php.json", ".ps1": "powershell.json", ".py": "python.json",
-      ".rs": "rust.json", ".scala": "scala.json", ".sh": "shell.json", ".sql": "sql.json", ".swift": "swift.json",
-      ".toml": "toml.json", ".ts": "typescript.json", ".vb": "vb.json", ".xml": "xml.json", ".yaml": "yaml.json",
-      ".md": "markdown.json", ".wenyan": "wenyan.json", ".myu": "iapp.json", ".css": "css.json",
-      ".scss": "scss.json", ".less": "less.json", ".cmake": "cmake.json", ".dockerfile": "dockerfile.json",
-      ".mk": "makefile.json", ".properties": "properties.json", ".env": "env.json", ".proto": "protobuf.json",
-      ".graphql": "graphql.json", ".gql": "graphql.json", ".nginx": "nginx.json", ".conf": "nginx.json",
-      ".gitignore": "gitignore.json", ".diff": "diff.json", ".patch": "diff.json", ".rb": "ruby.json",
-      ".rake": "ruby.json", ".gemspec": "ruby.json", ".ru": "ruby.json", ".hcl": "hcl.json",
-      ".tf": "terraform.json", ".tfvars": "terraform.json", ".tfbackend": "terraform.json", ".vue": "vue.json",
-      ".svelte": "svelte.json"
-    };
-
-    const ROUTED_DOCUMENT_NAMES = {
-      ".gitignore": "example.gitignore",
-      "CMakeLists.txt": "example.cmake",
-      "Containerfile": "example.dockerfile",
-      "Dockerfile": "example.dockerfile",
-      "GNUmakefile": "example.mk",
-      "Makefile": "example.mk",
-      "makefile": "example.mk"
-    };
-
-    const SORTED_SUFFIXES = Object.keys(SUFFIX_SYNTAX_MAP).sort((left, right) => right.length - left.length);
-
     const EXAMPLE_FILES = [
-      "example.c", "example.cpp", "example.cs", "example.dart", "example.go", "example.groovy", "example.html", "example.java", "example.js",
-      "example.kt", "example.lua", "example.m", "example.md", "example.myu", "example.php", "example.ps1", "example.py", "example.rs",
-      "example.scala", "example.sh", "example.sql", "example.swift", "example.t", "example.toml", "example.ts", "example.vb", "example.wenyan",
-      "example.xml", "example.yaml"
+      "example.aarch64", "example.abnf", "example.bat", "example.bf", "example.c", "example.cmake", "example.cpp", "example.cs",
+      "example.css", "example.csv", "example.dart", "example.diff", "example.dockerfile", "example.dts", "example.env", "example.gitignore",
+      "example.glsl", "example.go", "example.graphql", "example.groovy", "example.hcl", "example.hlsl", "example.html", "example.jasm",
+      "example.java", "example.js", "example.json5", "example.jsonc", "example.kt", "example.less", "example.lrc", "example.lua",
+      "example.m", "example.md", "example.mk", "example.myu", "example.nasm", "example.nginx", "example.nix", "example.php",
+      "example.properties", "example.proto", "example.ps1", "example.py", "example.rb", "example.rs", "example.s", "example.scala",
+      "example.scss", "example.sh", "example.smali", "example.sql", "example.svelte", "example.svg", "example.swift", "example.t",
+      "example.tex", "example.tf", "example.toml", "example.ts", "example.vb", "example.vue", "example.wenyan", "example.xml",
+      "example.yaml", "example.zig"
     ];
 
     function makeTheme(name, bg, text, colors) {
@@ -318,10 +299,14 @@
 
     const state = {
       sl: null,
+      commonEngine: null,
+      manualEngine: null,
       engine: null,
       analyzer: null,
+      mode: "auto",
       syntaxJson: "",
       syntaxFile: "",
+      commonSyntaxEntries: new Map(),
       fileName: "example.java",
       documentFileName: "example.java",
       text: "",
@@ -331,25 +316,12 @@
       renderRaf: 0,
       scrollRaf: 0,
       loadingToken: 0,
-      lastVisibleKey: ""
+      lastVisibleKey: "",
+      warmupSummary: null
     };
 
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-    function resolveSyntaxFileName(name) {
-      if (Object.prototype.hasOwnProperty.call(EXACT_SYNTAX_MAP, name)) {
-        return EXACT_SYNTAX_MAP[name];
-      }
-      for (const suffix of SORTED_SUFFIXES) {
-        if (name.endsWith(suffix)) {
-          return SUFFIX_SYNTAX_MAP[suffix];
-        }
-      }
-      return "";
-    }
-
-    function resolveDocumentFileName(name) {
-      return ROUTED_DOCUMENT_NAMES[name] || name;
-    }
+    function documentUri(fileName) { return `file:///${fileName}`; }
 
     function escapeHtml(text) {
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -370,6 +342,22 @@
       els.statusText.textContent = text;
       els.statusBar.classList.remove("good", "bad");
       if (level) { els.statusBar.classList.add(level); }
+    }
+
+    function setControlsEnabled(enabled) {
+      els.exampleSelect.disabled = !enabled;
+      els.syntaxSelect.disabled = !enabled;
+      els.loadExampleBtn.disabled = !enabled;
+      els.openCodeBtn.disabled = !enabled;
+      els.openSyntaxBtn.disabled = !enabled;
+      els.recompileBtn.disabled = !enabled;
+      els.editorInput.disabled = !enabled;
+    }
+
+    function yieldToUi() {
+      return new Promise((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
     }
 
     function setTextCaches(text) {
@@ -540,9 +528,20 @@
       }
     }
 
+    function createEngine() {
+      const config = new state.sl.HighlightConfig();
+      config.showIndex = true;
+      config.inlineStyle = false;
+      config.tabSize = 4;
+      const engine = new state.sl.HighlightEngine(config);
+      registerStyleNames(engine);
+      engine.defineMacro("WEB");
+      return engine;
+    }
+
     function disposeAnalyzer() {
       if (state.engine && state.documentFileName) {
-        try { state.engine.removeDocument(`file:///${state.documentFileName}`); } catch (e) {}
+        try { state.engine.removeDocument(documentUri(state.documentFileName)); } catch (e) {}
       }
       if (state.analyzer && typeof state.analyzer.delete === "function") {
         state.analyzer.delete();
@@ -550,23 +549,220 @@
       state.analyzer = null;
     }
 
-    function disposeEngine() {
-      disposeAnalyzer();
-      if (state.engine && typeof state.engine.delete === "function") {
-        state.engine.delete();
+    function disposeManualEngine() {
+      if (state.manualEngine && typeof state.manualEngine.delete === "function") {
+        state.manualEngine.delete();
       }
-      state.engine = null;
+      state.manualEngine = null;
+      if (state.mode === "localManual") {
+        state.engine = null;
+      }
     }
 
-    function buildEngine() {
-      disposeEngine();
-      const config = new state.sl.HighlightConfig();
-      config.showIndex = true;
-      config.inlineStyle = false;
-      config.tabSize = 4;
-      state.engine = new state.sl.HighlightEngine(config);
-      registerStyleNames(state.engine);
-      state.engine.defineMacro("WEB");
+    function isRetryableImportError(error) {
+      return error && error.name === "SyntaxCompileError"
+        && error.errorCode === SYNTAX_COMPILE_ERROR_CODES.IMPORT_SYNTAX_NOT_FOUND;
+    }
+
+    function wrapSyntaxCompileError(fileName, error) {
+      if (!error || typeof error !== "object") {
+        return new Error(`Failed to compile ${fileName}: ${String(error)}`);
+      }
+      const message = error.message || String(error);
+      if (error.name === "SyntaxCompileError") {
+        return new Error(`Failed to compile ${fileName}: [${error.errorCode}] ${message}`);
+      }
+      return new Error(`Failed to compile ${fileName}: ${message}`);
+    }
+
+    function inferManualDocumentFileName(syntaxJson, fallbackSyntaxFile) {
+      let parsed;
+      try {
+        parsed = JSON.parse(syntaxJson);
+      } catch (error) {
+        throw new Error(`Cannot infer manual route from ${fallbackSyntaxFile}: invalid JSON`);
+      }
+
+      const fileNames = Array.isArray(parsed?.fileNames) ? parsed.fileNames : [];
+      const exactName = fileNames.find((value) => typeof value === "string" && value.trim().length > 0);
+      if (exactName) { return exactName.trim(); }
+
+      const fileSuffixes = Array.isArray(parsed?.fileSuffixes) ? parsed.fileSuffixes : [];
+      const suffix = fileSuffixes.find((value) => typeof value === "string" && value.trim().length > 0);
+      if (suffix) { return `manual${suffix.trim()}`; }
+
+      throw new Error(`Manual syntax ${fallbackSyntaxFile} has no fileNames or fileSuffixes for routing`);
+    }
+
+    async function loadBuiltinCommonSyntaxEntries() {
+      const files = BUILTIN_COMMON_SYNTAX_FILES.slice();
+      const entries = await Promise.all(files.map(async (fileName) => ({
+        fileName,
+        syntaxJson: await fetchText(`${DEMO_SYNTAX_BASE}${fileName}`)
+      })));
+      return entries;
+    }
+
+    async function compileSyntaxEntriesWithRetry(engine, entries) {
+      const total = entries.length;
+      let compiled = 0;
+      let pending = entries.slice();
+      while (pending.length > 0) {
+        let roundProgress = 0;
+        const nextPending = [];
+        for (const entry of pending) {
+          setStatus(`Compiling ${compiled + 1}/${total}: ${entry.fileName}`);
+          await yieldToUi();
+          try {
+            engine.compileSyntaxFromJson(entry.syntaxJson);
+            compiled += 1;
+            roundProgress += 1;
+          } catch (error) {
+            if (isRetryableImportError(error)) {
+              nextPending.push(entry);
+              continue;
+            }
+            throw wrapSyntaxCompileError(entry.fileName, error);
+          }
+        }
+        if (roundProgress === 0) {
+          const unresolved = nextPending.map((entry) => entry.fileName).join(", ");
+          throw new Error(`Unresolved syntax imports: ${unresolved}`);
+        }
+        pending = nextPending;
+      }
+      return compiled;
+    }
+
+    async function prepareBuiltInCommonEngine() {
+      const startedAt = performance.now();
+      setStatus(`Loading ${BUILTIN_COMMON_SYNTAX_FILES.length} common syntax files...`);
+      const entries = await loadBuiltinCommonSyntaxEntries();
+      const engine = createEngine();
+      try {
+        const compiledCount = await compileSyntaxEntriesWithRetry(engine, entries);
+        state.commonEngine = engine;
+        state.commonSyntaxEntries = new Map(entries.map((entry) => [entry.fileName, entry.syntaxJson]));
+        state.warmupSummary = {
+          compiledCount,
+          elapsedMs: performance.now() - startedAt
+        };
+      } catch (error) {
+        if (typeof engine.delete === "function") {
+          engine.delete();
+        }
+        throw error;
+      }
+    }
+
+    async function rebuildAutoAnalyzer(reason = "Auto route") {
+      if (!state.commonEngine) {
+        setStatus("Common syntax engine is not ready.", "bad");
+        return;
+      }
+
+      disposeAnalyzer();
+      disposeManualEngine();
+      state.mode = "auto";
+      state.engine = state.commonEngine;
+      state.documentFileName = state.fileName;
+
+      const doc = new state.sl.Document(documentUri(state.documentFileName), state.text);
+      state.analyzer = state.engine.loadDocument(doc);
+      if (!state.analyzer) {
+        state.lastVisibleKey = "";
+        renderPlainVisible();
+        setStatus(`No routed syntax matched ${state.fileName}.`, "bad");
+        return;
+      }
+
+      const analyzeStartedAt = performance.now();
+      state.analyzer.analyze();
+      const analyzeMs = performance.now() - analyzeStartedAt;
+
+      state.lastVisibleKey = "";
+      await refreshVisibleNoChange(true);
+      setStatus(`${reason}: auto route ${state.fileName} | full analyze ${analyzeMs.toFixed(2)} ms | lines ${state.lines.length}`, "good");
+    }
+
+    async function rebuildBuiltinManualAnalyzer(reason = "Manual syntax") {
+      if (!state.commonEngine || !state.syntaxFile) {
+        setStatus("No built-in manual syntax selected.", "bad");
+        return;
+      }
+
+      disposeAnalyzer();
+      disposeManualEngine();
+      state.mode = "builtinManual";
+      state.engine = state.commonEngine;
+
+      const doc = new state.sl.Document(documentUri(state.documentFileName), state.text);
+      state.analyzer = state.engine.loadDocument(doc);
+      if (!state.analyzer) {
+        state.lastVisibleKey = "";
+        renderPlainVisible();
+        setStatus(`Manual route ${state.documentFileName} did not resolve ${state.syntaxFile}.`, "bad");
+        return;
+      }
+
+      const analyzeStartedAt = performance.now();
+      state.analyzer.analyze();
+      const analyzeMs = performance.now() - analyzeStartedAt;
+
+      state.lastVisibleKey = "";
+      await refreshVisibleNoChange(true);
+      setStatus(`${reason}: ${state.syntaxFile} via ${state.documentFileName} | full analyze ${analyzeMs.toFixed(2)} ms | lines ${state.lines.length}`, "good");
+    }
+
+    async function rebuildLocalManualAnalyzer(reason = "Manual syntax") {
+      if (!state.syntaxJson) {
+        setStatus("No local syntax JSON loaded.", "bad");
+        return;
+      }
+
+      disposeAnalyzer();
+      disposeManualEngine();
+      state.mode = "localManual";
+      state.manualEngine = createEngine();
+      state.engine = state.manualEngine;
+
+      const compileStartedAt = performance.now();
+      try {
+        state.manualEngine.compileSyntaxFromJson(state.syntaxJson);
+      } catch (error) {
+        throw wrapSyntaxCompileError(state.syntaxFile || "local syntax", error);
+      }
+      const compileMs = performance.now() - compileStartedAt;
+
+      const doc = new state.sl.Document(documentUri(state.documentFileName), state.text);
+      state.analyzer = state.engine.loadDocument(doc);
+      if (!state.analyzer) {
+        state.lastVisibleKey = "";
+        renderPlainVisible();
+        setStatus(`Manual route ${state.documentFileName} did not resolve ${state.syntaxFile || "local syntax"}.`, "bad");
+        return;
+      }
+
+      const analyzeStartedAt = performance.now();
+      state.analyzer.analyze();
+      const analyzeMs = performance.now() - analyzeStartedAt;
+
+      state.lastVisibleKey = "";
+      await refreshVisibleNoChange(true);
+      setStatus(`${reason}: ${state.syntaxFile || "local syntax"} | compile ${compileMs.toFixed(2)} ms | full analyze ${analyzeMs.toFixed(2)} ms | lines ${state.lines.length}`, "good");
+    }
+
+    async function rebuildAnalyzer(reason = "Rebuild") {
+      if (!state.sl) { return; }
+      if (state.mode === "builtinManual") {
+        await rebuildBuiltinManualAnalyzer(reason);
+        return;
+      }
+      if (state.mode === "localManual") {
+        await rebuildLocalManualAnalyzer(reason);
+        return;
+      }
+      await rebuildAutoAnalyzer(reason);
     }
 
     async function fetchText(path) {
@@ -603,34 +799,6 @@
       });
     }
 
-    async function rebuildAnalyzer(reason = "Rebuild") {
-      if (!state.sl) { return; }
-      if (!state.syntaxJson) {
-        setStatus("No syntax JSON loaded.", "bad");
-        return;
-      }
-
-      const t0 = performance.now();
-      buildEngine();
-      state.engine.compileSyntaxFromJson(state.syntaxJson);
-      const compileMs = performance.now() - t0;
-
-      const doc = new state.sl.Document(`file:///${state.documentFileName}`, state.text);
-      state.analyzer = state.engine.loadDocument(doc);
-      if (!state.analyzer) {
-        setStatus("Failed to create DocumentAnalyzer.", "bad");
-        return;
-      }
-
-      const t1 = performance.now();
-      state.analyzer.analyze();
-      const fullMs = performance.now() - t1;
-
-      state.lastVisibleKey = "";
-      await refreshVisibleNoChange(true);
-      setStatus(`${reason}: compile ${compileMs.toFixed(2)} ms | full analyze ${fullMs.toFixed(2)} ms | lines ${state.lines.length}`, "good");
-    }
-
     async function incrementalAnalyze(newText) {
       if (!state.analyzer) {
         setTextCaches(newText);
@@ -656,45 +824,55 @@
       renderSlice(slice);
       setStatus(`Incremental: ${ms.toFixed(2)} ms | start ${patch.startIndex} | replaced ${patch.oldEnd - patch.startIndex} | inserted ${patch.inserted.length}`, "good");
     }
-    async function loadExample(fileName) {
-      const syntaxFile = resolveSyntaxFileName(fileName);
-      if (!syntaxFile) {
-        setStatus(`No syntax mapping for ${fileName}`, "bad");
+
+    async function activateBuiltinManualSyntax(syntaxFile) {
+      const syntaxJson = state.commonSyntaxEntries.get(syntaxFile);
+      if (!syntaxJson) {
+        setStatus(`Built-in syntax ${syntaxFile} is not available.`, "bad");
         return;
       }
-      const token = ++state.loadingToken;
-      setStatus(`Loading ${fileName} ...`);
+
       try {
-        const [code, syntax] = await Promise.all([
-          fetchText(`${DEMO_EXAMPLE_BASE}${fileName}`),
-          fetchText(`${DEMO_SYNTAX_BASE}${syntaxFile}`)
-        ]);
-        if (token !== state.loadingToken) { return; }
-        state.fileName = fileName;
-        state.documentFileName = resolveDocumentFileName(fileName);
         state.syntaxFile = syntaxFile;
-        state.syntaxJson = syntax;
-        els.syntaxSelect.value = syntaxFile;
-        els.editorInput.value = code;
-        setTextCaches(code);
-        await rebuildAnalyzer(`Loaded ${fileName}`);
-      } catch (err) {
-        console.error(err);
-        setStatus(`Load failed: ${err.message}`, "bad");
+        state.syntaxJson = "";
+        state.documentFileName = inferManualDocumentFileName(syntaxJson, syntaxFile);
+        await rebuildBuiltinManualAnalyzer(`Manual syntax ${syntaxFile}`);
+      } catch (error) {
+        console.error(error);
+        setStatus(`Manual syntax failed: ${error.message}`, "bad");
       }
     }
 
-    async function loadBuiltinSyntax(syntaxFile) {
-      const token = ++state.loadingToken;
+    async function activateLocalManualSyntax(syntaxFile, syntaxJson) {
       try {
-        const syntax = await fetchText(`${DEMO_SYNTAX_BASE}${syntaxFile}`);
-        if (token !== state.loadingToken) { return; }
         state.syntaxFile = syntaxFile;
-        state.syntaxJson = syntax;
-        await rebuildAnalyzer(`Syntax ${syntaxFile}`);
+        state.syntaxJson = syntaxJson;
+        state.documentFileName = inferManualDocumentFileName(syntaxJson, syntaxFile);
+        els.syntaxSelect.value = "";
+        await rebuildLocalManualAnalyzer(`Local syntax ${syntaxFile}`);
+      } catch (error) {
+        console.error(error);
+        setStatus(`Local syntax failed: ${error.message}`, "bad");
+      }
+    }
+
+    async function loadExample(fileName) {
+      const token = ++state.loadingToken;
+      setStatus(`Loading ${fileName} ...`);
+      try {
+        const code = await fetchText(`${DEMO_EXAMPLE_BASE}${fileName}`);
+        if (token !== state.loadingToken) { return; }
+        state.fileName = fileName;
+        state.documentFileName = fileName;
+        state.syntaxFile = "";
+        state.syntaxJson = "";
+        els.syntaxSelect.value = "";
+        els.editorInput.value = code;
+        setTextCaches(code);
+        await rebuildAutoAnalyzer(`Loaded ${fileName}`);
       } catch (err) {
         console.error(err);
-        setStatus(`Syntax load failed: ${err.message}`, "bad");
+        setStatus(`Load failed: ${err.message}`, "bad");
       }
     }
 
@@ -707,11 +885,13 @@
         els.exampleSelect.appendChild(op);
       });
 
-      const syntaxFiles = Array.from(new Set([
-        ...Object.values(EXACT_SYNTAX_MAP),
-        ...Object.values(SUFFIX_SYNTAX_MAP)
-      ])).sort();
-      syntaxFiles.forEach((name) => {
+      const autoOption = document.createElement("option");
+      autoOption.value = "";
+      autoOption.textContent = "Auto route (built-in flow)";
+      autoOption.selected = true;
+      els.syntaxSelect.appendChild(autoOption);
+
+      BUILTIN_COMMON_SYNTAX_FILES.forEach((name) => {
         const op = document.createElement("option");
         op.value = name;
         op.textContent = name;
@@ -730,7 +910,14 @@
     function setupEvents() {
       els.loadExampleBtn.addEventListener("click", () => loadExample(els.exampleSelect.value));
       els.exampleSelect.addEventListener("change", () => loadExample(els.exampleSelect.value));
-      els.syntaxSelect.addEventListener("change", () => loadBuiltinSyntax(els.syntaxSelect.value));
+      els.syntaxSelect.addEventListener("change", async () => {
+        const syntaxFile = els.syntaxSelect.value;
+        if (!syntaxFile) {
+          await rebuildAutoAnalyzer("Returned to auto route");
+          return;
+        }
+        await activateBuiltinManualSyntax(syntaxFile);
+      });
 
       els.themeSelect.addEventListener("change", () => {
         state.themeIndex = Number(els.themeSelect.value) || 0;
@@ -752,26 +939,32 @@
       els.localCodeInput.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) { return; }
-        const text = await file.text();
-        state.fileName = file.name;
-        state.documentFileName = resolveDocumentFileName(file.name);
-        els.editorInput.value = text;
-        setTextCaches(text);
-        const mapped = resolveSyntaxFileName(file.name);
-        if (mapped) {
-          els.syntaxSelect.value = mapped;
-          await loadBuiltinSyntax(mapped);
-        } else {
-          await rebuildAnalyzer(`Loaded local file ${file.name}`);
+        try {
+          const text = await file.text();
+          state.fileName = file.name;
+          state.documentFileName = file.name;
+          state.syntaxFile = "";
+          state.syntaxJson = "";
+          els.syntaxSelect.value = "";
+          els.editorInput.value = text;
+          setTextCaches(text);
+          await rebuildAutoAnalyzer(`Loaded local file ${file.name}`);
+        } catch (error) {
+          console.error(error);
+          setStatus(`Local file load failed: ${error.message}`, "bad");
         }
       });
 
       els.localSyntaxInput.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) { return; }
-        state.syntaxFile = file.name;
-        state.syntaxJson = await file.text();
-        await rebuildAnalyzer(`Local syntax ${file.name}`);
+        try {
+          const syntaxJson = await file.text();
+          await activateLocalManualSyntax(file.name, syntaxJson);
+        } catch (error) {
+          console.error(error);
+          setStatus(`Local syntax load failed: ${error.message}`, "bad");
+        }
       });
 
       els.editorInput.addEventListener("input", () => {
@@ -806,16 +999,23 @@
       applyTheme();
       setTextCaches("");
       renderPlainVisible();
+      setControlsEnabled(false);
 
       try {
         state.sl = await createSweetLine();
         els.moduleState.textContent = "WASM: ready";
-        setStatus("WASM loaded, preparing default example...", "good");
+        await prepareBuiltInCommonEngine();
+        const summary = state.warmupSummary;
+        setStatus(`Compiled ${summary.compiledCount} common syntax files in ${summary.elapsedMs.toFixed(2)} ms. Loading default example...`, "good");
         await loadExample("example.java");
+        setControlsEnabled(true);
       } catch (err) {
         console.error(err);
         els.moduleState.textContent = "WASM: failed";
         setStatus(`Failed to load WASM module: ${err.message}`, "bad");
+        if (state.commonEngine) {
+          setControlsEnabled(true);
+        }
       }
     }
 

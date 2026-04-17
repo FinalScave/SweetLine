@@ -16,7 +16,8 @@ Read [common-failures.md](references/common-failures.md) before final review.
 ## Repository-specific rules
 
 - Syntax files live in `syntaxes/*.json`.
-- Example files live in `tests/files/example.*`.
+- Example files usually live in `tests/files/example.*`.
+- A small number of syntax-specific self-hosting assets such as `syntaxes/json-sweetline.json` also exist outside `tests/files`.
 - New examples and modified examples should end within `120` to `250` lines.
 - Syntax compilation coverage belongs in `tests/syntax_test.cpp`.
 - Focused highlight assertions belong in `tests/highlight_test.cpp`.
@@ -45,7 +46,7 @@ For syntax additions and normal syntax refinements, do not modify these areas by
 - `src/include`
 - public APIs
 - bindings
-- demo routing infrastructure
+- demo asset manifests or built-in demo lists
 
 Exhaust the existing syntax JSON model first:
 - `fileName` / `fileNames`
@@ -64,7 +65,7 @@ Exhaust the existing syntax JSON model first:
 Delivery work may still be required after a syntax-only solution:
 - syntax tests
 - highlight tests
-- demo registration
+- demo asset exposure
 
 Only consider core or API changes when the requirement cannot be expressed with the current SweetLine syntax model and routing behavior.
 
@@ -75,12 +76,13 @@ If a core or binding change seems necessary, stop and get explicit user confirma
 - Do not add a new syntax before checking whether the request is actually a refinement, a dialect split, a DSL split, or a file-routing problem.
 - Do not ship a syntax that only works for one happy-path snippet.
 - Do not use a giant catch-all regex when the language has separable tokens such as directives, labels, properties, attributes, tags, or builtins.
-- Prefer non-capturing groups by default. Introduce capturing groups only when they are intentionally consumed by `styles` or `subStates`.
-- Do not leave structural regex groups as capturing groups when the whole match should use one token class.
+- Prefer non-capturing groups by default, but keep structural capturing groups when they are needed to preserve stable downstream group numbering for `styles` or `subStates`.
+- Do not rewrite helper captures to non-capturing groups if that would shift the token-local capture indices consumed by `styles` or `subStates`.
 - Do not leave repeated constructs duplicated across states when a fragment can express them once.
 - Do not write filler examples.
 - Do not leave new or modified example files outside the SweetLine target range.
 - Do not skip routing checks when file names, suffixes, or patterns are ambiguous, overloaded, or multi-part.
+- Do not introduce duplicate exact file names or duplicate syntax names; core does not report those as routing ambiguity.
 - Do not expand a syntax task into engine, parser, routing-infrastructure, or public-API changes unless the current SweetLine syntax model cannot express the requirement.
 - Do not close the task without exact-style assertions for at least one representative language-specific feature.
 - Do not treat line-count compliance as sufficient example quality.
@@ -109,22 +111,58 @@ Prefer the existing shared style vocabulary:
 
 ## SweetLine-specific routing model
 
-SweetLine routing is file-name based.
+SweetLine routing is basename-based.
 
 Prefer these fields in syntax JSON:
 - `fileName` / `fileNames`
 - `fileSuffix` / `fileSuffixes`
 - `fileNamePattern` / `fileNamePatterns`
 
+Routing only considers the basename from the `Document` URI or file name:
+- directory segments do not participate
+- mixed or alternate path separators are not normalized for you
+- `fileNamePattern` / `fileNamePatterns` are full-string matches, not substring matches
+
 Resolve routes in this order:
 - exact file names
 - file suffixes
 - file name patterns
 
+Ambiguity behavior matters:
+- exact-name duplicates are silent one-wins, so avoid them entirely
+- equal-length suffix collisions return no analyzer
+- overlapping file-name patterns return no analyzer
+
 This matters for syntaxes such as:
 - `gradle` and `gradle-kts`
 - assembly dialects
 - any syntax that depends on multi-part names or conventional file names
+- exact-name routes such as `CMakeLists.txt`, `Dockerfile`, `Containerfile`, `Makefile`, `GNUmakefile`, `BSDmakefile`, and `.gitignore`
+
+## Capture groups, fragments, and imports
+
+- `style` applies to group `0`, which is the whole token match.
+- `styles` and `subStates` use the token pattern's own capture-group indices, not the merged state regex indices.
+- Helper captures without a style are valid when they intentionally preserve numbering for later groups.
+- `include` / `includes` entries must be standalone objects with no sibling fields.
+- `includes` preserves declared order.
+- Missing fragments and circular fragment includes are compile-time failures.
+- `onLineEndState` and `importSyntax` entries are standalone directives, not mix-ins for normal token objects.
+- `importSyntax` resolves at compile time against syntaxes already compiled into the same `HighlightEngine`.
+- `#ifdef` on `importSyntax` is macro-gated. Missing macros do not fall back automatically, so verify compile order and macros together.
+
+## Scope rules and indent behavior
+
+- `scopeRules[].start` and `scopeRules[].end` must be strings.
+- `scopeRules[].branches`, when present, must be an array of strings.
+- Scope and indent analysis skips styles whose names contain `string`, `comment`, or `char`.
+- If a syntax changes delimiters, block heads, branch markers, or the styles assigned to them, validate `scopeRules` and `tests/indent_test.cpp`, not just highlight output.
+
+## Inline-style variants
+
+- Inline-style syntaxes require top-level `styles[]`.
+- Every inline style name referenced by `style` or `styles` must exist in `styles[]`.
+- `style_id == 0` means `unstyled`, not a renderable inline style.
 
 ## SweetLine delivery bar
 
@@ -134,7 +172,7 @@ For every new syntax or major syntax split:
 - compile the syntax in `tests/syntax_test.cpp`
 - cover analyzer selection in `tests/syntax_test.cpp`
 - add at least one exact-style highlight test
-- update demo registration when the syntax should appear in shipped demos
+- update demo asset exposure when the syntax should appear in shipped demos
 
 ## Definition of done
 
@@ -149,8 +187,17 @@ The task is not complete until every applicable item below is true:
 - At least one exact-style assertion proves a changed or language-specific token category.
 - Representative style assignments follow [style-vocabulary-policy.md](references/style-vocabulary-policy.md).
 - Known failure modes from [common-failures.md](references/common-failures.md) have been checked and ruled out.
-- Demo registration or asset routing is updated when the syntax appears in shipped demos.
+- Demo asset exposure is updated when the syntax appears in shipped demos.
 
 ## Demo note
 
-SweetLine demos maintain their own syntax maps. If a new syntax should be selectable in demos, update the demo-side routing and asset lists in the current branch.
+Most SweetLine demos now precompile common syntaxes and rely on core file-name routing.
+
+Shipped demo asset exposure should stay aligned with the common-syntax set:
+- exclude `*-inlineStyle.json` from shipped demo common syntax bundles unless the task explicitly targets inline-style demo work
+- do not bundle route-colliding variants together in shipped common syntax sets
+- keep branch-specific exclusions such as `yaml(non zero width).json` aligned with the current branch
+
+If a new syntax should be selectable in shipped demos, update only the demo-side asset exposure layer that still enumerates shipped content in the current branch, such as:
+- Flutter synced assets and generated manifest
+- Emscripten built-in syntax and example lists

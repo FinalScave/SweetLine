@@ -5,7 +5,9 @@ Use this file when wiring a syntax change through the repository.
 ## Syntax and examples
 
 - `syntaxes/*.json`
-- `tests/files/example.*`
+- `tests/files/example.*` for the main example set
+- occasional syntax-specific self-hosting assets such as `syntaxes/json-sweetline.json`
+- the example set also includes alias-style routed names such as `example.aarch64`, `example.myu`, and `example.t`
 
 ## Syntax-focused tests
 
@@ -40,19 +42,13 @@ Use this file when wiring a syntax change through the repository.
 
 ## Demo surfaces commonly touched by syntax additions
 
-- Android:
-  - `platform/Android/app/src/main/java/com/qiplat/sweetline/demo/MainActivity.java`
-  - `platform/Android/app/src/main/java/com/qiplat/sweetline/demo/MarkwonActivity.java`
-- Java22:
-  - `platform/Java22/demo/src/main/java/com/qiplat/sweetline/demo/Main.java`
+Most native demos now precompile common syntaxes and rely on core file-name routing, so syntax additions usually do not require demo-side routing edits.
+
+The shipped demo surfaces still commonly touched are:
 - Flutter:
-  - `platform/Flutter/demo/lib/main.dart`
   - `platform/Flutter/demo/tool/sync_demo_assets.dart`
   - `platform/Flutter/demo/lib/generated/demo_assets.g.dart`
-- OHOS:
-  - `platform/OHOS/demo/src/main/ets/pages/Index.ets`
-- Apple:
-  - `platform/Apple/Examples-MacOS/Sources/SweetLineDemoSupport/DemoSampleSupport.swift`
+  - `platform/Flutter/demo/lib/main.dart`
 - Emscripten:
   - `platform/Emscripten/demo.html`
 
@@ -66,5 +62,9 @@ Use this file when wiring a syntax change through the repository.
 
 - Reuse fragments for comments, strings, escapes, and embedded inline tokens.
 - Keep new or modified example files realistic and within `120` to `250` lines.
-- If a syntax reuses an ambiguous suffix, verify whether core routing and demo routing both need changes.
+- Route test names should reflect the real routed basename, especially for exact-name routes and alias-style sample names.
+- `CMakeLists.txt`, `Dockerfile`, `Containerfile`, `Makefile`, `makefile`, `GNUmakefile`, `BSDmakefile`, and `.gitignore` are exact-name routing cases worth checking explicitly.
+- `generated.route` and `templated.route` are full-match pattern examples; `generated.route.bak` and `prefix-generated.route` should not route.
+- If a syntax reuses an ambiguous suffix, verify core routing first, then update only the demo asset exposure layers that still enumerate shipped syntaxes or examples.
+- Do not ship route-colliding variants together in a common-syntax bundle.
 - Watch for suffix collisions such as Objective-C versus MATLAB on `.m`.

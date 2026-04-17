@@ -4,93 +4,15 @@ using SweetLine;
 namespace Demo;
 
 public partial class Form1 : Form {
-	private static readonly Dictionary<string, string> ExactSyntaxMap = new(StringComparer.Ordinal) {
-		[".gitignore"] = "gitignore.json",
-		["CMakeLists.txt"] = "cmake.json",
-		["Containerfile"] = "dockerfile.json",
-		["Dockerfile"] = "dockerfile.json",
-		["GNUmakefile"] = "makefile.json",
-		["Makefile"] = "makefile.json",
-		["makefile"] = "makefile.json"
-	};
-	private static readonly Dictionary<string, string> SuffixSyntaxMap = new(StringComparer.Ordinal) {
-		[".t"] = "tiecode.json",
-		[".c"] = "c.json",
-		[".cpp"] = "cpp.json",
-		[".cs"] = "csharp.json",
-		[".dart"] = "dart.json",
-		[".go"] = "go.json",
-		[".groovy"] = "groovy.json",
-		[".html"] = "html.json",
-		[".java"] = "java.json",
-		[".js"] = "javascript.json",
-		[".json"] = "json-sweetline.json",
-		[".jsonc"] = "jsonc.json",
-		[".json5"] = "json5.json",
-		[".kt"] = "kotlin.json",
-		[".lua"] = "lua.json",
-		[".m"] = "objc.json",
-		[".php"] = "php.json",
-		[".ps1"] = "powershell.json",
-		[".py"] = "python.json",
-		[".rs"] = "rust.json",
-		[".scala"] = "scala.json",
-		[".sh"] = "shell.json",
-		[".sql"] = "sql.json",
-		[".swift"] = "swift.json",
-		[".toml"] = "toml.json",
-		[".ts"] = "typescript.json",
-		[".vb"] = "vb.json",
-		[".xml"] = "xml.json",
-		[".yaml"] = "yaml.json",
-		[".md"] = "markdown.json",
-		[".wenyan"] = "wenyan.json",
-		[".myu"] = "iapp.json",
-		[".css"] = "css.json",
-		[".scss"] = "scss.json",
-		[".less"] = "less.json",
-		[".cmake"] = "cmake.json",
-		[".dockerfile"] = "dockerfile.json",
-		[".mk"] = "makefile.json",
-		[".properties"] = "properties.json",
-		[".env"] = "env.json",
-		[".proto"] = "protobuf.json",
-		[".graphql"] = "graphql.json",
-		[".gql"] = "graphql.json",
-		[".nginx"] = "nginx.json",
-		[".conf"] = "nginx.json",
-		[".gitignore"] = "gitignore.json",
-		[".diff"] = "diff.json",
-		[".patch"] = "diff.json",
-		[".rb"] = "ruby.json",
-		[".rake"] = "ruby.json",
-		[".gemspec"] = "ruby.json",
-		[".ru"] = "ruby.json",
-		[".hcl"] = "hcl.json",
-		[".tf"] = "terraform.json",
-		[".tfvars"] = "terraform.json",
-		[".tfbackend"] = "terraform.json",
-		[".vue"] = "vue.json",
-		[".svelte"] = "svelte.json"
-	};
-	private static readonly Dictionary<string, string> RoutedDocumentNames = new(StringComparer.Ordinal) {
-		[".gitignore"] = "example.gitignore",
-		["CMakeLists.txt"] = "example.cmake",
-		["Containerfile"] = "example.dockerfile",
-		["Dockerfile"] = "example.dockerfile",
-		["GNUmakefile"] = "example.mk",
-		["Makefile"] = "example.mk",
-		["makefile"] = "example.mk"
-	};
-	private static readonly List<string> SortedSuffixes = SuffixSyntaxMap.Keys
-		.OrderByDescending(static suffix => suffix.Length)
-		.ToList();
+	private const string ExcludedDuplicateSyntaxFile = "yaml(non zero width).json";
 
 	private readonly string _syntaxesDir;
 	private readonly string _examplesDir;
 	private readonly List<string> _exampleFiles;
 	private readonly List<HighlightTheme> _themes;
 	private readonly HighlightEngine _engine;
+	private readonly int _compiledSyntaxCount;
+	private readonly long _precompileUs;
 
 	private ComboBox _fileCombo = null!;
 	private ComboBox _themeCombo = null!;
@@ -105,9 +27,11 @@ public partial class Form1 : Form {
 		_examplesDir = examplesDir;
 		_themes = HighlightTheme.BuiltinThemes();
 		_currentTheme = _themes[0];
-		_exampleFiles = ListExampleFiles(_examplesDir);
 		_engine = new HighlightEngine(new HighlightConfig(ShowIndex: true, InlineStyle: false));
 		RegisterStyleNames(_engine);
+		_engine.DefineMacro("WINDOWS");
+		(_compiledSyntaxCount, _precompileUs) = PrecompileCommonSyntaxes(_syntaxesDir, _engine);
+		_exampleFiles = ListExampleFiles(_examplesDir, _engine);
 
 		InitializeComponent();
 		InitializeUi();
@@ -118,7 +42,7 @@ public partial class Form1 : Form {
 		if (_exampleFiles.Count > 0) {
 			_fileCombo.SelectedIndex = 0;
 		} else {
-			_statusLabel.Text = $"No demo files found under: {_examplesDir}";
+			_statusLabel.Text = $"Compiled {_compiledSyntaxCount} syntax rule files in {_precompileUs}us | No demo files found under: {_examplesDir}";
 		}
 	}
 
@@ -215,51 +139,41 @@ public partial class Form1 : Form {
 		}
 
 		string fileName = _exampleFiles[idx];
-		string? syntaxFileName = ResolveSyntaxFileName(fileName);
-		if (syntaxFileName is null) {
-			_statusLabel.Text = $"No syntax mapping for file: {fileName}";
-			return;
-		}
-
-		string syntaxPath = Path.Combine(_syntaxesDir, syntaxFileName);
 		string examplePath = Path.Combine(_examplesDir, fileName);
-		if (!File.Exists(syntaxPath)) {
-			_statusLabel.Text = $"Syntax file not found: {syntaxPath}";
+		if (!File.Exists(examplePath)) {
+			_statusLabel.Text = $"Demo file not found: {examplePath}";
 			return;
 		}
 
 		try {
-			HighlightFile(examplePath, syntaxPath, ResolveDocumentFileName(fileName));
+			HighlightFile(examplePath, fileName);
 		} catch (Exception ex) {
 			_statusLabel.Text = $"Error: {ex.Message}";
 		}
 	}
 
-	private void HighlightFile(string filePath, string syntaxPath, string documentFileName) {
+	private void HighlightFile(string filePath, string documentFileName) {
 		string sourceCode = File.ReadAllText(filePath);
-		string syntaxJson = File.ReadAllText(syntaxPath);
 		string fileName = Path.GetFileName(filePath);
 
-		Stopwatch compileWatch = Stopwatch.StartNew();
-		_engine.CompileSyntaxFromJson(syntaxJson);
-		compileWatch.Stop();
-		long compileUs = (long)(compileWatch.Elapsed.TotalMilliseconds * 1000);
-
 		using Document doc = new(documentFileName, sourceCode);
+		Stopwatch loadWatch = Stopwatch.StartNew();
 		using DocumentAnalyzer? analyzer = _engine.LoadDocument(doc);
+		loadWatch.Stop();
 		if (analyzer is null) {
-			_statusLabel.Text = "Failed to load document.";
+			_statusLabel.Text = $"No matching syntax for file: {documentFileName}";
 			return;
 		}
 
 		Stopwatch analyzeWatch = Stopwatch.StartNew();
 		DocumentHighlight highlight = analyzer.Analyze();
 		analyzeWatch.Stop();
+		long loadUs = (long)(loadWatch.Elapsed.TotalMilliseconds * 1000);
 		long analyzeUs = (long)(analyzeWatch.Elapsed.TotalMilliseconds * 1000);
 
 		IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
 		int lineCount = sourceCode.Replace("\r\n", "\n").Split('\n').Length;
-		_statusLabel.Text = $"Compile: {compileUs}us | Analyze: {analyzeUs}us | Lines: {lineCount} | File: {fileName}";
+		_statusLabel.Text = $"Warmup: {_compiledSyntaxCount} files in {_precompileUs}us | Load: {loadUs}us | Analyze: {analyzeUs}us | Lines: {lineCount} | File: {fileName}";
 		_codeView.SetHighlightData(sourceCode, highlight, guides);
 		_editorHost.AutoScrollPosition = new Point(0, 0);
 	}
@@ -277,23 +191,11 @@ public partial class Form1 : Form {
 
 		string filePath = dialog.FileName;
 		string fileName = Path.GetFileName(filePath);
-		string? syntaxFileName = ResolveSyntaxFileName(fileName);
-		if (syntaxFileName is null) {
-			_statusLabel.Text = $"Unsupported file name: {fileName}";
-			return;
-		}
-
-		string syntaxPath = Path.Combine(_syntaxesDir, syntaxFileName);
-		if (!File.Exists(syntaxPath)) {
-			_statusLabel.Text = $"Syntax file not found: {syntaxPath}";
-			return;
-		}
-
 		try {
 			_suppressComboEvents = true;
 			_fileCombo.SelectedIndex = -1;
 			_suppressComboEvents = false;
-			HighlightFile(filePath, syntaxPath, ResolveDocumentFileName(fileName));
+			HighlightFile(filePath, fileName);
 		} catch (Exception ex) {
 			_statusLabel.Text = $"Error: {ex.Message}";
 		}
@@ -318,7 +220,7 @@ public partial class Form1 : Form {
 		engine.RegisterStyleName("property", HighlightTheme.StyleProperty);
 	}
 
-	private static List<string> ListExampleFiles(string examplesDir) {
+	private static List<string> ListExampleFiles(string examplesDir, HighlightEngine engine) {
 		List<string> files = [];
 		if (!Directory.Exists(examplesDir)) {
 			return files;
@@ -328,11 +230,11 @@ public partial class Form1 : Form {
 			string name = Path.GetFileName(path);
 			if (!name.StartsWith("example", StringComparison.OrdinalIgnoreCase) &&
 				!name.Equals("json-sweetline.json", StringComparison.OrdinalIgnoreCase)) {
-				if (ResolveSyntaxFileName(name) is null) {
-					continue;
-				}
+				continue;
 			}
-			if (ResolveSyntaxFileName(name) is not null) {
+
+			using TextAnalyzer? analyzer = engine.CreateAnalyzerByFileName(name);
+			if (analyzer is not null) {
 				files.Add(name);
 			}
 		}
@@ -341,23 +243,46 @@ public partial class Form1 : Form {
 		return files;
 	}
 
-	private static string? ResolveSyntaxFileName(string fileName) {
-		if (ExactSyntaxMap.TryGetValue(fileName, out string? exactSyntaxFileName)) {
-			return exactSyntaxFileName;
-		}
+	private static (int CompiledSyntaxCount, long CompileUs) PrecompileCommonSyntaxes(string syntaxesDir, HighlightEngine engine) {
+		List<string> syntaxPaths = Directory
+			.GetFiles(syntaxesDir, "*.json")
+			.Where(static path => !Path.GetFileName(path).EndsWith("-inlineStyle.json", StringComparison.Ordinal))
+			.Where(static path => !Path.GetFileName(path).Equals(ExcludedDuplicateSyntaxFile, StringComparison.Ordinal))
+			.OrderBy(static path => Path.GetFileName(path), StringComparer.Ordinal)
+			.ToList();
+		Dictionary<string, string> syntaxJsonByFileName = syntaxPaths.ToDictionary(
+			static path => Path.GetFileName(path),
+			static path => File.ReadAllText(path),
+			StringComparer.Ordinal);
+		List<string> pending = syntaxJsonByFileName.Keys
+			.OrderBy(static fileName => fileName, StringComparer.Ordinal)
+			.ToList();
+		Stopwatch compileWatch = Stopwatch.StartNew();
+		int compiledCount = 0;
 
-		foreach (string suffix in SortedSuffixes) {
-			if (fileName.EndsWith(suffix, StringComparison.Ordinal)) {
-				return SuffixSyntaxMap[suffix];
+		while (pending.Count > 0) {
+			bool progress = false;
+			List<string> retryPending = [];
+
+			foreach (string fileName in pending) {
+				try {
+					engine.CompileSyntaxFromJson(syntaxJsonByFileName[fileName]);
+					compiledCount++;
+					progress = true;
+				} catch (SyntaxCompileError ex) when (ex.ErrorCode == SyntaxCompileError.ErrImportSyntaxNotFound) {
+					retryPending.Add(fileName);
+				}
 			}
+
+			if (!progress) {
+				throw new InvalidOperationException($"Failed to resolve syntax dependencies: {string.Join(", ", retryPending)}");
+			}
+
+			pending = retryPending;
 		}
 
-		return null;
-	}
-
-	private static string ResolveDocumentFileName(string fileName) {
-		return RoutedDocumentNames.TryGetValue(fileName, out string? routedDocumentName)
-			? routedDocumentName
-			: fileName;
+		compileWatch.Stop();
+		long compileUs = (long)(compileWatch.Elapsed.TotalMilliseconds * 1000);
+		return (compiledCount, compileUs);
 	}
 }

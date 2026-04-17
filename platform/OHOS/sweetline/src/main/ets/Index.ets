@@ -2,6 +2,35 @@ import lib from "libsweetline.so"
 
 export namespace sweetline {
 
+  interface NativeSyntaxCompileErrorShape {
+    name?: string;
+    errorCode?: number;
+    message?: string;
+  }
+
+  function normalizeSyntaxCompileError(error: Object): Error {
+    if (error instanceof SyntaxCompileError) {
+      return error;
+    }
+    const nativeError = error as NativeSyntaxCompileErrorShape;
+    if (nativeError.name == 'SyntaxCompileError' && typeof nativeError.errorCode == 'number') {
+      const message = error instanceof Error ? error.message : (nativeError.message ?? `${error}`);
+      return new SyntaxCompileError(nativeError.errorCode, message);
+    }
+    if (error instanceof Error) {
+      return error;
+    }
+    return new Error(`${error}`);
+  }
+
+  function withSyntaxCompileError<T>(block: () => T): T {
+    try {
+      return block();
+    } catch (error) {
+      throw normalizeSyntaxCompileError(error as Object);
+    }
+  }
+
   /**
    * Text position descriptor
    */
@@ -720,11 +749,13 @@ export namespace sweetline {
       if (this.nativeHandle == 0) {
         return null;
       }
-      let handle: number = lib.HighlightEngine_CompileSyntaxFromJson(this.nativeHandle, syntaxJson);
-      if (handle == 0) {
-        return null;
-      }
-      return SyntaxRule.__createNative(handle);
+      return withSyntaxCompileError(() => {
+        let handle: number = lib.HighlightEngine_CompileSyntaxFromJson(this.nativeHandle, syntaxJson);
+        if (handle == 0) {
+          return null;
+        }
+        return SyntaxRule.__createNative(handle);
+      });
     }
 
     /**
@@ -736,11 +767,13 @@ export namespace sweetline {
       if (this.nativeHandle == 0) {
         return null;
       }
-      let handle: number = lib.HighlightEngine_CompileSyntaxFromFile(this.nativeHandle, path);
-      if (handle == 0) {
-        return null;
-      }
-      return SyntaxRule.__createNative(handle);
+      return withSyntaxCompileError(() => {
+        let handle: number = lib.HighlightEngine_CompileSyntaxFromFile(this.nativeHandle, path);
+        if (handle == 0) {
+          return null;
+        }
+        return SyntaxRule.__createNative(handle);
+      });
     }
 
     /**

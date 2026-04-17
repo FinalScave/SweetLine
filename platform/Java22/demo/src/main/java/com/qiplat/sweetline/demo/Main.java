@@ -1,142 +1,73 @@
 package com.qiplat.sweetline.demo;
 
-import com.qiplat.sweetline.*;
+import com.qiplat.sweetline.Document;
+import com.qiplat.sweetline.DocumentAnalyzer;
+import com.qiplat.sweetline.DocumentHighlight;
+import com.qiplat.sweetline.HighlightConfig;
+import com.qiplat.sweetline.HighlightEngine;
+import com.qiplat.sweetline.IndentGuideResult;
+import com.qiplat.sweetline.SyntaxCompileError;
+import com.qiplat.sweetline.TextAnalyzer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * SweetLine Java 22 FFM Swing demo application.
- * Supports selecting built-in syntax / example files and switching highlight themes
+ * Supports selecting built-in syntax / example files and switching highlight themes.
  */
 public class Main extends JFrame {
 
-    private static final Map<String, String> EXACT_SYNTAX_MAP = new LinkedHashMap<>();
-    private static final Map<String, String> SUFFIX_SYNTAX_MAP = new LinkedHashMap<>();
-    private static final Map<String, String> ROUTED_DOCUMENT_NAMES = new LinkedHashMap<>();
-    private static final List<String> SORTED_SUFFIXES = new ArrayList<>();
+    private static final String WINDOWS_MACRO = "WINDOWS";
+    private static final String YAML_NON_ZERO_WIDTH_FILE = "yaml(non zero width).json";
 
-    static {
-        registerExactRoute(".gitignore", "gitignore.json", "example.gitignore");
-        registerExactRoute("CMakeLists.txt", "cmake.json", "example.cmake");
-        registerExactRoute("Containerfile", "dockerfile.json", "example.dockerfile");
-        registerExactRoute("Dockerfile", "dockerfile.json", "example.dockerfile");
-        registerExactRoute("GNUmakefile", "makefile.json", "example.mk");
-        registerExactRoute("Makefile", "makefile.json", "example.mk");
-        registerExactRoute("makefile", "makefile.json", "example.mk");
-
-        registerSuffixRoute(".t", "tiecode.json");
-        registerSuffixRoute(".c", "c.json");
-        registerSuffixRoute(".cpp", "cpp.json");
-        registerSuffixRoute(".cs", "csharp.json");
-        registerSuffixRoute(".dart", "dart.json");
-        registerSuffixRoute(".go", "go.json");
-        registerSuffixRoute(".groovy", "groovy.json");
-        registerSuffixRoute(".html", "html.json");
-        registerSuffixRoute(".java", "java.json");
-        registerSuffixRoute(".js", "javascript.json");
-        registerSuffixRoute(".json", "json-sweetline.json");
-        registerSuffixRoute(".jsonc", "jsonc.json");
-        registerSuffixRoute(".json5", "json5.json");
-        registerSuffixRoute(".kt", "kotlin.json");
-        registerSuffixRoute(".lua", "lua.json");
-        registerSuffixRoute(".m", "objc.json");
-        registerSuffixRoute(".php", "php.json");
-        registerSuffixRoute(".ps1", "powershell.json");
-        registerSuffixRoute(".py", "python.json");
-        registerSuffixRoute(".rs", "rust.json");
-        registerSuffixRoute(".scala", "scala.json");
-        registerSuffixRoute(".sh", "shell.json");
-        registerSuffixRoute(".sql", "sql.json");
-        registerSuffixRoute(".swift", "swift.json");
-        registerSuffixRoute(".toml", "toml.json");
-        registerSuffixRoute(".ts", "typescript.json");
-        registerSuffixRoute(".vb", "vb.json");
-        registerSuffixRoute(".xml", "xml.json");
-        registerSuffixRoute(".yaml", "yaml.json");
-        registerSuffixRoute(".md", "markdown.json");
-        registerSuffixRoute(".wenyan", "wenyan.json");
-        registerSuffixRoute(".myu", "iapp.json");
-        registerSuffixRoute(".css", "css.json");
-        registerSuffixRoute(".scss", "scss.json");
-        registerSuffixRoute(".less", "less.json");
-        registerSuffixRoute(".cmake", "cmake.json");
-        registerSuffixRoute(".dockerfile", "dockerfile.json");
-        registerSuffixRoute(".mk", "makefile.json");
-        registerSuffixRoute(".properties", "properties.json");
-        registerSuffixRoute(".env", "env.json");
-        registerSuffixRoute(".proto", "protobuf.json");
-        registerSuffixRoute(".graphql", "graphql.json");
-        registerSuffixRoute(".gql", "graphql.json");
-        registerSuffixRoute(".nginx", "nginx.json");
-        registerSuffixRoute(".conf", "nginx.json");
-        registerSuffixRoute(".gitignore", "gitignore.json");
-        registerSuffixRoute(".diff", "diff.json");
-        registerSuffixRoute(".patch", "diff.json");
-        registerSuffixRoute(".rb", "ruby.json");
-        registerSuffixRoute(".rake", "ruby.json");
-        registerSuffixRoute(".gemspec", "ruby.json");
-        registerSuffixRoute(".ru", "ruby.json");
-        registerSuffixRoute(".hcl", "hcl.json");
-        registerSuffixRoute(".tf", "terraform.json");
-        registerSuffixRoute(".tfvars", "terraform.json");
-        registerSuffixRoute(".tfbackend", "terraform.json");
-        registerSuffixRoute(".vue", "vue.json");
-        registerSuffixRoute(".svelte", "svelte.json");
-
-        SORTED_SUFFIXES.sort((left, right) -> Integer.compare(right.length(), left.length()));
+    private record SyntaxSource(String fileName, String json) {
     }
 
-    private static void registerExactRoute(String fileName, String syntaxFileName, String routedDocumentName) {
-        EXACT_SYNTAX_MAP.put(fileName, syntaxFileName);
-        if (routedDocumentName != null && !routedDocumentName.isEmpty()) {
-            ROUTED_DOCUMENT_NAMES.put(fileName, routedDocumentName);
-        }
+    private record WarmupProgress(int compiledCount, int totalCount, String fileName) {
     }
 
-    private static void registerSuffixRoute(String suffix, String syntaxFileName) {
-        SUFFIX_SYNTAX_MAP.put(suffix, syntaxFileName);
-        SORTED_SUFFIXES.add(suffix);
+    private record WarmupResult(List<String> exampleFiles, int compiledCount, long elapsedMillis) {
     }
 
-    private static String resolveSyntaxFileName(String fileName) {
-        String exact = EXACT_SYNTAX_MAP.get(fileName);
-        if (exact != null) {
-            return exact;
-        }
-        for (String suffix : SORTED_SUFFIXES) {
-            if (fileName.endsWith(suffix)) {
-                return SUFFIX_SYNTAX_MAP.get(suffix);
-            }
-        }
-        return null;
-    }
-
-    private static String resolveDocumentFileName(String fileName) {
-        return ROUTED_DOCUMENT_NAMES.getOrDefault(fileName, fileName);
-    }
-
-    private Path syntaxesDir;
-    private Path examplesDir;
+    private final Path syntaxesDir;
+    private final Path examplesDir;
     private List<String> exampleFiles;
-    private List<HighlightTheme> themes;
+    private final List<HighlightTheme> themes;
 
-    private HighlightEngine engine;
+    private final HighlightEngine engine;
     private JComboBox<String> fileCombo;
     private JComboBox<String> themeCombo;
+    private JButton openButton;
     private JLabel statusLabel;
     private CodePanel codePanel;
 
     private HighlightTheme currentTheme;
+    private int compiledSyntaxCount = 0;
+    private long warmupElapsedMillis = 0;
 
     private boolean suppressComboEvents = false;
 
@@ -144,28 +75,29 @@ public class Main extends JFrame {
         super("SweetLine Demo(Swing)");
         this.syntaxesDir = syntaxesDir;
         this.examplesDir = examplesDir;
+        this.exampleFiles = new ArrayList<>();
         this.themes = HighlightTheme.builtinThemes();
         this.currentTheme = themes.getFirst();
-        this.exampleFiles = listExampleFiles(examplesDir);
 
         this.engine = new HighlightEngine(new HighlightConfig(true, false));
         registerStyleNames(engine);
+        engine.defineMacro(WINDOWS_MACRO);
 
         initUI();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(532, 856);
         setLocationRelativeTo(null);
 
-        if (!exampleFiles.isEmpty()) {
-            fileCombo.setSelectedIndex(0);
-        }
+        setWarmupUiState(true);
+        statusLabel.setText("Preparing syntax rules...");
+        startWarmup();
     }
 
     private void initUI() {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
 
         toolbar.add(new JLabel("File:"));
-        fileCombo = new JComboBox<>(exampleFiles.toArray(new String[0]));
+        fileCombo = new JComboBox<>();
         fileCombo.setMaximumRowCount(20);
         fileCombo.addActionListener(e -> {
             if (!suppressComboEvents) {
@@ -192,9 +124,9 @@ public class Main extends JFrame {
 
         toolbar.add(Box.createHorizontalStrut(16));
 
-        JButton openBtn = new JButton("Open...");
-        openBtn.addActionListener(e -> openExternalFile());
-        toolbar.add(openBtn);
+        openButton = new JButton("Open...");
+        openButton.addActionListener(e -> openExternalFile());
+        toolbar.add(openButton);
 
         codePanel = new CodePanel();
         codePanel.setTheme(currentTheme);
@@ -211,46 +143,109 @@ public class Main extends JFrame {
         getContentPane().add(statusLabel, BorderLayout.SOUTH);
     }
 
+    private void setWarmupUiState(boolean warmingUp) {
+        fileCombo.setEnabled(!warmingUp && !exampleFiles.isEmpty());
+        openButton.setEnabled(!warmingUp);
+    }
+
+    private void startWarmup() {
+        SwingWorker<WarmupResult, WarmupProgress> worker = new SwingWorker<>() {
+            @Override
+            protected WarmupResult doInBackground() throws Exception {
+                long startedAt = System.nanoTime();
+                List<SyntaxSource> syntaxSources = listCommonSyntaxSources(syntaxesDir);
+                publish(new WarmupProgress(0, syntaxSources.size(), null));
+                int compiledCount = compileSyntaxSources(syntaxSources, progress -> publish(progress));
+                List<String> demoFiles = listExampleFiles(examplesDir);
+                long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
+                return new WarmupResult(demoFiles, compiledCount, elapsedMillis);
+            }
+
+            @Override
+            protected void process(List<WarmupProgress> chunks) {
+                WarmupProgress progress = chunks.get(chunks.size() - 1);
+                if (progress.fileName() == null) {
+                    statusLabel.setText(String.format("Compiling 0/%d syntax rule files...", progress.totalCount()));
+                    return;
+                }
+                statusLabel.setText(String.format(
+                        "Compiling %d/%d: %s",
+                        progress.compiledCount(),
+                        progress.totalCount(),
+                        progress.fileName()));
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    applyWarmupResult(get());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    handleWarmupFailure(e);
+                } catch (ExecutionException e) {
+                    handleWarmupFailure(e.getCause() != null ? e.getCause() : e);
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void applyWarmupResult(WarmupResult result) {
+        exampleFiles = new ArrayList<>(result.exampleFiles());
+        compiledSyntaxCount = result.compiledCount();
+        warmupElapsedMillis = result.elapsedMillis();
+
+        suppressComboEvents = true;
+        fileCombo.setModel(new DefaultComboBoxModel<>(exampleFiles.toArray(new String[0])));
+        fileCombo.setSelectedIndex(-1);
+        suppressComboEvents = false;
+
+        setWarmupUiState(false);
+        if (exampleFiles.isEmpty()) {
+            statusLabel.setText(String.format(
+                    "Compiled %d syntax rule files in %d ms | No demo files available",
+                    compiledSyntaxCount,
+                    warmupElapsedMillis));
+            return;
+        }
+
+        fileCombo.setSelectedIndex(0);
+    }
+
+    private void handleWarmupFailure(Throwable error) {
+        setWarmupUiState(true);
+        statusLabel.setText("Warmup failed: " + error.getMessage());
+        error.printStackTrace();
+    }
+
     private void highlightSelectedFile() {
         int idx = fileCombo.getSelectedIndex();
         if (idx < 0 || idx >= exampleFiles.size()) {
             return;
         }
+
         String fileName = exampleFiles.get(idx);
-        String syntaxFileName = resolveSyntaxFileName(fileName);
-        if (syntaxFileName == null) {
-            statusLabel.setText("No syntax mapping for file: " + fileName);
-            return;
-        }
-
-        Path syntaxPath = syntaxesDir.resolve(syntaxFileName);
         Path examplePath = examplesDir.resolve(fileName);
-
-        if (!Files.exists(syntaxPath)) {
-            statusLabel.setText("Syntax file not found: " + syntaxPath);
+        if (!Files.exists(examplePath)) {
+            statusLabel.setText("Example file not found: " + examplePath);
             return;
         }
 
         try {
-            highlightFile(examplePath, syntaxPath, resolveDocumentFileName(fileName));
+            highlightFile(examplePath, fileName);
         } catch (Exception ex) {
             statusLabel.setText("Error: " + ex.getMessage());
         }
     }
 
-    private void highlightFile(Path filePath, Path syntaxPath, String documentFileName) throws IOException, SyntaxCompileError {
+    private void highlightFile(Path filePath, String documentFileName) throws IOException {
         String sourceCode = Files.readString(filePath);
-        String syntaxJson = Files.readString(syntaxPath);
         String fileName = filePath.getFileName().toString();
 
-        long compileStart = System.nanoTime();
-        engine.compileSyntaxFromJson(syntaxJson);
-        long compileUs = (System.nanoTime() - compileStart) / 1000;
-
-        try (Document doc = new Document(documentFileName, sourceCode)) {
-            DocumentAnalyzer analyzer = engine.loadDocument(doc);
+        try (Document doc = new Document(documentFileName, sourceCode);
+             DocumentAnalyzer analyzer = engine.loadDocument(doc)) {
             if (analyzer == null) {
-                statusLabel.setText("Failed to load document.");
+                statusLabel.setText("No matching syntax for file: " + documentFileName);
                 return;
             }
 
@@ -259,16 +254,18 @@ public class Main extends JFrame {
             long analyzeUs = (System.nanoTime() - analyzeStart) / 1000;
 
             IndentGuideResult indentGuides = analyzer.analyzeIndentGuides();
-
             int lineCount = sourceCode.split("\n", -1).length;
-            statusLabel.setText(String.format("Compile: %d\u00b5s | Analyze: %d\u00b5s | Lines: %d | File: %s",
-                    compileUs, analyzeUs, lineCount, fileName));
+            statusLabel.setText(String.format(
+                    "Warmup: %d files in %d ms | Analyze: %d\u00b5s | Lines: %d | File: %s",
+                    compiledSyntaxCount,
+                    warmupElapsedMillis,
+                    analyzeUs,
+                    lineCount,
+                    fileName));
 
             codePanel.setHighlightData(sourceCode, highlight, indentGuides);
             codePanel.revalidate();
             codePanel.repaint();
-
-            analyzer.close();
         }
     }
 
@@ -280,26 +277,106 @@ public class Main extends JFrame {
 
         Path filePath = chooser.getSelectedFile().toPath();
         String fileName = filePath.getFileName().toString();
-        String syntaxFileName = resolveSyntaxFileName(fileName);
-        if (syntaxFileName == null) {
-            statusLabel.setText("Unsupported file name: " + fileName);
-            return;
-        }
-
-        Path syntaxPath = syntaxesDir.resolve(syntaxFileName);
-        if (!Files.exists(syntaxPath)) {
-            statusLabel.setText("Syntax file not found: " + syntaxPath);
-            return;
-        }
 
         try {
             suppressComboEvents = true;
             fileCombo.setSelectedIndex(-1);
             suppressComboEvents = false;
 
-            highlightFile(filePath, syntaxPath, resolveDocumentFileName(fileName));
+            highlightFile(filePath, fileName);
         } catch (Exception ex) {
             statusLabel.setText("Error: " + ex.getMessage());
+        }
+    }
+
+    private List<SyntaxSource> listCommonSyntaxSources(Path dir) throws IOException {
+        List<Path> files = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.json")) {
+            for (Path entry : stream) {
+                if (!Files.isRegularFile(entry)) {
+                    continue;
+                }
+                String name = entry.getFileName().toString();
+                if (!shouldPrecompileSyntaxFile(name)) {
+                    continue;
+                }
+                files.add(entry);
+            }
+        }
+
+        files.sort(Comparator.comparing(path -> path.getFileName().toString()));
+
+        List<SyntaxSource> sources = new ArrayList<>(files.size());
+        for (Path file : files) {
+            sources.add(new SyntaxSource(file.getFileName().toString(), Files.readString(file)));
+        }
+        return sources;
+    }
+
+    private int compileSyntaxSources(List<SyntaxSource> syntaxSources, Consumer<WarmupProgress> onProgress)
+            throws SyntaxCompileError {
+        List<SyntaxSource> pending = new ArrayList<>(syntaxSources);
+        int compiledCount = 0;
+        while (!pending.isEmpty()) {
+            boolean progressed = false;
+            List<SyntaxSource> nextPending = new ArrayList<>();
+            for (SyntaxSource source : pending) {
+                try {
+                    engine.compileSyntaxFromJson(source.json());
+                    compiledCount += 1;
+                    progressed = true;
+                    onProgress.accept(new WarmupProgress(compiledCount, syntaxSources.size(), source.fileName()));
+                } catch (SyntaxCompileError e) {
+                    if (e.getErrorCode() == SyntaxCompileError.ERR_IMPORT_SYNTAX_NOT_FOUND) {
+                        nextPending.add(source);
+                        continue;
+                    }
+                    throw new SyntaxCompileError(
+                            e.getErrorCode(),
+                            "Failed to compile " + source.fileName() + ": " + e.getMessage());
+                }
+            }
+
+            if (!progressed) {
+                String unresolved = nextPending.stream()
+                        .map(SyntaxSource::fileName)
+                        .collect(Collectors.joining(", "));
+                throw new IllegalStateException("Unresolved importSyntax dependencies: " + unresolved);
+            }
+            pending = nextPending;
+        }
+        return compiledCount;
+    }
+
+    private boolean shouldPrecompileSyntaxFile(String fileName) {
+        return !fileName.endsWith("-inlineStyle.json") && !fileName.equals(YAML_NON_ZERO_WIDTH_FILE);
+    }
+
+    private List<String> listExampleFiles(Path dir) throws IOException {
+        List<String> files = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path entry : stream) {
+                if (!Files.isRegularFile(entry)) {
+                    continue;
+                }
+                String name = entry.getFileName().toString();
+                if (!isDemoSampleFile(name) || !supportsFileNameRouting(name)) {
+                    continue;
+                }
+                files.add(name);
+            }
+        }
+        files.sort(Comparator.naturalOrder());
+        return files;
+    }
+
+    private boolean isDemoSampleFile(String fileName) {
+        return fileName.startsWith("example") || fileName.equals("json-sweetline.json");
+    }
+
+    private boolean supportsFileNameRouting(String fileName) {
+        try (TextAnalyzer analyzer = engine.createAnalyzerByFileName(fileName)) {
+            return analyzer != null;
         }
     }
 
@@ -320,25 +397,6 @@ public class Main extends JFrame {
         engine.registerStyleName("builtin", HighlightTheme.STYLE_BUILTIN);
         engine.registerStyleName("url", HighlightTheme.STYLE_URL);
         engine.registerStyleName("property", HighlightTheme.STYLE_PROPERTY);
-    }
-
-    private static List<String> listExampleFiles(Path dir) {
-        List<String> files = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            for (Path entry : stream) {
-                String name = entry.getFileName().toString();
-                if (!name.equals("json-sweetline.json") && resolveSyntaxFileName(name) == null) {
-                    continue;
-                }
-                if (resolveSyntaxFileName(name) != null) {
-                    files.add(name);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Failed to list example files: " + e.getMessage());
-        }
-        files.sort(Comparator.naturalOrder());
-        return files;
     }
 
     private static Path resolveDir(String[] args, int index, String defaultRelative) {

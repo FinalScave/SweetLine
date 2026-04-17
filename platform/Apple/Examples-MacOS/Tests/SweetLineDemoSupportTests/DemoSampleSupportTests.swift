@@ -67,7 +67,7 @@ final class DemoSampleSupportTests: XCTestCase {
     }
 
     func testLoadStateReportsFailureForMissingSampleAsset() {
-        let missingSample = DemoSample(fileName: "missing.swift", syntaxFileName: "swift.json")
+        let missingSample = DemoSample(fileName: "missing.swift")
         let state = DemoSampleSupport.makeLoadState(sample: missingSample)
 
         guard case let .failed(message, sampleName, themes) = state else {
@@ -79,8 +79,8 @@ final class DemoSampleSupportTests: XCTestCase {
         XCTAssertEqual(themes.map { $0.id }, DemoSampleSupport.builtinThemes.map { $0.id })
     }
 
-    func testLoadStateSupportsNonSwiftSampleWhenSyntaxMatchesSampleMetadata() {
-        let javaSample = DemoSample(fileName: "example.java", syntaxFileName: "java.json")
+    func testLoadStateSupportsNonSwiftSampleWhenCoreRoutesByRealFileName() {
+        let javaSample = DemoSample(fileName: "example.java")
         let state = DemoSampleSupport.makeLoadState(sample: javaSample)
 
         guard case let .ready(model) = state else {

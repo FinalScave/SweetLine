@@ -3,11 +3,9 @@ import SweetLineMacOS
 
 public struct DemoSample: Equatable {
     public let fileName: String
-    public let syntaxFileName: String
 
-    public init(fileName: String, syntaxFileName: String) {
+    public init(fileName: String) {
         self.fileName = fileName
-        self.syntaxFileName = syntaxFileName
     }
 }
 
@@ -110,6 +108,11 @@ public enum DemoLoadState: Equatable {
 }
 
 public enum DemoSampleSupport {
+    private struct DemoEngineBundle {
+        let engine: HighlightEngine
+        let compileMicroseconds: Int
+    }
+
     private static let styleKeyword: Int32 = 1
     private static let styleString: Int32 = 2
     private static let styleNumber: Int32 = 3
@@ -126,41 +129,6 @@ public enum DemoSampleSupport {
     private static let styleBuiltin: Int32 = 14
     private static let styleUrl: Int32 = 15
     private static let styleProperty: Int32 = 16
-    private static let exactSyntaxMap: [String: String] = [
-        ".gitignore": "gitignore.json",
-        "CMakeLists.txt": "cmake.json",
-        "Containerfile": "dockerfile.json",
-        "Dockerfile": "dockerfile.json",
-        "GNUmakefile": "makefile.json",
-        "Makefile": "makefile.json",
-        "makefile": "makefile.json",
-    ]
-    private static let suffixSyntaxMap: [String: String] = [
-        ".swift": "swift.json",
-        ".css": "css.json",
-        ".scss": "scss.json",
-        ".less": "less.json",
-        ".jsonc": "jsonc.json",
-        ".json5": "json5.json",
-        ".cmake": "cmake.json",
-        ".dockerfile": "dockerfile.json",
-        ".mk": "makefile.json",
-        ".properties": "properties.json",
-        ".env": "env.json",
-        ".proto": "protobuf.json",
-        ".graphql": "graphql.json",
-        ".nginx": "nginx.json",
-        ".gitignore": "gitignore.json",
-        ".diff": "diff.json",
-        ".rb": "ruby.json",
-        ".hcl": "hcl.json",
-        ".tf": "terraform.json",
-        ".vue": "vue.json",
-        ".svelte": "svelte.json",
-    ]
-    private static let sortedSuffixes: [String] = suffixSyntaxMap.keys.sorted { left, right in
-        left.count > right.count
-    }
     private static let builtinSampleFileNames: [String] = [
         "example.swift",
         "example.css",
@@ -184,6 +152,16 @@ public enum DemoSampleSupport {
         "example.vue",
         "example.svelte",
     ]
+    private static let excludedSyntaxFileNames: Set<String> = [
+        "yaml(non zero width).json",
+    ]
+    private static let sharedEngineBundleResult: Result<DemoEngineBundle, Error> = {
+        do {
+            return .success(try makeSharedEngineBundle())
+        } catch {
+            return .failure(error)
+        }
+    }()
 
     public static let placeholderMessage = "SweetLine Apple demo skeleton is ready for integration."
 
@@ -358,12 +336,7 @@ public enum DemoSampleSupport {
         ),
     ]
 
-    public static let builtinSamples: [DemoSample] = builtinSampleFileNames.compactMap { fileName in
-        guard let syntaxFileName = resolveSyntaxFileName(for: fileName) else {
-            return nil
-        }
-        return DemoSample(fileName: fileName, syntaxFileName: syntaxFileName)
-    }
+    public static let builtinSamples: [DemoSample] = builtinSampleFileNames.map(DemoSample.init(fileName:))
 
     public static func defaultConfig() -> HighlightConfig {
         HighlightConfig(showIndex: true, inlineStyle: false)
@@ -414,38 +387,21 @@ public enum DemoSampleSupport {
         try makeRenderModel(sample: builtinSamples[0], selectedTheme: builtinThemes[0])
     }
 
-    private static func resolveSyntaxFileName(for fileName: String) -> String? {
-        if let exactSyntaxFileName = exactSyntaxMap[fileName] {
-            return exactSyntaxFileName
-        }
-        for suffix in sortedSuffixes where fileName.hasSuffix(suffix) {
-            return suffixSyntaxMap[suffix]
-        }
-        return nil
-    }
-
     private static func makeRenderModel(sample: DemoSample, selectedTheme: DemoTheme) throws -> DemoRenderModel {
         let repositoryRoot = resolveRepositoryRoot()
         let sampleURL = repositoryRoot.appendingPathComponent("tests/files/\(sample.fileName)")
-        let syntaxURL = repositoryRoot.appendingPathComponent("syntaxes/\(sample.syntaxFileName)")
         let sampleText = try String(contentsOf: sampleURL, encoding: .utf8)
-
-        let engine = try HighlightEngine(config: defaultConfig())
-        try registerStyleNames(on: engine)
-
-        let compileStart = DispatchTime.now().uptimeNanoseconds
-        try engine.compileSyntax(fromFile: syntaxURL.path)
-        let compileMicroseconds = elapsedMicroseconds(since: compileStart)
-
-        let analyzer = try makeAnalyzer(engine: engine, sample: sample)
+        let engineBundle = try sharedEngineBundle()
+        let document = try Document(uri: sample.fileName, text: sampleText)
+        let analyzer = try engineBundle.engine.loadDocument(document)
         let analyzeStart = DispatchTime.now().uptimeNanoseconds
-        let highlight = try analyzer.analyze(sampleText)
-        let indentGuides = try analyzer.analyzeIndentGuides(sampleText)
+        let highlight = try analyzer.analyze()
+        let indentGuides = try analyzer.analyzeIndentGuides()
         let analyzeMicroseconds = elapsedMicroseconds(since: analyzeStart)
 
-        let summary = makeSummary(sampleURL: sampleURL, sampleText: sampleText, highlight: highlight)
+        let summary = makeSummary(sample: sample, sampleText: sampleText, highlight: highlight)
         let status = DemoStatusMetrics(
-            compileMicroseconds: compileMicroseconds,
+            compileMicroseconds: engineBundle.compileMicroseconds,
             analyzeMicroseconds: analyzeMicroseconds,
             lineCount: summary.lineCount,
             themeName: selectedTheme.name
@@ -463,12 +419,69 @@ public enum DemoSampleSupport {
         )
     }
 
-    private static func makeAnalyzer(engine: HighlightEngine, sample: DemoSample) throws -> TextAnalyzer {
-        let syntaxName = URL(fileURLWithPath: sample.syntaxFileName)
-            .deletingPathExtension()
-            .lastPathComponent
+    private static func sharedEngineBundle() throws -> DemoEngineBundle {
+        try sharedEngineBundleResult.get()
+    }
 
-        return try engine.createAnalyzer(named: syntaxName)
+    private static func makeSharedEngineBundle() throws -> DemoEngineBundle {
+        let repositoryRoot = resolveRepositoryRoot()
+        let syntaxURLs = try listCommonSyntaxURLs(repositoryRoot: repositoryRoot)
+        let engine = try HighlightEngine(config: defaultConfig())
+        try registerStyleNames(on: engine)
+
+        let compileStart = DispatchTime.now().uptimeNanoseconds
+        try compileCommonSyntaxes(into: engine, syntaxURLs: syntaxURLs)
+        let compileMicroseconds = elapsedMicroseconds(since: compileStart)
+
+        return DemoEngineBundle(engine: engine, compileMicroseconds: compileMicroseconds)
+    }
+
+    private static func listCommonSyntaxURLs(repositoryRoot: URL) throws -> [URL] {
+        let syntaxesURL = repositoryRoot.appendingPathComponent("syntaxes", isDirectory: true)
+        let syntaxURLs = try FileManager.default.contentsOfDirectory(
+            at: syntaxesURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )
+
+        return syntaxURLs
+            .filter { $0.pathExtension == "json" }
+            .filter { !$0.lastPathComponent.hasSuffix("-inlineStyle.json") }
+            .filter { !excludedSyntaxFileNames.contains($0.lastPathComponent) }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    }
+
+    private static func compileCommonSyntaxes(into engine: HighlightEngine, syntaxURLs: [URL]) throws {
+        var pending = syntaxURLs
+
+        while !pending.isEmpty {
+            var nextPending: [URL] = []
+            var madeProgress = false
+
+            for syntaxURL in pending {
+                do {
+                    try engine.compileSyntax(fromFile: syntaxURL.path)
+                    madeProgress = true
+                } catch let error as SyntaxCompileError {
+                    if error.errorCode == SyntaxCompileError.errImportSyntaxNotFound {
+                        nextPending.append(syntaxURL)
+                        continue
+                    }
+                    throw error
+                }
+            }
+
+            if !madeProgress {
+                let fileNames = nextPending.map(\.lastPathComponent).joined(separator: ", ")
+                throw NSError(
+                    domain: "SweetLineDemoSupport",
+                    code: SyntaxCompileError.errImportSyntaxNotFound,
+                    userInfo: [NSLocalizedDescriptionKey: "Unresolved syntax dependencies: \(fileNames)"]
+                )
+            }
+
+            pending = nextPending
+        }
     }
 
     private static func registerStyleNames(on engine: HighlightEngine) throws {
@@ -500,7 +513,7 @@ public enum DemoSampleSupport {
             .deletingLastPathComponent()
     }
 
-    private static func makeSummary(sampleURL: URL, sampleText: String, highlight: DocumentHighlight) -> DemoAnalysisSummary {
+    private static func makeSummary(sample: DemoSample, sampleText: String, highlight: DocumentHighlight) -> DemoAnalysisSummary {
         let lineCount = highlight.lines.count
         let highlightedLineCount = highlight.lines.filter { !$0.spans.isEmpty }.count
         let spanCount = highlight.lines.reduce(into: 0) { partial, line in
@@ -512,7 +525,7 @@ public enum DemoSampleSupport {
             .map(String.init) ?? ""
 
         return DemoAnalysisSummary(
-            sampleName: sampleURL.lastPathComponent,
+            sampleName: sample.fileName,
             lineCount: lineCount,
             highlightedLineCount: highlightedLineCount,
             spanCount: spanCount,
