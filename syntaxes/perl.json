@@ -1,0 +1,287 @@
+{
+  "name": "perl",
+  "fileNames": ["Makefile.PL", "Build.PL"],
+  "fileSuffixes": [".pl", ".pm", ".psgi"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "package": "[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)*",
+    "sigiledVariable": "(?:\\$#(?:\\$[A-Za-z_][A-Za-z0-9_]*|\\$\\{[^}]+\\}|[A-Za-z_][A-Za-z0-9_]*|\\{[^}]+\\})|[\\$@%&\\*](?:[A-Za-z_][A-Za-z0-9_]*|\\d+|[!~?]|\\{[^}]+\\}))",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "doubleStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "singleStringContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "interpolationRule": [
+      {
+        "pattern": "(?:\\$\\{[^}]+\\}|\\$[A-Za-z_][A-Za-z0-9_]*|\\$\\d+|\\$[!~?]|@[A-Za-z_][A-Za-z0-9_]*)",
+        "style": "variable"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^#!${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "^(=)(pod|head[1-6]|item|over|back|begin|for)\\b",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "pod"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(package)\\b${whiteSpace}+(${package})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(sub)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(use|require)\\b${whiteSpace}+(${package})(?=${whiteSpace}|;|\\()",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:my|our|state|local|if|elsif|else|unless|while|until|for|foreach|given|when|default|continue|return|next|last|redo|goto|do|eval|BEGIN|CHECK|INIT|UNITCHECK|END)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:undef|__FILE__|__LINE__|__PACKAGE__|__SUB__|__DATA__|__END__)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\b(?:say|print|open|close|chomp|chop|split|join|map|grep|sort|keys|values|each|scalar|defined|exists|delete|push|pop|shift|unshift|splice|pack|unpack|sprintf|substr|length|ref|bless|warn|die|caller|require|eval|do|system|exec|readline|readpipe|chdir|opendir|readdir|mkdir|rmdir|unlink|rename)\\b)${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${package})(::)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${package})(::)(${identifier})",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\$#(?:\\$[A-Za-z_][A-Za-z0-9_]*|\\$\\{[^}]+\\}|[A-Za-z_][A-Za-z0-9_]*|\\{[^}]+\\})",
+        "style": "variable"
+      },
+      {
+        "pattern": "${sigiledVariable}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(?:q|qq|qx|qw)\\{[^{}]*\\}",
+        "style": "string"
+      },
+      {
+        "pattern": "\\bqr\\{[^{}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\bm\\/(?:[^/\\\\\\n]|\\\\.)+\\/[msixpodualngcer]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\bs\\/(?:[^/\\\\\\n]|\\\\.)+\\/(?:[^/\\\\\\n]|\\\\.)+\\/[msixpodualngcer]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\b(?:tr|y)\\/(?:[^/\\\\\\n]|\\\\.)+\\/(?:[^/\\\\\\n]|\\\\.)+\\/[cdsr]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "<<[-~]?(?:'|\")?[A-Za-z_][A-Za-z0-9_]*(?:'|\")?",
+        "style": "string",
+        "state": "heredoc"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[+\\-*/=%!&|^~<>?:,.;()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ],
+    "pod": [
+      {
+        "pattern": "^=cut\\b",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "pod"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "heredoc": [
+      {
+        "pattern": "^[ \\t]*[A-Za-z_][A-Za-z0-9_]*[ \\t]*$",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      },
+      {
+        "onLineEndState": "heredoc"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

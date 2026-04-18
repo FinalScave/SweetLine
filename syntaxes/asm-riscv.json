@@ -1,0 +1,130 @@
+{
+  "name": "asm-riscv",
+  "fileSuffixes": [".riscv.s", ".riscv.S", ".rv32.s", ".rv32.S", ".rv64.s", ".rv64.S"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\"(?:[^\"\\\\]|\\\\.)*\")",
+        "style": "string",
+        "subStates": [1, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "('(?:[^'\\\\]|\\\\.)*')",
+        "style": "string",
+        "subStates": [1, "stringContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?m)^\\s*(${identifier})(\\s*:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^\\s*(#)(if|ifdef|ifndef|elif|else|endif|include|define|undef)\\b",
+        "styles": [1, "preprocessor", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(?m)^\\s*(\\.)?(section|text|data|bss|rodata|globl|global|local|hidden|type|size|align|p2align|balign|file|loc|option|macro|endm|if|else|endif|set|equ|equiv|include|word|half|byte|dword|quad|zero|ascii|asciz|string|comm|lcomm|extern|weak|pushsection|popsection|attribute)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "\\b(lui|auipc|jal|jalr|ret|call|tail|j|jr|mv|li|la|nop|not|neg|seqz|snez|sltz|sgtz|beq|bne|blt|bge|bltu|bgeu|addi|add|sub|slli|srli|srai|and|or|xor|andi|ori|xori|slti|sltiu|mul|mulh|mulhsu|mulhu|div|divu|rem|remu|lb|lh|lw|ld|lbu|lhu|lwu|sb|sh|sw|sd|fence|fence\\.i|ecall|ebreak|csrrw|csrrs|csrrc|csrrwi|csrrsi|csrrci|lr\\.w|sc\\.w|amoswap\\.w|amoadd\\.w|amoand\\.w|amoor\\.w|amoxor\\.w|amomax\\.w|amomaxu\\.w|amomin\\.w|amominu\\.w|lr\\.d|sc\\.d|amoswap\\.d|amoadd\\.d|amoand\\.d|amoor\\.d|amoxor\\.d|amomax\\.d|amomaxu\\.d|amomin\\.d|amominu\\.d)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(x(?:[0-9]|[12][0-9]|3[01])|zero|ra|sp|gp|tp|t[0-6]|s(?:[0-1]|[0-9]|1[0-1])|a[0-7]|f(?:[0-9]|[12][0-9]|3[01])|v(?:[0-9]|[12][0-9]|3[01]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(%[A-Za-z_][A-Za-z0-9_]*)(\\()([^)]*)(\\))",
+        "styles": [1, "annotation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "relocArg"]
+      },
+      {
+        "pattern": "(\\#)(-?0[xX][0-9a-fA-F]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?0[bB][01]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?[0-9]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[+\\-*/=&<>!~|^,().\\[\\]{}:]",
+        "style": "punctuation"
+      }
+    ],
+    "relocArg": [
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

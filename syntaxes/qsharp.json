@@ -1,0 +1,385 @@
+{
+  "name": "qsharp",
+  "fileSuffixes": [".qs", ".qsc"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "namespace": "[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "docCommentRule": [
+      {
+        "pattern": "(///)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "docCommentContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\"(?:[^\"\\\\]|\\\\.)*\")",
+        "style": "string",
+        "subStates": [1, "doubleStringContent"]
+      }
+    ],
+    "interpolatedStringStartRule": [
+      {
+        "pattern": "\\$\"",
+        "style": "string",
+        "state": "interpolatedString"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(namespace)\\b${whiteSpace}+(${namespace})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "namespaceHeader"
+      },
+      {
+        "pattern": "\\b(open|import)\\b${whiteSpace}+(${namespace}(?:\\.\\*)?)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(operation|function)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "method"],
+        "state": "callableHeader"
+      },
+      {
+        "pattern": "\\b(newtype|struct)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "(@)(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "\\b(let|mutable|use|borrowing)\\b${whiteSpace}+(\\()([^)]*)(\\))${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "bindingTuple"]
+      },
+      {
+        "pattern": "\\b(let|mutable|use|borrowing)\\b${whiteSpace}+(${identifier})${whiteSpace}*(=)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(let|mutable|set|use|borrow|borrowing|if|elif|else|for|in|return|fail|repeat|until|fixup|within|apply|is|body|adjoint|controlled|internal|open|import)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(Adj|Ctl)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(')(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "\\b(true|false)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(Zero|One|PauliI|PauliX|PauliY|PauliZ)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(Qubit|Result|Int|BigInt|Double|Bool|String|Unit|Pauli|Range)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${namespace})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "include": "interpolatedStringStartRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "docCommentRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "=>|->|::|==|!=|<=|>=|&&|\\|\\||\\+\\+|--|[.()\\[\\]?!@%^&|+\\-*/<>=,{};:]",
+        "style": "punctuation"
+      }
+    ],
+    "namespaceHeader": [
+      {
+        "pattern": "(${namespace})",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[.]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "namespaceHeader"
+      }
+    ],
+    "callableHeader": [
+      {
+        "pattern": "\\(",
+        "style": "punctuation",
+        "state": "callableParams"
+      },
+      {
+        "pattern": "\\b(is|body|adjoint|controlled)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(')(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(Adj|Ctl)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${namespace})",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "[=:;,+]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "callableHeader"
+      }
+    ],
+    "typeHeader": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "structFields"
+      },
+      {
+        "pattern": ";",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(')(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "\\b(Qubit|Result|Int|BigInt|Double|Bool|String|Unit|Pauli|Range)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "(${namespace})",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "[=,:\\[\\]()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "typeHeader"
+      }
+    ],
+    "callableParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "callableTail"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${namespace})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(')(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "\\b(Qubit|Result|Int|BigInt|Double|Bool|String|Unit|Pauli|Range)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "(${identifier})",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "callableParams"
+      }
+    ],
+    "bindingTuple": [
+      {
+        "pattern": "(${identifier})",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "[,\\[\\]()]",
+        "style": "punctuation"
+      }
+    ],
+    "callableTail": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(is|Adj|Ctl|body|adjoint|controlled)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(Qubit|Result|Int|BigInt|Double|Bool|String|Unit|Pauli|Range)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "[=:+;,]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "callableTail"
+      }
+    ],
+    "structFields": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(')(${identifier})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "\\b(Qubit|Result|Int|BigInt|Double|Bool|String|Unit|Pauli|Range)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "(${namespace})",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "[=,;:\\[\\]()]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "structFields"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "interpolatedString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "docCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

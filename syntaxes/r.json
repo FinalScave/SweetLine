@@ -1,0 +1,255 @@
+{
+  "name": "r",
+  "fileSuffixes": [".r", ".R"],
+  "variables": {
+    "identifier": "(?:[A-Za-z]|\\.(?!\\d))[A-Za-z0-9._]*",
+    "symbol": "(?:`[^`]+`|(?:[A-Za-z]|\\.(?!\\d))[A-Za-z0-9._]*)",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "doubleStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "singleStringContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(${symbol})${whiteSpace}*(<-|=|<<-)${whiteSpace}*(function)${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation", 3, "keyword", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(?:if|else|for|while|repeat|next|break|return|switch|in)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:TRUE|FALSE|NULL|NA|NaN|Inf|-Inf)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\b(?:library|require|source|print|cat|paste|sprintf|sum|mean|median|min|max|sd|var|length|names|str|data\\.frame|list|matrix|seq|rep|cbind|rbind|lapply|sapply|vapply|Map|Reduce|apply|tapply|aggregate|with|within|ifelse|requireNamespace|setClass|setGeneric|setMethod|setRefClass)\\b)${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${symbol})(:::|::)(${symbol})${whiteSpace}*(\\()",
+        "styles": [1, "class", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${symbol})(:::|::)(${symbol})",
+        "styles": [1, "class", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${symbol})(\\$)(${symbol})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${symbol})(\\$)(${symbol})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "\\b(function)${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "(${symbol})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${symbol})${whiteSpace}*(<-|=|<<-)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "(:)(${symbol})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "\\.\\.\\.",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f]+(?:L)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9]+)?(?:L)?)\\b",
+        "style": "number"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "[+\\-*/^$@~<>=!&|:]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[()\\[\\]{};,]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(${symbol})${whiteSpace}*([=])(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "${symbol}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\.\\.\\.",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\bTRUE\\b|\\bFALSE\\b|\\bNULL\\b|\\bNA\\b|\\bNaN\\b|\\bInf\\b|\\b-Inf\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9]+)?(?:L)?)\\b",
+        "style": "number"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[,:]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "funcParams"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

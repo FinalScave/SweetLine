@@ -83,6 +83,17 @@ namespace {
     }
     return -1;
   }
+
+  void requireNoTransparentSpans(const SharedPtr<DocumentHighlight>& highlight, const U8String& file_name) {
+    REQUIRE(highlight != nullptr);
+    for (size_t line_index = 0; line_index < highlight->lines.size(); ++line_index) {
+      const LineHighlight& line = highlight->lines[line_index];
+      for (const TokenSpan& span : line.spans) {
+        CAPTURE(file_name, line_index, span.range.start.column, span.range.end.column, span.style_id);
+        REQUIRE(span.style_id > 0);
+      }
+    }
+  }
 }
 
 TEST_CASE("Highlight multi-group") {
@@ -1153,6 +1164,387 @@ TEST_CASE("Batch comments only trigger for line-leading comment forms") {
   CHECK(styleAtColumn(highlight->lines[0], 5) != kComment);
   CHECK(styleAtColumn(highlight->lines[1], 16) != kComment);
   CHECK(styleAtColumn(highlight->lines[2], 0) == kComment);
+}
+
+TEST_CASE("R and Julia keep package calls, macros, builtins, and URLs distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/r.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/julia.json"));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kMacro = 12;
+  constexpr int32_t kUrl = 16;
+
+  SharedPtr<TextAnalyzer> r = engine->createAnalyzerBySyntaxName("r");
+  REQUIRE(r != nullptr);
+  SharedPtr<DocumentHighlight> rHighlight = r->analyzeText(
+    "stats::median(values)\n"
+    "value <- function(x, y = 1) x + y\n"
+    "flag <- TRUE\n"
+    "text <- \"https://example.com/r\"\n");
+  REQUIRE(rHighlight != nullptr);
+  CHECK(styleAtColumn(rHighlight->lines[0], 0) == kClass);
+  CHECK(styleAtColumn(rHighlight->lines[0], 7) == kMethod);
+  CHECK(styleAtColumn(rHighlight->lines[1], 0) == kMethod);
+  CHECK(styleAtColumn(rHighlight->lines[1], 9) == kKeyword);
+  CHECK(styleAtColumn(rHighlight->lines[3], 9) == kUrl);
+
+  SharedPtr<TextAnalyzer> julia = engine->createAnalyzerBySyntaxName("julia");
+  REQUIRE(julia != nullptr);
+  SharedPtr<DocumentHighlight> juliaHighlight = julia->analyzeText(
+    "@show value\n"
+    "struct Point{T<:Real}\n"
+    "cmd = `echo $value`\n"
+    "text = \"https://example.com/julia\"\n");
+  REQUIRE(juliaHighlight != nullptr);
+  CHECK(styleAtColumn(juliaHighlight->lines[0], 1) == kMacro);
+  CHECK(styleAtColumn(juliaHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(juliaHighlight->lines[1], 7) == kClass);
+  CHECK(styleAtColumn(juliaHighlight->lines[2], 6) == kString);
+  CHECK(styleAtColumn(juliaHighlight->lines[3], 8) == kUrl);
+}
+
+TEST_CASE("Julia keeps local bindings, typed defaults, where generics, and strings styled") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/julia.json"));
+
+  U8String code_txt = FileUtil::readString(TESTS_DIR"/files/example.jl");
+  REQUIRE_FALSE(code_txt.empty());
+
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.jl", code_txt);
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 143);
+
+  CHECK(styleAtColumn(highlight->lines[20], 8) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[20], 14) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[20], 20) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[46], 46) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[46], 71) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[46], 73) == kString);
+  CHECK(styleAtColumn(highlight->lines[54], 50) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[54], 71) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[64], 44) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[64], 51) == kClass);
+  CHECK(styleAtColumn(highlight->lines[72], 14) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[101], 12) == kString);
+  CHECK(styleAtColumn(highlight->lines[105], 16) == kString);
+  CHECK(styleAtColumn(highlight->lines[112], 68) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[112], 75) == kClass);
+  CHECK(styleAtColumn(highlight->lines[142], 4) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[142], 8) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[142], 14) == kPunctuation);
+}
+
+TEST_CASE("R and Perl sample calls keep method names, punctuation, and sigils distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kBuiltin = 10;
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/r.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/perl.json"));
+
+  U8String rCode = FileUtil::readString(TESTS_DIR"/files/example.r");
+  REQUIRE_FALSE(rCode.empty());
+  SharedPtr<Document> rDocument = makeSharedPtr<Document>("example.r", rCode);
+  SharedPtr<DocumentAnalyzer> rAnalyzer = engine->loadDocument(rDocument);
+  REQUIRE(rAnalyzer != nullptr);
+  SharedPtr<DocumentHighlight> rHighlight = rAnalyzer->analyze();
+  REQUIRE(rHighlight != nullptr);
+  CHECK(styleAtColumn(rHighlight->lines[128], 16) == kMethod);
+  CHECK(styleAtColumn(rHighlight->lines[128], 32) == kPunctuation);
+  CHECK(styleAtColumn(rHighlight->lines[149], 15) == kBuiltin);
+  CHECK(styleAtColumn(rHighlight->lines[149], 21) == kPunctuation);
+  CHECK(styleAtColumn(rHighlight->lines[149], 49) == kKeyword);
+  CHECK(styleAtColumn(rHighlight->lines[149], 57) == kPunctuation);
+  CHECK(styleAtColumn(rHighlight->lines[160], 11) == kBuiltin);
+  CHECK(styleAtColumn(rHighlight->lines[160], 17) == kPunctuation);
+  CHECK(styleAtColumn(rHighlight->lines[164], 24) == kMethod);
+  CHECK(styleAtColumn(rHighlight->lines[164], 29) == kPunctuation);
+
+  U8String perlCode = FileUtil::readString(TESTS_DIR"/files/example.pl");
+  REQUIRE_FALSE(perlCode.empty());
+  SharedPtr<Document> perlDocument = makeSharedPtr<Document>("example.pl", perlCode);
+  SharedPtr<DocumentAnalyzer> perlAnalyzer = engine->loadDocument(perlDocument);
+  REQUIRE(perlAnalyzer != nullptr);
+  SharedPtr<DocumentHighlight> perlHighlight = perlAnalyzer->analyze();
+  REQUIRE(perlHighlight != nullptr);
+  CHECK(styleAtColumn(perlHighlight->lines[84], 11) == kVariable);
+  CHECK(styleAtColumn(perlHighlight->lines[84], 24) == kVariable);
+  CHECK(styleAtColumn(perlHighlight->lines[84], 33) == kPunctuation);
+  CHECK(styleAtColumn(perlHighlight->lines[175], 16) == kMethod);
+  CHECK(styleAtColumn(perlHighlight->lines[175], 30) == kPunctuation);
+  CHECK(styleAtColumn(perlHighlight->lines[176], 18) == kMethod);
+  CHECK(styleAtColumn(perlHighlight->lines[176], 29) == kPunctuation);
+  CHECK(styleAtColumn(perlHighlight->lines[176], 30) == kBuiltin);
+  CHECK(styleAtColumn(perlHighlight->lines[176], 36) == kPunctuation);
+}
+
+TEST_CASE("Perl and Erlang keep sigils, directives, records, and regexes distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/perl.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/erlang.json"));
+
+  constexpr int32_t kComment = 4;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPreprocessor = 11;
+  constexpr int32_t kAnnotation = 9;
+  constexpr int32_t kUrl = 16;
+
+  SharedPtr<TextAnalyzer> perl = engine->createAnalyzerBySyntaxName("perl");
+  REQUIRE(perl != nullptr);
+  SharedPtr<DocumentHighlight> perlHighlight = perl->analyzeText(
+    "sub render {\n"
+    "    my $name = \"https://example.com/perl\";\n"
+    "    $name =~ qr{^\\\\w+$};\n"
+    "}\n");
+  REQUIRE(perlHighlight != nullptr);
+  CHECK(styleAtColumn(perlHighlight->lines[0], 4) == kMethod);
+  CHECK(styleAtColumn(perlHighlight->lines[1], 7) == kVariable);
+  CHECK(styleAtColumn(perlHighlight->lines[1], 17) == kUrl);
+  CHECK(styleAtColumn(perlHighlight->lines[2], 4) == kVariable);
+  CHECK(styleAtColumn(perlHighlight->lines[2], 13) == kAnnotation);
+
+  SharedPtr<TextAnalyzer> erlang = engine->createAnalyzerBySyntaxName("erlang");
+  REQUIRE(erlang != nullptr);
+  SharedPtr<DocumentHighlight> erlangHighlight = erlang->analyzeText(
+    "-module(demo).\n"
+    "-record(person, {name, age = 0}).\n"
+    "render(#person{name = <<\"Ada\">>}) ->\n"
+    "    io:format(\"https://example.com/erl~n\"),\n"
+    "    ok.\n");
+  REQUIRE(erlangHighlight != nullptr);
+  CHECK(styleAtColumn(erlangHighlight->lines[0], 1) == kPreprocessor);
+  CHECK(styleAtColumn(erlangHighlight->lines[1], 8) == kClass);
+  CHECK(styleAtColumn(erlangHighlight->lines[2], 0) == kMethod);
+  CHECK(styleAtColumn(erlangHighlight->lines[2], 8) == kClass);
+  CHECK(styleAtColumn(erlangHighlight->lines[3], 4) == kClass);
+  CHECK(styleAtColumn(erlangHighlight->lines[3], 15) == kUrl);
+}
+
+TEST_CASE("Starlark, Bazel, and Gradle DSLs keep block heads and calls distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/starlark.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/bazel.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/gradle.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/gradle-kts.json"));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kProperty = 13;
+
+  SharedPtr<TextAnalyzer> starlark = engine->createAnalyzerBySyntaxName("starlark");
+  REQUIRE(starlark != nullptr);
+  SharedPtr<DocumentHighlight> starlarkHighlight = starlark->analyzeText(
+    "load(\"//tools:defs.bzl\", \"demo_rule\")\n"
+    "def build_demo(name):\n"
+    "    return struct(enabled = True)\n");
+  REQUIRE(starlarkHighlight != nullptr);
+  CHECK(styleAtColumn(starlarkHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(starlarkHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(starlarkHighlight->lines[1], 4) == kMethod);
+  CHECK(styleAtColumn(starlarkHighlight->lines[2], 28) == kBuiltin);
+
+  SharedPtr<TextAnalyzer> bazel = engine->createAnalyzerBySyntaxName("bazel");
+  REQUIRE(bazel != nullptr);
+  SharedPtr<DocumentHighlight> bazelHighlight = bazel->analyzeText(
+    "cc_binary(\n"
+    "    name = \"demo\",\n"
+    "    deps = [\":core\"],\n"
+    ")\n");
+  REQUIRE(bazelHighlight != nullptr);
+  CHECK(styleAtColumn(bazelHighlight->lines[0], 0) == kMethod);
+  CHECK(styleAtColumn(bazelHighlight->lines[1], 4) == kProperty);
+  CHECK(styleAtColumn(bazelHighlight->lines[2], 12) == kString);
+
+  SharedPtr<TextAnalyzer> gradle = engine->createAnalyzerBySyntaxName("gradle");
+  REQUIRE(gradle != nullptr);
+  SharedPtr<DocumentHighlight> gradleHighlight = gradle->analyzeText(
+    "plugins {\n"
+    "    id 'java'\n"
+    "}\n"
+    "dependencies {\n"
+    "    implementation 'com.google.guava:guava:1.0'\n"
+    "}\n");
+  REQUIRE(gradleHighlight != nullptr);
+  CHECK(styleAtColumn(gradleHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(gradleHighlight->lines[1], 4) == kKeyword);
+  CHECK(styleAtColumn(gradleHighlight->lines[3], 0) == kKeyword);
+  CHECK(styleAtColumn(gradleHighlight->lines[4], 4) == kKeyword);
+
+  SharedPtr<TextAnalyzer> gradleKts = engine->createAnalyzerBySyntaxName("gradle-kts");
+  REQUIRE(gradleKts != nullptr);
+  SharedPtr<DocumentHighlight> gradleKtsHighlight = gradleKts->analyzeText(
+    "plugins {\n"
+    "    kotlin(\"jvm\") version \"2.0.21\"\n"
+    "}\n"
+    "tasks.register(\"demo\") {\n"
+    "    doLast {\n"
+    "        println(\"https://example.com\")\n"
+    "    }\n"
+    "}\n");
+  REQUIRE(gradleKtsHighlight != nullptr);
+  CHECK(styleAtColumn(gradleKtsHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(gradleKtsHighlight->lines[1], 4) == kMethod);
+  CHECK(styleAtColumn(gradleKtsHighlight->lines[3], 6) == kMethod);
+  CHECK(styleAtColumn(gradleKtsHighlight->lines[5], 8) == kMethod);
+}
+
+TEST_CASE("QSharp and RISC-V keep declarations, interpolation, directives, and relocations distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/qsharp.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/asm-riscv.json"));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kPreprocessor = 11;
+  constexpr int32_t kAnnotation = 9;
+
+  SharedPtr<TextAnalyzer> qsharp = engine->createAnalyzerBySyntaxName("qsharp");
+  REQUIRE(qsharp != nullptr);
+  SharedPtr<DocumentHighlight> qsharpHighlight = qsharp->analyzeText(
+    "newtype Angle = Double;\n"
+    "newtype Pair = (Int, Int);\n"
+    "function Clamp(value : Int) : Int {\n"
+    "    let result = value;\n"
+    "    let (first, second) = (1, 2);\n"
+    "    Message($\"value={result}\");\n"
+    "}\n"
+    "operation Main() : Unit is Adj + Ctl {\n"
+    "    Message($\"value={1}\");\n"
+    "}\n");
+  REQUIRE(qsharpHighlight != nullptr);
+  CHECK(styleAtColumn(qsharpHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[0], 8) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[0], 16) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[1], 8) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[1], 17) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[2], 0) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[2], 9) == kMethod);
+  CHECK(styleAtColumn(qsharpHighlight->lines[2], 15) == kVariable);
+  CHECK(styleAtColumn(qsharpHighlight->lines[2], 23) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[2], 30) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[3], 4) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[3], 8) == kVariable);
+  CHECK(styleAtColumn(qsharpHighlight->lines[4], 4) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[4], 9) == kVariable);
+  CHECK(styleAtColumn(qsharpHighlight->lines[4], 16) == kVariable);
+  CHECK(styleAtColumn(qsharpHighlight->lines[5], 4) == kMethod);
+  CHECK(styleAtColumn(qsharpHighlight->lines[5], 20) == kAnnotation);
+  CHECK(styleAtColumn(qsharpHighlight->lines[7], 0) == kKeyword);
+  CHECK(styleAtColumn(qsharpHighlight->lines[7], 10) == kMethod);
+  CHECK(styleAtColumn(qsharpHighlight->lines[7], 19) == kClass);
+  CHECK(styleAtColumn(qsharpHighlight->lines[8], 4) == kMethod);
+  CHECK(styleAtColumn(qsharpHighlight->lines[8], 20) == kAnnotation);
+
+  SharedPtr<TextAnalyzer> riscv = engine->createAnalyzerBySyntaxName("asm-riscv");
+  REQUIRE(riscv != nullptr);
+  SharedPtr<DocumentHighlight> riscvHighlight = riscv->analyzeText(
+    ".globl _start\n"
+    "_start:\n"
+    "    auipc t0, %hi(message)\n"
+    "    addi t0, t0, %lo(message)\n");
+  REQUIRE(riscvHighlight != nullptr);
+  CHECK(styleAtColumn(riscvHighlight->lines[0], 1) == kPreprocessor);
+  CHECK(styleAtColumn(riscvHighlight->lines[1], 0) == kMethod);
+  CHECK(styleAtColumn(riscvHighlight->lines[2], 10) == kBuiltin);
+  CHECK(styleAtColumn(riscvHighlight->lines[2], 14) == kAnnotation);
+  CHECK(styleAtColumn(riscvHighlight->lines[3], 19) == kAnnotation);
+}
+
+TEST_CASE("Elixir keeps multiline strings and directive module names styled") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kClass = 5;
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/elixir.json"));
+
+  U8String code_txt = FileUtil::readString(TESTS_DIR"/files/example.ex");
+  REQUIRE_FALSE(code_txt.empty());
+
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.ex", code_txt);
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 163);
+
+  CHECK(styleAtColumn(highlight->lines[1], 13) == kString);
+  CHECK(styleAtColumn(highlight->lines[1], 15) == kString);
+  CHECK(styleAtColumn(highlight->lines[2], 2) == kString);
+  CHECK(styleAtColumn(highlight->lines[6], 2) == kString);
+  CHECK(styleAtColumn(highlight->lines[6], 4) == kString);
+  CHECK(styleAtColumn(highlight->lines[8], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[8], 8) == kClass);
+  CHECK(styleAtColumn(highlight->lines[8], 18) == kClass);
+  CHECK(styleAtColumn(highlight->lines[9], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[9], 9) == kClass);
+  CHECK(styleAtColumn(highlight->lines[10], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[10], 10) == kClass);
+  CHECK(styleAtColumn(highlight->lines[12], 13) == kClass);
+  CHECK(styleAtColumn(highlight->lines[97], 16) == kClass);
+  CHECK(styleAtColumn(highlight->lines[100], 11) == kClass);
+  CHECK(styleAtColumn(highlight->lines[159], 6) == kString);
+  CHECK(styleAtColumn(highlight->lines[160], 6) == kString);
+  CHECK(styleAtColumn(highlight->lines[162], 6) == kString);
+  CHECK(styleAtColumn(highlight->lines[162], 8) == kString);
+}
+
+TEST_CASE("New language samples do not emit transparent spans") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> syntax_files = {
+    "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json", "erlang.json"
+  };
+  for (const U8String& syntax_file : syntax_files) {
+    CAPTURE(syntax_file);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/" + syntax_file));
+  }
+
+  const List<U8String> sample_files = {
+    TESTS_DIR"/files/example.r",
+    TESTS_DIR"/files/example.jl",
+    TESTS_DIR"/files/example.pl",
+    TESTS_DIR"/files/example.clj",
+    TESTS_DIR"/files/example.ex",
+    TESTS_DIR"/files/example.erl"
+  };
+  for (const U8String& file_path : sample_files) {
+    CAPTURE(file_path);
+    U8String code_txt = FileUtil::readString(file_path);
+    REQUIRE_FALSE(code_txt.empty());
+    U8String file_name = FileUtil::getPathName(file_path);
+    SharedPtr<Document> document = makeSharedPtr<Document>(file_name, code_txt);
+    SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+    REQUIRE(analyzer != nullptr);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+    requireNoTransparentSpans(highlight, file_name);
+  }
 }
 
 TEST_CASE("SVG routes cleanly alongside XML") {

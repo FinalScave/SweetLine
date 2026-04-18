@@ -1,0 +1,194 @@
+{
+  "name": "clojure",
+  "fileSuffixes": [".clj", ".cljc", ".cljs", ".edn"],
+  "fileNames": ["deps.edn", "bb.edn", "project.clj", "build.boot", "shadow-cljs.edn"],
+  "variables": {
+    "symbolHead": "[A-Za-z*+!_?<>.=/-]",
+    "symbolTail": "[A-Za-z0-9*+!_?<>.=/-]",
+    "symbolCore": "${symbolHead}${symbolTail}*",
+    "symbol": "(?:${symbolCore}(?:\\.${symbolCore})*(?:/${symbolCore}(?:\\.${symbolCore})*)?|[+\\-*/<>=!?]+)",
+    "keywordBody": "(?:${symbolCore}(?:\\.${symbolCore})*(?:/${symbolCore}(?:\\.${symbolCore})*)?|[+\\-*/<>=!?]+)",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(;)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "regexLiteralRule": [
+      {
+        "pattern": "(#\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "punctuation", 2, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\(?:u[0-9A-Fa-f]{4}|o[0-7]{3}|.)",
+        "style": "string"
+      }
+    ],
+    "charLiteralRule": [
+      {
+        "pattern": "\\\\(?:newline|space|tab|formfeed|backspace|return|u[0-9A-Fa-f]{4}|o[0-7]{3}|.)",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "(?:#\\?@?|#\\'|#_)",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "(?:#inst|#uuid)\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "#\\{",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "(\\^)([^\t\n\r\\f \\[\\]{}()'\";@`~]+)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(@)(${symbol})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(::?)([^\t\n\r\\f \\[\\]{}()'\";@`~]+)",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "\\b(defrecord|deftype|defprotocol)\\b${whiteSpace}+(${symbolCore}(?:\\.${symbolCore})*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(defn|defn-|defmacro|defmethod|defmulti)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(def)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(ns|in-ns)\\b${whiteSpace}+(${symbolCore}(?:\\.${symbolCore})*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:quote|var|new|throw|try|catch|finally|do|set!|load|load-file|reify|proxy|time|assert|loop|recur|if|if-let|if-some|when|when-let|when-some|cond|condp|case|fn|let|letfn|and|or)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|nil)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b##(?:Inf|-Inf|NaN)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*M\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*N\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*/[0-9][0-9_]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+r[0-9A-Za-z_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "include": "charLiteralRule"
+      },
+      {
+        "include": "regexLiteralRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[\\[\\]{}()']",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${symbol}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "(",
+      "end": ")"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    },
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

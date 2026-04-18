@@ -1,0 +1,111 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'maven-publish'
+}
+
+group = 'com.sweetline.demo'
+version = '1.2.2'
+description = 'SweetLine Gradle Groovy DSL example'
+
+repositories {
+    mavenCentral()
+    google()
+    gradlePluginPortal()
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'com.google.guava:guava:33.4.8-jre'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+configurations.all {
+    resolutionStrategy {
+        failOnVersionConflict()
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java', 'src/shared/java']
+        resources.srcDirs = ['src/main/resources']
+    }
+    test {
+        java.srcDirs = ['src/test/java']
+        resources.srcDirs = ['src/test/resources']
+    }
+}
+
+application {
+    mainClass = 'com.sweetline.demo.Main'
+}
+
+tasks.register('printConfig') {
+    doLast {
+        println "project=$project.name"
+        println "version=$version"
+        println "group=$group"
+    }
+}
+
+tasks.register('copyDocs', Copy) {
+    from('docs')
+    into(layout.buildDirectory.dir('docs'))
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+tasks.named('test', Test) {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+    systemProperty 'demo.mode', 'syntax'
+}
+
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = group
+            artifactId = 'sweetline-demo'
+            version = version
+        }
+    }
+    repositories {
+        maven {
+            url = uri(layout.buildDirectory.dir('repo'))
+        }
+    }
+}
+
+android {
+    namespace 'com.sweetline.demo'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+        versionCode 122
+        versionName '1.2.2'
+    }
+}

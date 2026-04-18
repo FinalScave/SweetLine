@@ -45,7 +45,9 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
-    "svelte.json", "fsharp.json",
+    "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
+    "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
+    "qsharp.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -76,7 +78,9 @@ TEST_CASE("Create analyzers by file name for sample files") {
     "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
-    "svelte.json", "fsharp.json"
+    "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
+    "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
+    "qsharp.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -98,12 +102,14 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.dts",
     TESTS_DIR"/files/example.glsl",
     TESTS_DIR"/files/example.go",
+    TESTS_DIR"/files/example.r",
     TESTS_DIR"/files/example.groovy",
     TESTS_DIR"/files/example.hlsl",
     TESTS_DIR"/files/example.html",
     TESTS_DIR"/files/example.jasm",
     TESTS_DIR"/files/example.java",
     TESTS_DIR"/files/example.js",
+    TESTS_DIR"/files/example.jl",
     TESTS_DIR"/files/example.kt",
     TESTS_DIR"/files/example.lrc",
     TESTS_DIR"/files/example.lua",
@@ -113,6 +119,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.nasm",
     TESTS_DIR"/files/example.nix",
     TESTS_DIR"/files/example.php",
+    TESTS_DIR"/files/example.pl",
     TESTS_DIR"/files/example.ps1",
     TESTS_DIR"/files/example.py",
     TESTS_DIR"/files/example.rs",
@@ -152,12 +159,22 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.tf",
     TESTS_DIR"/files/example.vue",
     TESTS_DIR"/files/example.svelte",
-    TESTS_DIR"/files/example.fs"
+    TESTS_DIR"/files/example.fs",
+    TESTS_DIR"/files/example.clj",
+    TESTS_DIR"/files/example.ex",
+    TESTS_DIR"/files/example.erl",
+    TESTS_DIR"/files/example.bzl",
+    TESTS_DIR"/files/BUILD.bazel",
+    TESTS_DIR"/files/build.gradle",
+    TESTS_DIR"/files/build.gradle.kts",
+    TESTS_DIR"/files/example.qs",
+    TESTS_DIR"/files/example.riscv.s"
   };
 
   for (const U8String& file_path : sample_files) {
     CAPTURE(file_path);
-    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_path);
+    std::filesystem::path path = std::filesystem::u8path(file_path);
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(path.filename().u8string());
     REQUIRE(analyzer != nullptr);
   }
 }
@@ -165,8 +182,9 @@ TEST_CASE("Create analyzers by file name for sample files") {
 TEST_CASE("New syntax routes avoid suffix collisions with existing families") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
-    "shell.json", "groovy.json", "hlsl.json", "xml.json", "svg.json",
-    "asm-aarch64.json", "asm-att.json", "asm-intel.json"
+    "shell.json", "groovy.json", "hlsl.json", "xml.json", "svg.json", "objc.json", "tiecode.json",
+    "kotlin.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "asm-riscv.json",
+    "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "perl.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -184,6 +202,47 @@ TEST_CASE("New syntax routes avoid suffix collisions with existing families") {
   CHECK(engine->createAnalyzerByFileName("example.s") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.aarch64") != nullptr);
   CHECK(engine->createAnalyzerByFileName("module.arm64.S") != nullptr);
+  REQUIRE(engine->getSyntaxRuleByFileName("module.rv64.s") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("module.rv64.s")->name == "asm-riscv");
+  REQUIRE(engine->getSyntaxRuleByFileName("example.bzl") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.bzl")->name == "starlark");
+  REQUIRE(engine->getSyntaxRuleByFileName("BUILD.bazel") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("BUILD.bazel")->name == "bazel");
+  REQUIRE(engine->getSyntaxRuleByFileName("build.gradle") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("build.gradle")->name == "gradle");
+  REQUIRE(engine->getSyntaxRuleByFileName("build.gradle.kts") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("build.gradle.kts")->name == "gradle-kts");
+  REQUIRE(engine->getSyntaxRuleByFileName("example.m") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.m")->name == "objc");
+  REQUIRE(engine->getSyntaxRuleByFileName("example.t") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.t")->name == "tiecode");
+  REQUIRE(engine->getSyntaxRuleByFileName("example.pl") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.pl")->name == "perl");
+}
+
+TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> files = {
+    "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json", "erlang.json",
+    "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "qsharp.json"
+  };
+  for (const U8String& file_name : files) {
+    CAPTURE(file_name);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath(file_name)));
+  }
+
+  CHECK(engine->createAnalyzerByFileName("example.r") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.jl") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.pl") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.clj") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.ex") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.erl") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.bzl") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("BUILD.bazel") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("build.gradle") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("build.gradle.kts") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.qs") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.riscv.s") != nullptr);
 }
 
 TEST_CASE("Exact file names take priority over suffix routing") {

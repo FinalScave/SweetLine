@@ -1,0 +1,277 @@
+{
+  "name": "gradle-kts",
+  "fileNames": ["build.gradle.kts", "settings.gradle.kts", "init.gradle.kts"],
+  "fileSuffixes": [".gradle.kts"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\"(?:[^\"\\\\]|\\\\.)*\")",
+        "style": "string",
+        "subStates": [1, "doubleStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "('(?:[^'\\\\]|\\\\.)*')",
+        "style": "string"
+      }
+    ],
+    "tripleDoubleQuotedStringRule": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "tripleDoubleString"
+      }
+    ],
+    "blockCommentStartRule": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "longComment"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(plugins|repositories|dependencies|buildscript|allprojects|subprojects|tasks|sourceSets|android|publishing|configurations|pluginManagement|dependencyResolutionManagement|versionCatalogs)\\b(?=\\s*\\{)",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(package|import|fun|class|interface|object|val|var|typealias|if|else|when|for|while|do|try|catch|finally|return|throw|is|in|as|this|super|where|by|get|set|init|constructor|companion|override|private|protected|public|internal|const|lateinit|suspend|operator|infix|tailrec|crossinline|noinline|inline|reified|open|abstract|sealed|enum|data)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(String|Int|Long|Short|Byte|Double|Float|Boolean|Unit|Any|List|Map|Set|Array|Pair|Triple|MutableList|MutableMap|MutableSet)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "(@)(${identifier}(?:\\.${identifier})*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(fun)\\b${whiteSpace}*(<)([^()]*)(>)${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation", 5, "method", 6, "punctuation"],
+        "subStates": [3, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fun)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(val|var)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(val|var)\\b${whiteSpace}+(${identifier})${whiteSpace}*([;=,)])",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+[uUlL]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+[uUlL]*\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFdDmMuUlL]*)\\b",
+        "style": "number"
+      },
+      {
+        "include": "tripleDoubleQuotedStringRule"
+      },
+      {
+        "include": "blockCommentStartRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "=>|\\?\\?=|\\?\\?|\\?\\.|\\.\\.|->|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(this|super|in|is|as|by|where|get|set|constructor|init|field|property)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=,])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(true|false|null)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[fFdDmMuUlL]*)\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()=*]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "\\b(in|out|reified)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(<)([^()]*)(>)",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      },
+      {
+        "pattern": "\\b(String|Int|Long|Short|Byte|Double|Float|Boolean|Unit|Any|List|Map|Set|Array|Pair|Triple)\\b",
+        "styles": [1, "class"]
+      },
+      {
+        "pattern": "[,\\[\\]()]",
+        "style": "punctuation"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "pattern": "\\$\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\$${identifier}",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\$\\{[^}]*\\}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\$${identifier}",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "longComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

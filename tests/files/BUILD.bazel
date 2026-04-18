@@ -1,0 +1,121 @@
+load(":example.bzl", "demo_binary_macro", "demo_macro", "demo_java_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+
+package(default_visibility = ["//visibility:public"])
+licenses(["notice"])
+
+exports_files([
+    "README.md",
+    "MODULE.bazel",
+])
+
+config_setting(
+    name = "dbg",
+    values = {"compilation_mode": "dbg"},
+)
+
+config_setting(
+    name = "opt",
+    values = {"compilation_mode": "opt"},
+)
+
+filegroup(
+    name = "headers",
+    srcs = glob(["include/**/*.h"]),
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob([
+        "src/**/*.cc",
+        "src/**/*.cpp",
+    ]),
+)
+
+cc_library(
+    name = "core",
+    srcs = glob(["src/**/*.cc", "src/**/*.cpp"]),
+    hdrs = glob(["include/**/*.h"]),
+    copts = [
+        "-DSWEETLINE_DEMO=1",
+        "-Wall",
+    ],
+    defines = [
+        "SWEETLINE_BUILD=1",
+    ],
+    deps = select({
+        ":dbg": [":headers"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "parser",
+    srcs = ["src/parser.cc"],
+    deps = [":core"],
+)
+
+cc_binary(
+    name = "demo_tool",
+    srcs = ["src/main.cc"],
+    deps = [":core", ":parser"],
+)
+
+genrule(
+    name = "copy_assets",
+    srcs = ["assets/input.txt"],
+    outs = ["generated/output.txt"],
+    cmd = "cp $< $@",
+)
+
+alias(
+    name = "core_alias",
+    actual = ":core",
+)
+
+demo_macro(
+    name = "syntax_rule",
+    srcs = glob(["examples/**/*.txt"]),
+    deps = [":core"],
+    tags = ["build"],
+)
+
+demo_binary_macro(
+    name = "syntax_runner",
+    srcs = ["tools/main.cc"],
+    deps = [":core"],
+    main = "tools/main.cc",
+)
+
+demo_java_library(
+    name = "java_support",
+    srcs = glob(["java/**/*.java"]),
+    deps = [":core"],
+)
+
+exports_files(glob(["rules/**/*.bzl"]))
+
+package_group(
+    name = "public_api",
+    packages = ["//...", "-//internal/..."],
+)
+
+filegroup(
+    name = "example_files",
+    srcs = [
+        "example.bzl",
+        "build.gradle",
+        "build.gradle.kts",
+        "example.qs",
+        "example.riscv.s",
+    ],
+)
+
+cc_binary(
+    name = "sample_app",
+    srcs = ["app/main.cc"],
+    deps = [
+        ":core",
+        ":parser",
+    ],
+)

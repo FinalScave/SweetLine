@@ -1,0 +1,462 @@
+{
+  "name": "erlang",
+  "fileSuffixes": [".erl", ".hrl"],
+  "fileNames": ["rebar.config", "rebar.config.script", "sys.config", "app.config", "vm.args"],
+  "fileNamePatterns": [".*\\.app\\.src"],
+  "variables": {
+    "lowerIdentifier": "[a-z][A-Za-z0-9_@]*",
+    "upperIdentifier": "[A-Z_][A-Za-z0-9_@]*",
+    "functionName": "(?:[a-z][A-Za-z0-9_@]*|'(?:[^'\\\\]|\\\\.)*')",
+    "macroName": "[A-Z][A-Z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(%)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "quotedAtomRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 3, "property"],
+        "subStates": [2, "quotedAtomContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "atomRule": [
+      {
+        "pattern": "\\b${lowerIdentifier}\\b",
+        "style": "property"
+      }
+    ],
+    "bitTypeRule": [
+      {
+        "pattern": "\\b(?:integer|float|binary|bitstring|bytes|bits|signed|unsigned|big|little|native|utf8|utf16|utf32|unit)\\b",
+        "style": "keyword"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)(module)(\\()(${lowerIdentifier})(\\))",
+        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "class", 5, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)(record)(\\()(${lowerIdentifier})",
+        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "class"],
+        "state": "recordDef"
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)(define)(\\()(${macroName})",
+        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "macro"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)(export|export_type|import|include|include_lib|undef|ifdef|ifndef|if|elif|else|endif|type|opaque|spec|callback|behaviour|behavior|doc|moduledoc|compile|dialyzer)\\b",
+        "styles": [1, "preprocessor", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(${functionName})(\\()",
+        "styles": [1, "method", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "(#)(${lowerIdentifier})(\\.)(${lowerIdentifier})",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation", 4, "property"]
+      },
+      {
+        "pattern": "(#)(${lowerIdentifier})(\\{)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "recordLiteral"
+      },
+      {
+        "pattern": "(${lowerIdentifier})(:)([a-z][A-Za-z0-9_@]*)(\\()",
+        "styles": [1, "class", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${lowerIdentifier})(:)([a-z][A-Za-z0-9_@]*)",
+        "styles": [1, "class", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "\\?(?:${macroName})",
+        "style": "macro"
+      },
+      {
+        "pattern": "\\b(?:case|if|receive|try|fun|begin|end|after|of|when|catch|else|maybe|let|query)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "pattern": "\\b${upperIdentifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "pattern": "<<",
+        "style": "punctuation",
+        "state": "bitSyntax"
+      },
+      {
+        "pattern": "\\b[0-9]+#[0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b${lowerIdentifier}\\b",
+        "style": "property"
+      },
+      {
+        "pattern": "->|:=|=:=|=/=|==|/=|=<|>=|<-|<<|>>|\\+\\+|--|\\|\\||&&|!|\\.\\.\\.|[.()\\[\\]{};,|:+\\-*/<>=]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "funcHeadTail"
+      },
+      {
+        "pattern": "(${lowerIdentifier})(\\{)",
+        "styles": [1, "class", 2, "punctuation"],
+        "state": "recordLiteral"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "property"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "variable"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "<<",
+        "style": "punctuation",
+        "state": "bitSyntax"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "pattern": "\\?(?:${macroName})",
+        "style": "macro"
+      },
+      {
+        "pattern": "\\b[0-9]+#[0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,\\[\\]{}()|:+\\-*/<>=]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "funcParams"
+      }
+    ],
+    "funcHeadTail": [
+      {
+        "pattern": "\\bwhen\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "->",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[;.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "property"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "variable"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "pattern": "\\?(?:${macroName})",
+        "style": "macro"
+      },
+      {
+        "pattern": "[,\\[\\]{}()|:+\\-*/<>=]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "recordDef": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "property"
+      },
+      {
+        "pattern": "=",
+        "style": "punctuation"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "<<",
+        "style": "punctuation",
+        "state": "bitSyntax"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "include": "atomRule"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b[0-9]+#[0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,{}()\\[\\]:|+-/<>]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "recordDef"
+      }
+    ],
+    "recordLiteral": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "property"
+      },
+      {
+        "pattern": "=",
+        "style": "punctuation"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "include": "atomRule"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b[0-9]+#[0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,{}()\\[\\]:|+-/<>]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "quotedAtomContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "property"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "bitSyntax": [
+      {
+        "pattern": ">>",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "include": "bitTypeRule"
+      },
+      {
+        "include": "quotedAtomRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "property"
+      },
+      {
+        "pattern": "\\b[0-9]+#[0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(?::|/|-|=|,|\\[|\\]|\\{|\\}|\\(|\\)|<|>)",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "begin",
+      "end": "end"
+    },
+    {
+      "start": "case",
+      "end": "end",
+      "branches": ["of", "when", "catch", "after", "else"]
+    },
+    {
+      "start": "if",
+      "end": "end",
+      "branches": ["when", "else"]
+    },
+    {
+      "start": "receive",
+      "end": "end",
+      "branches": ["after", "when"]
+    },
+    {
+      "start": "try",
+      "end": "end",
+      "branches": ["of", "catch", "after"]
+    },
+    {
+      "start": "fun",
+      "end": "end"
+    }
+  ]
+}

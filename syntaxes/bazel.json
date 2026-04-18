@@ -1,0 +1,227 @@
+{
+  "name": "bazel",
+  "fileNames": [
+    "BUILD",
+    "BUILD.bazel",
+    "WORKSPACE",
+    "WORKSPACE.bazel",
+    "MODULE.bazel",
+    "REPO.bazel"
+  ],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\"(?:[^\"\\\\]|\\\\.)*\")",
+        "style": "string",
+        "subStates": [1, "doubleStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "('(?:[^'\\\\]|\\\\.)*')",
+        "style": "string",
+        "subStates": [1, "singleStringContent"]
+      }
+    ],
+    "tripleDoubleQuotedStringRule": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "tripleDoubleString"
+      }
+    ],
+    "tripleSingleQuotedStringRule": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "tripleSingleString"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(load)\\b${whiteSpace}*(\\()([^)]*)(\\))",
+        "styles": [1, "keyword", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "loadArgs"]
+      },
+      {
+        "pattern": "\\b(package|exports_files|glob|select|depset|struct|fail|print|len)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(if|for|in|return|break|continue|pass|and|or|not|lambda)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(True|False|None)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(=)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "include": "tripleDoubleQuotedStringRule"
+      },
+      {
+        "include": "tripleSingleQuotedStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[+\\-*/%=&|^~<>!?:.,;()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ],
+    "loadArgs": [
+      {
+        "pattern": "(${identifier})${whiteSpace}*(=)${whiteSpace}*",
+        "styles": [1, "annotation", 2, "punctuation"]
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "singleStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleSingleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": ":",
+      "end": ""
+    }
+  ]
+}
