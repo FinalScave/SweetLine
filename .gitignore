@@ -17,4 +17,6 @@ tests/build
 CMakeSettings.json
 
 .tmp
+.codex
+.claude
 .trae/
