@@ -18,6 +18,10 @@
         "pattern": "\\[",
         "style": "punctuation",
         "state": "loop"
+      },
+      {
+        "pattern": "\\]",
+        "style": "punctuation"
       }
     ],
     "loop": [
@@ -38,7 +42,16 @@
         "pattern": "\\]",
         "style": "punctuation",
         "state": "default"
+      },
+      {
+        "onLineEndState": "loop"
       }
     ]
-  }
+  },
+  "scopeRules": [
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
 }

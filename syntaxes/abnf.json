@@ -23,12 +23,12 @@
       },
       {
         "pattern": "(\\[)",
-        "styles": [1, "keyword"],
+        "styles": [1, "punctuation"],
         "state": "optionalGroup"
       },
       {
         "pattern": "(\\])",
-        "styles": [1, "keyword"]
+        "styles": [1, "punctuation"]
       },
       {
         "pattern": "(%[bsix])(\")((?:[^\"\\\\]|\\\\.)*)(\")",
@@ -66,10 +66,10 @@
       },
       {
         "pattern": "(\\/)",
-        "styles": [1, "keyword"]
+        "styles": [1, "punctuation"]
       },
       {
-        "pattern": "[(\\)]",
+        "pattern": "(\\(|\\))",
         "styles": [1, "punctuation"]
       },
       {
@@ -79,7 +79,7 @@
     "optionalGroup": [
       {
         "pattern": "(\\])",
-        "styles": [1, "keyword"],
+        "styles": [1, "punctuation"],
         "state": "default"
       },
       {
@@ -88,7 +88,7 @@
       },
       {
         "pattern": "(\\[)",
-        "styles": [1, "keyword"],
+        "styles": [1, "punctuation"],
         "state": "optionalGroup"
       },
       {
@@ -123,11 +123,14 @@
       },
       {
         "pattern": "(\\/)",
-        "styles": [1, "keyword"]
+        "styles": [1, "punctuation"]
       },
       {
-        "pattern": "[(\\)]",
+        "pattern": "(\\(|\\))",
         "styles": [1, "punctuation"]
+      },
+      {
+        "include": "lineCommentRule"
       },
       {
         "onLineEndState": "default"

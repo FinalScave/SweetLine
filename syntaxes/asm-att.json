@@ -37,6 +37,18 @@
         "state": "longComment"
       },
       {
+        "pattern": "(?m)^\\s*((?:\\.[A-Za-z_][A-Za-z0-9_]*|[0-9]+|${identifier}(?:\\.${identifier})*))(\\s*:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^\\s*(#)(\\s*)(include|define|undef|if|ifdef|ifndef|elif|else|endif)\\b",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)(@)(function|object|tls_object|gnu_indirect_function|notype|GOTPCREL|GOTPCRELX|REX_GOTPCRELX|GOTOFF|GOT|PLT|PLTOFF|TLSGD|TLSLDM|TLSDESC|TLSDESCCALL|DTPOFF|TPOFF|NTPOFF|GOTTPOFF|GOTNTPOFF|INDNTPOFF)\\b",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
         "pattern": "(\\.)(text|data|bss|section|globl|global|extern|align|balign|p2align|ascii|asciz|string|byte|word|long|quad|octa|float|double|space|skip|fill|size|type|ident|weak|hidden|protected|internal|local|comm|lcomm|abort|if|else|endif|ifdef|ifndef|elif|include|incbin|error|warning|print|macro|endm|altmacro|noaltmacro|line|file|loc|loc_mark_labels|cv_file|cv_func|cv_loc|cv_def_range|cv_stringtable|cv_checksum)\\b",
         "styles": [1, "punctuation", 2, "preprocessor"]
       },
@@ -45,7 +57,7 @@
         "styles": [1, "punctuation", 2, "preprocessor"]
       },
       {
-        "pattern": "(?i)\\b(mov|movb|movw|movl|movq|movabs|movsx|movsxb|movsxw|movsxl|movzx|movzxb|movzxw|movzxl|lea|xchg|cmpxchg|cmpxchg8b|cmpxchg16b)\\b",
+        "pattern": "(?i)\\b(mov|movb|movw|movl|movq|movabs|movsx|movsxb|movsxw|movsxl|movzx|movzxb|movzxw|movzxl|lea|leab|leaw|leal|leaq|xchg|cmpxchg|cmpxchg8b|cmpxchg16b)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -93,11 +105,15 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(cmov\\w+|f\\w+)\\b",
+        "pattern": "(?i)\\b(cmov\\w+)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(v\\w+|vm\\w+|vmx\\w+|vmp\\w+)\\b",
+        "pattern": "(?i)\\b(f(?:2xm1|abs|add(?:p)?|bld|bstp|chs|clex|com(?:i(?:p)?)?|cos|decstp|div(?:p|r|rp)?|free(?:p)?|i(?:add|com(?:p)?|div(?:r)?|ld|mul|st(?:p)?|sub(?:r)?)|incstp|init|ld(?:1|cw|env|l2e|l2t|lg2|ln2|pi|z)?|mul(?:p)?|nop|patan|prem(?:1)?|ptan|rndint|scale|setpm|sin|sincos|sqrt|st(?:cw|env|sw)?|sub(?:p|r|rp)?|tst|ucom(?:i(?:p)?)?|wait|xam|xchg|xtract|yl2x|yl2xp1)\\w*)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(v(?:add|sub|mul|div|sqrt|max|min|and|andn|or|xor|blend|broadcast|cmp|test|perm|shuffle|shuf|extract|insert|pack|unpck|gather|scatter|mov|pmov|padd|psub|pmul|pmax|pmin|pcmp|punpck|cvt|fmadd|fmsub|fnmadd|fnmsub|zeroall|zeroupper)\\w*)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -121,7 +137,7 @@
         "styles": [1, "punctuation", 2, "builtin"]
       },
       {
-        "pattern": "(%)(xmm\\d+|ymm\\d+|zmm\\d+|st\\d|mm\\d)\\b",
+        "pattern": "(%)(xmm(?:[0-9]|[12][0-9]|3[01])|ymm(?:[0-9]|[12][0-9]|3[01])|zmm(?:[0-9]|[12][0-9]|3[01])|st(?:\\([0-7]\\)|[0-7])|mm[0-7]|k[0-7]|bnd[0-3])\\b",
         "styles": [1, "punctuation", 2, "builtin"]
       },
       {
@@ -129,20 +145,20 @@
         "styles": [1, "punctuation", 2, "variable"]
       },
       {
-        "pattern": "(${identifier}):",
-        "styles": [1, "method"]
-      },
-      {
-        "pattern": "(\\$)(0[xX][0-9a-fA-F]+)\\b",
+        "pattern": "(\\$)(-?0[xX][0-9a-fA-F]+)\\b",
         "styles": [1, "punctuation", 2, "number"]
       },
       {
-        "pattern": "(\\$)(0[bB][01]+)\\b",
+        "pattern": "(\\$)(-?0[bB][01]+)\\b",
         "styles": [1, "punctuation", 2, "number"]
       },
       {
-        "pattern": "(\\$)([0-9]+)\\b",
+        "pattern": "(\\$)(-?[0-9]+)\\b",
         "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(?<![%$])\\b([0-9]+)([fb])\\b",
+        "styles": [1, "number", 2, "annotation"]
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F]+\\b",

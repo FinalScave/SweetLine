@@ -12,7 +12,18 @@ namespace {
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
   static const char* kKotlinSyntaxPath = SYNTAX_DIR"/kotlin.json";
   static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
+  static const char* kAbnfSyntaxPath = SYNTAX_DIR"/abnf.json";
+  static const char* kAsmAarch64SyntaxPath = SYNTAX_DIR"/asm-aarch64.json";
+  static const char* kAsmAttSyntaxPath = SYNTAX_DIR"/asm-att.json";
+  static const char* kAsmIntelSyntaxPath = SYNTAX_DIR"/asm-intel.json";
+  static const char* kBatchSyntaxPath = SYNTAX_DIR"/batch.json";
+  static const char* kBrainfuckSyntaxPath = SYNTAX_DIR"/brainfuck.json";
+  static const char* kDtsSyntaxPath = SYNTAX_DIR"/dts.json";
+  static const char* kGlslSyntaxPath = SYNTAX_DIR"/glsl.json";
+  static const char* kGroovySyntaxPath = SYNTAX_DIR"/groovy.json";
+  static const char* kHlslSyntaxPath = SYNTAX_DIR"/hlsl.json";
   static const char* kJavascriptSyntaxPath = SYNTAX_DIR"/javascript.json";
+  static const char* kJasmSyntaxPath = SYNTAX_DIR"/jasm.json";
   static const char* kTypescriptSyntaxPath = SYNTAX_DIR"/typescript.json";
   static const char* kCssSyntaxPath = SYNTAX_DIR"/css.json";
   static const char* kScssSyntaxPath = SYNTAX_DIR"/scss.json";
@@ -28,12 +39,18 @@ namespace {
   static const char* kProtobufSyntaxPath = SYNTAX_DIR"/protobuf.json";
   static const char* kGraphqlSyntaxPath = SYNTAX_DIR"/graphql.json";
   static const char* kNginxSyntaxPath = SYNTAX_DIR"/nginx.json";
+  static const char* kNixSyntaxPath = SYNTAX_DIR"/nix.json";
   static const char* kGitignoreSyntaxPath = SYNTAX_DIR"/gitignore.json";
   static const char* kDiffSyntaxPath = SYNTAX_DIR"/diff.json";
   static const char* kRubySyntaxPath = SYNTAX_DIR"/ruby.json";
   static const char* kHclSyntaxPath = SYNTAX_DIR"/hcl.json";
+  static const char* kShellSyntaxPath = SYNTAX_DIR"/shell.json";
+  static const char* kSmaliSyntaxPath = SYNTAX_DIR"/smali.json";
+  static const char* kSvgSyntaxPath = SYNTAX_DIR"/svg.json";
   static const char* kTerraformSyntaxPath = SYNTAX_DIR"/terraform.json";
   static const char* kVueSyntaxPath = SYNTAX_DIR"/vue.json";
+  static const char* kXmlSyntaxPath = SYNTAX_DIR"/xml.json";
+  static const char* kZigSyntaxPath = SYNTAX_DIR"/zig.json";
   static const char* kSvelteSyntaxPath = SYNTAX_DIR"/svelte.json";
   static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
   static const char* kTiecodeExampleFilePath = TESTS_DIR"/files/example.t";
@@ -50,6 +67,8 @@ namespace {
     engine->registerStyleName("punctuation", 8);
     engine->registerStyleName("annotation", 9);
     engine->registerStyleName("builtin", 10);
+    engine->registerStyleName("preprocessor", 11);
+    engine->registerStyleName("macro", 12);
     engine->registerStyleName("property", 13);
     engine->registerStyleName("selector", 15);
     engine->registerStyleName("url", 16);
@@ -640,6 +659,67 @@ TEST_CASE("Markup component syntaxes keep directives, bindings, scripts, styles,
   CHECK(styleAtColumn(svelteHighlight->lines[5], 0) == kKeyword);
 }
 
+TEST_CASE("Host syntaxes keep every embedded importSyntax state active") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavascriptSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTypescriptSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(R"JSON(
+{
+  "name": "embedded-host",
+  "fileSuffixes": [".embed"],
+  "states": {
+    "default": [
+      {
+        "pattern": "^(```)(js)$",
+        "styles": [1, "punctuation", 2, "annotation"],
+        "state": "jsBlock"
+      },
+      {
+        "pattern": "^(```)(ts)$",
+        "styles": [1, "punctuation", 2, "annotation"],
+        "state": "tsBlock"
+      }
+    ],
+    "jsBlock": [
+      {
+        "pattern": "^(```)$",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "javascript"
+      }
+    ],
+    "tsBlock": [
+      {
+        "pattern": "^(```)$",
+        "styles": [1, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "typescript"
+      }
+    ]
+  }
+}
+)JSON"));
+
+  constexpr int32_t kKeyword = 1;
+
+  SharedPtr<TextAnalyzer> host = engine->createAnalyzerBySyntaxName("embedded-host");
+  REQUIRE(host != nullptr);
+  SharedPtr<DocumentHighlight> highlight = host->analyzeText(
+    "```js\n"
+    "const first = 1;\n"
+    "```\n"
+    "```ts\n"
+    "const total: number = 1;\n"
+    "```\n");
+  REQUIRE(highlight != nullptr);
+  CHECK(styleAtColumn(highlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[4], 0) == kKeyword);
+}
+
 TEST_CASE("Ops syntaxes keep directives, globs, patch metadata, and URLs distinct") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kNginxSyntaxPath));
@@ -717,4 +797,318 @@ TEST_CASE("Ruby keeps operator defs, regexes, heredocs, and URLs distinct") {
   CHECK(styleAtColumn(highlight->lines[5], 4) == 2);
   CHECK(styleAtColumn(highlight->lines[6], 4) == kAnnotation);
   CHECK(styleAtColumn(highlight->lines[8], 0) == kUrl);
+}
+
+TEST_CASE("Grammar syntaxes keep comments, loops, descriptors, and interpolation distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kAbnfSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kBrainfuckSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJasmSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kNixSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kComment = 4;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kProperty = 13;
+  constexpr int32_t kString = 2;
+
+  SharedPtr<TextAnalyzer> abnf = engine->createAnalyzerBySyntaxName("abnf");
+  REQUIRE(abnf != nullptr);
+  SharedPtr<DocumentHighlight> abnfHighlight = abnf->analyzeText(
+    "rule = [item ; note\n"
+    " ] / %x41-5A\n");
+  REQUIRE(abnfHighlight != nullptr);
+  CHECK(styleAtColumn(abnfHighlight->lines[0], 0) == kVariable);
+  CHECK(styleAtColumn(abnfHighlight->lines[0], 7) == kPunctuation);
+  CHECK(styleAtColumn(abnfHighlight->lines[0], 13) == kComment);
+  CHECK(styleAtColumn(abnfHighlight->lines[1], 1) == kPunctuation);
+  CHECK(styleAtColumn(abnfHighlight->lines[1], 3) == kPunctuation);
+  CHECK(styleAtColumn(abnfHighlight->lines[1], 5) == 3);
+
+  SharedPtr<TextAnalyzer> brainfuck = engine->createAnalyzerBySyntaxName("brainfuck");
+  REQUIRE(brainfuck != nullptr);
+  SharedPtr<DocumentHighlight> brainfuckHighlight = brainfuck->analyzeText("]+[->+<] note\n");
+  REQUIRE(brainfuckHighlight != nullptr);
+  CHECK(styleAtColumn(brainfuckHighlight->lines[0], 0) == kPunctuation);
+  CHECK(styleAtColumn(brainfuckHighlight->lines[0], 1) == kKeyword);
+  CHECK(styleAtColumn(brainfuckHighlight->lines[0], 2) == kPunctuation);
+  CHECK(styleAtColumn(brainfuckHighlight->lines[0], 7) == kPunctuation);
+  CHECK(styleAtColumn(brainfuckHighlight->lines[0], 9) == kComment);
+
+  SharedPtr<TextAnalyzer> jasm = engine->createAnalyzerBySyntaxName("jasm");
+  REQUIRE(jasm != nullptr);
+  SharedPtr<DocumentHighlight> jasmHighlight = jasm->analyzeText(
+    "Method \"main\":\"()V\" public static {\n"
+    "@interface com/example/MyAnno {\n");
+  REQUIRE(jasmHighlight != nullptr);
+  CHECK(styleAtColumn(jasmHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(jasmHighlight->lines[0], 8) == kMethod);
+  CHECK(styleAtColumn(jasmHighlight->lines[0], 20) == kKeyword);
+  CHECK(styleAtColumn(jasmHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(jasmHighlight->lines[1], 11) == 5);
+
+  SharedPtr<TextAnalyzer> nix = engine->createAnalyzerBySyntaxName("nix");
+  REQUIRE(nix != nullptr);
+  SharedPtr<DocumentHighlight> nixHighlight = nix->analyzeText(
+    "config = import <nixpkgs> // { value = \"${name}\"; };\n"
+    "size = builtins.length list;\n");
+  REQUIRE(nixHighlight != nullptr);
+  CHECK(styleAtColumn(nixHighlight->lines[0], 0) == kProperty);
+  CHECK(styleAtColumn(nixHighlight->lines[0], 9) == kKeyword);
+  CHECK(styleAtColumn(nixHighlight->lines[0], 16) == kString);
+  CHECK(styleAtColumn(nixHighlight->lines[0], 26) == kPunctuation);
+  CHECK(styleAtColumn(nixHighlight->lines[0], 42) == kVariable);
+  CHECK(styleAtColumn(nixHighlight->lines[1], 7) == kBuiltin);
+  CHECK(styleAtColumn(nixHighlight->lines[1], 16) == kMethod);
+}
+
+TEST_CASE("Shader syntaxes keep directives, resources, and semantics distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kGlslSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kHlslSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kComment = 4;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPreprocessor = 11;
+  constexpr int32_t kAnnotation = 9;
+
+  SharedPtr<TextAnalyzer> glsl = engine->createAnalyzerBySyntaxName("glsl");
+  REQUIRE(glsl != nullptr);
+  SharedPtr<DocumentHighlight> glslHighlight = glsl->analyzeText(
+    "#version 450 core\n"
+    "layout(location = 0) out vec4 FragColor;\n"
+    "uniform samplerCubeArrayShadow shadowMap;\n"
+    "gl_Position = vec4(1.0);\n"
+    "// hello\n"
+    "struct Light { vec3 pos; };\n");
+  REQUIRE(glslHighlight != nullptr);
+  CHECK(styleAtColumn(glslHighlight->lines[0], 0) == kPreprocessor);
+  CHECK(styleAtColumn(glslHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(glslHighlight->lines[1], 25) == kBuiltin);
+  CHECK(styleAtColumn(glslHighlight->lines[2], 8) == kBuiltin);
+  CHECK(styleAtColumn(glslHighlight->lines[3], 0) == kVariable);
+  CHECK(styleAtColumn(glslHighlight->lines[3], 14) == kBuiltin);
+  CHECK(styleAtColumn(glslHighlight->lines[4], 0) == kComment);
+  CHECK(styleAtColumn(glslHighlight->lines[5], 0) == kKeyword);
+  CHECK(styleAtColumn(glslHighlight->lines[5], 7) == kClass);
+
+  SharedPtr<TextAnalyzer> hlsl = engine->createAnalyzerBySyntaxName("hlsl");
+  REQUIRE(hlsl != nullptr);
+  SharedPtr<DocumentHighlight> hlslHighlight = hlsl->analyzeText(
+    "#include \"common.hlsl\"\n"
+    "Texture2DMS tex : register(t0);\n"
+    "float4 color : SV_TARGET;\n"
+    "// hello\n"
+    "struct Light { float3 pos : POSITION; };\n");
+  REQUIRE(hlslHighlight != nullptr);
+  CHECK(styleAtColumn(hlslHighlight->lines[0], 0) == kPreprocessor);
+  CHECK(styleAtColumn(hlslHighlight->lines[1], 0) == kBuiltin);
+  CHECK(styleAtColumn(hlslHighlight->lines[1], 18) == kKeyword);
+  CHECK(styleAtColumn(hlslHighlight->lines[1], 27) == kAnnotation);
+  CHECK(styleAtColumn(hlslHighlight->lines[2], 0) == kBuiltin);
+  CHECK(styleAtColumn(hlslHighlight->lines[2], 15) == kAnnotation);
+  CHECK(styleAtColumn(hlslHighlight->lines[3], 0) == kComment);
+  CHECK(styleAtColumn(hlslHighlight->lines[4], 0) == kKeyword);
+  CHECK(styleAtColumn(hlslHighlight->lines[4], 7) == kClass);
+}
+
+TEST_CASE("Assembly dialect syntaxes keep directives, labels, and registers distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kAsmAttSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kAsmAarch64SyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kAsmIntelSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kComment = 4;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kPreprocessor = 11;
+  constexpr int32_t kMacro = 12;
+  constexpr int32_t kAnnotation = 9;
+
+  SharedPtr<TextAnalyzer> att = engine->createAnalyzerBySyntaxName("asm-att");
+  REQUIRE(att != nullptr);
+  SharedPtr<DocumentHighlight> attHighlight = att->analyzeText(
+    ".globl _start\n"
+    ".Ltmp0:\n"
+    "  vmovaps %zmm16, %zmm17\n"
+    "  leaq label(%rip), %rax\n");
+  REQUIRE(attHighlight != nullptr);
+  CHECK(styleAtColumn(attHighlight->lines[0], 1) == kPreprocessor);
+  CHECK(styleAtColumn(attHighlight->lines[1], 0) == kMethod);
+  CHECK(styleAtColumn(attHighlight->lines[2], 11) == kBuiltin);
+  CHECK(styleAtColumn(attHighlight->lines[3], 2) == kKeyword);
+
+  SharedPtr<TextAnalyzer> aarch64 = engine->createAnalyzerBySyntaxName("asm-aarch64");
+  REQUIRE(aarch64 != nullptr);
+  SharedPtr<DocumentHighlight> aarch64Highlight = aarch64->analyzeText(
+    "@ just comment\n"
+    "#ifdef DEBUG\n"
+    ".globl _start\n"
+    "_start:\n"
+    "  adrp x0, _msg@PAGE\n"
+    "#endif\n");
+  REQUIRE(aarch64Highlight != nullptr);
+  CHECK(styleAtColumn(aarch64Highlight->lines[0], 0) == kComment);
+  CHECK(styleAtColumn(aarch64Highlight->lines[1], 0) == kPreprocessor);
+  CHECK(styleAtColumn(aarch64Highlight->lines[2], 1) == kPreprocessor);
+  CHECK(styleAtColumn(aarch64Highlight->lines[3], 0) == kMethod);
+  CHECK(styleAtColumn(aarch64Highlight->lines[4], 7) == kBuiltin);
+  CHECK(styleAtColumn(aarch64Highlight->lines[4], 16) == kAnnotation);
+
+  SharedPtr<TextAnalyzer> intel = engine->createAnalyzerBySyntaxName("asm-intel");
+  REQUIRE(intel != nullptr);
+  SharedPtr<DocumentHighlight> intelHighlight = intel->analyzeText(
+    "%define SIZE 4\n"
+    "section .data\n"
+    "loop.start:\n"
+    "  mov zmm31, [rbp+16] ; comment\n");
+  REQUIRE(intelHighlight != nullptr);
+  CHECK(styleAtColumn(intelHighlight->lines[0], 1) == kMacro);
+  CHECK(styleAtColumn(intelHighlight->lines[1], 0) == kPreprocessor);
+  CHECK(styleAtColumn(intelHighlight->lines[2], 0) == kMethod);
+  CHECK(styleAtColumn(intelHighlight->lines[3], 6) == kBuiltin);
+  CHECK(styleAtColumn(intelHighlight->lines[3], 14) == kBuiltin);
+  CHECK(styleAtColumn(intelHighlight->lines[3], 18) == 3);
+  CHECK(styleAtColumn(intelHighlight->lines[3], 23) == kComment);
+}
+
+TEST_CASE("DTS keeps hash-prefixed and boolean properties distinct from node names") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kDtsSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kProperty = 13;
+
+  SharedPtr<TextAnalyzer> dts = engine->createAnalyzerBySyntaxName("dts");
+  REQUIRE(dts != nullptr);
+  SharedPtr<DocumentHighlight> highlight = dts->analyzeText(
+    "/dts-v1/;\n"
+    "/ {\n"
+    "  #address-cells = <2>;\n"
+    "  status;\n"
+    "  /delete-property/ #size-cells;\n"
+    "};\n");
+  REQUIRE(highlight != nullptr);
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[2], 2) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 2) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[4], 20) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[4], 31) == 8);
+}
+
+TEST_CASE("Smali keeps directives, descriptors, and member references distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kSmaliSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kProperty = 13;
+
+  SharedPtr<TextAnalyzer> smali = engine->createAnalyzerBySyntaxName("smali");
+  REQUIRE(smali != nullptr);
+  SharedPtr<DocumentHighlight> highlight = smali->analyzeText(
+    ".field private counter:I\n"
+    ".method public constructor <init>()V\n"
+    ".end method\n"
+    "iget-object v0, p0, Lfoo/bar/Baz;->field-name:Ljava/lang/String;\n"
+    "Lcom/example/Foo;->counter:I\n"
+    "Lcom/example/Foo;->name()V\n");
+  REQUIRE(highlight != nullptr);
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[0], 15) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[0], 23) == kBuiltin);
+  CHECK(styleAtColumn(highlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 8) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 27) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[1], 35) == kBuiltin);
+  CHECK(styleAtColumn(highlight->lines[3], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[3], 35) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 46) == kClass);
+  CHECK(styleAtColumn(highlight->lines[4], 0) == kClass);
+  CHECK(styleAtColumn(highlight->lines[4], 19) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[5], 19) == kMethod);
+}
+
+TEST_CASE("Zig keeps control keywords, line strings, and member access distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kZigSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kNumber = 3;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kProperty = 13;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kString = 2;
+
+  SharedPtr<TextAnalyzer> zig = engine->createAnalyzerBySyntaxName("zig");
+  REQUIRE(zig != nullptr);
+  SharedPtr<DocumentHighlight> highlight = zig->analyzeText(
+    "defer _ = 1;\n"
+    "const Point = struct { x: i32 };\n"
+    "const p = Point{ .x = 1 };\n"
+    "const rgb = Color.red.toRgb();\n"
+    "const value = 1.25;\n"
+    "\\\\line string\n");
+  REQUIRE(highlight != nullptr);
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[0], 6) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[1], 6) == kClass);
+  CHECK(styleAtColumn(highlight->lines[1], 14) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[2], 10) == kClass);
+  CHECK(styleAtColumn(highlight->lines[2], 18) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 12) == kClass);
+  CHECK(styleAtColumn(highlight->lines[3], 18) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 22) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[4], 12) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[4], 14) == kNumber);
+  CHECK(styleAtColumn(highlight->lines[5], 0) == kString);
+}
+
+TEST_CASE("Batch comments only trigger for line-leading comment forms") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kBatchSyntaxPath));
+
+  constexpr int32_t kComment = 4;
+
+  SharedPtr<TextAnalyzer> batch = engine->createAnalyzerBySyntaxName("batch");
+  REQUIRE(batch != nullptr);
+  SharedPtr<DocumentHighlight> highlight = batch->analyzeText(
+    "echo rem\n"
+    "set VALUE=prefix::suffix\n"
+    "REM real comment\n");
+  REQUIRE(highlight != nullptr);
+  CHECK(styleAtColumn(highlight->lines[0], 5) != kComment);
+  CHECK(styleAtColumn(highlight->lines[1], 16) != kComment);
+  CHECK(styleAtColumn(highlight->lines[2], 0) == kComment);
+}
+
+TEST_CASE("SVG routes cleanly alongside XML") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kXmlSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kSvgSyntaxPath));
+
+  CHECK(engine->createAnalyzerByFileName("icon.svg") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("layout.xml") != nullptr);
+}
+
+TEST_CASE("HLSL routes cleanly alongside shell and groovy") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kShellSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kGroovySyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kHlslSyntaxPath));
+
+  CHECK(engine->createAnalyzerByFileName("tool.csh") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("build.gsh") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("shader.hlsl") != nullptr);
 }

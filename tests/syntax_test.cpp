@@ -36,11 +36,13 @@ namespace {
 TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
-    "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json", "iapp.json",
-    "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
-    "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
-    "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
-    "scala.json", "css.json", "scss.json", "less.json", "jsonc.json", "json5.json", "cmake.json",
+    "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json", "c.json",
+    "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
+    "hlsl.json", "iapp.json", "jasm.json", "java.json", "javascript.json", "json-sweetline.json", "kotlin.json",
+    "latex.json", "less.json", "lua.json", "lyrics.json", "nix.json", "objc.json", "php.json",
+    "powershell.json", "python.json", "rust.json", "shell.json", "smali.json", "sql.json", "svg.json", "swift.json",
+    "tiecode.json", "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
+    "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
     "svelte.json",
@@ -65,11 +67,13 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
 TEST_CASE("Create analyzers by file name for sample files") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
-    "c.json", "cpp.json", "csharp.json", "dart.json", "go.json", "groovy.json", "iapp.json",
-    "java.json", "javascript.json", "json-sweetline.json", "kotlin.json", "lua.json", "objc.json", "php.json",
-    "powershell.json", "python.json", "rust.json", "shell.json", "sql.json", "swift.json", "tiecode.json",
-    "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
-    "scala.json", "css.json", "scss.json", "less.json", "jsonc.json", "json5.json", "cmake.json",
+    "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json", "c.json",
+    "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
+    "hlsl.json", "iapp.json", "jasm.json", "java.json", "javascript.json", "json-sweetline.json", "kotlin.json",
+    "latex.json", "less.json", "lua.json", "lyrics.json", "nix.json", "objc.json", "php.json",
+    "powershell.json", "python.json", "rust.json", "shell.json", "smali.json", "sql.json", "svg.json", "swift.json",
+    "tiecode.json", "toml.json", "typescript.json", "vb.json", "wenyan.json", "xml.json", "yaml.json", "html.json",
+    "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
     "svelte.json"
@@ -82,35 +86,52 @@ TEST_CASE("Create analyzers by file name for sample files") {
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("markdown.json")));
 
   const List<U8String> sample_files = {
+    TESTS_DIR"/files/example.abnf",
+    TESTS_DIR"/files/example.aarch64",
+    TESTS_DIR"/files/example.bat",
+    TESTS_DIR"/files/example.bf",
     TESTS_DIR"/files/example.c",
     TESTS_DIR"/files/example.cpp",
     TESTS_DIR"/files/example.cs",
+    TESTS_DIR"/files/example.csv",
     TESTS_DIR"/files/example.dart",
+    TESTS_DIR"/files/example.dts",
+    TESTS_DIR"/files/example.glsl",
     TESTS_DIR"/files/example.go",
     TESTS_DIR"/files/example.groovy",
+    TESTS_DIR"/files/example.hlsl",
     TESTS_DIR"/files/example.html",
+    TESTS_DIR"/files/example.jasm",
     TESTS_DIR"/files/example.java",
     TESTS_DIR"/files/example.js",
     TESTS_DIR"/files/example.kt",
+    TESTS_DIR"/files/example.lrc",
     TESTS_DIR"/files/example.lua",
     TESTS_DIR"/files/example.m",
     TESTS_DIR"/files/example.md",
     TESTS_DIR"/files/example.myu",
+    TESTS_DIR"/files/example.nasm",
+    TESTS_DIR"/files/example.nix",
     TESTS_DIR"/files/example.php",
     TESTS_DIR"/files/example.ps1",
     TESTS_DIR"/files/example.py",
     TESTS_DIR"/files/example.rs",
+    TESTS_DIR"/files/example.s",
     TESTS_DIR"/files/example.scala",
     TESTS_DIR"/files/example.sh",
+    TESTS_DIR"/files/example.smali",
     TESTS_DIR"/files/example.sql",
+    TESTS_DIR"/files/example.svg",
     TESTS_DIR"/files/example.swift",
     TESTS_DIR"/files/example.t",
+    TESTS_DIR"/files/example.tex",
     TESTS_DIR"/files/example.toml",
     TESTS_DIR"/files/example.ts",
     TESTS_DIR"/files/example.vb",
     TESTS_DIR"/files/example.wenyan",
     TESTS_DIR"/files/example.xml",
     TESTS_DIR"/files/example.yaml",
+    TESTS_DIR"/files/example.zig",
     TESTS_DIR"/files/example.css",
     TESTS_DIR"/files/example.scss",
     TESTS_DIR"/files/example.less",
@@ -138,6 +159,30 @@ TEST_CASE("Create analyzers by file name for sample files") {
     SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_path);
     REQUIRE(analyzer != nullptr);
   }
+}
+
+TEST_CASE("New syntax routes avoid suffix collisions with existing families") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> files = {
+    "shell.json", "groovy.json", "hlsl.json", "xml.json", "svg.json",
+    "asm-aarch64.json", "asm-att.json", "asm-intel.json"
+  };
+  for (const U8String& file_name : files) {
+    CAPTURE(file_name);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath(file_name)));
+  }
+
+  CHECK(engine->createAnalyzerByFileName("script.csh") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("pipeline.gsh") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("shader.hlsl") != nullptr);
+
+  CHECK(engine->createAnalyzerByFileName("icon.svg") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("layout.xml") != nullptr);
+
+  CHECK(engine->createAnalyzerByFileName("example.nasm") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.s") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.aarch64") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("module.arm64.S") != nullptr);
 }
 
 TEST_CASE("Exact file names take priority over suffix routing") {
@@ -574,7 +619,7 @@ TEST_CASE("inline style references must be declared in styles") {
 TEST_CASE("inline style analysis preserves direct unstyled spans") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine({true, true});
   SECTION("direct capture groups") {
-    const U8String syntax = R"({
+    const U8String syntax = R"JSON({
   "name": "inlineSparseGroups",
   "fileSuffixes": [".isg"],
   "styles": [
@@ -586,7 +631,7 @@ TEST_CASE("inline style analysis preserves direct unstyled spans") {
       { "pattern": "(<)([^>]*)(>)", "styles": [1, "punctuation", 3, "punctuation"] }
     ]
   }
-})";
+})JSON";
 
     SharedPtr<SyntaxRule> rule;
     REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));
@@ -605,7 +650,7 @@ TEST_CASE("inline style analysis preserves direct unstyled spans") {
   }
 
   SECTION("subState-expanded capture groups") {
-    const U8String syntax = R"({
+    const U8String syntax = R"JSON({
   "name": "inlineSparseSubState",
   "fileSuffixes": [".iss"],
   "styles": [
@@ -620,7 +665,7 @@ TEST_CASE("inline style analysis preserves direct unstyled spans") {
       { "pattern": "(<)([^>]*)(>)", "styles": [1, "punctuation", 3, "punctuation"] }
     ]
   }
-})";
+})JSON";
 
     SharedPtr<SyntaxRule> rule;
     REQUIRE_NOTHROW(rule = engine->compileSyntaxFromJson(syntax));

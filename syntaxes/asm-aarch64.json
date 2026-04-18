@@ -1,7 +1,7 @@
 {
   "name": "asm-aarch64",
-  "fileSuffixes": [".s", ".S"],
-  "fileNamePatterns": [".*\\.aarch64", ".*\\.arm64", ".*\\.arm"],
+  "fileSuffixes": [".aarch64", ".arm64"],
+  "fileNamePatterns": [".*\\.(?:aarch64|arm64|arm)\\.[sS]"],
   "variables": {
     "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
     "whiteSpace": "[ \\t\\f]",
@@ -15,14 +15,9 @@
         "subStates": [2, "lineCommentContent"]
       },
       {
-        "pattern": "(;)(.*)",
-        "styles": [1, "comment", 2, "comment"],
-        "subStates": [2, "lineCommentContent"]
-      },
-      {
-        "pattern": "(@)(.*)",
-        "styles": [1, "comment", 2, "comment"],
-        "subStates": [2, "lineCommentContent"]
+        "pattern": "(?m)(^|\\s)(@)(?=\\s|$)(.*)",
+        "styles": [2, "comment", 3, "comment"],
+        "subStates": [3, "lineCommentContent"]
       }
     ],
     "doubleQuotedStringRule": [
@@ -48,7 +43,23 @@
         "state": "longComment"
       },
       {
-        "pattern": "(\\.)(text|data|bss|section|globl|global|extern|align|balign|p2align|ascii|asciz|string|byte|hword|word|xword|dword|quad|octa|float|double|space|skip|fill|size|type|ident|weak|hidden|protected|internal|local|comm|lcomm|abort|if|else|endif|ifdef|ifndef|elif|include|incbin|error|warning|print|macro|endm|altmacro|noaltmacro|line|file|loc|fnstart|fnend|cantunwind|personality|handlerdata|set|cpu|arch|fpu|arch_extension|inst|tlsdescseq)\\b",
+        "pattern": "(?m)^\\s*((?:\\.[A-Za-z_][A-Za-z0-9_]*|[0-9]+|${identifier}(?:\\.${identifier})*))(\\s*:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^\\s*(#)(\\s*)(include|define|undef|if|ifdef|ifndef|elif|else|endif)\\b",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)(@)(PAGE|PAGEOFF|GOT|GOTPAGE|GOTPAGEOFF|PLT|TLVPPAGE|TLVPPAGEOFF|function|object|tls_object|gnu_indirect_function|notype|progbits|nobits|note|init_array|fini_array|preinit_array)\\b",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(?i)(:)(abs_g[0-3](?:_nc)?|pg_hi21(?:_nc)?|prel_g[0-3](?:_nc)?|lo12(?:_nc)?|got(?:_lo12)?|gotpage_lo15|tlsdesc(?:_lo12(?:_nc)?)?|tprel_(?:g[0-2](?:_nc)?|lo12(?:_nc)?)|dtprel_(?:g[0-2](?:_nc)?|lo12(?:_nc)?))(:)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)(text|data|bss|section|globl|global|extern|align|balign|p2align|ascii|asciz|string|byte|hword|word|xword|dword|quad|octa|float|double|space|skip|fill|size|type|ident|weak|hidden|protected|internal|local|comm|lcomm|abort|if|else|endif|ifdef|ifndef|elif|include|incbin|error|warning|print|macro|endm|altmacro|noaltmacro|line|file|loc|fnstart|fnend|cantunwind|personality|handlerdata|set|cpu|arch|fpu|arch_extension|inst|tlsdescseq|req|unreq|rept|endr|irp|irpc|ltorg|pool|cfi_startproc|cfi_endproc|cfi_def_cfa|cfi_def_cfa_offset|cfi_offset|cfi_restore|cfi_remember_state|cfi_restore_state)\\b",
         "styles": [1, "punctuation", 2, "preprocessor"]
       },
       {
@@ -56,7 +67,11 @@
         "styles": [1, "punctuation", 2, "preprocessor"]
       },
       {
-        "pattern": "(?i)\\b(mov|movz|movk|movn|movi|mvn|mrs|msr|movf|movd)\\b",
+        "pattern": "(?i)\\b(mov|movz|movk|movn|movi|mvn|movf|movd)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(adr|adrp|prfm|prfum)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -64,7 +79,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(and|ands|orr|orrs|eor|eors|eon|orns|bic|bics|bif|bit|bsl|mov|mvn|tst)\\b",
+        "pattern": "(?i)\\b(and|ands|orr|orrs|eor|eors|eon|orns|bic|bics|bif|bit|bsl|tst)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -76,11 +91,11 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(mul|madd|msub|smull|umull|smulh|umulh|smaddl|umaddl|smsubl|umsubl|smul|umul|smnegl|umnegl|smull|umull)\\b",
+        "pattern": "(?i)\\b(mul|madd|msub|smull|umull|smulh|umulh|smaddl|umaddl|smsubl|umsubl|smul|umul|smnegl|umnegl)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(sdiv|udiv|sdvi|udvi|asr|lsr|lsl|ror)\\b",
+        "pattern": "(?i)\\b(sdiv|udiv)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -96,7 +111,7 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(b|bl|blr|br|ret|eret|drps|b\\.eq|b\\.ne|b\\.cs|b\\.hs|b\\.cc|b\\.lo|b\\.mi|b\\.pl|b\\.vs|b\\.vc|b\\.hi|b\\.ls|b\\.ge|b\\.lt|b\\.gt|b\\.le|b\\.al|cbz|cbnz|tbz|tbnz)\\b",
+        "pattern": "(?i)\\b(blr|bl|br|ret|eret|drps|cbz|cbnz|tbz|tbnz|b(?:\\.(?:eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)|eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al)?)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -144,44 +159,64 @@
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "(?i)\\b(x[0-9]|x1[0-9]|x2[0-9]|x30|sp|lr|fp|xzr|wzr)\\b",
+        "pattern": "(?i)\\b(x(?:[0-9]|[12][0-9]|3[01])|sp|wsp|lr|fp|xzr)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(w[0-9]|w1[0-9]|w30)\\b",
+        "pattern": "(?i)\\b(w(?:[0-9]|[12][0-9]|3[01])|wzr)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(q[0-9]|q1[0-9]|q2[0-9]|q3[0-1])\\b",
+        "pattern": "(?i)\\b(q(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(v[0-9]|v1[0-9]|v2[0-9]|v3[0-1])\\b",
+        "pattern": "(?i)\\b(v(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(d[0-9]|d1[0-9]|d2[0-9]|d3[0-1])\\b",
+        "pattern": "(?i)\\b(d(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(s[0-9]|s1[0-9]|s2[0-9]|s3[0-1])\\b",
+        "pattern": "(?i)\\b(s(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(b[0-9]|b1[0-9]|b2[0-9]|b3[0-1])\\b",
+        "pattern": "(?i)\\b(b(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(h[0-9]|h1[0-9]|h2[0-9]|h3[0-1])\\b",
+        "pattern": "(?i)\\b(h(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(el0|el1|el2|el3|currentel|spsel|daifset|daifclr|pan|uao|dit|ssbs|tco|mrs|msr)\\b",
+        "pattern": "(?i)\\b(z(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(${identifier}):",
-        "styles": [1, "method"]
+        "pattern": "(?i)\\b(p(?:[0-9]|1[0-5]))\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(el0|el1|el2|el3|currentel|spsel|daifset|daifclr|pan|uao|dit|ssbs|tco)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(sy|st|ld|ish|ishst|ishld|nsh|nshst|nshld|osh|oshst|oshld)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(\\#)(-?0[xX][0-9a-fA-F]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?0[bB][01]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
+      },
+      {
+        "pattern": "(\\#)(-?[0-9]+)\\b",
+        "styles": [1, "punctuation", 2, "number"]
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F]+\\b",

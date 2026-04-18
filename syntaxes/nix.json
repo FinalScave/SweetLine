@@ -37,12 +37,20 @@
         "state": "longComment"
       },
       {
-        "pattern": "(<)([^>]+)(>)",
+        "pattern": "(<)([a-zA-Z0-9_./-]+)(>)",
         "styles": [1, "string", 2, "string", 3, "string"]
       },
       {
         "pattern": "(\\.\\.?\\/)[\\w.\\/-]*",
         "styles": [1, "string"]
+      },
+      {
+        "pattern": "(~\\/[-A-Za-z0-9._+~\\/-]*)",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\/[A-Za-z0-9._+~-][A-Za-z0-9._+~\\/-]*)",
+        "style": "string"
       },
       {
         "pattern": "[a-z+]+:\\/\\/\\S+",
@@ -59,6 +67,14 @@
       {
         "pattern": "\\b(builtins|map|filter|derivation|toString)\\b",
         "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(builtins)(\\.)([a-zA-Z_][a-zA-Z0-9_'-]*)\\b",
+        "styles": [1, "builtin", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "property", 4, "punctuation", 5, "punctuation"]
       },
       {
         "pattern": "(${identifier})(\\s*)(=)",
@@ -81,6 +97,10 @@
       },
       {
         "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "(\\+\\+|//|==|!=|<=|>=)",
+        "styles": [1, "punctuation"]
       },
       {
         "pattern": "[+\\-*/%&|^!<>?=]",

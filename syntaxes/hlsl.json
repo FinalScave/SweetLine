@@ -1,6 +1,6 @@
 {
   "name": "hlsl",
-  "fileSuffixes": [".hlsl", ".fx", ".fxh", ".vsh", ".psh", ".csh", ".gsh", ".hsh", ".dsh"],
+  "fileSuffixes": [".hlsl", ".fx", ".fxh", ".vsh", ".psh", ".hsh", ".dsh"],
   "variables": {
     "identifier": "[a-zA-Z_][a-zA-Z0-9_]*",
     "whiteSpace": "[ \\t\\f]",
@@ -30,51 +30,74 @@
         "state": "longComment"
       },
       {
-        "pattern": "(?m)^[ \\t]*(#)([ \\t]*include)(\\s*)(<.*?>)",
-        "styles": [1, "preprocessor", 2, "preprocessor", 3, "punctuation", 4, "string"]
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*)(include)\\b(\\s*)(<[^>]+>|\"(?:[^\"\\\\]|\\\\.)*\")",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor", 4, "punctuation", 5, "string"]
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*)(define)\\b(\\s+)(${identifier})(\\s*)(\\()",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor", 4, "punctuation", 5, "macro", 6, "punctuation", 7, "punctuation"]
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*)(define)\\b(\\s+)(${identifier})",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor", 4, "punctuation", 5, "macro"]
+      },
+      {
+        "pattern": "(?m)^[ \\t]*(#)([ \\t]*)(undef|if|ifdef|ifndef|elif|else|endif|pragma|line|error|warning)\\b(.*)",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "preprocessor", 4, "preprocessor"]
       },
       {
         "pattern": "(?m)^[ \\t]*(#)[ \\t]*\\S+",
         "styles": [1, "preprocessor"]
       },
       {
+        "pattern": "\\b([A-Z][A-Z0-9_]{2,})\\b",
+        "styles": [1, "macro"]
+      },
+      {
+        "pattern": "\\b(struct)\\b([ \\t]+)(${identifier})([ \\t]*)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(struct)\\b([ \\t]+)(${identifier})\\b",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "\\b(cbuffer|tbuffer)\\b([ \\t]+)(${identifier})\\b",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class"]
+      },
+      {
         "pattern": "\\b(break|case|continue|default|do|else|for|if|return|switch|while|struct|discard|clip)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(const|static|inline|in|out|inout|extern|nointerpolation|precise|shared|groupshared|uniform|volatile)\\b",
+        "pattern": "\\b(const|static|inline|in|out|inout|extern|uniform|volatile|shared|groupshared|precise|nointerpolation|linear|centroid|sample|row_major|column_major|pack_matrix|flatten|branch|loop|unroll|fastopt|allow_uav_condition|domain|partitioning|outputtopology|outputcontrolpoints|patchconstantfunc|maxvertexcount|maxtessfactor|instance|earlydepthstencil)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(void|bool|int|uint|half|float|double|min10float|min16float|min12int|min16int|min16uint)\\b",
+        "pattern": "\\b(void|bool|int|uint|dword|half|float|double|min10float|min16float|min12int|min16int|min16uint|int64_t|uint64_t)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(bool[1-4]|int[1-4]|uint[1-4]|half[1-4]|float[1-4]|double[1-4])\\b",
+        "pattern": "\\b(bool[1-4]|int[1-4]|uint[1-4]|dword[1-4]|half[1-4]|float[1-4]|double[1-4]|min16float[1-4]|min12int[1-4]|min16int[1-4]|min16uint[1-4])\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b((bool|int|float|uint|double)[1-4]x[1-4])\\b",
+        "pattern": "\\b(bool[1-4]x[1-4]|int[1-4]x[1-4]|uint[1-4]x[1-4]|half[1-4]x[1-4]|float[1-4]x[1-4]|double[1-4]x[1-4]|min16float[1-4]x[1-4]|matrix)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(matrix|texture|Texture1D|Texture1DArray|Texture2D|Texture2DArray|Texture3D|TextureCube)\\b",
+        "pattern": "\\b(Texture1D|Texture1DArray|Texture1DMS|Texture1DMSArray|Texture2D|Texture2DArray|Texture2DMS|Texture2DMSArray|Texture3D|TextureCube|TextureCubeArray|RWTexture1D|RWTexture1DArray|RWTexture2D|RWTexture2DArray|RWTexture2DMS|RWTexture2DMSArray|RWTexture3D|RasterizerOrderedTexture1D|RasterizerOrderedTexture1DArray|RasterizerOrderedTexture2D|RasterizerOrderedTexture2DArray|RasterizerOrderedTexture3D)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(RWTexture1D|RWTexture1DArray|RWTexture2D|RWTexture2DArray|RWTexture3D)\\b",
+        "pattern": "\\b(Buffer|StructuredBuffer|AppendStructuredBuffer|ConsumeStructuredBuffer|ByteAddressBuffer|RWBuffer|RWStructuredBuffer|RWByteAddressBuffer|RasterizerOrderedBuffer|RasterizerOrderedStructuredBuffer|RasterizerOrderedByteAddressBuffer|ConstantBuffer)\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(Buffer|StructuredBuffer|AppendStructuredBuffer|ConsumeStructuredBuffer)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\\b(RWBuffer|RWStructuredBuffer|ByteAddressBuffer|RWByteAddressBuffer)\\b",
-        "styles": [1, "builtin"]
-      },
-      {
-        "pattern": "\\b(PointStream|LineStream|TriangleStream|InputPatch|OutputPatch)\\b",
+        "pattern": "\\b(PointStream|LineStream|TriangleStream|InputPatch|OutputPatch|RaytracingAccelerationStructure)\\b",
         "styles": [1, "builtin"]
       },
       {
@@ -82,51 +105,51 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "\\b(cbuffer|tbuffer)\\b",
+        "pattern": "\\b(cbuffer|tbuffer|technique|technique10|technique11|pass)\\b",
         "styles": [1, "keyword"]
       },
       {
-        "pattern": "\\b(register|packoffset)\\b",
-        "styles": [1, "keyword"]
+        "pattern": "\\b(register|packoffset)\\b(\\s*)(\\()([A-Za-z][A-Za-z0-9_]*(?:\\.[xyzwrgba]+)?)(\\s*)(\\))",
+        "styles": [1, "keyword", 2, "punctuation", 3, "punctuation", 4, "annotation", 5, "punctuation", 6, "punctuation"]
       },
       {
-        "pattern": "(:)(\\s*)(SV_\\w+|[A-Z][A-Z0-9_]*)",
-        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation"]
-      },
-      {
-        "pattern": "\\b(SV_\\w+)\\b",
-        "styles": [1, "annotation"]
-      },
-      {
-        "pattern": "\\b(technique|pass)\\b",
-        "styles": [1, "keyword"]
+        "pattern": "(\\[)(\\s*)(${identifier})(\\s*)(\\()",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation"]
       },
       {
         "pattern": "(\\[)(\\s*)(${identifier})(\\s*)(\\])",
         "styles": [1, "punctuation", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation"]
       },
       {
-        "pattern": "(<)(\\s*)(${identifier})(\\s*)(>)",
-        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation"]
+        "pattern": "(:)(\\s*)(SV_[A-Za-z0-9_]+|[A-Z][A-Z0-9_]*)",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "annotation"]
       },
       {
-        "pattern": "\\b(abs|acos|all|any|asin|atan|atan2|ceil|clamp|clip|cos|cosh|cross|ddx|ddy|degrees|determinant|distance|dot|exp|exp2|floor|fmod|frac|frexp|fwidth|isfinite|isinf|isnan|ldexp|length|lerp|lit|log|log10|log2|max|min|modf|mul|normalize|pow|radians|reflect|refract|round|rsqrt|saturate|sign|sin|sincos|sinh|smoothstep|sqrt|step|tan|tanh|transpose|trunc)\\b",
+        "pattern": "\\b(SV_[A-Za-z0-9_]+)\\b",
+        "styles": [1, "annotation"]
+      },
+      {
+        "pattern": "(\\.)([xyzwrgba]{1,4}|[stpq]{1,4})\\b",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "(\\.)([A-Za-z_][A-Za-z0-9_]*)(?!\\s*\\()",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "\\b(abs|acos|all|any|asin|atan|atan2|ceil|clamp|clip|cos|cosh|cross|ddx|ddx_coarse|ddx_fine|ddy|ddy_coarse|ddy_fine|degrees|determinant|distance|dot|dst|exp|exp2|faceforward|firstbithigh|firstbitlow|floor|fma|fmod|frac|frexp|fwidth|isfinite|isinf|isnan|ldexp|length|lerp|lit|log|log10|log2|mad|max|min|modf|msad4|mul|normalize|pow|radians|rcp|reflect|refract|reversebits|round|rsqrt|saturate|sign|sin|sincos|smoothstep|sqrt|step|tan|tanh|transpose|trunc|countbits|EvaluateAttributeAtCentroid|EvaluateAttributeAtSample|EvaluateAttributeSnapped|Process2DQuadTessFactorsAvg|Process2DQuadTessFactorsMax|Process2DQuadTessFactorsMin|ProcessIsolineTessFactors|ProcessQuadTessFactorsAvg|ProcessQuadTessFactorsMax|ProcessQuadTessFactorsMin|ProcessTriTessFactorsAvg|ProcessTriTessFactorsMax|ProcessTriTessFactorsMin)\\b",
         "styles": [1, "method"]
       },
       {
-        "pattern": "\\b(InterlockedAdd|InterlockedAnd|InterlockedCompareExchange|InterlockedCompareStore|InterlockedExchange|InterlockedMax|InterlockedMin|InterlockedOr|InterlockedXor)\\b",
+        "pattern": "\\b(InterlockedAdd|InterlockedAnd|InterlockedCompareExchange|InterlockedCompareStore|InterlockedExchange|InterlockedMax|InterlockedMin|InterlockedOr|InterlockedXor|AllMemoryBarrier|AllMemoryBarrierWithGroupSync|DeviceMemoryBarrier|DeviceMemoryBarrierWithGroupSync|GroupMemoryBarrier|GroupMemoryBarrierWithGroupSync)\\b",
         "styles": [1, "method"]
       },
       {
-        "pattern": "\\b(CalculateLevelOfDetail|CalculateLevelOfDetailUnclamped|Gather|GatherRed|GatherGreen|GatherBlue|GatherAlpha|GetDimensions|GetSamplePosition|Load|Sample|SampleBias|SampleCmp|SampleCmpLevelZero|SampleGrad|SampleLevel)\\b",
+        "pattern": "\\b(CalculateLevelOfDetail|CalculateLevelOfDetailUnclamped|Gather|GatherRed|GatherGreen|GatherBlue|GatherAlpha|GetDimensions|GetSamplePosition|Load|Sample|SampleBias|SampleCmp|SampleCmpLevelZero|SampleGrad|SampleLevel|Append|Consume|IncrementCounter|DecrementCounter|RestartStrip)\\b",
         "styles": [1, "method"]
       },
       {
-        "pattern": "\\b(Append|Consume|IncrementCounter|DecrementCounter)\\b",
-        "styles": [1, "method"]
-      },
-      {
-        "pattern": "\\b(true|false)\\b",
+        "pattern": "\\b(true|false|NULL)\\b",
         "styles": [1, "builtin"]
       },
       {
@@ -134,7 +157,7 @@
         "styles": [1, "method", 2, "punctuation"]
       },
       {
-        "pattern": "\\b0[xX][0-9a-fA-F]+[uU]?\\b",
+        "pattern": "\\b0[xX][0-9a-fA-F]+(?:\\.[0-9a-fA-F]*)?(?:[pP][+-]?[0-9]+)?[uU]?\\b",
         "style": "number"
       },
       {
@@ -142,11 +165,11 @@
         "style": "number"
       },
       {
-        "pattern": "\\b[0-9]+[uU]?\\b",
+        "pattern": "(?:\\b[0-9]+\\.[0-9]*|\\B\\.[0-9]+|\\b[0-9]+(?:[eE][+-]?[0-9]+))(?:[fFhH])?\\b",
         "style": "number"
       },
       {
-        "pattern": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?[fFhH]?\\b",
+        "pattern": "\\b[0-9]+[uU]?\\b",
         "style": "number"
       },
       {
@@ -157,11 +180,8 @@
         "style": "punctuation"
       },
       {
-        "pattern": "[+\\-*/%&|^!<>?=]",
+        "pattern": "<<=|>>=|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|[+\\-*/%&|^!<>?=:~]",
         "style": "punctuation"
-      },
-      {
-        "include": "lineCommentRule"
       }
     ],
     "longComment": [
@@ -191,5 +211,11 @@
         "style": "comment"
       }
     ]
-  }
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
 }

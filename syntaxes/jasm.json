@@ -3,6 +3,7 @@
   "fileSuffixes": [".jasm", ".class"],
   "variables": {
     "identifier": "[a-zA-Z_$][a-zA-Z0-9_$]*",
+    "qualifiedIdentifier": "[a-zA-Z_$][a-zA-Z0-9_$/.-]*",
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
@@ -30,15 +31,15 @@
         "state": "longComment"
       },
       {
-        "pattern": "(?m)^\\s*(package)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)(\\s*;)",
+        "pattern": "(?m)^\\s*(package)(\\s+)(${qualifiedIdentifier})(\\s*;)",
         "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation"]
       },
       {
-        "pattern": "(?m)^\\s*(class|interface|module)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)",
+        "pattern": "(@interface|class|interface|module)\\b(\\s+)(${qualifiedIdentifier})",
         "styles": [1, "keyword", 2, "punctuation", 3, "class"]
       },
       {
-        "pattern": "(?m)^\\s*(extends|implements|throws|uses|provides|to|with|exports|opens)(\\s+)([a-zA-Z_$][a-zA-Z0-9_$/.-]*)",
+        "pattern": "\\b(extends|implements|throws|uses|provides|to|with|exports|opens)\\b(\\s+)(${qualifiedIdentifier})",
         "styles": [1, "keyword", 2, "punctuation", 3, "class"]
       },
       {
@@ -46,8 +47,8 @@
         "styles": [1, "keyword", 2, "punctuation", 3, "number", 4, "punctuation", 5, "keyword"]
       },
       {
-        "pattern": "(?m)^\\s*(Field|Method|Component)(\\s+)(?:\"[^\"]+\"|([a-zA-Z_$][a-zA-Z0-9_$<>$]*))(?=:)",
-        "styles": [1, "keyword", 2, "punctuation", 3, "method"]
+        "pattern": "(?m)^\\s*(Field|Method|Component)(\\s+)(?:\"([^\"]+)\"|([a-zA-Z_$][a-zA-Z0-9_$<>$]*))(?=:)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "method"]
       },
       {
         "pattern": "(?m)^\\s*(?:(\\d+):\\s*)?([a-zA-Z_$][a-zA-Z0-9_$]*):",

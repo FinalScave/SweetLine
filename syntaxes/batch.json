@@ -9,14 +9,14 @@
   "fragments": {
     "lineCommentRule": [
       {
-        "pattern": "(::)(.*)",
-        "styles": [1, "comment", 2, "comment"],
-        "subStates": [2, "lineCommentContent"]
+        "pattern": "(?m)^(\\s*)(::)(.*)",
+        "styles": [2, "comment", 3, "comment"],
+        "subStates": [3, "lineCommentContent"]
       },
       {
-        "pattern": "(?i)(rem)(\\s+.*)",
-        "styles": [1, "comment", 2, "comment"],
-        "subStates": [2, "lineCommentContent"]
+        "pattern": "(?im)^(\\s*)(rem)(?=\\s|$)(.*)",
+        "styles": [2, "comment", 3, "comment"],
+        "subStates": [3, "lineCommentContent"]
       }
     ],
     "doubleQuotedStringRule": [

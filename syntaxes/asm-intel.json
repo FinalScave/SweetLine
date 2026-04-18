@@ -37,6 +37,22 @@
         "state": "longComment"
       },
       {
+        "pattern": "(?im)^\\s*(%)(macro|endmacro|define|undef|include|push|pop|assign|if|elif|else|endif|rep|endrep|warning|error|line|imacro|local|rotate|substr|strlen|strcat|deftok|defstr|xdefine|ixdefine|purgem)\\b",
+        "styles": [1, "punctuation", 2, "macro"]
+      },
+      {
+        "pattern": "(?im)^\\s*(section|segment|global|extern|bits|default|org|absolute|struc|endstruc|equ|equiv|times|incbin|align|alignb|common|group|use16|use32|use64|cpu|fill|resb|resw|resd|resq|resy|resz)\\b",
+        "styles": [1, "preprocessor"]
+      },
+      {
+        "pattern": "(?i)\\b(section|segment|global|extern|bits|default|org|absolute|struc|endstruc|istruc|iend|equ|equiv|times|incbin|align|alignb|common|group|use16|use32|use64|cpu|fill|resb|resw|resd|resq|resy|resz|db|dw|dd|dq|dt|do|dy|dz)\\b",
+        "styles": [1, "preprocessor"]
+      },
+      {
+        "pattern": "(?m)^\\s*((?:\\.[A-Za-z_][A-Za-z0-9_]*|[0-9]+|${identifier}(?:\\.${identifier})*))(\\s*:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
         "pattern": "(?i)\\b(mov|movzx|movsx|movsxd|lea|xchg|cmpxchg|cmpxchg8b|cmpxchg16b)\\b",
         "styles": [1, "keyword"]
       },
@@ -89,7 +105,11 @@
         "styles": [1, "annotation"]
       },
       {
-        "pattern": "(?i)\\b(vmovapd|vmovaps|vmovdqa|vmovdqu|vmovupd|vmovups|vaddpd|vaddps|vmulpd|vmulps|vdivpd|vdivps|vsqrtpd|vsqrtps)\\b",
+        "pattern": "(?i)\\b(f(?:2xm1|abs|add(?:p)?|bld|bstp|chs|clex|com(?:i(?:p)?)?|cos|decstp|div(?:p|r|rp)?|free(?:p)?|i(?:add|com(?:p)?|div(?:r)?|ld|mul|st(?:p)?|sub(?:r)?)|incstp|init|ld(?:1|cw|env|l2e|l2t|lg2|ln2|pi|z)?|mul(?:p)?|nop|patan|prem(?:1)?|ptan|rndint|scale|setpm|sin|sincos|sqrt|st(?:cw|env|sw)?|sub(?:p|r|rp)?|tst|ucom(?:i(?:p)?)?|wait|xam|xchg|xtract|yl2x|yl2xp1)\\w*)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(?i)\\b(v(?:add|sub|mul|div|sqrt|max|min|and|andn|or|xor|blend|broadcast|cmp|test|perm|shuffle|shuf|extract|insert|pack|unpck|gather|scatter|mov|pmov|padd|psub|pmul|pmax|pmin|pcmp|punpck|cvt|fmadd|fmsub|fnmadd|fnmsub|zeroall|zeroupper)\\w*)\\b",
         "styles": [1, "keyword"]
       },
       {
@@ -113,36 +133,33 @@
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(xmm0|xmm1|xmm2|xmm3|xmm4|xmm5|xmm6|xmm7|xmm8|xmm9|xmm10|xmm11|xmm12|xmm13|xmm14|xmm15)\\b",
+        "pattern": "(?i)\\b(xmm(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(ymm0|ymm1|ymm2|ymm3|ymm4|ymm5|ymm6|ymm7|ymm8|ymm9|ymm10|ymm11|ymm12|ymm13|ymm14|ymm15)\\b",
+        "pattern": "(?i)\\b(ymm(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(zmm0|zmm1|zmm2|zmm3|zmm4|zmm5|zmm6|zmm7|zmm8|zmm9|zmm10|zmm11|zmm12|zmm13|zmm14|zmm15)\\b",
+        "pattern": "(?i)\\b(zmm(?:[0-9]|[12][0-9]|3[01]))\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(?i)\\b(st0|st1|st2|st3|st4|st5|st6|st7|mm0|mm1|mm2|mm3|mm4|mm5|mm6|mm7)\\b",
+        "pattern": "(?i)\\b(st(?:\\([0-7]\\)|[0-7])|mm[0-7]|k[0-7]|bnd[0-3])\\b",
         "styles": [1, "builtin"]
       },
       {
-        "pattern": "(\\[)(.*)(\\])",
-        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+        "pattern": "(\\[)([^\\]]*)(\\])",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "memoryExpr"]
       },
       {
-        "pattern": "(${identifier}):",
-        "styles": [1, "method"]
+        "pattern": "(?i)\\b(byte|word|dword|qword|tword|oword|yword|zword|xmmword|ymmword|zmmword|ptr|near|far|short|rel|abs|strict|wrt|seg|offset)\\b",
+        "styles": [1, "keyword"]
       },
       {
         "pattern": "(\\.)(${identifier})\\b",
         "styles": [1, "punctuation", 2, "preprocessor"]
-      },
-      {
-        "pattern": "(%)(\\w+)",
-        "styles": [1, "punctuation", 2, "macro"]
       },
       {
         "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
@@ -164,15 +181,15 @@
         "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
       },
       {
+        "include": "lineCommentRule"
+      },
+      {
         "pattern": "[+\\-*/=&<>!~|^]",
         "style": "punctuation"
       },
       {
-        "pattern": "[()\\[\\]{};,.]",
+        "pattern": "[()\\[\\]{},.]",
         "style": "punctuation"
-      },
-      {
-        "include": "lineCommentRule"
       }
     ],
     "longComment": [
@@ -200,6 +217,64 @@
       {
         "pattern": "${any}",
         "style": "comment"
+      }
+    ],
+    "memoryExpr": [
+      {
+        "pattern": "(?i)\\b(rax|rbx|rcx|rdx|rsi|rdi|rbp|rsp|r8|r9|r10|r11|r12|r13|r14|r15|rip)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(eax|ebx|ecx|edx|esi|edi|ebp|esp|r8d|r9d|r10d|r11d|r12d|r13d|r14d|r15d|eip)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(ax|bx|cx|dx|si|di|bp|sp|r8w|r9w|r10w|r11w|r12w|r13w|r14w|r15w)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(al|ah|bl|bh|cl|ch|dl|dh|sil|dil|bpl|spl|r8b|r9b|r10b|r11b|r12b|r13b|r14b|r15b)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(cs|ds|es|fs|gs|ss|cr0|cr2|cr3|cr4|dr0|dr1|dr2|dr3|dr6|dr7)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(xmm(?:[0-9]|[12][0-9]|3[01])|ymm(?:[0-9]|[12][0-9]|3[01])|zmm(?:[0-9]|[12][0-9]|3[01])|st(?:\\([0-7]\\)|[0-7])|mm[0-7]|k[0-7]|bnd[0-3])\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(?i)\\b(byte|word|dword|qword|tword|oword|yword|zword|xmmword|ymmword|zmmword|ptr|near|far|short|rel|abs|strict|wrt|seg|offset)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9]+[hHoObBdD]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[+\\-*/:&<>!~|^]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "(\\.)(${identifier})\\b",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[$]",
+        "style": "punctuation"
       }
     ]
   }

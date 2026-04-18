@@ -3,6 +3,7 @@
   "fileSuffixes": [".dts", ".dtsi"],
   "variables": {
     "identifier": "[a-zA-Z_][a-zA-Z0-9_\\-]*",
+    "propertyIdentifier": "#?[a-zA-Z_][a-zA-Z0-9_\\-]*",
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]"
   },
@@ -66,6 +67,15 @@
         "styles": [1, "class", 2, "punctuation", 3, "number"]
       },
       {
+        "pattern": "(${propertyIdentifier})(\\s*)(=)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "propertyValue"
+      },
+      {
+        "pattern": "(${propertyIdentifier})(\\s*)(;)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
         "pattern": "(${identifier})",
         "styles": [1, "class"]
       },
@@ -76,11 +86,6 @@
       {
         "pattern": "(&)(\\{)([^}]+)(\\})",
         "styles": [1, "punctuation", 2, "punctuation", 3, "variable", 4, "punctuation"]
-      },
-      {
-        "pattern": "(${identifier})(\\s*)(=)",
-        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
-        "state": "propertyValue"
       },
       {
         "pattern": "\\b0x[0-9a-fA-F]+\\b",
@@ -152,8 +157,8 @@
     ],
     "deleteProperty": [
       {
-        "pattern": "(${identifier})",
-        "styles": [1, "property"],
+        "pattern": "(${propertyIdentifier})(\\s*)(;)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
         "state": "default"
       },
       {
