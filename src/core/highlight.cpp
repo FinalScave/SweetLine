@@ -13,16 +13,150 @@ namespace NS_SWEETLINE {
   namespace {
     enum class SyntaxRouteStatus {
       matched,
-      not_found,
-      ambiguous_suffix,
-      ambiguous_pattern
+      not_found
     };
 
     struct SyntaxRouteResult {
       SyntaxRouteStatus status {SyntaxRouteStatus::not_found};
       SharedPtr<SyntaxRule> rule {nullptr};
-      U8String detail;
     };
+
+    struct PatternSpecificity {
+      size_t literal_count {0};
+      size_t generic_count {0};
+      size_t pattern_length {0};
+    };
+
+    bool isAsciiWordChar(char ch) {
+      return (ch >= 'a' && ch <= 'z')
+        || (ch >= 'A' && ch <= 'Z')
+        || (ch >= '0' && ch <= '9')
+        || ch == '_' || ch == '-';
+    }
+
+    bool isGenericRegexEscape(char ch) {
+      switch (ch) {
+      case 'A':
+      case 'z':
+      case 'b':
+      case 'B':
+      case 'd':
+      case 'D':
+      case 's':
+      case 'S':
+      case 'w':
+      case 'W':
+      case 'p':
+      case 'P':
+      case 'h':
+      case 'H':
+      case 'v':
+      case 'V':
+      case 'R':
+      case 'X':
+      case 'Q':
+      case 'E':
+        return true;
+      default:
+        return false;
+      }
+    }
+
+    PatternSpecificity computePatternSpecificity(const U8String& pattern_text) {
+      PatternSpecificity result;
+      result.pattern_length = pattern_text.size();
+      for (size_t i = 0; i < pattern_text.size(); ++i) {
+        const char ch = pattern_text[i];
+        if (ch == '\\' && i + 1 < pattern_text.size()) {
+          const char escaped = pattern_text[++i];
+          if (isGenericRegexEscape(escaped)) {
+            result.generic_count++;
+          } else {
+            result.literal_count++;
+          }
+          continue;
+        }
+        if (ch == '[') {
+          result.generic_count++;
+          while (++i < pattern_text.size()) {
+            if (pattern_text[i] == '\\' && i + 1 < pattern_text.size()) {
+              ++i;
+              continue;
+            }
+            if (pattern_text[i] == ']') {
+              break;
+            }
+          }
+          continue;
+        }
+        if (isAsciiWordChar(ch)) {
+          result.literal_count++;
+          continue;
+        }
+        switch (ch) {
+        case '.':
+        case '*':
+        case '+':
+        case '?':
+        case '|':
+        case '(':
+        case ')':
+        case '{':
+        case '}':
+        case '^':
+        case '$':
+          result.generic_count++;
+          break;
+        default:
+          result.literal_count++;
+          break;
+        }
+      }
+      return result;
+    }
+
+    bool isBetterRuleNameMatch(const SharedPtr<SyntaxRule>& candidate, const SharedPtr<SyntaxRule>& current) {
+      return current == nullptr || candidate->name < current->name;
+    }
+
+    bool isBetterSuffixMatch(const SharedPtr<SyntaxRule>& candidate, size_t candidate_length,
+      const SharedPtr<SyntaxRule>& current, size_t current_length) {
+      if (current == nullptr) {
+        return true;
+      }
+      if (candidate_length != current_length) {
+        return candidate_length > current_length;
+      }
+      return candidate->name < current->name;
+    }
+
+    bool isBetterPatternSpecificity(const PatternSpecificity& candidate, const PatternSpecificity& current) {
+      if (candidate.literal_count != current.literal_count) {
+        return candidate.literal_count > current.literal_count;
+      }
+      if (candidate.generic_count != current.generic_count) {
+        return candidate.generic_count < current.generic_count;
+      }
+      return candidate.pattern_length > current.pattern_length;
+    }
+
+    bool isBetterPatternMatch(const SharedPtr<SyntaxRule>& candidate_rule, const U8String& candidate_pattern,
+      const PatternSpecificity& candidate_specificity, const SharedPtr<SyntaxRule>& current_rule,
+      const U8String& current_pattern, const PatternSpecificity& current_specificity) {
+      if (current_rule == nullptr) {
+        return true;
+      }
+      if (isBetterPatternSpecificity(candidate_specificity, current_specificity)) {
+        return true;
+      }
+      if (isBetterPatternSpecificity(current_specificity, candidate_specificity)) {
+        return false;
+      }
+      if (candidate_rule->name != current_rule->name) {
+        return candidate_rule->name < current_rule->name;
+      }
+      return candidate_pattern < current_pattern;
+    }
 
     SyntaxRouteResult resolveSyntaxByFileName(
       const HashSet<SharedPtr<SyntaxRule>>& syntax_rules,
@@ -34,13 +168,19 @@ namespace NS_SWEETLINE {
       if (base_name.empty()) {
         return {};
       }
+      SharedPtr<SyntaxRule> exact_match = nullptr;
       for (const SharedPtr<SyntaxRule>& rule : syntax_rules) {
         if (rule->file_names.find(base_name) != rule->file_names.end()) {
-          SyntaxRouteResult result;
-          result.status = SyntaxRouteStatus::matched;
-          result.rule = rule;
-          return result;
+          if (isBetterRuleNameMatch(rule, exact_match)) {
+            exact_match = rule;
+          }
         }
+      }
+      if (exact_match != nullptr) {
+        SyntaxRouteResult result;
+        result.status = SyntaxRouteStatus::matched;
+        result.rule = exact_match;
+        return result;
       }
 
       SharedPtr<SyntaxRule> suffix_match = nullptr;
@@ -50,13 +190,7 @@ namespace NS_SWEETLINE {
           if (!StrUtil::endsWith(base_name, suffix)) {
             continue;
           }
-          if (suffix_match != nullptr && suffix.size() == suffix_length) {
-            SyntaxRouteResult result;
-            result.status = SyntaxRouteStatus::ambiguous_suffix;
-            result.detail = base_name;
-            return result;
-          }
-          if (suffix.size() > suffix_length) {
+          if (isBetterSuffixMatch(rule, suffix.size(), suffix_match, suffix_length)) {
             suffix_match = rule;
             suffix_length = suffix.size();
           }
@@ -70,18 +204,21 @@ namespace NS_SWEETLINE {
       }
 
       SharedPtr<SyntaxRule> pattern_match = nullptr;
+      PatternSpecificity pattern_specificity;
+      U8String matched_pattern;
       for (const SharedPtr<SyntaxRule>& rule : syntax_rules) {
         for (size_t i = 0; i < rule->file_name_patterns.size(); ++i) {
           if (!rule->matchesFileNamePattern(base_name, i)) {
             continue;
           }
-          if (pattern_match != nullptr) {
-            SyntaxRouteResult result;
-            result.status = SyntaxRouteStatus::ambiguous_pattern;
-            result.detail = base_name;
-            return result;
+          const U8String& pattern_text = rule->file_name_patterns[i];
+          const PatternSpecificity candidate_specificity = computePatternSpecificity(pattern_text);
+          if (isBetterPatternMatch(rule, pattern_text, candidate_specificity,
+            pattern_match, matched_pattern, pattern_specificity)) {
+            pattern_match = rule;
+            pattern_specificity = candidate_specificity;
+            matched_pattern = pattern_text;
           }
-          pattern_match = rule;
         }
       }
       if (pattern_match != nullptr) {

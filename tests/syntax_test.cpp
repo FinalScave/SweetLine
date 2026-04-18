@@ -219,7 +219,7 @@ TEST_CASE("File name patterns are full matches and can create analyzers") {
   CHECK(engine->createAnalyzerByFileName("prefix-generated.route") == nullptr);
 }
 
-TEST_CASE("Ambiguous file suffix routing returns no analyzer") {
+TEST_CASE("Duplicate file suffix routing chooses deterministic syntax") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax_a = R"({
   "name": "dupSuffixA",
@@ -242,10 +242,13 @@ TEST_CASE("Ambiguous file suffix routing returns no analyzer") {
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_a));
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_b));
-  CHECK(engine->createAnalyzerByFileName("sample.dup") == nullptr);
+  SharedPtr<SyntaxRule> rule = engine->getSyntaxRuleByFileName("sample.dup");
+  REQUIRE(rule != nullptr);
+  CHECK(rule->name == "dupSuffixA");
+  CHECK(engine->createAnalyzerByFileName("sample.dup") != nullptr);
 }
 
-TEST_CASE("Ambiguous file name pattern routing returns no analyzer") {
+TEST_CASE("More specific file name patterns win over generic matches") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax_a = R"({
   "name": "patternA",
@@ -268,7 +271,39 @@ TEST_CASE("Ambiguous file name pattern routing returns no analyzer") {
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_a));
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_b));
-  CHECK(engine->createAnalyzerByFileName("example.route") == nullptr);
+  SharedPtr<SyntaxRule> rule = engine->getSyntaxRuleByFileName("example.route");
+  REQUIRE(rule != nullptr);
+  CHECK(rule->name == "patternB");
+  CHECK(engine->createAnalyzerByFileName("example.route") != nullptr);
+}
+
+TEST_CASE("Duplicate exact file names choose deterministic syntax") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax_a = R"JSON({
+  "name": "exactA",
+  "fileName": "same.route",
+  "states": {
+    "default": [
+      { "pattern": "\\b(a)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})JSON";
+  const U8String syntax_b = R"JSON({
+  "name": "exactB",
+  "fileName": "same.route",
+  "states": {
+    "default": [
+      { "pattern": "\\b(b)\\b", "styles": [1, "keyword"] }
+    ]
+  }
+})JSON";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_a));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax_b));
+  SharedPtr<SyntaxRule> rule = engine->getSyntaxRuleByFileName("same.route");
+  REQUIRE(rule != nullptr);
+  CHECK(rule->name == "exactA");
+  CHECK(engine->createAnalyzerByFileName("same.route") != nullptr);
 }
 
 TEST_CASE("importSyntax merges rules from source syntax") {
