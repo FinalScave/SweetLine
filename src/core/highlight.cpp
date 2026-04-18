@@ -728,18 +728,18 @@ namespace NS_SWEETLINE {
     if (m_rule_ == nullptr) {
       return nullptr;
     }
-    int32_t line_change = m_document_->patch(range, new_text);
+    PatchResult patch_result = m_document_->patch(range, new_text);
     size_t change_start_line = range.start.line;
-    size_t change_end_line = static_cast<int32_t>(range.end.line) + line_change;
+    size_t change_end_line = static_cast<int32_t>(range.end.line) + patch_result.line_delta;
     m_line_syntax_states_[change_start_line] = change_start_line > 0 ? m_line_syntax_states_[change_start_line - 1] : SyntaxRule::kDefaultStateId;
-    if (line_change < 0) {
-      m_line_syntax_states_.erase(m_line_syntax_states_.begin() + range.end.line + line_change + 1,
+    if (patch_result.line_delta < 0) {
+      m_line_syntax_states_.erase(m_line_syntax_states_.begin() + range.end.line + patch_result.line_delta + 1,
         m_line_syntax_states_.begin() + range.end.line + 1);
-      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + line_change + 1,
+      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + patch_result.line_delta + 1,
         m_highlight_->lines.begin() + range.end.line + 1);
-    } else if (line_change > 0) {
-      m_line_syntax_states_.insert(m_line_syntax_states_.begin() + range.end.line + 1, line_change, {});
-      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, line_change, {});
+    } else if (patch_result.line_delta > 0) {
+      m_line_syntax_states_.insert(m_line_syntax_states_.begin() + range.end.line + 1, patch_result.line_delta, {});
+      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, patch_result.line_delta, {});
     }
 
     // Start analyzing from the patch start line until state stabilizes

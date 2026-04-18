@@ -169,8 +169,8 @@ public:
     const DocumentLine& getLine(size_t line) const;
 
     // Incremental updates
-    int32_t patch(const TextRange& range, const U8String& new_text);
-    int32_t appendText(const U8String& text);
+    PatchResult patch(const TextRange& range, const U8String& new_text);
+    PatchResult appendText(const U8String& text);
     void insert(const TextPosition& position, const U8String& text);
     void remove(const TextRange& range);
 

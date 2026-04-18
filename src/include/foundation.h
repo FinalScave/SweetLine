@@ -6,6 +6,7 @@
 #include <iostream>
 #endif
 
+#include <cstdint>
 #include "macro.h"
 
 namespace NS_SWEETLINE {
@@ -53,6 +54,14 @@ namespace NS_SWEETLINE {
     LineEnding ending {LineEnding::NONE};
   };
 
+  /// Patch result
+  struct PatchResult {
+    /// Total line count delta after the patch
+    int32_t line_delta {0};
+    /// Total character count delta after the patch
+    int32_t char_delta {0};
+  };
+
   /// Text document with incremental update support
   class Document {
   public:
@@ -90,12 +99,12 @@ namespace NS_SWEETLINE {
     /// Perform an incremental update on the specified line/column range
     /// @param range The range to update
     /// @param new_text The replacement text
-    /// @return Line change count: negative means lines deleted, positive means lines added, 0 means only the current line changed
-    int32_t patch(const TextRange& range, const U8String& new_text);
+    /// @return Total line and character deltas after the patch
+    PatchResult patch(const TextRange& range, const U8String& new_text);
 
     /// Append text
     /// @param text Text to append
-    int32_t appendText(const U8String& text);
+    PatchResult appendText(const U8String& text);
 
     /// Insert text at the specified position
     /// @param position Insert position
@@ -123,12 +132,17 @@ namespace NS_SWEETLINE {
     friend class TextAnalyzer;
     U8String m_uri_;
     List<DocumentLine> m_lines_;
+    List<size_t> m_line_total_widths_;
+    List<size_t> m_line_start_indices_;
     bool isValidPosition(const TextPosition& pos) const;
     size_t positionToCharIndex(const TextPosition& pos) const;
+    void rebuildLineMetrics();
+    void rebuildLineMetricsFrom(size_t start_line);
+    static size_t getLineTotalWidth(const DocumentLine& line);
 
     static void splitTextIntoLines(const U8String& text, List<DocumentLine>& result);
-    int32_t patchSingleLine(const TextRange& range, const List<DocumentLine>& new_lines);
-    int32_t patchMultipleLines(const TextRange& range, const List<DocumentLine>& new_lines);
+    PatchResult patchSingleLine(const TextRange& range, const List<DocumentLine>& new_lines);
+    PatchResult patchMultipleLines(const TextRange& range, const List<DocumentLine>& new_lines);
     static void appendLineEnding(U8String& text, LineEnding ending);
   };
 }
