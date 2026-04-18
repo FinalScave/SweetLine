@@ -13,7 +13,7 @@ Flutter 包通过 Dart FFI 封装 SweetLine C API，并提供与 Android、Java 
 
 ```yaml
 dependencies:
-  sweetline: ^1.0.2
+  sweetline: ^1.2.2
 ```
 
 在 monorepo 本地开发时，也可以使用指向 `platform/Flutter/sweetline` 的

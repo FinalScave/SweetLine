@@ -14,7 +14,7 @@ wrappers.
 
 ```yaml
 dependencies:
-  sweetline: ^1.0.2
+  sweetline: ^1.2.2
 ```
 
 For local monorepo development you can also use a `path` dependency pointing to

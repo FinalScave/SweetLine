@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+
+- 同步平台包版本到 `1.2.2`
+- 更新 README 示例，统一使用基于文件名的自动路由
+
 ## 1.1.0
 
 - 补充 `DocumentAnalyzer.analyzeIncrementalInLineRange(...)` 的 README 示例

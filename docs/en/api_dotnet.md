@@ -15,14 +15,14 @@ The WinForms/.NET wrapper is a P/Invoke binding over the SweetLine C API:
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.2.1
+dotnet add package SweetLine --version 1.2.2
 ```
 
 Or in `.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.2.1" />
+  <PackageReference Include="SweetLine" Version="1.2.2" />
 </ItemGroup>
 ```
 

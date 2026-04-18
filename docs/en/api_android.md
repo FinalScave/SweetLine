@@ -12,7 +12,7 @@ Android provides a Java API through JNI bindings. Class and function names are c
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.2.0'
+implementation 'com.qiplat:sweetline:1.2.2'
 ```
 
 Or import via source dependency by adding the `platform/Android/sweetline` module to your project.

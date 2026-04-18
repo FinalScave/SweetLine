@@ -29,6 +29,7 @@ Download the language rules you need from the repository `syntaxes/` directory:
 - [syntaxes/](https://github.com/FinalScave/SweetLine/tree/master/syntaxes)
 
 Then place the selected JSON files in your application resources or deployment directory and load them with `CompileSyntaxFromFile(...)`.
+After compiling the syntax rules, prefer `CreateAnalyzerByFileName(...)` or `LoadDocument(...)` with real file names so the core can resolve routing automatically.
 
 ## Quick Start
 
@@ -47,7 +48,7 @@ engine.RegisterStyleName("comment", 3);
 engine.CompileSyntaxFromFile("syntaxes/csharp.json");
 // or: engine.CompileSyntaxFromJson(jsonString);
 
-TextAnalyzer? textAnalyzer = engine.CreateAnalyzerByName("csharp");
+TextAnalyzer? textAnalyzer = engine.CreateAnalyzerByFileName("Program.cs");
 if (textAnalyzer is not null)
 {
     DocumentHighlight result = textAnalyzer.AnalyzeText("public class Demo {}");
@@ -58,7 +59,7 @@ if (textAnalyzer is not null)
 ## Managed Document and Incremental Updates
 
 ```csharp
-using var document = new Document("file:///example.cs", sourceText);
+using var document = new Document("Program.cs", sourceText);
 DocumentAnalyzer? analyzer = engine.LoadDocument(document);
 
 if (analyzer is not null)
@@ -144,9 +145,9 @@ Build or sync the native libraries under `prebuilt/windows/x64`, `prebuilt/linux
 `prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, and `prebuilt/osx/arm64` first.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.1
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.2
 
-dotnet nuget push artifacts/nuget/SweetLine.1.2.1.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.2.2.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate

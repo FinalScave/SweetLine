@@ -1,3 +1,8 @@
+## 1.2.2
+
+* Align the package version with the latest cross-platform release.
+* Update README examples to use file-name-based analyzer routing.
+
 ## 1.0.2
 
 * Add Linux `aarch64` native library support.

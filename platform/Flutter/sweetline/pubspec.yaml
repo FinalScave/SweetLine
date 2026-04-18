@@ -4,7 +4,7 @@ homepage: https://github.com/FinalScave/SweetLine
 repository: https://github.com/FinalScave/SweetLine
 issue_tracker: https://github.com/FinalScave/SweetLine/issues
 resolution: workspace
-version: 1.0.2
+version: 1.2.2
 
 environment:
   sdk: ^3.11.4

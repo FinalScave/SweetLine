@@ -1,6 +1,6 @@
 {
   "name": "@qiplat/sweetline",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "description": "基于C++17跨平台语法高亮引擎SweetLine的ArkTS绑定，支持语法高亮（全量分析+增量分析双支持）、作用域划线分析等特性",
   "main": "./src/main/ets/Index.ets",
   "types": "./src/main/ets/Index.d.ts",

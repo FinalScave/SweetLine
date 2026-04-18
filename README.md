@@ -95,7 +95,7 @@ auto engine = std::make_shared<HighlightEngine>();
 auto rule = engine->compileSyntaxFromFile("syntaxes/java.json");
 
 // 3. Create document object
-auto document = std::make_shared<Document>("file:///example.java", R"(
+auto document = std::make_shared<Document>("example.java", R"(
 public class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
@@ -143,7 +143,7 @@ import com.qiplat.sweetline.*;
 try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
     engine.compileSyntaxFromFile("syntaxes/java.json");
 
-    try (TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java")) {
+    try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Example.java")) {
         DocumentHighlight result = analyzer.analyzeText(sourceCode);
     }
 }
@@ -156,7 +156,7 @@ Running code requires native access enabled (for example `--enable-native-access
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.2.0'
+implementation 'com.qiplat:sweetline:1.2.2'
 ```
 
 ```java
@@ -167,7 +167,7 @@ HighlightEngine engine = new HighlightEngine(new HighlightConfig());
 engine.compileSyntaxFromJson(jsonString);
 
 // Full analysis
-TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java");
+TextAnalyzer analyzer = engine.createAnalyzerByFileName("MainActivity.java");
 DocumentHighlight result = analyzer.analyzeText(sourceCode);
 
 // Iterate results
@@ -181,17 +181,17 @@ for (LineHighlight line : result.lines) {
 ### WebAssembly Usage
 
 ```javascript
-import { sweetline } from './libsweetline.js';
+import createSweetLine from './sweetline.js';
 
-// Create engine
-const config = new sweetline.HighlightConfig();
-const engine = new sweetline.HighlightEngine(config);
+const sl = await createSweetLine();
+const config = new sl.HighlightConfig();
+const engine = new sl.HighlightEngine(config);
 
 // Compile syntax rules
 engine.compileSyntaxFromJson(jsonString);
 
 // Analyze text
-const analyzer = engine.createAnalyzerBySyntaxName("javascript");
+const analyzer = engine.createAnalyzerByFileName("main.js");
 const highlight = analyzer.analyzeText(sourceCode);
 
 // Iterate results

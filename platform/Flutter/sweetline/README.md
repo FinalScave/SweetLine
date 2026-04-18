@@ -39,7 +39,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.0.2
+  sweetline: ^1.2.2
 ```
 
 ## Load syntax rules
@@ -50,7 +50,9 @@ provide syntax JSON yourself, then compile it into the engine.
 Built-in syntax rule JSON files can be downloaded from the SweetLine open
 source repository's [`syntaxes/`](https://github.com/FinalScave/SweetLine/tree/master/syntaxes)
 directory. In most cases you only need to copy the language files your app
-actually uses into Flutter assets.
+actually uses into Flutter assets. After compiling those JSON files, prefer
+`createAnalyzerByFileName(...)` or `loadDocument(...)` with real file names so
+the core can resolve syntax routing automatically.
 
 In Flutter applications, loading syntax JSON from assets is the most direct
 approach:
@@ -94,9 +96,9 @@ Future<void> main() async {
     final syntaxJson = await rootBundle.loadString('assets/syntaxes/dart.json');
     engine.compileSyntaxFromJson(syntaxJson);
 
-    final analyzer = engine.createAnalyzerBySyntaxName('dart');
+    final analyzer = engine.createAnalyzerByFileName('main.dart');
     if (analyzer == null) {
-      throw StateError('dart syntax is not available');
+      throw StateError('no syntax matched main.dart');
     }
 
     final result = analyzer.analyzeText('class Foo<T> {\n  final int value;\n}');
@@ -125,7 +127,7 @@ re-analysis.
 import 'package:sweetline/sweetline.dart';
 
 void analyzeDocument(HighlightEngine engine, String source) {
-  final document = Document('file:///lib/main.dart', source);
+  final document = Document('main.dart', source);
 
   try {
     final analyzer = engine.loadDocument(document);
@@ -163,8 +165,8 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `getStyleName(int styleId)`
 - `defineMacro(String macroName)`
 - `undefineMacro(String macroName)`
-- `createAnalyzerBySyntaxName(String syntaxName)`
 - `createAnalyzerByFileName(String fileName)`
+- `createAnalyzerBySyntaxName(String syntaxName)`
 - `loadDocument(Document document)`
 
 ### `TextAnalyzer`

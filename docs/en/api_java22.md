@@ -20,7 +20,7 @@ This document describes the Java 22 FFM wrapper in `platform/Java22/sweetline`.
 <dependency>
   <groupId>com.qiplat</groupId>
   <artifactId>sweetline-ffm</artifactId>
-  <version>1.2.1</version>
+  <version>1.2.2</version>
 </dependency>
 ```
 
@@ -28,7 +28,7 @@ This document describes the Java 22 FFM wrapper in `platform/Java22/sweetline`.
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline-ffm:1.2.1'
+implementation 'com.qiplat:sweetline-ffm:1.2.2'
 ```
 
 ---

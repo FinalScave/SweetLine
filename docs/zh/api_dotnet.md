@@ -15,14 +15,14 @@ WinForms/.NET 封装基于 SweetLine C API 的 P/Invoke：
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.2.1
+dotnet add package SweetLine --version 1.2.2
 ```
 
 或在 `.csproj` 中添加：
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.2.1" />
+  <PackageReference Include="SweetLine" Version="1.2.2" />
 </ItemGroup>
 ```
 

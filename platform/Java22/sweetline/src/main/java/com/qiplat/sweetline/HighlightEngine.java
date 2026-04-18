@@ -14,7 +14,7 @@ import java.lang.foreign.MemorySegment;
  * <pre>{@code
  * try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
  *     engine.compileSyntaxFromFile("/path/to/java.json");
- *     try (TextAnalyzer analyzer = engine.createAnalyzerBySyntaxName("java")) {
+ *     try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Example.java")) {
  *         DocumentHighlight result = analyzer.analyzeText("public class Foo {}");
  *     }
  * }
