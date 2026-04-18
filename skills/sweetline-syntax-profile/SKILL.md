@@ -13,6 +13,18 @@ Read [style-vocabulary-policy.md](references/style-vocabulary-policy.md) before 
 Read [validation-checklist.md](references/validation-checklist.md) before closing the task.
 Read [common-failures.md](references/common-failures.md) before final review.
 
+## Language Syntax Rules
+
+Before working on a language syntax task, you must understand the target language first:
+
+- read the target language's official documentation first
+- then inspect TextMate or other mature grammar-engine rule files for the same language
+- use the official documentation as the primary source of truth
+- use grammar-engine rule files as secondary references only
+- use nearby SweetLine syntaxes as repository references, not as the primary source for language rules
+
+Complete this learning step before following the repository-specific rules in this skill.
+
 ## Repository-specific rules
 
 - Syntax files live in `syntaxes/*.json`.
