@@ -2,8 +2,9 @@
 
 ## 1.2.2
 
-- 同步平台包版本到 `1.2.2`
-- 更新 README 示例，统一使用基于文件名的自动路由
+- HighlightEngine.createAnalyzerByExtension 更新为 createAnalyzerByFileName，统一使用基于文件名的自动路由
+- HighlightEngine.loadDocument 也使用基于文件名的自动路由
+- 同步平台包版本到 `1.2.2` （与C++高亮引擎内核版本对齐）
 
 ## 1.1.0
 
