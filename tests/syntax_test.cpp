@@ -45,7 +45,7 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
-    "svelte.json",
+    "svelte.json", "fsharp.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -76,7 +76,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
     "zig.json", "scala.json", "css.json", "scss.json", "jsonc.json", "json5.json", "cmake.json",
     "dockerfile.json", "makefile.json", "properties.json", "env.json", "protobuf.json", "graphql.json",
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
-    "svelte.json"
+    "svelte.json", "fsharp.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -151,7 +151,8 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.hcl",
     TESTS_DIR"/files/example.tf",
     TESTS_DIR"/files/example.vue",
-    TESTS_DIR"/files/example.svelte"
+    TESTS_DIR"/files/example.svelte",
+    TESTS_DIR"/files/example.fs"
   };
 
   for (const U8String& file_path : sample_files) {

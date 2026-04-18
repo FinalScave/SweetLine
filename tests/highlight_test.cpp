@@ -799,6 +799,68 @@ TEST_CASE("Ruby keeps operator defs, regexes, heredocs, and URLs distinct") {
   CHECK(styleAtColumn(highlight->lines[8], 0) == kUrl);
 }
 
+TEST_CASE("F# keeps keywords, types, let bindings, attributes, and preprocessor distinct") {
+  static const char* kFsharpSyntaxPath = SYNTAX_DIR"/fsharp.json";
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kFsharpSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kNumber = 3;
+  constexpr int32_t kComment = 4;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kAnnotation = 9;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kPreprocessor = 11;
+  constexpr int32_t kUrl = 16;
+
+  SharedPtr<TextAnalyzer> fsharp = engine->createAnalyzerBySyntaxName("fsharp");
+  REQUIRE(fsharp != nullptr);
+
+  SharedPtr<DocumentHighlight> highlight = fsharp->analyzeText(
+    "namespace MyApp\n"
+    "open System.Collections\n"
+    "#if DEBUG\n"
+    "[<Obsolete(\"use v2\")>]\n"
+    "type Color = Red | Green | Blue\n"
+    "let rec fib n = if n <= 1 then n else fib (n-1) + fib (n-2)\n"
+    "let x = 42\n"
+    "let msg = \"hello\"\n"
+    "let flag = true\n"
+    "// https://example.com/fsharp\n"
+    "(* https://example.com/block *)\n");
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 11);
+
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);       // namespace
+  CHECK(styleAtColumn(highlight->lines[0], 10) == kClass);        // MyApp
+  CHECK(styleAtColumn(highlight->lines[1], 0) == kKeyword);       // open
+  CHECK(styleAtColumn(highlight->lines[1], 5) == kClass);         // System.Collections
+  CHECK(styleAtColumn(highlight->lines[2], 1) == kPreprocessor);  // #
+  CHECK(styleAtColumn(highlight->lines[2], 1) == kPreprocessor);  // #if token
+  CHECK(styleAtColumn(highlight->lines[3], 1) == kPunctuation);   // [<
+  CHECK(styleAtColumn(highlight->lines[3], 3) == kAnnotation);    // Obsolete
+  CHECK(styleAtColumn(highlight->lines[4], 0) == kKeyword);       // type
+  CHECK(styleAtColumn(highlight->lines[4], 5) == kClass);         // Color
+  CHECK(styleAtColumn(highlight->lines[5], 0) == kKeyword);       // let
+  CHECK(styleAtColumn(highlight->lines[5], 4) == kKeyword);       // rec
+  CHECK(styleAtColumn(highlight->lines[5], 8) == kMethod);        // fib
+  CHECK(styleAtColumn(highlight->lines[6], 0) == kKeyword);       // let
+  CHECK(styleAtColumn(highlight->lines[6], 4) == kVariable);      // x
+  CHECK(styleAtColumn(highlight->lines[6], 8) == kNumber);        // 42
+  CHECK(styleAtColumn(highlight->lines[7], 4) == kVariable);      // msg
+  CHECK(styleAtColumn(highlight->lines[7], 10) == kString);       // "hello"
+  CHECK(styleAtColumn(highlight->lines[8], 4) == kVariable);      // flag
+  CHECK(styleAtColumn(highlight->lines[8], 11) == kBuiltin);      // true
+  CHECK(styleAtColumn(highlight->lines[9], 0) == kComment);       // // comment start
+  CHECK(styleAtColumn(highlight->lines[9], 3) == kUrl);           // line comment URL
+  CHECK(styleAtColumn(highlight->lines[10], 0) == kComment);      // (* comment start
+  CHECK(styleAtColumn(highlight->lines[10], 3) == kUrl);          // block comment URL
+}
+
 TEST_CASE("Grammar syntaxes keep comments, loops, descriptors, and interpolation distinct") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kAbnfSyntaxPath));

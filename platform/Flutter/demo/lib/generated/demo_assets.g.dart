@@ -73,6 +73,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     sourceAssetPath: 'assets/examples/example.env',
   ),
   DemoAssetEntry(
+    fileName: 'example.fs',
+    sourceAssetPath: 'assets/examples/example.fs',
+  ),
+  DemoAssetEntry(
     fileName: 'example.gitignore',
     sourceAssetPath: 'assets/examples/example.gitignore',
   ),
@@ -300,6 +304,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/dockerfile.json',
   'assets/syntaxes/dts.json',
   'assets/syntaxes/env.json',
+  'assets/syntaxes/fsharp.json',
   'assets/syntaxes/gitignore.json',
   'assets/syntaxes/glsl.json',
   'assets/syntaxes/go.json',
@@ -368,6 +373,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.dockerfile',
   'example.dts',
   'example.env',
+  'example.fs',
   'example.gitignore',
   'example.glsl',
   'example.go',

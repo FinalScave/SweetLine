@@ -226,7 +226,7 @@
     const BUILTIN_COMMON_SYNTAX_FILES = [
       "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json",
       "c.json", "cmake.json", "cpp.json", "csharp.json", "css.json", "csv.json", "dart.json", "diff.json",
-      "dockerfile.json", "dts.json", "env.json", "gitignore.json", "glsl.json", "go.json", "graphql.json",
+      "dockerfile.json", "dts.json", "env.json", "fsharp.json", "gitignore.json", "glsl.json", "go.json", "graphql.json",
       "groovy.json", "hcl.json", "hlsl.json", "html.json", "iapp.json", "jasm.json", "java.json",
       "javascript.json", "json5.json", "json-sweetline.json", "jsonc.json", "kotlin.json", "latex.json",
       "less.json", "lua.json", "lyrics.json", "makefile.json", "markdown.json", "nginx.json", "nix.json",
@@ -238,12 +238,12 @@
 
     const STYLE_IDS = {
       keyword: 1, string: 2, number: 3, comment: 4, class: 5, method: 6, variable: 7,
-      punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14
+      punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14, url: 16
     };
 
     const EXAMPLE_FILES = [
       "example.aarch64", "example.abnf", "example.bat", "example.bf", "example.c", "example.cmake", "example.cpp", "example.cs",
-      "example.css", "example.csv", "example.dart", "example.diff", "example.dockerfile", "example.dts", "example.env", "example.gitignore",
+      "example.css", "example.csv", "example.dart", "example.diff", "example.dockerfile", "example.dts", "example.env", "example.fs", "example.gitignore",
       "example.glsl", "example.go", "example.graphql", "example.groovy", "example.hcl", "example.hlsl", "example.html", "example.jasm",
       "example.java", "example.js", "example.json5", "example.jsonc", "example.kt", "example.less", "example.lrc", "example.lua",
       "example.m", "example.md", "example.mk", "example.myu", "example.nasm", "example.nginx", "example.nix", "example.php",
@@ -262,13 +262,13 @@
     }
 
     const THEMES = [
-      makeTheme("SweetLine Dark", 0xff1e1e1e, 0xffd4d4d4, [0xff569cd6,0xffbd63c5,0xffe4fad5,0xff60ae6f,0xff4ec9b0,0xff9cdcfe,0xff9b9bc8,0xffd69d85,0xfffffd9b,0xff569cd6,0xff9b9bc8,0xff4ec9b0,0xff4ec9b0,0xff569cd6]),
-      makeTheme("Monokai", 0xff272822, 0xfff8f8f2, [0xfff92672,0xffe6db74,0xffae81ff,0xff75715e,0xffa6e22e,0xffa6e22e,0xfff8f8f2,0xfff8f8f2,0xffe6db74,0xfff92672,0xffae81ff,0xfffd971f,0xffa6e22e,0xff66d9ef]),
-      makeTheme("Dracula", 0xff282a36, 0xfff8f8f2, [0xffff79c6,0xfff1fa8c,0xffbd93f9,0xff6272a4,0xff8be9fd,0xff50fa7b,0xfff8f8f2,0xfff8f8f2,0xffffb86c,0xffff79c6,0xffbd93f9,0xffffb86c,0xff50fa7b,0xff8be9fd]),
-      makeTheme("One Dark", 0xff282c34, 0xffabb2bf, [0xffc678dd,0xff98c379,0xffd19a66,0xff5c6370,0xffe5c07b,0xff61afef,0xffe06c75,0xffabb2bf,0xffe5c07b,0xffc678dd,0xffd19a66,0xff56b6c2,0xffe5c07b,0xff56b6c2]),
-      makeTheme("Solarized Dark", 0xff002b36, 0xff839496, [0xff859900,0xff2aa198,0xffd33682,0xff586e75,0xffb58900,0xff268bd2,0xffcb4b16,0xff839496,0xffb58900,0xff859900,0xffcb4b16,0xffd33682,0xff268bd2,0xff268bd2]),
-      makeTheme("Nord", 0xff2e3440, 0xffd8dee9, [0xff81a1c1,0xffa3be8c,0xffb48ead,0xff616e88,0xff8fbcbb,0xff88c0d0,0xffd8dee9,0xffeceff4,0xffebcb8b,0xff81a1c1,0xffb48ead,0xffebcb8b,0xff8fbcbb,0xff5e81ac]),
-      makeTheme("GitHub Dark", 0xff0d1117, 0xffc9d1d9, [0xffff7b72,0xffa5d6ff,0xff79c0ff,0xff8b949e,0xffffa657,0xffd2a8ff,0xffffa657,0xffc9d1d9,0xffffa657,0xffff7b72,0xff79c0ff,0xffffa657,0xff7ee787,0xff79c0ff])
+      makeTheme("SweetLine Dark", 0xff1e1e1e, 0xffd4d4d4, [0xff569cd6,0xffbd63c5,0xffe4fad5,0xff60ae6f,0xff4ec9b0,0xff9cdcfe,0xff9b9bc8,0xffd69d85,0xfffffd9b,0xff569cd6,0xff9b9bc8,0xff4ec9b0,0xff4ec9b0,0xff569cd6,0xff9cdcfe,0xff4fc1ff]),
+      makeTheme("Monokai", 0xff272822, 0xfff8f8f2, [0xfff92672,0xffe6db74,0xffae81ff,0xff75715e,0xffa6e22e,0xffa6e22e,0xfff8f8f2,0xfff8f8f2,0xffe6db74,0xfff92672,0xffae81ff,0xfffd971f,0xffa6e22e,0xff66d9ef,0xffa6e22e,0xff66d9ef]),
+      makeTheme("Dracula", 0xff282a36, 0xfff8f8f2, [0xffff79c6,0xfff1fa8c,0xffbd93f9,0xff6272a4,0xff8be9fd,0xff50fa7b,0xfff8f8f2,0xfff8f8f2,0xffffb86c,0xffff79c6,0xffbd93f9,0xffffb86c,0xff50fa7b,0xff8be9fd,0xff50fa7b,0xff8be9fd]),
+      makeTheme("One Dark", 0xff282c34, 0xffabb2bf, [0xffc678dd,0xff98c379,0xffd19a66,0xff5c6370,0xffe5c07b,0xff61afef,0xffe06c75,0xffabb2bf,0xffe5c07b,0xffc678dd,0xffd19a66,0xff56b6c2,0xffe5c07b,0xff56b6c2,0xff61afef,0xff61afef]),
+      makeTheme("Solarized Dark", 0xff002b36, 0xff839496, [0xff859900,0xff2aa198,0xffd33682,0xff586e75,0xffb58900,0xff268bd2,0xffcb4b16,0xff839496,0xffb58900,0xff859900,0xffcb4b16,0xffd33682,0xff268bd2,0xff268bd2,0xff268bd2,0xff268bd2]),
+      makeTheme("Nord", 0xff2e3440, 0xffd8dee9, [0xff81a1c1,0xffa3be8c,0xffb48ead,0xff616e88,0xff8fbcbb,0xff88c0d0,0xffd8dee9,0xffeceff4,0xffebcb8b,0xff81a1c1,0xffb48ead,0xffebcb8b,0xff8fbcbb,0xff5e81ac,0xff88c0d0,0xff88c0d0]),
+      makeTheme("GitHub Dark", 0xff0d1117, 0xffc9d1d9, [0xffff7b72,0xffa5d6ff,0xff79c0ff,0xff8b949e,0xffffa657,0xffd2a8ff,0xffffa657,0xffc9d1d9,0xffffa657,0xffff7b72,0xff79c0ff,0xffffa657,0xff7ee787,0xff79c0ff,0xff79c0ff,0xff79c0ff])
     ];
 
     const els = {
