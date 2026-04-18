@@ -1,0 +1,39 @@
+# SweetLine v{{VERSION}}
+
+Cross-platform release assets for SweetLine.
+
+Replace the placeholders below before publishing:
+- `{{VERSION}}`
+- `{{COMMIT}}`
+- `{{PREBUILT_ASSET_NAME}}`
+- `{{HEADERS_ASSET_NAME}}`
+
+## Assets
+
+- Prebuilt binaries: `{{PREBUILT_ASSET_NAME}}`
+- C/C++ headers: `{{HEADERS_ASSET_NAME}}`
+
+## Included Platforms In The Prebuilt Package
+
+- Android: `arm64-v8a`, `x86_64`
+- iOS: `arm64`, `simulator-arm64`, `SweetLineCoreIOS.xcframework.zip`
+- macOS: `arm64`, `x86_64`, `SweetLineCoreOSX.xcframework.zip`
+- Linux: `x86_64`, `aarch64`
+- Windows: `x64`
+- OHOS: `arm64-v8a`, `x86_64`
+- WebAssembly: `sweetline.js`, `sweetline.wasm`, `sweetline.d.ts`
+
+## Package Layout
+
+- `{{PREBUILT_ASSET_NAME}}`
+  - archive root contains platform directories directly
+  - includes `README.txt` and `SHA256SUMS.txt` by default
+- `{{HEADERS_ASSET_NAME}}`
+  - archive root contains `include/sweetline/...`
+  - includes `SHA256SUMS.txt` by default
+
+## Notes
+
+- Commit: `{{COMMIT}}`
+- The prebuilt package is built from the repository `prebuilt/` artifacts.
+- The headers package is built from `src/include/` and uses the install-style layout `include/sweetline/`.
