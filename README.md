@@ -245,6 +245,7 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | Document | Description |
 |----------|-------------|
 | [Syntax Rule Configuration Guide](docs/en/syntax_rule.md) | Detailed guide on writing JSON syntax rule files |
+| [Engine Comparison Report](docs/en/engine_comparison.md) | Multidimensional comparison with mainstream syntax highlighting engines |
 | [API Reference (Index)](docs/en/api.md) | API entry page and reading order |
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
@@ -256,21 +257,13 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | [Build Guide](docs/en/api_build.md) | Multi-platform build commands and options |
 | [Contributing Guide](docs/en/join.md) | How to participate in the project, including using repository skills for faster syntax authoring |
 
-## Built-in Language Support
+## Grammar Pack
 
-| Language | File | Language | File |
-|----------|------|----------|------|
-| Java | `java.json` | Python | `python.json` |
-| C | `c.json` | C++ | `c++.json` |
-| C# | `csharp.json` | Kotlin | `kotlin.json` |
-| Swift | `swift.json` | Rust | `rust.json` |
-| Go | `go.json` | Dart | `dart.json` |
-| TypeScript | `typescript.json` | JavaScript | `javascript.json` |
-| HTML | `html.json` | XML | `xml.json` |
-| SQL | `sql.json` | Shell | `shell.json` |
-| Lua | `lua.json` | Groovy | `groovy.json` |
-| YAML | `yaml.json` | TOML | `toml.json` |
-| Markdown | `markdown.json` | JSON | `json-sweetline.json` |
+SweetLine provides a grammar pack covering `100+` language and syntax scenarios, including mainstream programming languages, markup languages, configuration formats, template syntaxes, and specialized grammars.
+
+Both the grammars shipped with the repository and developer-authored custom grammars are compiled through `HighlightEngine` before use, making it easy to adapt SweetLine to different languages, frameworks, and domain-specific scenarios.
+
+See the `syntaxes/` directory for the available grammar set, and the [Syntax Rule Configuration Guide](docs/en/syntax_rule.md) for authoring details.
 
 ## Performance Tips
 

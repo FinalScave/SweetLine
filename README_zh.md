@@ -245,6 +245,7 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | 文档 | 说明 |
 |------|------|
 | [语法规则配置文档](docs/zh/syntax_rule.md) | 详细介绍如何编写 JSON 语法规则文件 |
+| [引擎对比报告](docs/zh/engine_comparison.md) | 与主流语法高亮引擎的多维度对比报告 |
 | [API 文档（索引）](docs/zh/api.md) | API 总入口与阅读顺序 |
 | [核心 API](docs/zh/api_core.md) | 核心概念与 C++ API |
 | [C API](docs/zh/api_c.md) | 面向 FFI 的 C 接口 |
@@ -256,21 +257,13 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [构建文档](docs/zh/api_build.md) | 多平台构建命令与参数 |
 | [项目协作说明](docs/zh/join.md) | 参与项目共建指南，包含使用仓库 skills 快速编写语法规则的说明 |
 
-## 内置语言支持
+## 语法规则集
 
-| 语言 | 文件 | 语言 | 文件 |
-|------|------|------|------|
-| Java | `java.json` | Python | `python.json` |
-| C | `c.json` | C++ | `c++.json` |
-| C# | `csharp.json` | Kotlin | `kotlin.json` |
-| Swift | `swift.json` | Rust | `rust.json` |
-| Go | `go.json` | Dart | `dart.json` |
-| TypeScript | `typescript.json` | JavaScript | `javascript.json` |
-| HTML | `html.json` | XML | `xml.json` |
-| SQL | `sql.json` | Shell | `shell.json` |
-| Lua | `lua.json` | Groovy | `groovy.json` |
-| YAML | `yaml.json` | TOML | `toml.json` |
-| Markdown | `markdown.json` | JSON | `json-sweetline.json` |
+SweetLine 提供覆盖 `100+` 语言与语法场景的规则集，包括主流编程语言、标记语言、配置语言、模板语言和专用语法。
+
+无论是仓库提供的语法规则，还是开发者自定义编写的语法规则，都通过 `HighlightEngine` 编译后使用，以适配不同语言、框架和业务场景。
+
+完整规则集可参考 `syntaxes/` 目录，语法规则编写方式请参见 [语法规则配置文档](docs/zh/syntax_rule.md)。
 
 ## 性能建议
 
