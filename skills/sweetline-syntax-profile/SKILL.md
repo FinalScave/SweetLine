@@ -155,7 +155,10 @@ This matters for syntaxes such as:
 
 - `style` applies to group `0`, which is the whole token match.
 - `styles` and `subStates` use the token pattern's own capture-group indices, not the merged state regex indices.
+- Do not leave unused capturing groups in a token that only uses `style`; those extra groups produce unstyled spans in SweetLine.
+- If a group is not explicitly consumed by `styles` or `subStates`, make it non-capturing `(?:...)`.
 - Helper captures without a style are valid when they intentionally preserve numbering for later groups.
+- Keep capturing groups when they are needed for group-indexed styling, sub-state routing, or stable numbering.
 - `include` / `includes` entries must be standalone objects with no sibling fields.
 - `includes` preserves declared order.
 - Missing fragments and circular fragment includes are compile-time failures.

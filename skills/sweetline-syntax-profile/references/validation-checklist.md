@@ -33,6 +33,7 @@ Do not finish syntax work until you have checked the items that apply.
 - The assertion covers something more specific than plain keywords or strings.
 - Representative tokens map to the correct shared style classes from `style-vocabulary-policy.md`.
 - Grouped rules have been checked so `style`, `styles`, and `subStates` align with the intended full-match or subgroup tokenization.
+- Tokens that use only `style` do not leave unused capturing groups behind; helper groups are non-capturing unless they are intentionally consumed by `styles` or `subStates`.
 - Meaningful tokens do not fall back to default style because of grouping, ordering, or fallback mistakes.
 
 ## Regression checks

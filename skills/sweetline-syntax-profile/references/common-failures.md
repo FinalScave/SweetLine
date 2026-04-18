@@ -20,6 +20,7 @@ Review this file before closing any syntax task.
 - A helper capture that preserved downstream group numbering was rewritten to non-capturing and shifted the `styles` or `subStates` mapping.
 - Capturing groups were added, removed, or reordered without revalidating the token-local capture indices consumed by `styles` or `subStates`.
 - `style`, `styles`, and `subStates` do not match the real intent of the rule or the actual capture-group indices.
+- A token that only uses `style` still contains extra capturing groups, so SweetLine emits unstyled spans for those unused groups.
 - Strings or comments contain embedded inline token classes, but the syntax forgot to reuse the needed fragment inside those states.
 - Meaningful tokens fall back to default style because a group, boundary, ordering rule, or fallback is misconfigured.
 - Inline-style rules reference a style name that was never declared in top-level `styles[]`.
