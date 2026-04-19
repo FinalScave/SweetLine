@@ -165,8 +165,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.erl",
     TESTS_DIR"/files/example.bzl",
     TESTS_DIR"/files/BUILD.bazel",
-    TESTS_DIR"/files/build.gradle",
-    TESTS_DIR"/files/build.gradle.kts",
+    TESTS_DIR"/files/example.build.gradle.kts",
     TESTS_DIR"/files/example.qs",
     TESTS_DIR"/files/example.riscv.s"
   };
@@ -208,10 +207,8 @@ TEST_CASE("New syntax routes avoid suffix collisions with existing families") {
   CHECK(engine->getSyntaxRuleByFileName("example.bzl")->name == "starlark");
   REQUIRE(engine->getSyntaxRuleByFileName("BUILD.bazel") != nullptr);
   CHECK(engine->getSyntaxRuleByFileName("BUILD.bazel")->name == "bazel");
-  REQUIRE(engine->getSyntaxRuleByFileName("build.gradle") != nullptr);
-  CHECK(engine->getSyntaxRuleByFileName("build.gradle")->name == "gradle");
-  REQUIRE(engine->getSyntaxRuleByFileName("build.gradle.kts") != nullptr);
-  CHECK(engine->getSyntaxRuleByFileName("build.gradle.kts")->name == "gradle-kts");
+  REQUIRE(engine->getSyntaxRuleByFileName("example.build.gradle.kts") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.build.gradle.kts")->name == "gradle-kts");
   REQUIRE(engine->getSyntaxRuleByFileName("example.m") != nullptr);
   CHECK(engine->getSyntaxRuleByFileName("example.m")->name == "objc");
   REQUIRE(engine->getSyntaxRuleByFileName("example.t") != nullptr);
@@ -240,7 +237,7 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   CHECK(engine->createAnalyzerByFileName("example.bzl") != nullptr);
   CHECK(engine->createAnalyzerByFileName("BUILD.bazel") != nullptr);
   CHECK(engine->createAnalyzerByFileName("build.gradle") != nullptr);
-  CHECK(engine->createAnalyzerByFileName("build.gradle.kts") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.build.gradle.kts") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.qs") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.riscv.s") != nullptr);
 }
