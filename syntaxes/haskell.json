@@ -1,0 +1,351 @@
+{
+  "name": "haskell",
+  "fileNames": ["Setup.hs"],
+  "fileSuffixes": [".hs", ".hs-boot"],
+  "variables": {
+    "identifier": "[a-z_][A-Za-z0-9_']*",
+    "constructor": "[A-Z][A-Za-z0-9_']*",
+    "moduleName": "${constructor}(?:\\.${constructor})*",
+    "operator": "[!#$%&*+./<=>?@^|:\\-~]+",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(--)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "blockCommentStartRule": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockComment"
+      }
+    ],
+    "pragmaStartRule": [
+      {
+        "pattern": "\\{-#",
+        "style": "annotation",
+        "state": "pragma"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "charLiteralRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "charContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "recordFieldRule": [
+      {
+        "pattern": "(\\{)${whiteSpace}*(${identifier})${whiteSpace}*(::|=)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "(,)${whiteSpace}*(${identifier})${whiteSpace}*(::|=)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "pragmaStartRule"
+      },
+      {
+        "include": "blockCommentStartRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(module)\\b${whiteSpace}+(${moduleName})${whiteSpace}+(where)\\b",
+        "styles": [1, "keyword", 2, "class", 3, "keyword"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(qualified)${whiteSpace}+(${moduleName})${whiteSpace}+(as)${whiteSpace}+(${constructor})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "keyword", 5, "class"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(qualified)${whiteSpace}+(${moduleName})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(${moduleName})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(infixl|infixr|infix)${whiteSpace}+([0-9]+)${whiteSpace}+(${operator})",
+        "styles": [1, "keyword", 2, "number", 3, "method"]
+      },
+      {
+        "pattern": "\\b(data|newtype|type)\\b${whiteSpace}+(${constructor})(?:${whiteSpace}+(${identifier}))?",
+        "styles": [1, "keyword", 2, "class", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(class)\\b${whiteSpace}+(${constructor})(?:${whiteSpace}+(${identifier}))?",
+        "styles": [1, "keyword", 2, "class", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(instance)\\b${whiteSpace}+(${constructor})(?:${whiteSpace}+(${constructor}))?",
+        "styles": [1, "keyword", 2, "class", 3, "class"]
+      },
+      {
+        "pattern": "\\bderiving\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "^${whiteSpace}*(\\()(${operator})(\\))${whiteSpace}+(${identifier})",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation", 4, "variable"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(${constructor})",
+        "styles": [1, "method", 2, "class"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(${identifier})",
+        "styles": [1, "method", 2, "variable"]
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_'])${identifier}(?=${whiteSpace}*::)",
+        "style": "method"
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_'])(\\()(${operator})(\\))(?=${whiteSpace}*::)",
+        "styles": [1, "punctuation", 2, "method", 3, "punctuation"]
+      },
+      {
+        "include": "recordFieldRule"
+      },
+      {
+        "pattern": "\\b(?:case|of|if|then|else|let|in|do|where|qualified|as|hiding|safe|unsafe|foreign|default|infix|infixl|infixr|forall|mdo|rec|pattern|family|role)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:True|False|Nothing|Just|Left|Right|LT|EQ|GT|IO|Int|Integer|Float|Double|Char|Bool|String|Ordering|Maybe|Either|show|read|length|null|map|not|otherwise|error|id|const|seq|fmap|pure|return|maybe|either|foldl'|foldr|filter|take|drop|head|tail|fst|snd|zip|unzip|concat|lines|words|putStr|putStrLn|getLine|print)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${moduleName})(\\.)(${constructor})",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${moduleName})(\\.)(${identifier})",
+        "styles": [1, "class", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "\\b${constructor}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+(?:[eE][+-]?[0-9_]+)?|[0-9][0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "charLiteralRule"
+      },
+      {
+        "pattern": "->|<-|=>|::|\\.\\.|[()\\[\\]{};,]|[!#$%&*+./<=>?@^|:\\-~]+|\\\\",
+        "style": "punctuation"
+      }
+    ],
+    "pragma": [
+      {
+        "pattern": "#-\\}",
+        "style": "annotation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:LANGUAGE|OPTIONS_GHC|INLINE|INLINABLE|NOINLINE|RULES|ANN|DEPRECATED|WARNING|MINIMAL|UNPACK|NOUNPACK|SPECIALISE|SPECIALIZE|LINE)\\b",
+        "style": "keyword"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "annotation"
+      },
+      {
+        "onLineEndState": "pragma"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockCommentNested1"
+      },
+      {
+        "pattern": "-\\}",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockComment"
+      }
+    ],
+    "blockCommentNested1": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockCommentNested2"
+      },
+      {
+        "pattern": "-\\}",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentNested1"
+      }
+    ],
+    "blockCommentNested2": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockCommentNested3"
+      },
+      {
+        "pattern": "-\\}",
+        "style": "comment",
+        "state": "blockCommentNested1"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentNested2"
+      }
+    ],
+    "blockCommentNested3": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockCommentNested4"
+      },
+      {
+        "pattern": "-\\}",
+        "style": "comment",
+        "state": "blockCommentNested2"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentNested3"
+      }
+    ],
+    "blockCommentNested4": [
+      {
+        "pattern": "\\{-",
+        "style": "comment",
+        "state": "blockCommentNested4"
+      },
+      {
+        "pattern": "-\\}",
+        "style": "comment",
+        "state": "blockCommentNested3"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockCommentNested4"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "charContent": [
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

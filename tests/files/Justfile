@@ -1,0 +1,165 @@
+# Just syntax coverage sample for SweetLine.
+# The file stays within the target range and exercises routing, settings,
+# attributes, assignments, modules, aliases, expressions, and recipes.
+
+set quiet
+set fallback
+set export
+set dotenv-load
+set positional-arguments
+set ignore-comments
+set shell := ["bash", "-eu"]
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+set script-interpreter := ["sh", "-eu"]
+set working-directory := "build"
+
+mod? tools 'tools.just'
+alias fmt := clean
+alias ci := test
+
+name := "sweetline"
+version := if env("CI", "false") == "true" { "1.2.2" } else { "dev" }
+platform := os_family()
+arch_name := arch()
+os_name := os()
+repo_root := justfile_directory()
+source_root := source_directory()
+rev := `git rev-parse --short HEAD`
+quoted_root := quote(repo_root)
+artifact_dir := if os_family() == "windows" { "build\\artifacts" } else { "build/artifacts" }
+banner := """
+SweetLine
+Just syntax coverage
+"""
+notes := '''
+Just triple single quoted strings also span lines.
+They do not interpolate {{names}} inside them.
+'''
+command_block := ```
+echo "one"
+echo "two"
+```
+
+[default]
+default: build test info
+  just --list
+
+[private]
+[no-cd]
+clean:
+  -rm -rf {{artifact_dir}}
+  echo "cleaned {{quoted_root}}"
+  echo "root is {{repo_root}}"
+
+prepare target="app":
+  mkdir -p "{{artifact_dir}}/{{target}}"
+  echo "prepare {{target}}"
+  echo "{{name}} {{version}}"
+  echo "platform {{platform}} / {{arch_name}}"
+
+build target="app" +FLAGS='--release' *EXTRA='': (prepare target)
+  just prepare {{target}}
+  cargo build {{FLAGS}} {{EXTRA}} --target {{target}}
+  echo "built {{name}} {{version}} {{rev}}"
+  echo "artifact dir: {{artifact_dir}}"
+  echo "source root: {{source_root}}"
+  echo "command block: {{command_block}}"
+
+[arg("profile", long="profile")]
+test profile="debug" tests=if os_family() == "windows" { "unit" } else { "all" }: (build "app")
+  @echo "Testing {{profile}} with {{tests}}"
+  -cargo test --profile {{profile}} --tests {{tests}}
+  echo "done"
+  echo "current os {{os_name}}"
+
+[arg("path", help="Output directory")]
+package path=(artifact_dir):
+  echo "Packaging to {{path}}"
+  tar -czf "{{path}}/sweetline.tar.gz" .
+  echo "source root: {{source_root}}"
+  echo "directory: {{justfile_directory()}}"
+  echo "make sure {{replace('a-b-c', '-', '_')}} is visible"
+
+[working-directory: "docs"]
+docs:
+  #!/usr/bin/env bash
+  echo "docs root: {{justfile_directory()}}"
+  echo "source: {{source_file()}}"
+  echo "invocation: {{invocation_directory()}}"
+  echo "native invocation: {{invocation_directory_native()}}"
+  echo "$(date +%F)"
+
+[script]
+script-demo message='Hello':
+  echo "script: {{message}}"
+  echo "justfile: {{justfile_directory()}}"
+  echo "os: {{os()}}"
+  echo "arch: {{arch()}}"
+  echo "shell: {{shell('echo $1', 'hello')}}"
+
+[no-exit-message]
+ship version="1.2.2":
+  echo "shipping {{version}}"
+  just build app
+  just package
+  echo "rev {{rev}}"
+  echo "{{quote('ship it')}}"
+
+release:
+  echo "release {{version}}"
+  echo "binary name {{file_stem('sweetline.tar.gz')}}"
+  echo "path {{absolute_path('dist')}}"
+  echo "canonical {{canonicalize('.')}}"
+
+paths:
+  echo "{{append('/src', 'foo bar baz')}}"
+  echo "{{prepend('src/', 'foo bar baz')}}"
+  echo "{{encode_uri_component('hello world')}}"
+  echo "{{replace('a-b-c', '-', '_')}}"
+  echo "{{replace_regex('abc123', '[0-9]+', 'n')}}"
+  echo "{{trim('  padded  ')}}"
+  echo "{{trim_end('trim  ')}}"
+  echo "{{trim_start('  trim')}}"
+  echo "{{capitalize('sweet line')}}"
+  echo "{{kebabcase('Sweet Line')}}"
+  echo "{{lowercamelcase('Sweet Line')}}"
+  echo "{{lowercase('Sweet Line')}}"
+  echo "{{shoutykebabcase('sweet line')}}"
+  echo "{{shoutysnakecase('sweet line')}}"
+  echo "{{snakecase('Sweet Line')}}"
+  echo "{{titlecase('sweet line')}}"
+  echo "{{uppercamelcase('sweet line')}}"
+  echo "{{uppercase('sweet line')}}"
+
+system:
+  echo "{{num_cpus()}} cpus"
+  echo "{{just_executable()}}"
+  echo "{{just_pid()}}"
+  echo "{{home_directory()}}"
+  echo "{{cache_directory()}}"
+  echo "{{config_directory()}}"
+  echo "{{config_local_directory()}}"
+  echo "{{data_directory()}}"
+  echo "{{data_local_directory()}}"
+  echo "{{executable_directory()}}"
+
+information:
+  echo "{{file_name('/tmp/foo.txt')}}"
+  echo "{{file_stem('/tmp/foo.txt')}}"
+  echo "{{parent_directory('/tmp/foo.txt')}}"
+  echo "{{without_extension('/tmp/foo.txt')}}"
+  echo "{{extension('/tmp/foo.txt')}}"
+  echo "{{is_dependency()}}"
+  echo "{{which('git')}}"
+  echo "{{env_var('JUST_HOME', '/tmp')}}"
+  echo "{{env('JUST_MODE', 'dev')}}"
+  echo "{{shell('printf %s \"$1\"', 'SweetLine')}}"
+
+chooser:
+  @just --choose
+  echo "Available recipes live in the chooser."
+
+module-demo:
+  echo "Optional module declared as {{name}}."
+  echo "Use the root justfile from {{justfile()}}."
+  echo "This file is a syntax sample, not a build script."

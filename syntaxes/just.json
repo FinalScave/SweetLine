@@ -1,0 +1,515 @@
+{
+  "name": "just",
+  "fileNamePattern": "(?i)(?:justfile|\\.justfile)",
+  "fileSuffixes": [".just"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "moduleName": "[A-Za-z_][A-Za-z0-9_-]*",
+    "recipeName": "[A-Za-z_][A-Za-z0-9_-]*(?:::[A-Za-z_][A-Za-z0-9_-]*)*",
+    "settingName": "[A-Za-z_][A-Za-z0-9_-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "'(?:[^']*)'",
+        "style": "string"
+      }
+    ],
+    "tripleDoubleQuotedStringRule": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "tripleDoubleString"
+      }
+    ],
+    "tripleSingleQuotedStringRule": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "tripleSingleString"
+      }
+    ],
+    "backtickExpressionRule": [
+      {
+        "pattern": "(`)([^`\\n]*)(`)",
+        "styles": [1, "macro", 2, "macro", 3, "macro"]
+      }
+    ],
+    "tripleBacktickExpressionRule": [
+      {
+        "pattern": "```",
+        "style": "macro",
+        "state": "tripleBacktickExpression"
+      }
+    ],
+    "recipeInterpolationRule": [
+      {
+        "pattern": "(\\{\\{)([\\S\\s]*?)(\\}\\})",
+        "styles": [1, "punctuation", 2, "macro", 3, "punctuation"],
+        "subStates": [2, "expression"]
+      }
+    ],
+    "shellBracedVariableRule": [
+      {
+        "pattern": "(\\$\\{)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "shellSimpleVariableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "shellSpecialVariableRule": [
+      {
+        "pattern": "(\\$)([@*#?\\-$!0-9])",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "expressionCoreRules": [
+      {
+        "pattern": "\\b(?:if|else|and|or|not)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:arch|os|os_family|num_cpus|shell|which|env|env_var|is_dependency|justfile|justfile_directory|invocation_directory|invocation_directory_native|source_file|source_directory|just_executable|just_pid|absolute_path|canonicalize|extension|file_name|file_stem|parent_directory|without_extension|cache_directory|config_directory|config_local_directory|data_directory|data_local_directory|executable_directory|home_directory|append|prepend|encode_uri_component|quote|replace|replace_regex|trim|trim_end|trim_end_match|trim_end_matches|trim_start|trim_start_match|trim_start_matches|capitalize|kebabcase|lowercamelcase|lowercase|shoutykebabcase|shoutysnakecase|snakecase|titlecase|uppercamelcase|uppercase)\\b(?=\\s*\\()",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${identifier})(?=\\s*\\()",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(${identifier})\\b",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "includes": [
+          "tripleDoubleQuotedStringRule",
+          "tripleSingleQuotedStringRule",
+          "doubleQuotedStringRule",
+          "singleQuotedStringRule",
+          "tripleBacktickExpressionRule",
+          "backtickExpressionRule",
+          "lineCommentRule"
+        ]
+      },
+      {
+        "pattern": "::|\\[|\\]|\\{|\\}|\\(|\\)|,|:|=|\\+|\\-|\\*|/|%|\\?|!|<|>|\\.|@|\\$",
+        "style": "punctuation"
+      }
+    ],
+    "recipeBodyCoreRules": [
+      {
+        "pattern": "^${whiteSpace}*#!.*",
+        "style": "preprocessor"
+      },
+      {
+        "pattern": "^${whiteSpace}*([@+-])",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "(?=^\\S)",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(if|then|else|fi|for|do|done|case|esac|while|until|function)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(echo|printf|cd|cp|mv|rm|mkdir|cat|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|chmod|chown|curl|wget|git|docker|make|cmake|cargo|python|python3|node|just|sh|bash|tar|touch|ln|pwd|env|date)\\b",
+        "style": "builtin"
+      },
+      {
+        "includes": [
+          "recipeInterpolationRule",
+          "shellBracedVariableRule",
+          "shellSimpleVariableRule",
+          "shellSpecialVariableRule",
+          "doubleQuotedStringRule",
+          "singleQuotedStringRule",
+          "tripleBacktickExpressionRule",
+          "backtickExpressionRule",
+          "lineCommentRule"
+        ]
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "commandSubstitution"
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\|\\||&&|;;|>>|<<|\\|&|[|&;()\\[\\]{}><!=+\\-*/%~^:,]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^#!.*",
+        "style": "preprocessor"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(${whiteSpace}+)(?=\\S)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "recipeLine"]
+      },
+      {
+        "pattern": "^${whiteSpace}*\\[",
+        "style": "punctuation",
+        "state": "attribute"
+      },
+      {
+        "pattern": "^${whiteSpace}*set\\b",
+        "style": "keyword",
+        "state": "setting"
+      },
+      {
+        "pattern": "^${whiteSpace}*alias\\b",
+        "style": "keyword",
+        "state": "alias"
+      },
+      {
+        "pattern": "^${whiteSpace}*(mod)(\\?)?(?=${whiteSpace}|$)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "module"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}*(:=)",
+        "styles": [1, "variable", 2, "punctuation"],
+        "state": "expression"
+      },
+      {
+        "pattern": "^${whiteSpace}*(@?)(${recipeName})(?=${whiteSpace}|:|$)",
+        "styles": [1, "punctuation", 2, "method"],
+        "state": "recipeHeader"
+      }
+    ],
+    "attribute": [
+      {
+        "pattern": "\\]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:arg|default|private|no-cd|no-quiet|no-exit-message|script|working-directory|linux|macos|unix|windows)\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\b(?:long|short|help|value)\\b(?=\\s*=)",
+        "style": "property"
+      },
+      {
+        "pattern": "\\b${identifier}\\b(?=\\s*=)",
+        "style": "property"
+      },
+      {
+        "includes": [
+          "expressionCoreRules"
+        ]
+      }
+    ],
+    "setting": [
+      {
+        "pattern": "(${settingName})(?=\\s*:=)",
+        "styles": [1, "property"]
+      },
+      {
+        "pattern": ":=",
+        "style": "punctuation",
+        "state": "expression"
+      },
+      {
+        "pattern": "(${settingName})\\b",
+        "styles": [1, "property"],
+        "onLineEndState": "default"
+      }
+    ],
+    "alias": [
+      {
+        "pattern": "(${identifier})(?=\\s*:=)",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": ":=",
+        "style": "punctuation",
+        "state": "expression"
+      },
+      {
+        "pattern": "(${identifier})\\b",
+        "styles": [1, "method"],
+        "onLineEndState": "default"
+      }
+    ],
+    "module": [
+      {
+        "pattern": "(${moduleName})(?=\\s|$)",
+        "styles": [1, "variable"],
+        "state": "expression"
+      }
+    ],
+    "recipeHeader": [
+      {
+        "pattern": "([+*])(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "([$])(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "${identifier}(?=\\s*=)",
+        "style": "variable"
+      },
+      {
+        "pattern": ":",
+        "style": "punctuation",
+        "state": "recipeDeps"
+      },
+      {
+        "includes": [
+          "expressionCoreRules"
+        ]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "recipeDeps": [
+      {
+        "pattern": "(${recipeName})(?=\\s|$|\\()",
+        "styles": [1, "method"]
+      },
+      {
+        "includes": [
+          "expressionCoreRules"
+        ]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "recipeLine": [
+      {
+        "includes": [
+          "recipeInterpolationRule",
+          "shellBracedVariableRule",
+          "shellSimpleVariableRule",
+          "shellSpecialVariableRule"
+        ]
+      },
+      {
+        "pattern": "^[@+-]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(?:if|then|else|fi|for|do|done|case|esac|while|until|function)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:echo|printf|cd|cp|mv|rm|mkdir|cat|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|chmod|chown|curl|wget|git|docker|make|cmake|cargo|python|python3|node|just|sh|bash|tar|touch|ln|pwd|env|date)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\$\\(",
+        "style": "punctuation",
+        "state": "commandSubstitution"
+      },
+      {
+        "includes": [
+          "doubleQuotedStringRule",
+          "singleQuotedStringRule",
+          "tripleBacktickExpressionRule",
+          "backtickExpressionRule"
+        ]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\|\\||&&|;;|>>|<<|\\|&|[|&;()\\[\\]{}><!=+\\-*/%~^:,]",
+        "style": "punctuation"
+      }
+    ],
+    "expression": [
+      {
+        "includes": [
+          "lineCommentRule",
+          "tripleDoubleQuotedStringRule",
+          "tripleSingleQuotedStringRule",
+          "doubleQuotedStringRule",
+          "singleQuotedStringRule",
+          "tripleBacktickExpressionRule",
+          "backtickExpressionRule"
+        ]
+      },
+      {
+        "pattern": "\\b(?:if|else|and|or|not)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:arch|os|os_family|num_cpus|shell|which|env|env_var|is_dependency|justfile|justfile_directory|invocation_directory|invocation_directory_native|source_file|source_directory|just_executable|just_pid|absolute_path|canonicalize|extension|file_name|file_stem|parent_directory|without_extension|cache_directory|config_directory|config_local_directory|data_directory|data_local_directory|executable_directory|home_directory|append|prepend|encode_uri_component|quote|replace|replace_regex|trim|trim_end|trim_end_match|trim_end_matches|trim_start|trim_start_match|trim_start_matches|capitalize|kebabcase|lowercamelcase|lowercase|shoutykebabcase|shoutysnakecase|snakecase|titlecase|uppercamelcase|uppercase)\\b(?=\\s*\\()",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${identifier})(?=\\s*\\()",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(${identifier})\\b",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "::|\\[|\\]|\\{|\\}|\\(|\\)|,|:|=|\\+|\\-|\\*|/|%|\\?|!|<|>|\\.|@|\\$",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "commandSubstitution": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "recipeLine"
+      },
+      {
+        "includes": [
+          "lineCommentRule",
+          "doubleQuotedStringRule",
+          "singleQuotedStringRule",
+          "tripleBacktickExpressionRule",
+          "backtickExpressionRule",
+          "shellBracedVariableRule",
+          "shellSimpleVariableRule",
+          "shellSpecialVariableRule"
+        ]
+      },
+      {
+        "pattern": "\\b(?:if|then|else|fi|for|do|done|case|esac|while|until|function)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:echo|printf|cd|cp|mv|rm|mkdir|cat|grep|sed|awk|find|sort|uniq|wc|cut|tr|tee|chmod|chown|curl|wget|git|docker|make|cmake|cargo|python|python3|node|just|sh|bash|tar|touch|ln|pwd|env|date)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\|\\||&&|;;|>>|<<|\\|&|[|&;()\\[\\]{}><!=+\\-*/%~^:,]",
+        "style": "punctuation"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleSingleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "tripleBacktickExpression": [
+      {
+        "pattern": "```",
+        "style": "macro",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "macro"
+      },
+      {
+        "pattern": "${any}",
+        "style": "macro"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

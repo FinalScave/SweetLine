@@ -1,0 +1,809 @@
+{
+  "name": "solidity",
+  "fileSuffixes": [".sol"],
+  "variables": {
+    "identifier": "[A-Za-z_$][A-Za-z0-9_$]*",
+    "qualifiedIdentifier": "${identifier}(?:\\.${identifier})*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "builtinType": "(?:address|bool|string|byte|bytes(?:[0-9]+)?|u?int(?:[0-9]+)?|fixed(?:[0-9]+x[0-9]+)?|ufixed(?:[0-9]+x[0-9]+)?|mapping|function)",
+    "builtinValue": "(?:true|false|msg|block|tx|abi|this|super|type|keccak256|sha256|ripemd160|ecrecover|addmod|mulmod|gasleft|require|assert)"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "docTagRule": [
+      {
+        "pattern": "@(?:title|notice|dev|param|return|inheritdoc|author|custom:[A-Za-z0-9_.:-]+)",
+        "style": "annotation"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "docLineCommentRule": [
+      {
+        "pattern": "(///+)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "docLineCommentContent"]
+      }
+    ],
+    "blockCommentRule": [
+      {
+        "pattern": "(/\\*)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "blockComment"
+      }
+    ],
+    "docBlockCommentRule": [
+      {
+        "pattern": "(/\\*\\*)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "docBlockComment"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "hexStringRule": [
+      {
+        "pattern": "(\\bhex)(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "keyword", 2, "string", 4, "string"],
+        "subStates": [3, "stringContent"]
+      }
+    ],
+    "unicodeStringRule": [
+      {
+        "pattern": "(\\bunicode)(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "keyword", 2, "string", 4, "string"],
+        "subStates": [3, "stringContent"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\(?:x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|[nrt\"'\\\\])",
+        "style": "string"
+      }
+    ],
+    "builtinTypeRule": [
+      {
+        "pattern": "\\b(?:address|bool|string|byte|bytes(?:[0-9]+)?|u?int(?:[0-9]+)?|fixed(?:[0-9]+x[0-9]+)?|ufixed(?:[0-9]+x[0-9]+)?|mapping|function)\\b",
+        "style": "builtin"
+      }
+    ],
+    "builtinValueRule": [
+      {
+        "pattern": "\\b(?:true|false|msg|block|tx|abi|this|super|type|keccak256|sha256|ripemd160|ecrecover|addmod|mulmod|gasleft|require|assert)\\b",
+        "style": "builtin"
+      }
+    ],
+    "mappingTypeRule": [
+      {
+        "pattern": "(\\bmapping\\b)${whiteSpace}*(\\()([^()]*)(\\))",
+        "styles": [1, "builtin", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "mappingType"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "docBlockCommentRule"
+      },
+      {
+        "include": "blockCommentRule"
+      },
+      {
+        "include": "docLineCommentRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(pragma)\\b${whiteSpace}+(solidity|abicoder|experimental|license)\\b",
+        "styles": [1, "preprocessor", 2, "keyword"]
+      },
+      {
+        "pattern": "\\bpragma\\b",
+        "style": "preprocessor"
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+(\\{)",
+        "styles": [1, "preprocessor", 2, "punctuation"],
+        "state": "importList"
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+(\\*)${whiteSpace}+(as)${whiteSpace}+(${identifier})${whiteSpace}+(from)${whiteSpace}+((?:\"(?:[^\"\\\\]|\\\\.)*\"|hex\"(?:[^\"\\\\]|\\\\.)*\"|unicode\"(?:[^\"\\\\]|\\\\.)*\"))",
+        "styles": [1, "preprocessor", 2, "punctuation", 3, "keyword", 4, "variable", 5, "keyword", 6, "string"]
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+((?:\"(?:[^\"\\\\]|\\\\.)*\"|hex\"(?:[^\"\\\\]|\\\\.)*\"|unicode\"(?:[^\"\\\\]|\\\\.)*\"))",
+        "styles": [1, "preprocessor", 2, "string"]
+      },
+      {
+        "pattern": "\\b(abstract)\\b${whiteSpace}+(contract|interface|library)\\b${whiteSpace}+(${identifier})${whiteSpace}*(is)${whiteSpace}*([^\\{]*)${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "keyword", 6, "punctuation"],
+        "subStates": [5, "inheritanceList"]
+      },
+      {
+        "pattern": "\\b(abstract)\\b${whiteSpace}+(contract|interface|library)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "keyword", 3, "class", 4, "punctuation"]
+      },
+      {
+        "pattern": "\\b(contract|interface|library)\\b${whiteSpace}+(${identifier})${whiteSpace}*(is)${whiteSpace}*([^\\{]*)${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "class", 3, "keyword", 5, "punctuation"],
+        "subStates": [4, "inheritanceList"]
+      },
+      {
+        "pattern": "\\b(contract|interface|library)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(struct)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "structBody"
+      },
+      {
+        "pattern": "\\b(enum)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "enumBody"
+      },
+      {
+        "pattern": "\\b(error|event)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "declarationParams"
+      },
+      {
+        "pattern": "\\b(modifier|function)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "functionParams"
+      },
+      {
+        "pattern": "\\b(constructor|receive|fallback)\\b${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "functionParams"
+      },
+      {
+        "pattern": "\\b(assembly)\\b${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "assemblyBlock"
+      },
+      {
+        "pattern": "\\b(using)\\b${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}+(for)${whiteSpace}+(${builtinType}|${qualifiedIdentifier})",
+        "styles": [1, "keyword", 2, "class", 3, "keyword", 4, "builtin"]
+      },
+      {
+        "pattern": "\\b(?:emit|revert|delete|new|return|break|continue|if|else|for|while|do|try|catch|unchecked|virtual|override|public|private|internal|external|view|pure|payable|constant|immutable|indexed|anonymous|as|from|global)\\b",
+        "style": "keyword"
+      },
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "=>|\\+\\+|--|<<|>>|<=|>=|==|!=|&&|\\|\\||[.()\\[\\]?!@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "importList": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:as|from|global)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "class"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "importList"
+      }
+    ],
+    "inheritanceList": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\bis\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${qualifiedIdentifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "\\(",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "inheritanceList"
+      }
+    ],
+    "functionParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "functionTail"
+      },
+      {
+        "pattern": "\\b(?:indexed|memory|storage|calldata|payable|public|private|internal|external|virtual|override|returns)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(address)\\b${whiteSpace}+(payable)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,\\[\\]{}()=:+\\-*/<>&|!?.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "functionParams"
+      }
+    ],
+    "functionTail": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": ";",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(returns)\\b${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "returnsParams"
+      },
+      {
+        "pattern": "\\b(?:public|private|internal|external|virtual|override|view|pure|payable|constant|immutable|calldata|memory|storage|anonymous)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "method"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "[,=:+\\-*/<>&|!?.]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "functionTail"
+      }
+    ],
+    "returnsParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "functionTail"
+      },
+      {
+        "pattern": "\\b(?:indexed|memory|storage|calldata|payable|public|private|internal|external|virtual|override)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(address)\\b${whiteSpace}+(payable)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,\\[\\]{}()=:+\\-*/<>&|!?.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "returnsParams"
+      }
+    ],
+    "declarationParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:indexed|memory|storage|calldata|payable|public|private|internal|external|virtual|override|anonymous)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(address)\\b${whiteSpace}+(payable)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,\\[\\]{}()=:+\\-*/<>&|!?.]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "declarationParams"
+      }
+    ],
+    "structBody": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(address)\\b${whiteSpace}+(payable)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(${builtinType})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "builtin", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b(?:${whiteSpace}+(?:memory|storage|calldata))?${whiteSpace}+(${identifier})",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b(${qualifiedIdentifier})\\b${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,;=()\\[\\]]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "structBody"
+      }
+    ],
+    "enumBody": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "property"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "enumBody"
+      }
+    ],
+    "mappingType": [
+      {
+        "include": "mappingTypeRule"
+      },
+      {
+        "include": "builtinTypeRule"
+      },
+      {
+        "include": "builtinValueRule"
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]{2,}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "=>|,|\\(|\\)|\\[|\\]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "mappingType"
+      }
+    ],
+    "assemblyBlock": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:let|function|if|for|switch|case|default|break|continue|leave|return|revert)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:add|sub|mul|div|mod|exp|signextend|keccak256|mload|mstore|mstore8|sload|sstore|log0|log1|log2|log3|log4|calldataload|calldatasize|calldatacopy|codecopy|extcodecopy|returndatacopy|create|create2|call|callcode|delegatecall|staticcall|gas|gasprice|address|balance|origin|caller|callvalue|selfbalance|chainid|basefee|pop|not|lt|gt|slt|sgt|eq|iszero|and|or|xor|byte|shl|shr|sar|addmod|mulmod|datasize|dataoffset|linkersymbol|setimmutable|loadimmutable)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b${qualifiedIdentifier}\\b",
+        "style": "variable"
+      },
+      {
+        "include": "hexStringRule"
+      },
+      {
+        "include": "unicodeStringRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": ":=|->|[.()\\[\\]{};,|:+\\-*/<>=]",
+        "style": "punctuation"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "onLineEndState": "assemblyBlock"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockComment"
+      }
+    ],
+    "docBlockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "docTagRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "docBlockComment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "docLineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "docTagRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

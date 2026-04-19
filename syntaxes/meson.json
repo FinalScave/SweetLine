@@ -1,0 +1,186 @@
+{
+  "name": "meson",
+  "fileNames": ["meson.build", "meson.options", "meson_options.txt"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "stringFormatPlaceholderRule": [
+      {
+        "pattern": "@(?:[A-Za-z_][A-Za-z0-9_]*|[0-9]+)@",
+        "style": "annotation"
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\(?:[\\\\'abfnrtv]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|N\\{[^}]+\\}|[0-7]{1,3})",
+        "style": "string"
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(?:f)?'",
+        "style": "string",
+        "state": "singleString"
+      }
+    ],
+    "tripleSingleQuotedStringRule": [
+      {
+        "pattern": "(?:f)?'''",
+        "style": "string",
+        "state": "tripleString"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "\\b(?:if|elif|else|endif|foreach|endforeach|break|continue|and|or|not|in)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:meson|build_machine|host_machine|target_machine|fs)\\b(?!\\.)",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(meson|build_machine|host_machine|target_machine|fs)(\\.)([A-Za-z_][A-Za-z0-9_]*)${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)([A-Za-z_][A-Za-z0-9_]*)${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\+=|=)(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "(?<!\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "builtin", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:0|[1-9][0-9]*)\\b",
+        "style": "number"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "tripleSingleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      },
+      {
+        "pattern": "[+\\-*/%<>=!?:,()\\[\\]{}./]",
+        "style": "punctuation"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "stringFormatPlaceholderRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "tripleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "stringFormatPlaceholderRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      },
+      {
+        "onLineEndState": "tripleString"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "if",
+      "end": "endif",
+      "branches": ["elif", "else"]
+    },
+    {
+      "start": "foreach",
+      "end": "endforeach"
+    }
+  ]
+}
