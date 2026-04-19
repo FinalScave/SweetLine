@@ -1516,6 +1516,158 @@ TEST_CASE("Elixir keeps multiline strings and directive module names styled") {
   CHECK(styleAtColumn(highlight->lines[162], 8) == kString);
 }
 
+TEST_CASE("Haskell, Meson, and Just keep declarations, builtins, and exact-name DSLs distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kAnnotation = 9;
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/haskell.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/meson.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/just.json"));
+
+  SharedPtr<TextAnalyzer> haskell = engine->createAnalyzerBySyntaxName("haskell");
+  REQUIRE(haskell != nullptr);
+  SharedPtr<DocumentHighlight> haskellHighlight = haskell->analyzeText(
+    "{-# LANGUAGE OverloadedStrings #-}\n"
+    "module Example.Syntax where\n"
+    "import qualified Data.Text as Text\n"
+    "infixl 6 <+>\n"
+    "renderTask task = show (TaskId 1)\n");
+  REQUIRE(haskellHighlight != nullptr);
+  CHECK(styleAtColumn(haskellHighlight->lines[0], 0) == kAnnotation);
+  CHECK(styleAtColumn(haskellHighlight->lines[0], 4) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[1], 7) == kClass);
+  CHECK(styleAtColumn(haskellHighlight->lines[1], 22) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[2], 0) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[2], 7) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[2], 17) == kClass);
+  CHECK(styleAtColumn(haskellHighlight->lines[2], 27) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[2], 30) == kClass);
+  CHECK(styleAtColumn(haskellHighlight->lines[3], 0) == kKeyword);
+  CHECK(styleAtColumn(haskellHighlight->lines[3], 7) == 3);
+  CHECK(styleAtColumn(haskellHighlight->lines[3], 9) == kMethod);
+  CHECK(styleAtColumn(haskellHighlight->lines[4], 0) == kMethod);
+  CHECK(styleAtColumn(haskellHighlight->lines[4], 11) == kVariable);
+  CHECK(styleAtColumn(haskellHighlight->lines[4], 18) == kBuiltin);
+  CHECK(styleAtColumn(haskellHighlight->lines[4], 24) == kClass);
+
+  SharedPtr<TextAnalyzer> meson = engine->createAnalyzerBySyntaxName("meson");
+  REQUIRE(meson != nullptr);
+  SharedPtr<DocumentHighlight> mesonHighlight = meson->analyzeText(
+    "project('demo', 'c')\n"
+    "project_name = meson.project_name()\n"
+    "if true\n"
+    "  configure_file(input : 'a', output : 'b')\n"
+    "endif\n");
+  REQUIRE(mesonHighlight != nullptr);
+  CHECK(styleAtColumn(mesonHighlight->lines[0], 0) == kBuiltin);
+  CHECK(styleAtColumn(mesonHighlight->lines[0], 7) == kPunctuation);
+  CHECK(styleAtColumn(mesonHighlight->lines[1], 0) == kVariable);
+  CHECK(styleAtColumn(mesonHighlight->lines[1], 13) == kPunctuation);
+  CHECK(styleAtColumn(mesonHighlight->lines[1], 15) == kBuiltin);
+  CHECK(styleAtColumn(mesonHighlight->lines[1], 21) == kMethod);
+  CHECK(styleAtColumn(mesonHighlight->lines[2], 0) == kKeyword);
+  CHECK(styleAtColumn(mesonHighlight->lines[2], 3) == kBuiltin);
+  CHECK(styleAtColumn(mesonHighlight->lines[3], 2) == kBuiltin);
+  CHECK(styleAtColumn(mesonHighlight->lines[3], 17) == 13);
+  CHECK(styleAtColumn(mesonHighlight->lines[3], 30) == 13);
+  CHECK(styleAtColumn(mesonHighlight->lines[4], 0) == kKeyword);
+
+  SharedPtr<Document> justDocument = makeSharedPtr<Document>(
+    "Justfile",
+    "set shell := [\"bash\", \"-eu\"]\n"
+    "mod? tools 'tools.just'\n"
+    "alias fmt := clean\n"
+    "name := \"sweetline\"\n"
+    "[default]\n"
+    "default:\n"
+    "  just --list\n");
+  SharedPtr<DocumentAnalyzer> justAnalyzer = engine->loadDocument(justDocument);
+  REQUIRE(justAnalyzer != nullptr);
+  SharedPtr<DocumentHighlight> justHighlight = justAnalyzer->analyze();
+  REQUIRE(justHighlight != nullptr);
+  CHECK(styleAtColumn(justHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(justHighlight->lines[0], 4) == 13);
+  CHECK(styleAtColumn(justHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(justHighlight->lines[1], 3) == kPunctuation);
+  CHECK(styleAtColumn(justHighlight->lines[2], 0) == kKeyword);
+  CHECK(styleAtColumn(justHighlight->lines[3], 0) == kVariable);
+  CHECK(styleAtColumn(justHighlight->lines[3], 5) == kPunctuation);
+  CHECK(styleAtColumn(justHighlight->lines[3], 8) == kString);
+  CHECK(styleAtColumn(justHighlight->lines[4], 1) == kAnnotation);
+  CHECK(styleAtColumn(justHighlight->lines[5], 0) == kMethod);
+  CHECK(styleAtColumn(justHighlight->lines[6], 2) == kBuiltin);
+}
+
+TEST_CASE("SystemVerilog and Solidity keep preprocessors, declarations, and DSL bodies distinct") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kPreprocessor = 11;
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/systemverilog.json"));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/solidity.json"));
+
+  SharedPtr<TextAnalyzer> systemverilog = engine->createAnalyzerBySyntaxName("systemverilog");
+  REQUIRE(systemverilog != nullptr);
+  SharedPtr<DocumentHighlight> systemverilogHighlight = systemverilog->analyzeText(
+    "`timescale 1ns/1ps\n"
+    "package demo_pkg;\n"
+    "  typedef enum logic [2:0] { OP_ADD = 3'd0 } op_t;\n"
+    "  function automatic logic [31:0] sat_add(input logic [31:0] a);\n"
+    "    $display(\"ok\");\n"
+    "  endfunction\n"
+    "endpackage\n");
+  REQUIRE(systemverilogHighlight != nullptr);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[0], 1) == kPreprocessor);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[1], 8) == kClass);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[2], 2) == kKeyword);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[2], 10) == kKeyword);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[2], 15) == kKeyword);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[3], 2) == kKeyword);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[3], 34) == kMethod);
+  CHECK(styleAtColumn(systemverilogHighlight->lines[4], 5) == kBuiltin);
+
+  SharedPtr<TextAnalyzer> solidity = engine->createAnalyzerBySyntaxName("solidity");
+  REQUIRE(solidity != nullptr);
+  SharedPtr<DocumentHighlight> solidityHighlight = solidity->analyzeText(
+    "pragma solidity ^0.8.24;\n"
+    "interface IPriceOracle {\n"
+    "    function quote(uint256 amount) external view returns (uint256 price);\n"
+    "}\n"
+    "contract ExampleVault is IPriceOracle {\n"
+    "    mapping(address => uint256) private balances;\n"
+    "    function quote(uint256 amount) external view returns (uint256 price) {\n"
+    "        assembly { let x := amount }\n"
+    "    }\n"
+    "}\n");
+  REQUIRE(solidityHighlight != nullptr);
+  CHECK(styleAtColumn(solidityHighlight->lines[0], 0) == kPreprocessor);
+  CHECK(styleAtColumn(solidityHighlight->lines[0], 7) == kKeyword);
+  CHECK(styleAtColumn(solidityHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(solidityHighlight->lines[1], 10) == kClass);
+  CHECK(styleAtColumn(solidityHighlight->lines[2], 4) == kKeyword);
+  CHECK(styleAtColumn(solidityHighlight->lines[2], 13) == kMethod);
+  CHECK(styleAtColumn(solidityHighlight->lines[4], 0) == kKeyword);
+  CHECK(styleAtColumn(solidityHighlight->lines[4], 9) == kClass);
+  CHECK(styleAtColumn(solidityHighlight->lines[4], 25) == kClass);
+  CHECK(styleAtColumn(solidityHighlight->lines[5], 4) == kBuiltin);
+  CHECK(styleAtColumn(solidityHighlight->lines[6], 13) == kMethod);
+  CHECK(styleAtColumn(solidityHighlight->lines[7], 8) == kKeyword);
+  CHECK(styleAtColumn(solidityHighlight->lines[7], 17) == kPunctuation);
+}
+
 TEST_CASE("New language samples do not emit transparent spans") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> syntax_files = {
@@ -1538,11 +1690,39 @@ TEST_CASE("New language samples do not emit transparent spans") {
     CAPTURE(file_path);
     U8String code_txt = FileUtil::readString(file_path);
     REQUIRE_FALSE(code_txt.empty());
-    U8String file_name = FileUtil::getPathName(file_path);
-    SharedPtr<Document> document = makeSharedPtr<Document>(file_name, code_txt);
-    SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+    U8String file_name = std::filesystem::u8path(file_path).filename().u8string();
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_name);
     REQUIRE(analyzer != nullptr);
-    SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code_txt);
+    requireNoTransparentSpans(highlight, file_name);
+  }
+}
+
+TEST_CASE("Second batch language samples do not emit transparent spans") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> syntax_files = {
+    "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json"
+  };
+  for (const U8String& syntax_file : syntax_files) {
+    CAPTURE(syntax_file);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/" + syntax_file));
+  }
+
+  const List<U8String> sample_files = {
+    TESTS_DIR"/files/example.hs",
+    TESTS_DIR"/files/example.sv",
+    TESTS_DIR"/files/example.sol",
+    TESTS_DIR"/files/meson.build",
+    TESTS_DIR"/files/Justfile"
+  };
+  for (const U8String& file_path : sample_files) {
+    CAPTURE(file_path);
+    U8String code_txt = FileUtil::readString(file_path);
+    REQUIRE_FALSE(code_txt.empty());
+    U8String file_name = std::filesystem::u8path(file_path).filename().u8string();
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_name);
+    REQUIRE(analyzer != nullptr);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code_txt);
     requireNoTransparentSpans(highlight, file_name);
   }
 }

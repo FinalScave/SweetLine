@@ -19,6 +19,8 @@ import com.qiplat.sweetline.util.AssetUtils;
 import io.noties.markwon.Markwon;
 
 public class MarkwonActivity extends AppCompatActivity implements SpannableStyleFactory {
+    private static final String SYNTAX_ASSET_DIR = "syntaxes";
+    private static final String EXAMPLE_ASSET_DIR = "examples";
     private AppCompatTextView mainTextView;
     private static SparseIntArray colorMap = new SparseIntArray();
 
@@ -69,7 +71,7 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
         Markwon markwon = Markwon.builder(this).usePlugin(plugin).build();
 
         try {
-            String testMd = AssetUtils.readAsset(this, "example.md");
+            String testMd = AssetUtils.readAsset(this, EXAMPLE_ASSET_DIR + "/example.md");
             markwon.setMarkdown(mainTextView, testMd);
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,7 +89,7 @@ public class MarkwonActivity extends AppCompatActivity implements SpannableStyle
                     "makefile.json", "properties.json", "env.json"
             };
             for (String syntaxFile : syntaxFiles) {
-                String syntaxJson = AssetUtils.readAsset(this, syntaxFile);
+                String syntaxJson = AssetUtils.readAsset(this, SYNTAX_ASSET_DIR + "/" + syntaxFile);
                 SweetLineGlobal.getEngineInstance().compileSyntaxFromJson(syntaxJson);
             }
         } catch (Exception e) {

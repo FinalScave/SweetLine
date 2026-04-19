@@ -47,7 +47,7 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
     "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
     "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
-    "qsharp.json",
+    "qsharp.json", "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -80,7 +80,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
     "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
     "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
-    "qsharp.json"
+    "qsharp.json", "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -163,9 +163,14 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.clj",
     TESTS_DIR"/files/example.ex",
     TESTS_DIR"/files/example.erl",
+    TESTS_DIR"/files/example.hs",
+    TESTS_DIR"/files/example.sv",
+    TESTS_DIR"/files/example.sol",
+    TESTS_DIR"/files/meson.build",
+    TESTS_DIR"/files/Justfile",
     TESTS_DIR"/files/example.bzl",
     TESTS_DIR"/files/BUILD.bazel",
-    TESTS_DIR"/files/example.build.gradle.kts",
+    TESTS_DIR"/files/build.gradle.kts",
     TESTS_DIR"/files/example.qs",
     TESTS_DIR"/files/example.riscv.s"
   };
@@ -207,8 +212,8 @@ TEST_CASE("New syntax routes avoid suffix collisions with existing families") {
   CHECK(engine->getSyntaxRuleByFileName("example.bzl")->name == "starlark");
   REQUIRE(engine->getSyntaxRuleByFileName("BUILD.bazel") != nullptr);
   CHECK(engine->getSyntaxRuleByFileName("BUILD.bazel")->name == "bazel");
-  REQUIRE(engine->getSyntaxRuleByFileName("example.build.gradle.kts") != nullptr);
-  CHECK(engine->getSyntaxRuleByFileName("example.build.gradle.kts")->name == "gradle-kts");
+  REQUIRE(engine->getSyntaxRuleByFileName("build.gradle.kts") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("build.gradle.kts")->name == "gradle-kts");
   REQUIRE(engine->getSyntaxRuleByFileName("example.m") != nullptr);
   CHECK(engine->getSyntaxRuleByFileName("example.m")->name == "objc");
   REQUIRE(engine->getSyntaxRuleByFileName("example.t") != nullptr);
@@ -221,7 +226,8 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
     "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json", "erlang.json",
-    "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "qsharp.json"
+    "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "qsharp.json",
+    "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -234,10 +240,19 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   CHECK(engine->createAnalyzerByFileName("example.clj") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.ex") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.erl") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.hs") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("Setup.hs") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.sv") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.sol") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("meson.build") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("meson_options.txt") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("Justfile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName(".justfile") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("module.just") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.bzl") != nullptr);
   CHECK(engine->createAnalyzerByFileName("BUILD.bazel") != nullptr);
   CHECK(engine->createAnalyzerByFileName("build.gradle") != nullptr);
-  CHECK(engine->createAnalyzerByFileName("example.build.gradle.kts") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("build.gradle.kts") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.qs") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.riscv.s") != nullptr);
 }

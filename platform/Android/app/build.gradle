@@ -2,6 +2,18 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+def generatedDemoAssetsDir = file("$buildDir/generated/demo-assets")
+
+tasks.register("syncDemoAssets", Sync) {
+    into generatedDemoAssetsDir
+    from("../../../syntaxes") {
+        into "syntaxes"
+    }
+    from("../../../tests/files") {
+        into "examples"
+    }
+}
+
 android {
     namespace 'com.qiplat.sweetline.demo'
     compileSdk 34
@@ -18,7 +30,7 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs += ["../../../syntaxes", "../../../tests/files"]
+            assets.srcDirs += [generatedDemoAssetsDir]
         }
     }
 
@@ -45,6 +57,8 @@ android {
         abortOnError false
     }
 }
+
+preBuild.dependsOn(tasks.named("syncDemoAssets"))
 
 dependencies {
     implementation libs.activity

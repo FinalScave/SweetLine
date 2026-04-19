@@ -20,6 +20,19 @@ export class ResourceUtils {
     }
   }
 
+  static listRawFileNames(context: Context | undefined, directory: string): string[] {
+    try {
+      if (context == undefined) {
+        return [];
+      }
+      const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
+      return resourceMgr.getRawFileListSync(directory);
+    } catch (error) {
+      console.error(`Failed to list rawfile directory: ${directory}`, error);
+      return [];
+    }
+  }
+
   /**
    * Get string resource
    */
@@ -39,13 +52,12 @@ export class ResourceUtils {
   /**
    * Check if a file exists in rawfile
    */
-  static async isRawFileExists(context: Context | undefined, fileName: string): Promise<boolean> {
+  static async isRawFileExists(context: Context | undefined, fileName: string, directory: string = ''): Promise<boolean> {
     try {
       if (context == undefined) {
         return false;
       }
-      const resourceMgr: resourceManager.ResourceManager = context.resourceManager;
-      const rawFileList = resourceMgr.getRawFileListSync("");
+      const rawFileList = ResourceUtils.listRawFileNames(context, directory);
       return rawFileList.includes(fileName);
     } catch (error) {
       console.error('Failed to check file existence:', error);

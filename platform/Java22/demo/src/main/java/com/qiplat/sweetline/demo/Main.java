@@ -43,6 +43,7 @@ public class Main extends JFrame {
 
     private static final String WINDOWS_MACRO = "WINDOWS";
     private static final String YAML_NON_ZERO_WIDTH_FILE = "yaml(non zero width).json";
+    private static final String SYNTAX_SAMPLE_FILE = "json-sweetline.json";
 
     private record SyntaxSource(String fileName, String json) {
     }
@@ -156,7 +157,7 @@ public class Main extends JFrame {
                 List<SyntaxSource> syntaxSources = listCommonSyntaxSources(syntaxesDir);
                 publish(new WarmupProgress(0, syntaxSources.size(), null));
                 int compiledCount = compileSyntaxSources(syntaxSources, progress -> publish(progress));
-                List<String> demoFiles = listExampleFiles(examplesDir);
+                List<String> demoFiles = listExampleFiles(examplesDir, syntaxesDir);
                 long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
                 return new WarmupResult(demoFiles, compiledCount, elapsedMillis);
             }
@@ -225,7 +226,7 @@ public class Main extends JFrame {
         }
 
         String fileName = exampleFiles.get(idx);
-        Path examplePath = examplesDir.resolve(fileName);
+        Path examplePath = resolveDemoSamplePath(fileName);
         if (!Files.exists(examplePath)) {
             statusLabel.setText("Example file not found: " + examplePath);
             return;
@@ -352,26 +353,34 @@ public class Main extends JFrame {
         return !fileName.endsWith("-inlineStyle.json") && !fileName.equals(YAML_NON_ZERO_WIDTH_FILE);
     }
 
-    private List<String> listExampleFiles(Path dir) throws IOException {
+    private List<String> listExampleFiles(Path examplesDir, Path syntaxesDir) throws IOException {
         List<String> files = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(examplesDir)) {
             for (Path entry : stream) {
                 if (!Files.isRegularFile(entry)) {
                     continue;
                 }
                 String name = entry.getFileName().toString();
-                if (!isDemoSampleFile(name) || !supportsFileNameRouting(name)) {
+                if (!supportsFileNameRouting(name)) {
                     continue;
                 }
                 files.add(name);
             }
         }
+        Path syntaxSamplePath = syntaxesDir.resolve(SYNTAX_SAMPLE_FILE);
+        if (Files.isRegularFile(syntaxSamplePath) && supportsFileNameRouting(SYNTAX_SAMPLE_FILE)) {
+            files.add(SYNTAX_SAMPLE_FILE);
+        }
         files.sort(Comparator.naturalOrder());
         return files;
     }
 
-    private boolean isDemoSampleFile(String fileName) {
-        return fileName.startsWith("example") || fileName.equals("json-sweetline.json");
+    private Path resolveDemoSamplePath(String fileName) {
+        Path examplePath = examplesDir.resolve(fileName);
+        if (Files.isRegularFile(examplePath)) {
+            return examplePath;
+        }
+        return syntaxesDir.resolve(fileName);
     }
 
     private boolean supportsFileNameRouting(String fileName) {

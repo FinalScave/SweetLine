@@ -129,29 +129,8 @@ public enum DemoSampleSupport {
     private static let styleBuiltin: Int32 = 14
     private static let styleUrl: Int32 = 15
     private static let styleProperty: Int32 = 16
-    private static let builtinSampleFileNames: [String] = [
-        "example.swift",
-        "example.css",
-        "example.scss",
-        "example.less",
-        "example.jsonc",
-        "example.json5",
-        "example.cmake",
-        "example.dockerfile",
-        "example.mk",
-        "example.properties",
-        "example.env",
-        "example.proto",
-        "example.graphql",
-        "example.nginx",
-        "example.gitignore",
-        "example.diff",
-        "example.rb",
-        "example.hcl",
-        "example.tf",
-        "example.vue",
-        "example.svelte",
-    ]
+    private static let preferredDefaultSampleName = "example.swift"
+    private static let syntaxSampleFileName = "json-sweetline.json"
     private static let excludedSyntaxFileNames: Set<String> = [
         "yaml(non zero width).json",
     ]
@@ -336,7 +315,7 @@ public enum DemoSampleSupport {
         ),
     ]
 
-    public static let builtinSamples: [DemoSample] = builtinSampleFileNames.map(DemoSample.init(fileName:))
+    public static let builtinSamples: [DemoSample] = loadBuiltinSamples()
 
     public static func defaultConfig() -> HighlightConfig {
         HighlightConfig(showIndex: true, inlineStyle: false)
@@ -347,7 +326,7 @@ public enum DemoSampleSupport {
     }
 
     public static func loadDefaultState() throws -> DemoLoadState {
-        let state = makeLoadState(sample: builtinSamples[0])
+        let state = makeLoadState(sample: try defaultBuiltinSample())
         if case let .failed(message, _, _) = state {
             throw NSError(domain: "SweetLineDemoSupport", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
         }
@@ -384,12 +363,12 @@ public enum DemoSampleSupport {
     }
 
     public static func makeDefaultRenderModel() throws -> DemoRenderModel {
-        try makeRenderModel(sample: builtinSamples[0], selectedTheme: builtinThemes[0])
+        try makeRenderModel(sample: defaultBuiltinSample(), selectedTheme: builtinThemes[0])
     }
 
     private static func makeRenderModel(sample: DemoSample, selectedTheme: DemoTheme) throws -> DemoRenderModel {
         let repositoryRoot = resolveRepositoryRoot()
-        let sampleURL = repositoryRoot.appendingPathComponent("tests/files/\(sample.fileName)")
+        let sampleURL = resolveSampleURL(repositoryRoot: repositoryRoot, sampleFileName: sample.fileName)
         let sampleText = try String(contentsOf: sampleURL, encoding: .utf8)
         let engineBundle = try sharedEngineBundle()
         let document = try Document(uri: sample.fileName, text: sampleText)
@@ -434,6 +413,52 @@ public enum DemoSampleSupport {
         let compileMicroseconds = elapsedMicroseconds(since: compileStart)
 
         return DemoEngineBundle(engine: engine, compileMicroseconds: compileMicroseconds)
+    }
+
+    private static func loadBuiltinSamples() -> [DemoSample] {
+        let repositoryRoot = resolveRepositoryRoot()
+        let examplesURL = repositoryRoot.appendingPathComponent("tests/files", isDirectory: true)
+        let fileManager = FileManager.default
+        let sampleURLs = (try? fileManager.contentsOfDirectory(
+            at: examplesURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )) ?? []
+
+        var sampleNames = sampleURLs
+            .filter { fileManager.fileExists(atPath: $0.path, isDirectory: nil) }
+            .filter { (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true }
+            .map(\.lastPathComponent)
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+
+        let syntaxSampleURL = repositoryRoot.appendingPathComponent("syntaxes/\(syntaxSampleFileName)")
+        if fileManager.fileExists(atPath: syntaxSampleURL.path) {
+            sampleNames.append(syntaxSampleFileName)
+        }
+
+        return sampleNames.map(DemoSample.init(fileName:))
+    }
+
+    private static func defaultBuiltinSample() throws -> DemoSample {
+        if let preferred = builtinSamples.first(where: { $0.fileName == preferredDefaultSampleName }) {
+            return preferred
+        }
+        if let first = builtinSamples.first {
+            return first
+        }
+        throw NSError(
+            domain: "SweetLineDemoSupport",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "No built-in demo samples available"]
+        )
+    }
+
+    private static func resolveSampleURL(repositoryRoot: URL, sampleFileName: String) -> URL {
+        let examplesURL = repositoryRoot.appendingPathComponent("tests/files/\(sampleFileName)")
+        if FileManager.default.fileExists(atPath: examplesURL.path) {
+            return examplesURL
+        }
+        return repositoryRoot.appendingPathComponent("syntaxes/\(sampleFileName)")
     }
 
     private static func listCommonSyntaxURLs(repositoryRoot: URL) throws -> [URL] {

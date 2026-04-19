@@ -42,7 +42,8 @@ final class DemoWindowController: NSWindowController, NSToolbarDelegate {
         do {
             apply(state: try DemoSampleSupport.loadDefaultState())
         } catch {
-            apply(state: DemoSampleSupport.makeLoadState(sample: DemoSampleSupport.builtinSamples[0]))
+            let fallbackSample = DemoSampleSupport.builtinSamples.first ?? DemoSample(fileName: "example.swift")
+            apply(state: DemoSampleSupport.makeLoadState(sample: fallbackSample))
         }
     }
 

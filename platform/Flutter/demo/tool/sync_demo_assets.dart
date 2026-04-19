@@ -1,6 +1,7 @@
 import 'dart:io';
 
 const Set<String> _excludedSyntaxFiles = <String>{'yaml(non zero width).json'};
+const Set<String> _exactNameDemoSamples = <String>{'meson.build', 'Justfile'};
 
 const String _syntaxSampleName = 'json-sweetline.json';
 
@@ -135,7 +136,7 @@ bool _isCommonSyntaxFile(File file) {
 
 bool _isDemoExampleFile(File file) {
   final fileName = file.uri.pathSegments.last;
-  return fileName.startsWith('example');
+  return fileName.startsWith('example') || _exactNameDemoSamples.contains(fileName);
 }
 
 String _buildGeneratedSource({

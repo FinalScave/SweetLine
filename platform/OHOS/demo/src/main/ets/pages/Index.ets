@@ -3,6 +3,9 @@ import { ResourceUtils } from "./ResourceUtils";
 import { HighlightTheme } from "./HighlightTheme";
 
 const TAG = "SampleHighlight";
+const SYNTAX_RAWFILE_DIR = "syntaxes";
+const EXAMPLE_RAWFILE_DIR = "examples";
+const SYNTAX_SAMPLE_FILE = "json-sweetline.json";
 
 interface SpanItem {
   text: string;
@@ -13,15 +16,14 @@ const EXCLUDED_COMMON_SYNTAX_FILES: string[] = [
   "yaml(non zero width).json",
 ];
 
-function isDemoSampleFile(fileName: string): boolean {
-  return fileName.startsWith("example") || fileName === "json-sweetline.json";
-}
-
 function isCommonSyntaxFile(fileName: string): boolean {
   return fileName.endsWith(".json")
-    && !fileName.startsWith("example")
     && !fileName.endsWith("-inlineStyle.json")
     && !EXCLUDED_COMMON_SYNTAX_FILES.includes(fileName);
+}
+
+function rawfilePath(directory: string, fileName: string): string {
+  return `${directory}/${fileName}`;
 }
 
 @Entry
@@ -173,9 +175,9 @@ struct Index {
         this.analyzeTime = 'Failed to access demo resources';
         return;
       }
-      const rawFileList = context.resourceManager.getRawFileListSync("");
+      const syntaxFileList = ResourceUtils.listRawFileNames(context, SYNTAX_RAWFILE_DIR);
       const syntaxFiles: string[] = [];
-      for (const fileName of rawFileList) {
+      for (const fileName of syntaxFileList) {
         if (isCommonSyntaxFile(fileName)) {
           syntaxFiles.push(fileName);
         }
@@ -188,7 +190,7 @@ struct Index {
       this.syntaxWarmupSummary = `Compiled ${compiledCount} syntax rule files in ${elapsed}ms`;
       this.analyzeTime = this.syntaxWarmupSummary;
       this.hasPreparedSyntaxes = true;
-      this.loadExampleFiles(rawFileList);
+      this.loadExampleFiles(undefined, syntaxFileList);
     } catch (error) {
       const detail = this.describeError(error);
       this.analyzeTime = `Failed to compile demo syntaxes: ${detail}`;
@@ -201,7 +203,7 @@ struct Index {
   private async precompileCommonSyntaxes(context: Context | undefined, syntaxFiles: string[]): Promise<number> {
     let syntaxJsonMap: Map<string, string> = new Map();
     for (const syntaxFile of syntaxFiles) {
-      syntaxJsonMap.set(syntaxFile, await ResourceUtils.readRawTextFile(context, syntaxFile));
+      syntaxJsonMap.set(syntaxFile, await ResourceUtils.readRawTextFile(context, rawfilePath(SYNTAX_RAWFILE_DIR, syntaxFile)));
     }
 
     let pending: string[] = syntaxFiles.slice();
@@ -244,22 +246,32 @@ struct Index {
   /**
    * Load example file list
    */
-  private loadExampleFiles(rawFileList?: string[]): void {
+  private loadExampleFiles(exampleFileList?: string[], syntaxFileList?: string[]): void {
     try {
       let files: string[] = [];
-      let sourceFiles: string[] = [];
-      if (rawFileList !== undefined) {
-        sourceFiles = rawFileList;
+      let exampleFiles: string[] = [];
+      let syntaxFiles: string[] = [];
+      if (exampleFileList !== undefined) {
+        exampleFiles = exampleFileList;
       } else {
         const context = this.getUIContext().getHostContext();
         if (context != undefined) {
-          sourceFiles = context.resourceManager.getRawFileListSync("");
+          exampleFiles = ResourceUtils.listRawFileNames(context, EXAMPLE_RAWFILE_DIR);
         }
       }
-      for (const name of sourceFiles) {
-        if (isDemoSampleFile(name)) {
-          files.push(name);
+      if (syntaxFileList !== undefined) {
+        syntaxFiles = syntaxFileList;
+      } else {
+        const context = this.getUIContext().getHostContext();
+        if (context != undefined) {
+          syntaxFiles = ResourceUtils.listRawFileNames(context, SYNTAX_RAWFILE_DIR);
         }
+      }
+      for (const name of exampleFiles) {
+        files.push(name);
+      }
+      if (syntaxFiles.includes(SYNTAX_SAMPLE_FILE)) {
+        files.push(SYNTAX_SAMPLE_FILE);
       }
       files.sort();
       this.exampleFiles = files;
@@ -270,6 +282,13 @@ struct Index {
     } catch (error) {
       console.error(TAG, `Failed to list rawfile files: ${error}`);
     }
+  }
+
+  private resolveDemoSampleRawfilePath(fileName: string): string {
+    if (fileName === SYNTAX_SAMPLE_FILE) {
+      return rawfilePath(SYNTAX_RAWFILE_DIR, fileName);
+    }
+    return rawfilePath(EXAMPLE_RAWFILE_DIR, fileName);
   }
 
   /**
@@ -297,7 +316,7 @@ struct Index {
   private async highlight(testFileName: string): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext();
-      const testCode = await ResourceUtils.readRawTextFile(context, testFileName);
+      const testCode = await ResourceUtils.readRawTextFile(context, this.resolveDemoSampleRawfilePath(testFileName));
       const document = new sweetline.Document(testFileName, testCode);
 
       let loadStart = Date.now();

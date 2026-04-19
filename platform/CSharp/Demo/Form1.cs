@@ -5,6 +5,7 @@ namespace Demo;
 
 public partial class Form1 : Form {
 	private const string ExcludedDuplicateSyntaxFile = "yaml(non zero width).json";
+	private const string SyntaxSampleFile = "json-sweetline.json";
 
 	private readonly string _syntaxesDir;
 	private readonly string _examplesDir;
@@ -31,7 +32,7 @@ public partial class Form1 : Form {
 		RegisterStyleNames(_engine);
 		_engine.DefineMacro("WINDOWS");
 		(_compiledSyntaxCount, _precompileUs) = PrecompileCommonSyntaxes(_syntaxesDir, _engine);
-		_exampleFiles = ListExampleFiles(_examplesDir, _engine);
+		_exampleFiles = ListExampleFiles(_examplesDir, _syntaxesDir, _engine);
 
 		InitializeComponent();
 		InitializeUi();
@@ -139,7 +140,7 @@ public partial class Form1 : Form {
 		}
 
 		string fileName = _exampleFiles[idx];
-		string examplePath = Path.Combine(_examplesDir, fileName);
+		string examplePath = ResolveDemoSamplePath(fileName);
 		if (!File.Exists(examplePath)) {
 			_statusLabel.Text = $"Demo file not found: {examplePath}";
 			return;
@@ -220,7 +221,7 @@ public partial class Form1 : Form {
 		engine.RegisterStyleName("property", HighlightTheme.StyleProperty);
 	}
 
-	private static List<string> ListExampleFiles(string examplesDir, HighlightEngine engine) {
+	private static List<string> ListExampleFiles(string examplesDir, string syntaxesDir, HighlightEngine engine) {
 		List<string> files = [];
 		if (!Directory.Exists(examplesDir)) {
 			return files;
@@ -228,19 +229,29 @@ public partial class Form1 : Form {
 
 		foreach (string path in Directory.GetFiles(examplesDir)) {
 			string name = Path.GetFileName(path);
-			if (!name.StartsWith("example", StringComparison.OrdinalIgnoreCase) &&
-				!name.Equals("json-sweetline.json", StringComparison.OrdinalIgnoreCase)) {
-				continue;
-			}
-
 			using TextAnalyzer? analyzer = engine.CreateAnalyzerByFileName(name);
 			if (analyzer is not null) {
 				files.Add(name);
 			}
 		}
+		string syntaxSamplePath = Path.Combine(syntaxesDir, SyntaxSampleFile);
+		if (File.Exists(syntaxSamplePath)) {
+			using TextAnalyzer? analyzer = engine.CreateAnalyzerByFileName(SyntaxSampleFile);
+			if (analyzer is not null) {
+				files.Add(SyntaxSampleFile);
+			}
+		}
 
 		files.Sort(StringComparer.OrdinalIgnoreCase);
 		return files;
+	}
+
+	private string ResolveDemoSamplePath(string fileName) {
+		string examplePath = Path.Combine(_examplesDir, fileName);
+		if (File.Exists(examplePath)) {
+			return examplePath;
+		}
+		return Path.Combine(_syntaxesDir, fileName);
 	}
 
 	private static (int CompiledSyntaxCount, long CompileUs) PrecompileCommonSyntaxes(string syntaxesDir, HighlightEngine engine) {

@@ -46,6 +46,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SpannableStyleFactory {
     private static final String TAG = "SampleHighlight";
+    private static final String SYNTAX_ASSET_DIR = "syntaxes";
+    private static final String EXAMPLE_ASSET_DIR = "examples";
+    private static final String SYNTAX_SAMPLE_NAME = "json-sweetline.json";
     private static final HighlightEngine inlineStyleEngine = new HighlightEngine(new HighlightConfig(true, true));
     private static final HighlightEngine commonEngine = new HighlightEngine(new HighlightConfig(true, false));
     private static final List<String> INLINE_STYLE_SAMPLE_FILES = Arrays.asList(
@@ -411,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
 
     private List<String> listCommonSyntaxFiles() throws IOException {
         List<String> files = new ArrayList<>();
-        String[] allAssets = getAssets().list("");
+        String[] allAssets = getAssets().list(SYNTAX_ASSET_DIR);
         if (allAssets == null) {
             return files;
         }
@@ -434,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
             List<String> nextPending = new ArrayList<>();
             for (String syntaxFile : pending) {
                 progressListener.onCompiling(syntaxFile, compiledCount, totalCount);
-                String json = AssetUtils.readAsset(this, syntaxFile);
+                String json = AssetUtils.readAsset(this, SYNTAX_ASSET_DIR + "/" + syntaxFile);
                 try {
                     engine.compileSyntaxFromJson(json);
                     madeProgress = true;
@@ -464,28 +467,29 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
     private List<DemoSample> listDemoSamples() {
         List<DemoSample> samples = new ArrayList<>();
         try {
-            String[] allAssets = getAssets().list("");
-            if (allAssets == null) {
-                return samples;
-            }
-            for (String name : allAssets) {
-                if (!shouldIncludeDemoSample(name)) {
-                    continue;
+            String[] exampleAssets = getAssets().list(EXAMPLE_ASSET_DIR);
+            if (exampleAssets != null) {
+                for (String name : exampleAssets) {
+                    samples.add(new DemoSample(name, EXAMPLE_ASSET_DIR + "/" + name, false));
+                    if (INLINE_STYLE_SAMPLE_FILES.contains(name)) {
+                        samples.add(new DemoSample(name + " [inline]", EXAMPLE_ASSET_DIR + "/" + name, true));
+                    }
                 }
-                samples.add(new DemoSample(name, name, false));
-                if (INLINE_STYLE_SAMPLE_FILES.contains(name)) {
-                    samples.add(new DemoSample(name + " [inline]", name, true));
+            }
+
+            String[] syntaxAssets = getAssets().list(SYNTAX_ASSET_DIR);
+            if (syntaxAssets != null) {
+                for (String name : syntaxAssets) {
+                    if (!SYNTAX_SAMPLE_NAME.equals(name)) {
+                        continue;
+                    }
+                    samples.add(new DemoSample(name, SYNTAX_ASSET_DIR + "/" + name, false));
                 }
             }
         } catch (IOException e) {
             Log.e(TAG, "Failed to list demo samples", e);
         }
         return samples;
-    }
-
-    private boolean shouldIncludeDemoSample(String assetName) {
-        return assetName.startsWith("example")
-                || assetName.equals("json-sweetline.json");
     }
 
     private void highlightSample(DemoSample sample) {
