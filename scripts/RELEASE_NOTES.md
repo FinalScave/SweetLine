@@ -2,12 +2,6 @@
 
 Cross-platform release assets for SweetLine.
 
-Replace the placeholders below before publishing:
-- `{{VERSION}}`
-- `{{COMMIT}}`
-- `{{PREBUILT_ASSET_NAME}}`
-- `{{HEADERS_ASSET_NAME}}`
-
 ## Assets
 
 - Prebuilt binaries: `{{PREBUILT_ASSET_NAME}}`

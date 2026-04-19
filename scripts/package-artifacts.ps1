@@ -19,6 +19,8 @@ param(
 
     [switch]$SkipPrebuilt,
     [switch]$SkipHeaders,
+    [string]$ReleaseNotesTemplate = "",
+    [switch]$SkipReleaseNotes,
     [switch]$NoPrebuiltReadme,
     [switch]$NoChecksums,
     [switch]$Force
@@ -40,6 +42,11 @@ $ResolvedHeadersSourceDir = if ($HeadersSourceDir) {
     [System.IO.Path]::GetFullPath($HeadersSourceDir)
 } else {
     Join-Path $ProjectDir "src\include"
+}
+$ResolvedReleaseNotesTemplate = if ($ReleaseNotesTemplate) {
+    [System.IO.Path]::GetFullPath($ReleaseNotesTemplate)
+} else {
+    Join-Path $ScriptDir "RELEASE_NOTES.md"
 }
 $ResolvedOutputDir = if ($OutputDir) {
     [System.IO.Path]::GetFullPath($OutputDir)
@@ -208,6 +215,37 @@ function Get-ResolvedCommit {
     }
 }
 
+function Write-ReleaseNotesFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$TemplatePath,
+        [Parameter(Mandatory = $true)][string]$OutputDir,
+        [Parameter(Mandatory = $true)][string]$VersionText,
+        [Parameter(Mandatory = $true)][string]$PrebuiltAssetName,
+        [Parameter(Mandatory = $true)][string]$HeadersAssetName,
+        [string]$CommitText = ""
+    )
+
+    if (-not (Test-Path -LiteralPath $TemplatePath)) {
+        throw "Release notes template does not exist: $TemplatePath"
+    }
+
+    $content = [System.IO.File]::ReadAllText($TemplatePath, [System.Text.Encoding]::UTF8)
+    $replacements = @{
+        "{{VERSION}}" = $VersionText
+        "{{COMMIT}}" = $CommitText
+        "{{PREBUILT_ASSET_NAME}}" = $PrebuiltAssetName
+        "{{HEADERS_ASSET_NAME}}" = $HeadersAssetName
+    }
+
+    foreach ($entry in $replacements.GetEnumerator()) {
+        $content = $content.Replace($entry.Key, $entry.Value)
+    }
+
+    $outputPath = Join-Path $OutputDir "release-notes-v$VersionText.md"
+    [System.IO.File]::WriteAllText($outputPath, $content, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Created release notes: $outputPath"
+}
+
 function Package-PrebuiltArtifacts {
     param(
         [Parameter(Mandatory = $true)][string]$SourceDir,
@@ -310,6 +348,8 @@ if ($SkipPrebuilt -and $SkipHeaders) {
 
 Ensure-Directory -Path $ResolvedOutputDir
 $resolvedCommit = Get-ResolvedCommit -ProjectRoot $ProjectDir -OverrideCommit $Commit
+$prebuiltArchiveName = "$PrebuiltNamePrefix-v$Version.zip"
+$headersArchiveName = "$HeadersNamePrefix-v$Version.zip"
 
 if (-not $SkipPrebuilt) {
     $selectedPlatforms = @(Get-PlatformDirectories -RootDir $ResolvedPrebuiltSourceDir -RequestedPlatforms $Platform)
@@ -337,4 +377,14 @@ if (-not $SkipHeaders) {
         -ArchivePrefix $HeadersNamePrefix `
         -IncludeChecksums:(-not $NoChecksums) `
         -Overwrite:$Force
+}
+
+if (-not $SkipReleaseNotes) {
+    Write-ReleaseNotesFile `
+        -TemplatePath $ResolvedReleaseNotesTemplate `
+        -OutputDir $ResolvedOutputDir `
+        -VersionText $Version `
+        -PrebuiltAssetName $prebuiltArchiveName `
+        -HeadersAssetName $headersArchiveName `
+        -CommitText $resolvedCommit
 }
