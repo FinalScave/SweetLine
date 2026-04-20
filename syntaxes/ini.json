@@ -1,0 +1,141 @@
+{
+  "name": "ini",
+  "fileSuffixes": [".ini"],
+  "fileNames": [".editorconfig"],
+  "variables": {
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "keyName": "(?:\\\\.|[^:=\\s\\[\\]#;])+"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "^${whiteSpace}*([;#])(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "sectionHeaderRule": [
+      {
+        "pattern": "^${whiteSpace}*(\\[)([^\\]]+)(\\])${whiteSpace}*$",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "keyValueRule": [
+      {
+        "pattern": "^${whiteSpace}*(${keyName})${whiteSpace}*([=:])${whiteSpace}*(.*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [1, "keyContent", 3, "valueContent"]
+      }
+    ],
+    "valueQuotedRule": [
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "include": "singleQuotedStringRule"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "sectionHeaderRule"
+      },
+      {
+        "include": "keyValueRule"
+      }
+    ],
+    "keyContent": [
+      {
+        "pattern": "\\\\u[0-9A-Fa-f]{4}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "property"
+      }
+    ],
+    "valueContent": [
+      {
+        "include": "valueQuotedRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\b(?:true|false|on|off|yes|no)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "[-+]?(?:0[xX][0-9A-Fa-f]+|\\d+\\.\\d+|\\d+)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\\\u[0-9A-Fa-f]{4}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\u[0-9A-Fa-f]{4}",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

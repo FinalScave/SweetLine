@@ -33,10 +33,6 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     sourceAssetPath: 'assets/examples/example.bf',
   ),
   DemoAssetEntry(
-    fileName: 'example.build.gradle.kts',
-    sourceAssetPath: 'assets/examples/example.build.gradle.kts',
-  ),
-  DemoAssetEntry(
     fileName: 'example.bzl',
     sourceAssetPath: 'assets/examples/example.bzl',
   ),
@@ -83,6 +79,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
   DemoAssetEntry(
     fileName: 'example.dts',
     sourceAssetPath: 'assets/examples/example.dts',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.el',
+    sourceAssetPath: 'assets/examples/example.el',
   ),
   DemoAssetEntry(
     fileName: 'example.env',
@@ -137,6 +137,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     sourceAssetPath: 'assets/examples/example.html',
   ),
   DemoAssetEntry(
+    fileName: 'example.ini',
+    sourceAssetPath: 'assets/examples/example.ini',
+  ),
+  DemoAssetEntry(
     fileName: 'example.jasm',
     sourceAssetPath: 'assets/examples/example.jasm',
   ),
@@ -187,6 +191,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
   DemoAssetEntry(
     fileName: 'example.mk',
     sourceAssetPath: 'assets/examples/example.mk',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.ml',
+    sourceAssetPath: 'assets/examples/example.ml',
   ),
   DemoAssetEntry(
     fileName: 'example.myu',
@@ -243,6 +251,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
   DemoAssetEntry(
     fileName: 'example.riscv.s',
     sourceAssetPath: 'assets/examples/example.riscv.s',
+  ),
+  DemoAssetEntry(
+    fileName: 'example.rkt',
+    sourceAssetPath: 'assets/examples/example.rkt',
   ),
   DemoAssetEntry(
     fileName: 'example.rs',
@@ -313,6 +325,10 @@ const List<DemoAssetEntry> demoAssetEntries = <DemoAssetEntry>[
     sourceAssetPath: 'assets/examples/example.ts',
   ),
   DemoAssetEntry(
+    fileName: 'example.v',
+    sourceAssetPath: 'assets/examples/example.v',
+  ),
+  DemoAssetEntry(
     fileName: 'example.vb',
     sourceAssetPath: 'assets/examples/example.vb',
   ),
@@ -366,6 +382,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/diff.json',
   'assets/syntaxes/dockerfile.json',
   'assets/syntaxes/dts.json',
+  'assets/syntaxes/elisp.json',
   'assets/syntaxes/elixir.json',
   'assets/syntaxes/env.json',
   'assets/syntaxes/erlang.json',
@@ -382,6 +399,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/hlsl.json',
   'assets/syntaxes/html.json',
   'assets/syntaxes/iapp.json',
+  'assets/syntaxes/ini.json',
   'assets/syntaxes/jasm.json',
   'assets/syntaxes/java.json',
   'assets/syntaxes/javascript.json',
@@ -401,6 +419,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/nginx.json',
   'assets/syntaxes/nix.json',
   'assets/syntaxes/objc.json',
+  'assets/syntaxes/ocaml.json',
   'assets/syntaxes/perl.json',
   'assets/syntaxes/php.json',
   'assets/syntaxes/powershell.json',
@@ -409,6 +428,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/python.json',
   'assets/syntaxes/qsharp.json',
   'assets/syntaxes/r.json',
+  'assets/syntaxes/racket.json',
   'assets/syntaxes/ruby.json',
   'assets/syntaxes/rust.json',
   'assets/syntaxes/scala.json',
@@ -427,6 +447,7 @@ const List<String> demoCommonSyntaxAssetPaths = <String>[
   'assets/syntaxes/toml.json',
   'assets/syntaxes/typescript.json',
   'assets/syntaxes/vb.json',
+  'assets/syntaxes/verilog.json',
   'assets/syntaxes/vue.json',
   'assets/syntaxes/wenyan.json',
   'assets/syntaxes/xml.json',
@@ -440,7 +461,6 @@ const List<String> demoAssetFileNames = <String>[
   'example.abnf',
   'example.bat',
   'example.bf',
-  'example.build.gradle.kts',
   'example.bzl',
   'example.c',
   'example.clj',
@@ -453,6 +473,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.diff',
   'example.dockerfile',
   'example.dts',
+  'example.el',
   'example.env',
   'example.erl',
   'example.ex',
@@ -466,6 +487,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.hlsl',
   'example.hs',
   'example.html',
+  'example.ini',
   'example.jasm',
   'example.java',
   'example.jl',
@@ -479,6 +501,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.m',
   'example.md',
   'example.mk',
+  'example.ml',
   'example.myu',
   'example.nasm',
   'example.nginx',
@@ -493,6 +516,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.r',
   'example.rb',
   'example.riscv.s',
+  'example.rkt',
   'example.rs',
   'example.s',
   'example.scala',
@@ -510,6 +534,7 @@ const List<String> demoAssetFileNames = <String>[
   'example.tf',
   'example.toml',
   'example.ts',
+  'example.v',
   'example.vb',
   'example.vue',
   'example.wenyan',

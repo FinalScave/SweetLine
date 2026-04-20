@@ -1,0 +1,275 @@
+{
+  "name": "ocaml",
+  "fileSuffixes": [".ml", ".mli"],
+  "variables": {
+    "lowerIdentifier": "[a-z_][A-Za-z0-9_']*",
+    "upperIdentifier": "[A-Z][A-Za-z0-9_']*",
+    "typeVariable": "'[a-z_][A-Za-z0-9_']*",
+    "modulePath": "${upperIdentifier}(?:\\.${upperIdentifier})*",
+    "valuePath": "${lowerIdentifier}(?:\\.${lowerIdentifier})*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "builtinType": "unit|bool|char|string|bytes|int|int32|int64|nativeint|float|list|array|option|result|exn|ref|seq|lazy_t|format6|format4|format2|format"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "blockCommentStartRule": [
+      {
+        "pattern": "\\(\\*",
+        "style": "comment",
+        "state": "blockComment"
+      }
+    ],
+    "stringRule": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      }
+    ],
+    "quotedStringRule": [
+      {
+        "pattern": "(\\{)([a-z_]*)(\\|)([\\S\\s]*?)(\\|\\2\\})",
+        "styles": [1, "string", 2, "string", 3, "string", 4, "string", 5, "string"]
+      }
+    ],
+    "charRule": [
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)'",
+        "style": "string"
+      }
+    ],
+    "attributeRule": [
+      {
+        "pattern": "(\\[@@?)([^\"]*?)(\\])",
+        "styles": [1, "annotation", 3, "annotation"],
+        "subStates": [2, "attributeContent"]
+      },
+      {
+        "pattern": "(\\[%{1,2})([^\\]]*?)(\\])",
+        "styles": [1, "annotation", 3, "annotation"],
+        "subStates": [2, "attributeContent"]
+      }
+    ],
+    "modulePathRule": [
+      {
+        "pattern": "(${modulePath})(\\.)([a-z_][A-Za-z0-9_']*)",
+        "styles": [1, "class", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "(${modulePath})(\\.)([A-Z][A-Za-z0-9_']*)",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      }
+    ],
+    "valuePathRule": [
+      {
+        "pattern": "(${lowerIdentifier})(\\.)([a-z_][A-Za-z0-9_']*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      }
+    ],
+    "objectMethodRule": [
+      {
+        "pattern": "(${lowerIdentifier})(#)([a-z_][A-Za-z0-9_']*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "method"]
+      }
+    ],
+    "labelRule": [
+      {
+        "pattern": "([~?])(${lowerIdentifier})(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      }
+    ],
+    "numberRule": [
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+[lLnNoO]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+[lLnNoO]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+[lLnNoO]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(?:\\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?[fFlLnNoO]?\\b",
+        "style": "number"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "blockCommentStartRule"
+      },
+      {
+        "include": "attributeRule"
+      },
+      {
+        "pattern": "\\b(let)\\b\\s+(rec)\\b\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "method"]
+      },
+      {
+        "pattern": "\\b(let)\\b\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(module)\\b\\s+(type)\\b\\s+(${upperIdentifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(module)\\b\\s+(${upperIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(type)\\b\\s+(${typeVariable})\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "lifetime", 3, "class"]
+      },
+      {
+        "pattern": "\\b(type)\\b\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(exception)\\b\\s+(${upperIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(class)\\b\\s+(virtual)\\b\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(class)\\b\\s+(${lowerIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(open|include)\\b\\s+(${modulePath})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:fun|function|method|val|mutable|private|virtual|object|inherit|initializer|constraint|external)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:if|then|else|match|with|try|raise|as|when|of|begin|end|struct|sig|for|to|downto|while|do|done|and|or|not|in|new|lazy|assert|rec|type|module)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:${builtinType})\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "modulePathRule"
+      },
+      {
+        "include": "valuePathRule"
+      },
+      {
+        "include": "objectMethodRule"
+      },
+      {
+        "include": "labelRule"
+      },
+      {
+        "pattern": "${typeVariable}",
+        "style": "lifetime"
+      },
+      {
+        "pattern": "${upperIdentifier}",
+        "style": "class"
+      },
+      {
+        "pattern": "${lowerIdentifier}",
+        "style": "variable"
+      },
+      {
+        "include": "stringRule"
+      },
+      {
+        "include": "quotedStringRule"
+      },
+      {
+        "include": "charRule"
+      },
+      {
+        "include": "numberRule"
+      },
+      {
+        "pattern": "->|<-|:=|;;|::|\\|\\||&&|[=<>@^|&:+\\-*/%~.?;,()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\(\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "\\*\\)",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "string": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "attributeContent": [
+      {
+        "pattern": "\\]",
+        "style": "annotation",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "blockCommentStartRule"
+      },
+      {
+        "include": "stringRule"
+      },
+      {
+        "include": "quotedStringRule"
+      },
+      {
+        "include": "numberRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "annotation"
+      }
+    ]
+  }
+}

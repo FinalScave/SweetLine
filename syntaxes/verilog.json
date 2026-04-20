@@ -1,0 +1,662 @@
+{
+  "name": "verilog",
+  "fileSuffixes": [".v", ".vh"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_$]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "builtinType": "wire|tri|tri0|tri1|triand|trior|wand|wor|supply0|supply1|reg|integer|time|real|realtime|event|trireg"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\\\")((?:[^\\\"\\\\]|\\\\.)*)(\\\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "macroRefRule": [
+      {
+        "pattern": "(`)([A-Za-z_][A-Za-z0-9_$]*)",
+        "styles": [1, "punctuation", 2, "macro"]
+      }
+    ],
+    "systemTaskRule": [
+      {
+        "pattern": "(\\$)([A-Za-z_][A-Za-z0-9_$]*)",
+        "styles": [1, "punctuation", 2, "builtin"]
+      }
+    ],
+    "escapedIdentifierRule": [
+      {
+        "pattern": "\\\\[^\\s]+",
+        "style": "variable"
+      }
+    ],
+    "basedNumberRule": [
+      {
+        "pattern": "\\b(?:\\d+)?'(?:s)?[bB][01_xzXZ?]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:\\d+)?'(?:s)?[oO][0-7_xzXZ?]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:\\d+)?'(?:s)?[dD][-+]?[0-9_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:\\d+)?'(?:s)?[hH][0-9a-fA-F_xzXZ?]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b'[01xXzZ]\\b",
+        "style": "number"
+      }
+    ],
+    "realNumberRule": [
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.[0-9_]+|\\.[0-9_]+)(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      }
+    ],
+    "integerNumberRule": [
+      {
+        "pattern": "\\b[0-9][0-9_]*\\b",
+        "style": "number"
+      }
+    ],
+    "timeUnitLiteralRule": [
+      {
+        "pattern": "\\b([0-9][0-9_]*)(s|ms|us|ns|ps|fs)\\b",
+        "styles": [1, "number", 2, "builtin"]
+      }
+    ],
+    "attributeRule": [
+      {
+        "pattern": "(\\(\\*)(.*?)(\\*\\))",
+        "styles": [1, "annotation", 3, "annotation"],
+        "subStates": [2, "attributeContent"]
+      }
+    ],
+    "attributeStartRule": [
+      {
+        "pattern": "\\(\\*",
+        "style": "annotation",
+        "state": "attributeBlock"
+      }
+    ],
+    "portDeclRule": [
+      {
+        "pattern": "(\\b(?:input|output|inout)\\b(?:${whiteSpace}+\\b(?:signed|unsigned)\\b)?(?:${whiteSpace}+\\b(?:${builtinType})\\b)?(?:${whiteSpace}+\\[[^\\]\\n]+\\])?(?:${whiteSpace}+))(${identifier})(?=\\s*(?:,|\\)|;|=|$))",
+        "styles": [2, "property"],
+        "subStates": [1, "portDeclPrefix"]
+      }
+    ],
+    "localDeclRule": [
+      {
+        "pattern": "(\\b(?:${builtinType})\\b(?:${whiteSpace}+\\b(?:signed|unsigned)\\b)?(?:${whiteSpace}+\\[[^\\]\\n]+\\])?(?:${whiteSpace}+))(${identifier})(?=\\s*(?:,|;|=|\\)))",
+        "styles": [2, "variable"],
+        "subStates": [1, "localDeclPrefix"]
+      },
+      {
+        "pattern": "(\\bgenvar\\b(?:${whiteSpace}+))(${identifier})(?=\\s*(?:,|;|=|\\)))",
+        "styles": [2, "variable"],
+        "subStates": [1, "localDeclPrefix"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(?m)^\\s*(`)(ifdef|ifndef|elsif|else|endif|define|undef|include|timescale|default_nettype|celldefine|endcelldefine|resetall|pragma|begin_keywords|end_keywords|unconnected_drive|nounconnected_drive|uselib)\\b",
+        "styles": [1, "punctuation", 2, "preprocessor"]
+      },
+      {
+        "pattern": "(?m)^\\s*(`define)\\b\\s*(${identifier})",
+        "styles": [1, "preprocessor", 2, "macro"]
+      },
+      {
+        "pattern": "\\b(module|primitive)\\b\\s+(${identifier})\\s*(#)\\s*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 4, "punctuation"],
+        "state": "parenList"
+      },
+      {
+        "pattern": "\\b(module|primitive)\\b\\s+(${identifier})\\s*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"],
+        "state": "parenList"
+      },
+      {
+        "pattern": "\\b(module|primitive)\\b\\s+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(function|task)\\b(?:[^\\n;]*?)\\b(${identifier})\\b(?=\\s*;)",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(begin|fork)\\b\\s*(:)\\s*(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method"]
+      },
+      {
+        "pattern": "\\b(parameter|localparam|specparam)\\b(?:[^;\\n=]*?)\\b(${identifier})(?=\\s*=)",
+        "styles": [1, "keyword", 2, "property"]
+      },
+      {
+        "include": "portDeclRule"
+      },
+      {
+        "include": "localDeclRule"
+      },
+      {
+        "pattern": "(?<!\\.)(${identifier})${whiteSpace}+(${identifier})${whiteSpace}*(?=\\()",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "(?<!\\.)(${identifier})${whiteSpace}*(?:#${whiteSpace}*\\(${any}*?\\))${whiteSpace}+(${identifier})${whiteSpace}*(?=\\()",
+        "styles": [1, "class", 2, "variable"]
+      },
+      {
+        "pattern": "(\\.)([A-Za-z_][A-Za-z0-9_$]*)(?=\\s*\\()",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "\\btable\\b",
+        "style": "keyword",
+        "state": "tableContent"
+      },
+      {
+        "include": "attributeStartRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(?:module|endmodule|primitive|endprimitive|function|endfunction|task|endtask|begin|end|if|else|case|casex|casez|endcase|for|while|repeat|forever|fork|join|join_any|join_none|assign|always|initial|generate|endgenerate|specify|endspecify|table|endtable|return|wait|disable|force|release|default|defparam|genvar|input|output|inout|parameter|localparam|specparam|posedge|negedge|macromodule|and|nand|or|nor|xor|xnor|not|buf|bufif0|bufif1|notif0|notif1|pullup|pulldown|tran|tranif0|tranif1|nmos|pmos|cmos|rcmos)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${builtinType}\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      },
+      {
+        "pattern": "[=+\\-*/%&|^~!<>?:.,;()\\[\\]{}@]",
+        "style": "punctuation"
+      }
+    ],
+    "parenList": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "headerTail"
+      },
+      {
+        "include": "attributeRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "include": "portDeclRule"
+      },
+      {
+        "include": "localDeclRule"
+      },
+      {
+        "pattern": "\\b${builtinType}\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(\\.)([A-Za-z_][A-Za-z0-9_$]*)(?=\\s*\\()",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[=+\\-*/%&|^~!<>?:.,;\\[\\]{}@]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "parenList"
+      }
+    ],
+    "headerTail": [
+      {
+        "pattern": "\\(",
+        "style": "punctuation",
+        "state": "parenList"
+      },
+      {
+        "pattern": ";",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "include": "attributeRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "pattern": "\\b${builtinType}\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[=+\\-*/%&|^~!<>?:.,\\[\\]{}@]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "headerTail"
+      }
+    ],
+    "tableContent": [
+      {
+        "pattern": "\\bendtable\\b",
+        "style": "keyword",
+        "state": "default"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "pattern": "[01xXzZ?\\-]",
+        "style": "number"
+      },
+      {
+        "pattern": "[:;,()\\[\\]]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "onLineEndState": "tableContent"
+      }
+    ],
+    "string": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "attributeContent": [
+      {
+        "pattern": "\\*\\)",
+        "style": "annotation",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "annotation"
+      }
+    ],
+    "attributeBlock": [
+      {
+        "pattern": "\\*\\)",
+        "style": "annotation",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "systemTaskRule"
+      },
+      {
+        "include": "escapedIdentifierRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "annotation"
+      }
+    ],
+    "portDeclPrefix": [
+      {
+        "pattern": "\\b(?:input|output|inout)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:signed|unsigned)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${builtinType}\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[=+\\-*/%&|^~!<>?:.,;()\\[\\]{}@]",
+        "style": "punctuation"
+      }
+    ],
+    "localDeclPrefix": [
+      {
+        "pattern": "\\bgenvar\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:signed|unsigned)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${builtinType}\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "macroRefRule"
+      },
+      {
+        "include": "timeUnitLiteralRule"
+      },
+      {
+        "include": "basedNumberRule"
+      },
+      {
+        "include": "realNumberRule"
+      },
+      {
+        "include": "integerNumberRule"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[=+\\-*/%&|^~!<>?:.,;()\\[\\]{}@]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "module",
+      "end": "endmodule"
+    },
+    {
+      "start": "primitive",
+      "end": "endprimitive"
+    },
+    {
+      "start": "function",
+      "end": "endfunction"
+    },
+    {
+      "start": "task",
+      "end": "endtask"
+    },
+    {
+      "start": "begin",
+      "end": "end"
+    },
+    {
+      "start": "case",
+      "end": "endcase"
+    },
+    {
+      "start": "casex",
+      "end": "endcase"
+    },
+    {
+      "start": "casez",
+      "end": "endcase"
+    },
+    {
+      "start": "generate",
+      "end": "endgenerate"
+    },
+    {
+      "start": "specify",
+      "end": "endspecify"
+    },
+    {
+      "start": "table",
+      "end": "endtable"
+    },
+    {
+      "start": "fork",
+      "end": "join"
+    }
+  ]
+}

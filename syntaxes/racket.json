@@ -1,0 +1,225 @@
+{
+  "name": "racket",
+  "fileSuffixes": [".rkt", ".rktl"],
+  "variables": {
+    "identifier": "[^\\s\\[\\](){}`'\",;0-9][^\\s\\[\\](){}`'\",;]*",
+    "identifierChar": "[^\\s\\[\\](){}`'\",;]",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]",
+    "keywordForm": "define|define-values|define-syntax-rule|define-syntax|define/contract|define-syntaxes|lambda|case-lambda|let\\*|letrec|let-values|let\\*-values|letrec-values|let-syntax|letrec-syntax|begin|begin0|if|cond|case|and|or|when|unless|module|module\\+|require|provide|struct|class|new|send|quote|quasiquote|unquote|unquote-splicing|match|parameterize|with-handlers|delay|force|set!|for|for/list|for/fold|for\\*/list|for\\*/fold|do|syntax-rules|syntax-case|syntax-parse|define-for-syntax|local|let"
+  },
+  "fragments": {
+    "hashCommentRule": [
+      {
+        "pattern": ";.*",
+        "style": "comment"
+      }
+    ],
+    "blockCommentStartRule": [
+      {
+        "pattern": "#\\|",
+        "style": "comment",
+        "state": "blockComment1"
+      }
+    ],
+    "stringRule": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "string"
+      }
+    ],
+    "byteStringRule": [
+      {
+        "pattern": "(#)(\\\")((?:[^\\\"\\\\]|\\\\.)*)(\\\")",
+        "styles": [1, "preprocessor", 2, "string", 3, "string", 4, "string"]
+      }
+    ],
+    "regexpLiteralRule": [
+      {
+        "pattern": "(#(?:rx|px))(\\\")((?:[^\\\"\\\\]|\\\\.)*)(\\\")",
+        "styles": [1, "preprocessor", 2, "string", 3, "string", 4, "string"]
+      }
+    ],
+    "charRule": [
+      {
+        "pattern": "#\\\\(?:x[0-9a-fA-F]+|[a-zA-Z]+|.)",
+        "style": "builtin"
+      }
+    ],
+    "booleanRule": [
+      {
+        "pattern": "#(?:t|f|true|false)\\b",
+        "style": "builtin"
+      }
+    ],
+    "keywordRule": [
+      {
+        "pattern": "(?<!${identifierChar})(?:${keywordForm})(?!${identifierChar})",
+        "style": "keyword"
+      }
+    ],
+    "builtinRule": [
+      {
+        "pattern": "(?<!${identifierChar})(?:car|cdr|cadr|cddr|cons|list|map|apply|append|filter|foldl|foldr|reverse|member|assoc|vector|make-vector|vector-ref|vector-set!|hash|make-hash|hash-ref|hash-set!|string-append|string-length|substring|regexp-match|regexp-replace|display|displayln|write|writeln|printf|format|values|void|error|add1|sub1|number\\?|string\\?|symbol\\?|boolean\\?|pair\\?|list\\?|procedure\\?|equal\\?|eq\\?|zero\\?|null\\?|in-range|in-list|current-output-port|current-input-port|string->number|string-split|string-join|check-equal\\?|check-true)(?!${identifierChar})",
+        "style": "builtin"
+      }
+    ],
+    "propertyRule": [
+      {
+        "pattern": "(#:)([A-Za-z_][A-Za-z0-9_!?+*/<>=:-]*)",
+        "styles": [1, "punctuation", 2, "property"]
+      }
+    ],
+    "numberRule": [
+      {
+        "pattern": "#[bodxeiBODXEI][+-]?[0-9A-Fa-f]+(?:/[0-9A-Fa-f]+)?",
+        "style": "number"
+      },
+      {
+        "pattern": "#e[+-]?[0-9]+(?:/[0-9]+)?(?:\\.[0-9]+)?",
+        "style": "number"
+      },
+      {
+        "pattern": "#i[+-]?[0-9]+(?:/[0-9]+)?(?:\\.[0-9]+)?",
+        "style": "number"
+      },
+      {
+        "pattern": "[+-]?(?:0|[1-9][0-9]*)(?:/[1-9][0-9]*)?(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?",
+        "style": "number"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^#lang\\b",
+        "style": "preprocessor"
+      },
+      {
+        "include": "blockCommentStartRule"
+      },
+      {
+        "include": "hashCommentRule"
+      },
+      {
+        "include": "propertyRule"
+      },
+      {
+        "include": "booleanRule"
+      },
+      {
+        "include": "byteStringRule"
+      },
+      {
+        "include": "regexpLiteralRule"
+      },
+      {
+        "include": "keywordRule"
+      },
+      {
+        "include": "builtinRule"
+      },
+      {
+        "pattern": "(?:,@|['`,])",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "include": "charRule"
+      },
+      {
+        "include": "numberRule"
+      },
+      {
+        "include": "stringRule"
+      },
+      {
+        "pattern": "[()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment1": [
+      {
+        "pattern": "#\\|",
+        "style": "comment",
+        "state": "blockComment2"
+      },
+      {
+        "pattern": "\\|#",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment2": [
+      {
+        "pattern": "#\\|",
+        "style": "comment",
+        "state": "blockComment3"
+      },
+      {
+        "pattern": "\\|#",
+        "style": "comment",
+        "state": "blockComment1"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment3": [
+      {
+        "pattern": "#\\|",
+        "style": "comment",
+        "state": "blockComment4"
+      },
+      {
+        "pattern": "\\|#",
+        "style": "comment",
+        "state": "blockComment2"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment4": [
+      {
+        "pattern": "#\\|",
+        "style": "comment",
+        "state": "blockComment4"
+      },
+      {
+        "pattern": "\\|#",
+        "style": "comment",
+        "state": "blockComment3"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "string": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

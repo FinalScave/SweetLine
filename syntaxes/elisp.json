@@ -1,0 +1,172 @@
+{
+  "name": "elisp",
+  "fileSuffixes": [".el"],
+  "fileNames": [".emacs", ".dir-locals.el", "early-init.el", "init.el"],
+  "variables": {
+    "symbol": "[A-Za-z*+!_?<>.=/-][A-Za-z0-9*+!_?<>.=/-]*",
+    "keywordSymbol": ":[A-Za-z*+!_?<>.=/-][A-Za-z0-9*+!_?<>.=/-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(;)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "singleQuotedSymbolRule": [
+      {
+        "pattern": "(')(${symbol})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "functionQuoteRule": [
+      {
+        "pattern": "(#')(${symbol})",
+        "styles": [1, "punctuation", 2, "method"]
+      }
+    ],
+    "keywordSymbolRule": [
+      {
+        "pattern": "(:)(${symbol})",
+        "styles": [1, "punctuation", 2, "property"]
+      }
+    ],
+    "characterLiteralRule": [
+      {
+        "pattern": "\\?(?:\\\\[a-zA-Z]+|\\\\.|.)",
+        "style": "string"
+      }
+    ],
+    "numberLiteralRule": [
+      {
+        "pattern": "\\b(?:#(?:b[01_]+|o[0-7_]+|x[0-9A-Fa-f_]+|[0-9]+r[0-9A-Za-z_]+)|[0-9][0-9_]*(?:/[0-9][0-9_]*)?|[0-9][0-9_]*(?:\\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(defgroup)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "property"]
+      },
+      {
+        "pattern": "\\b(defcustom|defvar|defvar-local|defconst)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(defclass|cl-defstruct)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(cl-defgeneric|cl-defmethod|defmethod)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(defun|defsubst|defmacro|cl-defun|cl-defmacro)\\b${whiteSpace}+(${symbol})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:require|provide|autoload|add-hook|remove-hook)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:quote|function|lambda|if|when|unless|cond|pcase|pcase-let\\*?|let\\*?|letrec\\*?|let|while|dolist|dotimes|progn|prog1|catch|throw|condition-case|ignore-errors|save-excursion|save-restriction|save-match-data|with-temp-buffer|with-current-buffer|unwind-protect|cl-loop|cl-letf|cl-destructuring-bind|cl-case|setf|setq|setq-default|interactive|and|or)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:&optional|&rest|&key|&allow-other-keys|&aux|&body|&whole|&environment)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:t|nil)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:car|cdr|caar|cadr|cdar|cddr|cons|list|append|append1|mapcar|mapc|apply|funcall|length|nth|nthcdr|assoc|member|plist-get|plist-put|gethash|puthash|make-hash-table|hash-table-count|format|message|concat|string-trim|string-join|string-match-p|replace-regexp-in-string|split-string|downcase|upcase|capitalize|intern|symbol-name|number-to-string|expand-file-name|file-name-as-directory|file-exists-p|directory-files|read-file-name|insert|insert-file-contents|write-region|delete-file|buffer-string|buffer-substring-no-properties|search-forward|re-search-forward|match-string|goto-char|point|min|max|cl-remove-if-not|cl-position|seq-filter|seq-map|seq-find|make-vector|vector)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "keywordSymbolRule"
+      },
+      {
+        "include": "functionQuoteRule"
+      },
+      {
+        "include": "singleQuotedSymbolRule"
+      },
+      {
+        "include": "characterLiteralRule"
+      },
+      {
+        "include": "numberLiteralRule"
+      },
+      {
+        "include": "doubleQuotedStringRule"
+      },
+      {
+        "pattern": "[`',]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "[\\[\\]()]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "\\b(?:${symbol})\\b",
+        "style": "variable"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:u[0-9A-Fa-f]{4}|x[0-9A-Fa-f]+|o[0-7]{3}|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "(",
+      "end": ")"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
+}
