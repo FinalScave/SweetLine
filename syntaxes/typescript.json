@@ -1,6 +1,6 @@
 {
   "name": "typescript",
-  "fileSuffixes": [".ts", ".tsx", ".mts", ".cts"],
+  "fileSuffixes": [".ts", ".mts", ".cts"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",
@@ -93,8 +93,39 @@
         "styles": [1, "keyword", 2, "variable"]
       },
       {
-        "pattern": "\\b(import)\\b${whiteSpace}+(.+)",
-        "styles": [1, "keyword"]
+        "pattern": "\\b(import)${whiteSpace}+(type)${whiteSpace}+(\\*)${whiteSpace}+(as)${whiteSpace}+(${identifier})${whiteSpace}+(from)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "keyword", 3, "punctuation", 4, "keyword", 5, "variable", 6, "keyword", 7, "string"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(type)${whiteSpace}+(${identifier})${whiteSpace}+(from)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable", 4, "keyword", 5, "string"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(type)${whiteSpace}+(\\{)",
+        "styles": [1, "keyword", 2, "keyword", 3, "punctuation"],
+        "state": "importMembers"
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(\\*)${whiteSpace}+(as)${whiteSpace}+(${identifier})${whiteSpace}+(from)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "punctuation", 3, "keyword", 4, "variable", 5, "keyword", 6, "string"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(${identifier})${whiteSpace}*,${whiteSpace}*(\\{)",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation"],
+        "state": "importMembers"
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(${identifier})${whiteSpace}+(from)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "string"]
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+(\\{)",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "importMembers"
+      },
+      {
+        "pattern": "\\b(import)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "string"]
       },
       {
         "pattern": "\\b(abstract|as|async|await|break|case|catch|class|const|constructor|continue|debugger|declare|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|infer|instanceof|interface|is|keyof|let|module|namespace|new|of|override|private|protected|public|readonly|return|satisfies|set|static|super|switch|this|throw|try|type|typeof|undefined|unique|using|var|void|while|with|yield)\\b",
@@ -141,6 +172,10 @@
       {
         "pattern": "(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\??)${whiteSpace}*(:)${whiteSpace}*((?:'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\")(?:${whiteSpace}*\\|${whiteSpace}*(?:'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\"))+)",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "string"]
       },
       {
         "pattern": "(${identifier})(\\??)${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*(<)([^()]*)(>)",
@@ -200,6 +235,42 @@
         "style": "punctuation"
       }
     ],
+    "importMembers": [
+      {
+        "pattern": "(\\})${whiteSpace}+(from)${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "punctuation", 2, "keyword", 3, "string"],
+        "state": "default"
+      },
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(as)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(type)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(from)\\b${whiteSpace}+('[^']*'|\"[^\"]*\")",
+        "styles": [1, "keyword", 2, "string"],
+        "state": "default"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "importMembers"
+      }
+    ],
     "typeHeader": [
       {
         "pattern": "\\b(extends|implements)\\b",
@@ -253,6 +324,10 @@
         "styles": [1, "punctuation", 2, "variable"]
       },
       {
+        "pattern": "(${identifier})(\\??)${whiteSpace}*(:)${whiteSpace}*((?:'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\")(?:${whiteSpace}*\\|${whiteSpace}*(?:'(?:[^'\\\\]|\\\\.)*'|\"(?:[^\"\\\\]|\\\\.)*\"))+)",
+        "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "string"]
+      },
+      {
         "pattern": "(${identifier})(\\??)${whiteSpace}*(:)${whiteSpace}*(${identifier})${whiteSpace}*(<)([^()]*)(>)",
         "styles": [1, "variable", 2, "punctuation", 3, "punctuation", 4, "class", 5, "punctuation", 7, "punctuation"],
         "subStates": [6, "genericType"]
@@ -303,6 +378,9 @@
         "styles": [1, "builtin"]
       },
       {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
         "include": "genericTypeRefRule"
       },
       {
@@ -318,7 +396,7 @@
         "state": "default"
       },
       {
-        "pattern": "[\\[\\]?|&(),:<>]",
+        "pattern": "[;\\[\\]?|&(),:<>]",
         "style": "punctuation"
       },
       {

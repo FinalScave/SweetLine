@@ -1,0 +1,1084 @@
+{
+  "name": "tsx",
+  "fileNames": ["example.tsx"],
+  "fileSuffixes": [".tsx", ".react.tsx"],
+  "variables": {
+    "identifier": "[A-Za-z_$][A-Za-z0-9_$]*",
+    "intrinsicTag": "[a-z][A-Za-z0-9_$-]*(?::[A-Za-z][A-Za-z0-9_$-]*)?",
+    "componentTag": "[A-Z][A-Za-z0-9_$]*(?:\\.[A-Za-z_$][A-Za-z0-9_$]*)*",
+    "attrName": "[A-Za-z_:][A-Za-z0-9:._-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "entityRule": [
+      {
+        "pattern": "&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;",
+        "style": "annotation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tsxTag1"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tsxTag1"
+      },
+      {
+        "importSyntax": "typescript"
+      }
+    ],
+    "tsxTag1": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "tsxTag1"
+      }
+    ],
+    "tsxBody1": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tsxTag2"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tsxTag2"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "tsxBody1"
+      }
+    ],
+    "tsxTag2": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "tsxTag2"
+      }
+    ],
+    "tsxBody2": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "tsxBody1"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tsxTag3"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tsxTag3"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "tsxBody2"
+      }
+    ],
+    "tsxTag3": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "tsxTag3"
+      }
+    ],
+    "tsxBody3": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "tsxBody2"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody4"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tsxTag4"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tsxTag4"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "tsxBody3"
+      }
+    ],
+    "tsxTag4": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "tsxBody4"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "tsxTag4"
+      }
+    ],
+    "tsxBody4": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "tsxBody3"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "tsxBody4"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "tsxTag4"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tsxTag4"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "tsxBody4"
+      }
+    ],
+    "embeddedBody1_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxBody1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_1"
+      }
+    ],
+    "embeddedBody1_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_2"
+      }
+    ],
+    "embeddedBody1_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_3"
+      }
+    ],
+    "embeddedBody1_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_4"
+      }
+    ],
+    "embeddedBody2_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxBody2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_1"
+      }
+    ],
+    "embeddedBody2_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_2"
+      }
+    ],
+    "embeddedBody2_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_3"
+      }
+    ],
+    "embeddedBody2_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_4"
+      }
+    ],
+    "embeddedBody3_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxBody3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_1"
+      }
+    ],
+    "embeddedBody3_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_2"
+      }
+    ],
+    "embeddedBody3_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_3"
+      }
+    ],
+    "embeddedBody3_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_4"
+      }
+    ],
+    "embeddedBody4_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxBody4"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_1"
+      }
+    ],
+    "embeddedBody4_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_2"
+      }
+    ],
+    "embeddedBody4_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_3"
+      }
+    ],
+    "embeddedBody4_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_4"
+      }
+    ],
+    "embeddedTag1_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxTag1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_1"
+      }
+    ],
+    "embeddedTag1_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_2"
+      }
+    ],
+    "embeddedTag1_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_3"
+      }
+    ],
+    "embeddedTag1_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_4"
+      }
+    ],
+    "embeddedTag2_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxTag2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_1"
+      }
+    ],
+    "embeddedTag2_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_2"
+      }
+    ],
+    "embeddedTag2_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_3"
+      }
+    ],
+    "embeddedTag2_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_4"
+      }
+    ],
+    "embeddedTag3_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxTag3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_1"
+      }
+    ],
+    "embeddedTag3_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_2"
+      }
+    ],
+    "embeddedTag3_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_3"
+      }
+    ],
+    "embeddedTag3_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_4"
+      }
+    ],
+    "embeddedTag4_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "tsxTag4"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_1"
+      }
+    ],
+    "embeddedTag4_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_2"
+      }
+    ],
+    "embeddedTag4_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_2"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_3"
+      }
+    ],
+    "embeddedTag4_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_3"
+      },
+      {
+        "importSyntax": "typescript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_4"
+      }
+    ],
+    "embeddedHost": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "importSyntax": "typescript"
+      }
+    ],
+    "attrStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "javascript",
-  "fileSuffixes": [".js", ".jsx", ".mjs", ".cjs"],
+  "fileSuffixes": [".js", ".mjs", ".cjs"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",

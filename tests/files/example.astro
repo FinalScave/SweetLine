@@ -1,0 +1,251 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PromoIsland from '../components/PromoIsland.jsx';
+import StatusCard from '../components/StatusCard.astro';
+import AvatarCluster from '../components/AvatarCluster.astro';
+
+interface ReleaseItem {
+  id: number;
+  name: string;
+  owner: string;
+  status: 'stable' | 'preview' | 'queued';
+  latency: number;
+  href: string;
+}
+
+interface Props {
+  section?: string;
+  preview?: boolean;
+}
+
+const { section = 'releases', preview = false } = Astro.props;
+const pageTitle = `SweetLine Astro demo for ${section}`;
+const canonical = new URL('/dashboard/releases', Astro.url);
+const generatedAt = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+}).format(new Date());
+const AccentTag = preview ? 'aside' : 'section';
+const heroHtml = '<strong>Server-rendered summary</strong> prepared for Astro.';
+const releases = await Promise.resolve<ReleaseItem[]>([
+  { id: 101, name: 'Docs refresh', owner: 'Ava', status: 'stable', latency: 84, href: 'https://example.com/releases/docs-refresh' },
+  { id: 102, name: 'Search rollout', owner: 'Milo', status: 'preview', latency: 126, href: 'https://example.com/releases/search-rollout' },
+  { id: 103, name: 'Billing sync', owner: 'Noah', status: 'queued', latency: 241, href: 'https://example.com/releases/billing-sync' }
+]);
+const lead = releases[0];
+const totals = {
+  stable: releases.filter((item) => item.status === 'stable').length,
+  preview: releases.filter((item) => item.status === 'preview').length,
+  queued: releases.filter((item) => item.status === 'queued').length
+};
+const filters = ['stable', 'preview', 'queued'] as const;
+const panelLabel = preview ? 'Preview channel' : 'Stable channel';
+const accent = preview ? '#fb7185' : '#2563eb';
+const inlineTheme = preview ? 'theme-preview' : 'theme-stable';
+---
+<!DOCTYPE html>
+<!-- Astro dashboard demo: https://example.com/astro -->
+{/* Internal note: highlight Astro-only comments without adding DOM output. */}
+<>
+  <BaseLayout title={pageTitle} section={section}>
+    <Fragment slot="head">
+      <meta charset="utf-8" />
+      <meta name="description" content="Astro example used by SweetLine syntax coverage." />
+      <link rel="canonical" href={canonical.href} />
+    </Fragment>
+
+    <section
+      class:list={{ 'hero--preview': preview, 'hero--stable': !preview }}
+      class="hero shell"
+      data-section={section}
+      data-theme={inlineTheme}
+      aria-label="Release overview"
+    >
+      <header class="hero__header">
+        <div>
+          <p class="hero__eyebrow">{panelLabel}</p>
+          <h1>{pageTitle}</h1>
+          <p class="hero__subtitle">
+            Generated at <time datetime={new Date().toISOString()}>{generatedAt}</time>
+            for <a href={canonical.href}>{canonical.href}</a>.
+          </p>
+        </div>
+
+        <PromoIsland
+          client:load
+          data-track-id="promo-hero"
+          section={section}
+          title="Release health"
+          compact
+        />
+      </header>
+
+      <AccentTag class="hero__summary" data-tone={preview ? 'warm' : 'cool'}>
+        <Fragment set:html={heroHtml} />
+        <p>
+          Lead item <strong>{lead.name}</strong> is owned by {lead.owner} and reports
+          <code>{lead.latency}ms</code> latency.
+        </p>
+      </AccentTag>
+    </section>
+
+    <section class="metrics" aria-labelledby="metrics-title">
+      <div class="metrics__heading">
+        <h2 id="metrics-title">Rollout breakdown</h2>
+        <AvatarCluster server:defer data-source="ops" />
+      </div>
+
+      <ul class="metrics__list">
+        {filters.map((filterName) => (
+          <li class="metrics__item">
+            <StatusCard
+              status={filterName}
+              href={'https://example.com/filters/' + filterName}
+              client:visible
+            >
+              <span slot="eyebrow">{filterName.toUpperCase()}</span>
+              <strong slot="value">{totals[filterName]}</strong>
+              <span slot="meta">Tracked in Astro</span>
+            </StatusCard>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="release-grid">
+      {releases.map((item) => (
+        <article
+          class:list={{ 'release-card--preview': item.status === 'preview', 'release-card--queued': item.status === 'queued' }}
+          class="release-card"
+          data-status={item.status}
+        >
+          <header class="release-card__header">
+            <div>
+              <p class="release-card__eyebrow">{item.owner}</p>
+              <h3>{item.name}</h3>
+            </div>
+            <a href={item.href} rel="noreferrer">Open docs</a>
+          </header>
+
+          <dl class="release-card__meta">
+            <div>
+              <dt>Status</dt>
+              <dd>{item.status}</dd>
+            </div>
+            <div>
+              <dt>Latency</dt>
+              <dd>{item.latency}ms</dd>
+            </div>
+          </dl>
+
+          {item.status === 'queued' ? (
+            <p class="release-card__note">Queued items remain server rendered until approval.</p>
+          ) : (
+            <p class="release-card__note">Ready for the next publish window.</p>
+          )}
+        </article>
+      ))}
+    </section>
+
+    <Fragment set:html={'<p class="footnote">Astro supports inline HTML injection when you ask for it.</p>'} />
+  </BaseLayout>
+</>
+
+<script lang="ts" define:vars={{ accent, releaseCount: releases.length }}>
+  type DashboardInit = { accent: string; releaseCount: number };
+
+  const initDashboard = ({ accent, releaseCount }: DashboardInit) => {
+    const root = document.querySelector<HTMLElement>('.hero');
+    if (!root) return;
+    root.dataset.releaseCount = String(releaseCount);
+    root.style.setProperty('--accent', accent);
+  };
+
+  initDashboard({ accent, releaseCount });
+</script>
+
+<script is:inline>
+  const marker = document.querySelector('[data-section]');
+  if (marker) {
+    console.log('astro demo mounted', marker.getAttribute('data-section'));
+  }
+</script>
+
+<style lang="scss" define:vars={{ accent }}>
+  $panel-gap: 1rem;
+  $panel-border: rgba(37, 99, 235, 0.14);
+
+  .shell {
+    display: grid;
+    gap: 1.25rem;
+    padding: clamp(1rem, 4vw, 2rem);
+    color: #0f172a;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+  }
+
+  .hero {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.94));
+
+    &__header,
+    &__summary,
+    .metrics__heading,
+    .release-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $panel-gap;
+    }
+  }
+
+  .metrics__list,
+  .release-grid {
+    display: grid;
+    gap: $panel-gap;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .release-card {
+    display: grid;
+    gap: 0.875rem;
+    padding: 1rem;
+    border: 1px solid $panel-border;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92));
+
+    &--preview { border-color: rgba(251, 113, 133, 0.28); }
+    &--queued { border-style: dashed; }
+  }
+
+  .hero__eyebrow,
+  .release-card__eyebrow {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .footnote::before {
+    content: 'Coverage sample';
+    display: inline-block;
+    margin-inline-end: 0.5rem;
+    color: var(--accent);
+  }
+}
+</style>
+
+<style is:global>
+  :root {
+    color-scheme: light;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  a {
+    color: #2563eb;
+    text-underline-offset: 0.16em;
+  }
+</style>

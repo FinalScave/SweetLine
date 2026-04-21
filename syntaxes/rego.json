@@ -1,0 +1,157 @@
+{
+  "name": "rego",
+  "fileSuffixes": [".rego"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "expressionRules": [
+      {
+        "pattern": "\\b(?:package|import|as|default|else|if|contains|every|in|some|not|with)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|null|data|input|rego|future)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${identifier})(?:${whiteSpace}*)(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": ":=|==|!=|<=|>=|&&|\\|\\||[_.,:;()\\[\\]{}]|[+\\-*/%<>|&!]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(package)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(import)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(default)${whiteSpace}+(${identifier})\\b",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})(?:${whiteSpace}*)(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(contains)\\b",
+        "styles": [1, "method", 2, "keyword"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(if)\\b",
+        "styles": [1, "method", 2, "keyword"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})(?:${whiteSpace}*)(:=)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "`",
+        "style": "string",
+        "state": "rawString"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "expressionRules"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "rawString": [
+      {
+        "pattern": "`",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    },
+    {
+      "start": "(",
+      "end": ")"
+    }
+  ]
+}

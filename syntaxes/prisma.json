@@ -1,0 +1,253 @@
+{
+  "name": "prisma",
+  "fileSuffixes": [".prisma"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//+)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "nativeTypeRule": [
+      {
+        "pattern": "(@db)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "annotation", 2, "punctuation", 3, "builtin"]
+      }
+    ],
+    "annotationRule": [
+      {
+        "pattern": "(@@?)([A-Za-z_][A-Za-z0-9_.]*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "functionCallRule": [
+      {
+        "pattern": "([A-Za-z_][A-Za-z0-9_]*)(\\s*)(\\()",
+        "styles": [1, "builtin", 3, "punctuation"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(\\s*)(datasource|generator)(\\s+)(${identifier})(\\s*)(\\{)",
+        "styles": [2, "keyword", 4, "variable", 6, "punctuation"],
+        "state": "configBlock"
+      },
+      {
+        "pattern": "^(\\s*)(enum)(\\s+)(${identifier})(\\s*)(\\{)",
+        "styles": [2, "keyword", 4, "class", 6, "punctuation"],
+        "state": "enumBlock"
+      },
+      {
+        "pattern": "^(\\s*)(model|type|view)(\\s+)(${identifier})(\\s*)(\\{)",
+        "styles": [2, "keyword", 4, "class", 6, "punctuation"],
+        "state": "schemaBlock"
+      },
+      {
+        "includes": ["nativeTypeRule", "annotationRule", "doubleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[\\[\\]{}(),.:=]",
+        "style": "punctuation"
+      }
+    ],
+    "configBlock": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(\\s*)(${identifier})(\\s*)(=)",
+        "styles": [2, "property", 4, "punctuation"]
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "functionCallRule"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[\\[\\]{}(),.:=]",
+        "style": "punctuation"
+      }
+    ],
+    "schemaBlock": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(\\s*)(${identifier})(\\s+)(Int|String|Boolean|DateTime|Json|Bytes|Decimal|Float|BigInt|Unsupported)(\\[\\])?(\\?)?",
+        "styles": [2, "property", 4, "builtin", 5, "punctuation", 6, "punctuation"]
+      },
+      {
+        "pattern": "^(\\s*)(${identifier})(\\s+)(${identifier})(\\[\\])?(\\?)?",
+        "styles": [2, "property", 4, "class", 5, "punctuation", 6, "punctuation"]
+      },
+      {
+        "includes": ["nativeTypeRule", "annotationRule", "doubleQuotedStringRule", "functionCallRule"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(:)",
+        "styles": [1, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[\\[\\]{}(),.:=]",
+        "style": "punctuation"
+      }
+    ],
+    "enumBlock": [
+      {
+        "pattern": "\\}",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(\\s*)(${identifier})\\b",
+        "styles": [2, "variable"]
+      },
+      {
+        "includes": ["nativeTypeRule", "annotationRule", "doubleQuotedStringRule", "functionCallRule"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(:)",
+        "styles": [1, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[\\[\\]{}(),.:=]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

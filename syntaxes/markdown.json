@@ -26,9 +26,19 @@
         "state": "codeBlockJava"
       },
       {
+        "pattern": "^(```)${whiteSpace}*(jsx)${whiteSpace}*$",
+        "styles": [1, "punctuation", 2, "annotation"],
+        "state": "codeBlockJsx"
+      },
+      {
         "pattern": "^(```)${whiteSpace}*(javascript|js)${whiteSpace}*$",
         "styles": [1, "punctuation", 2, "annotation"],
         "state": "codeBlockJavaScript"
+      },
+      {
+        "pattern": "^(```)${whiteSpace}*(tsx)${whiteSpace}*$",
+        "styles": [1, "punctuation", 2, "annotation"],
+        "state": "codeBlockTsx"
       },
       {
         "pattern": "^(```)${whiteSpace}*(typescript|ts)${whiteSpace}*$",
@@ -275,12 +285,28 @@
         "importSyntax": "javascript"
       }
     ],
+    "codeBlockJsx": [
+      {
+        "include": "fencedCodeBlockCloseRule"
+      },
+      {
+        "importSyntax": "jsx"
+      }
+    ],
     "codeBlockTypeScript": [
       {
         "include": "fencedCodeBlockCloseRule"
       },
       {
         "importSyntax": "typescript"
+      }
+    ],
+    "codeBlockTsx": [
+      {
+        "include": "fencedCodeBlockCloseRule"
+      },
+      {
+        "importSyntax": "tsx"
       }
     ],
     "codeBlockPython": [

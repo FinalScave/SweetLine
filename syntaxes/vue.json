@@ -31,9 +31,19 @@
         "state": "htmlComment"
       },
       {
-        "pattern": "(<)(script)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:ts|tsx|typescript)\"|'(?:ts|tsx|typescript)'))(?:\\s[^>]*)?(>)",
+        "pattern": "(<)(script)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:tsx)\"|'(?:tsx)'))(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "scriptTsxContent"
+      },
+      {
+        "pattern": "(<)(script)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:ts|typescript)\"|'(?:ts|typescript)'))(?:\\s[^>]*)?(>)",
         "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
         "state": "scriptTsContent"
+      },
+      {
+        "pattern": "(<)(script)(?=[^>]*\\blang${whiteSpace}*=${whiteSpace}*(?:\"(?:jsx)\"|'(?:jsx)'))(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "scriptJsxContent"
       },
       {
         "pattern": "(<)(script)(?:\\s[^>]*)?(>)",
@@ -171,6 +181,16 @@
         "importSyntax": "javascript"
       }
     ],
+    "scriptJsxContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "jsx"
+      }
+    ],
     "scriptTsContent": [
       {
         "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
@@ -179,6 +199,16 @@
       },
       {
         "importSyntax": "typescript"
+      }
+    ],
+    "scriptTsxContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "importSyntax": "tsx"
       }
     ],
     "styleCssContent": [

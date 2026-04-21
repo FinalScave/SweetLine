@@ -73,8 +73,8 @@
         "styles": [1, "punctuation", 2, "punctuation", 3, "variable", 4, "punctuation", 5, "punctuation"]
       },
       {
-        "pattern": "(\\b(layout)\\b)([ \\t]*)(\\()",
-        "styles": [1, "keyword", 2, "punctuation", 3, "punctuation"],
+        "pattern": "\\b(layout)\\b(?:${whiteSpace}*)(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
         "state": "layoutQualifier"
       },
       {
@@ -163,6 +163,10 @@
       {
         "pattern": "\\b(${identifier})\\b(?=\\s*\\{)",
         "styles": [1, "class"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
       },
       {
         "pattern": "[()\\[\\]{};,.]",

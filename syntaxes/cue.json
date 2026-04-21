@@ -1,0 +1,192 @@
+{
+  "name": "cue",
+  "fileSuffixes": [".cue"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "definition": "(?:_#|#)[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "interpolationRule": [
+      {
+        "pattern": "(\\\\\\()([^)]*)(\\))",
+        "styles": [1, "annotation", 3, "annotation"],
+        "subStates": [2, "expression"]
+      }
+    ],
+    "expressionCoreRules": [
+      {
+        "pattern": "\\b(?:package|import|for|if|in|let)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b|_\\|_",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:bool|bytes|float|float32|float64|int|int8|int16|int32|int64|number|string|uint|uint8|uint16|uint32|uint64)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "${definition}",
+        "style": "class"
+      },
+      {
+        "pattern": "(${identifier})(?:\\s*)(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)([A-Za-z_#][A-Za-z0-9_#]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9_]*)(?:\\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "=~|!~|==|!=|<=|>=|&&|\\|\\||\\.\\.\\.|[&|+\\-*/%<>=!?:.,()\\[\\]{}]",
+        "style": "punctuation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "^(?:\\s*)(package|import)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${definition})(?:\\s*)([!?]?)(:)",
+        "styles": [1, "class", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")(?:[ \\t]*)([!?]?)(:)",
+        "styles": [1, "string", 3, "string", 4, "punctuation", 5, "punctuation"],
+        "subStates": [2, "doubleStringContent"]
+      },
+      {
+        "pattern": "(${identifier})(?:\\s*)([!?]?)(:)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\[)([^\\]]+)(\\])(?:[ \\t]*)(:)",
+        "styles": [1, "punctuation", 3, "punctuation", 4, "punctuation"],
+        "subStates": [2, "expression"]
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "expressionCoreRules"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "doubleStringContent": [
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "annotation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "expression": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "include": "expressionCoreRules"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
+}

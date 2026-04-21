@@ -224,18 +224,18 @@
       IMPORT_SYNTAX_NOT_FOUND: -8
     };
     const BUILTIN_COMMON_SYNTAX_FILES = [
-      "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json",
-      "c.json", "cmake.json", "cpp.json", "csharp.json", "css.json", "csv.json", "dart.json", "diff.json",
-      "dockerfile.json", "dts.json", "elisp.json", "env.json", "fsharp.json", "gitignore.json", "glsl.json", "go.json", "graphql.json",
-      "groovy.json", "haskell.json", "hcl.json", "hlsl.json", "html.json", "iapp.json", "ini.json", "jasm.json", "java.json",
-      "just.json",
-      "javascript.json", "json5.json", "json-sweetline.json", "jsonc.json", "kotlin.json", "latex.json",
-      "less.json", "lua.json", "lyrics.json", "makefile.json", "markdown.json", "meson.json", "nginx.json", "nix.json",
-      "objc.json", "ocaml.json", "php.json", "powershell.json", "properties.json", "protobuf.json", "python.json",
-      "racket.json", "ruby.json", "rust.json", "scala.json", "scss.json", "shell.json", "smali.json", "sql.json",
-      "solidity.json", "svelte.json", "svg.json", "swift.json", "systemverilog.json", "terraform.json",
-      "tiecode.json", "toml.json", "typescript.json", "vb.json", "verilog.json", "vue.json", "wenyan.json", "xml.json",
-      "yaml.json", "zig.json"
+      "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "astro.json", "batch.json",
+      "bicep.json", "brainfuck.json", "c.json", "cmake.json", "cpp.json", "csharp.json", "css.json", "csv.json",
+      "cue.json", "dart.json", "diff.json", "dockerfile.json", "dts.json", "elisp.json", "env.json", "fsharp.json",
+      "gitignore.json", "glsl.json", "go.json", "graphql.json", "groovy.json", "haskell.json", "hcl.json", "hlsl.json",
+      "html.json", "iapp.json", "ini.json", "jasm.json", "java.json", "javascript.json", "json5.json",
+      "json-sweetline.json", "jsonc.json", "jsx.json", "just.json", "kotlin.json", "latex.json", "less.json",
+      "lua.json", "lyrics.json", "makefile.json", "markdown.json", "meson.json", "nginx.json", "nix.json",
+      "objc.json", "ocaml.json", "php.json", "powershell.json", "prisma.json", "properties.json", "protobuf.json",
+      "python.json", "racket.json", "rego.json", "ruby.json", "rust.json", "scala.json", "scss.json", "shell.json",
+      "smali.json", "sql.json", "solidity.json", "svelte.json", "svg.json", "swift.json", "systemverilog.json",
+      "terraform.json", "tiecode.json", "toml.json", "tsx.json", "typescript.json", "vb.json", "verilog.json",
+      "vue.json", "wenyan.json", "wgsl.json", "xml.json", "yaml.json", "zig.json"
     ];
 
     const STYLE_IDS = {
@@ -244,15 +244,18 @@
     };
 
     const EXAMPLE_FILES = [
-      "example.aarch64", "example.abnf", "example.bat", "example.bf", "example.c", "example.cmake", "example.cpp", "example.cs",
-      "example.css", "example.csv", "example.dart", "example.diff", "example.dockerfile", "example.dts", "example.el", "example.env", "example.fs", "example.gitignore",
+      "example.aarch64", "example.abnf", "example.astro", "example.bat", "example.bf", "example.bicep", "example.c",
+      "example.cmake", "example.cpp", "example.cs", "example.css", "example.csv", "example.cue", "example.dart",
+      "example.diff", "example.dockerfile", "example.dts", "example.el", "example.env", "example.fs", "example.gitignore",
       "example.glsl", "example.go", "example.graphql", "example.groovy", "example.hcl", "example.hlsl", "example.hs", "example.html",
-      "example.ini", "example.jasm", "example.java", "example.js", "example.json5", "example.jsonc", "example.kt", "example.less", "example.lrc", "example.lua",
-      "example.m", "example.md", "example.mk", "example.ml", "example.myu", "example.nasm", "example.nginx", "example.nix", "example.php",
-      "example.properties", "example.proto", "example.ps1", "example.py", "example.rb", "example.rkt", "example.rs", "example.s", "example.scala",
+      "example.ini", "example.jasm", "example.java", "example.js", "example.json5", "example.jsonc", "example.jsx", "example.kt",
+      "example.less", "example.lrc", "example.lua", "example.m", "example.md", "example.mk", "example.ml", "example.myu",
+      "example.nasm", "example.nginx", "example.nix", "example.php", "example.prisma", "example.properties", "example.proto",
+      "example.ps1", "example.py", "example.rb", "example.rego", "example.rkt", "example.rs", "example.s", "example.scala",
       "example.scss", "example.sh", "example.smali", "example.sol", "example.sql", "example.sv", "example.svelte", "example.svg",
-      "example.swift", "example.t", "example.tex", "example.tf", "example.toml", "example.ts", "example.v", "example.vb", "example.vue",
-      "example.wenyan", "example.xml", "example.yaml", "example.zig", "Justfile", "meson.build"
+      "example.swift", "example.t", "example.tex", "example.tf", "example.toml", "example.ts", "example.tsx", "example.v",
+      "example.vb", "example.vue", "example.wenyan", "example.wgsl", "example.xml", "example.yaml", "example.zig",
+      "Justfile", "meson.build"
     ];
 
     function makeTheme(name, bg, text, colors) {

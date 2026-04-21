@@ -1,0 +1,1074 @@
+{
+  "name": "jsx",
+  "fileNames": ["example.jsx"],
+  "fileSuffixes": [".jsx", ".react.jsx"],
+  "variables": {
+    "identifier": "[A-Za-z_$][A-Za-z0-9_$]*",
+    "intrinsicTag": "[a-z][A-Za-z0-9_$-]*(?::[A-Za-z][A-Za-z0-9_$-]*)?",
+    "componentTag": "[A-Z][A-Za-z0-9_$]*(?:\\.[A-Za-z_$][A-Za-z0-9_$]*)*",
+    "attrName": "[A-Za-z_:][A-Za-z0-9:._-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "entityRule": [
+      {
+        "pattern": "&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;",
+        "style": "annotation"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "jsxTag1"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "jsxTag1"
+      },
+      {
+        "importSyntax": "javascript"
+      }
+    ],
+    "jsxTag1": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "jsxTag1"
+      }
+    ],
+    "jsxBody1": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "jsxTag2"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "jsxTag2"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "jsxBody1"
+      }
+    ],
+    "jsxTag2": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "jsxTag2"
+      }
+    ],
+    "jsxBody2": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "jsxBody1"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "jsxTag3"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "jsxTag3"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "jsxBody2"
+      }
+    ],
+    "jsxTag3": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "jsxTag3"
+      }
+    ],
+    "jsxBody3": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "jsxBody2"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody4"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "jsxTag4"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "jsxTag4"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "jsxBody3"
+      }
+    ],
+    "jsxTag4": [
+      {
+        "pattern": "(/>)",
+        "style": "punctuation",
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(>)",
+        "style": "punctuation",
+        "state": "jsxBody4"
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "attrStringContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)([^{}]*)(\\})",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation", 3, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "pattern": "(\\{)(\\.\\.\\.)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "onLineEndState": "jsxTag4"
+      }
+    ],
+    "jsxBody4": [
+      {
+        "pattern": "(</)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(</)(${componentTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "class", 3, "punctuation"],
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(</)(${intrinsicTag})${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "jsxBody3"
+      },
+      {
+        "pattern": "(<)(>)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "jsxBody4"
+      },
+      {
+        "pattern": "(<)(${componentTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "class"],
+        "state": "jsxTag4"
+      },
+      {
+        "pattern": "(<)(${intrinsicTag})(?=(?:${whiteSpace}|/|>|$))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "jsxTag4"
+      },
+      {
+        "pattern": "(\\{)(\\{)([^}]*)(\\})(\\})",
+        "styles": [1, "punctuation", 2, "punctuation", 4, "punctuation", 5, "punctuation"],
+        "subStates": [3, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)([^{}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "embeddedHost"]
+      },
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_1"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "onLineEndState": "jsxBody4"
+      }
+    ],
+    "embeddedBody1_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxBody1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_1"
+      }
+    ],
+    "embeddedBody1_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_2"
+      }
+    ],
+    "embeddedBody1_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_3"
+      }
+    ],
+    "embeddedBody1_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody1_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody1_4"
+      }
+    ],
+    "embeddedBody2_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxBody2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_1"
+      }
+    ],
+    "embeddedBody2_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_2"
+      }
+    ],
+    "embeddedBody2_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_3"
+      }
+    ],
+    "embeddedBody2_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody2_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody2_4"
+      }
+    ],
+    "embeddedBody3_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxBody3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_1"
+      }
+    ],
+    "embeddedBody3_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_2"
+      }
+    ],
+    "embeddedBody3_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_3"
+      }
+    ],
+    "embeddedBody3_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody3_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody3_4"
+      }
+    ],
+    "embeddedBody4_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxBody4"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_1"
+      }
+    ],
+    "embeddedBody4_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_2"
+      }
+    ],
+    "embeddedBody4_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_3"
+      }
+    ],
+    "embeddedBody4_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedBody4_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedBody4_4"
+      }
+    ],
+    "embeddedTag1_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxTag1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_1"
+      }
+    ],
+    "embeddedTag1_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_2"
+      }
+    ],
+    "embeddedTag1_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_3"
+      }
+    ],
+    "embeddedTag1_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag1_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag1_4"
+      }
+    ],
+    "embeddedTag2_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxTag2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_1"
+      }
+    ],
+    "embeddedTag2_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_2"
+      }
+    ],
+    "embeddedTag2_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_3"
+      }
+    ],
+    "embeddedTag2_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag2_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag2_4"
+      }
+    ],
+    "embeddedTag3_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxTag3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_1"
+      }
+    ],
+    "embeddedTag3_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_2"
+      }
+    ],
+    "embeddedTag3_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_3"
+      }
+    ],
+    "embeddedTag3_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag3_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag3_4"
+      }
+    ],
+    "embeddedTag4_1": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_2"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "jsxTag4"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_1"
+      }
+    ],
+    "embeddedTag4_2": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_3"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_1"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_2"
+      }
+    ],
+    "embeddedTag4_3": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_2"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_3"
+      }
+    ],
+    "embeddedTag4_4": [
+      {
+        "pattern": "(\\{)",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_4"
+      },
+      {
+        "pattern": "(\\})",
+        "styles": [1, "punctuation"],
+        "state": "embeddedTag4_3"
+      },
+      {
+        "importSyntax": "javascript"
+      },
+      {
+        "onLineEndState": "embeddedTag4_4"
+      }
+    ],
+    "embeddedHost": [
+      {
+        "importSyntax": "javascript"
+      }
+    ],
+    "attrStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  }
+}

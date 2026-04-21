@@ -1,0 +1,222 @@
+{
+  "name": "bicep",
+  "fileSuffixes": [".bicep", ".bicepparam"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "typeIdentifier": "(?!(?:string|int|bool|object|array)\\b)[A-Za-z_][A-Za-z0-9_]*",
+    "memberIdentifier": "[A-Za-z_][A-Za-z0-9_-]*",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "interpolationRule": [
+      {
+        "pattern": "(\\$\\{)([^}]*)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "default"]
+      }
+    ],
+    "decoratorNamespaceRule": [
+      {
+        "pattern": "(@)([A-Za-z_][A-Za-z0-9_]*)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation", 4, "annotation"]
+      }
+    ],
+    "decoratorRule": [
+      {
+        "pattern": "(@)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "directiveRule": [
+      {
+        "pattern": "^(\\s*)(#(?:disable-next-line|disable-diagnostics|restore-diagnostics))(.*)",
+        "styles": [2, "preprocessor"],
+        "subStates": [3, "directiveContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "directiveRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "includes": ["decoratorNamespaceRule", "decoratorRule"]
+      },
+      {
+        "pattern": "\\b(import)\\b(\\s+)(\\*)(\\s+)(as)(\\s+)(${identifier})(\\s+)(from)\\b",
+        "styles": [1, "keyword", 3, "punctuation", 5, "keyword", 7, "variable", 9, "keyword"]
+      },
+      {
+        "pattern": "\\b(func)\\b(\\s+)(${identifier})(\\s*)(\\()",
+        "styles": [1, "keyword", 3, "method", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(type)\\b(\\s+)(${identifier})\\b",
+        "styles": [1, "keyword", 3, "class"]
+      },
+      {
+        "pattern": "\\b(param|var|output)\\b(\\s+)(${identifier})(\\s+)(${typeIdentifier})\\b",
+        "styles": [1, "keyword", 3, "variable", 5, "class"]
+      },
+      {
+        "pattern": "\\b(metadata|param|var|resource|module|output|extension)\\b(\\s+)(${identifier})\\b",
+        "styles": [1, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(?:targetScope|using|import|existing|if|for|in|assert|from|as|with)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "('(?:[^'\\r\\n$]|''|\\$(?!\\{))*')(?:\\s*)(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${memberIdentifier})(?:\\s*)(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:string|int|bool|object|array)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(sys|az)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "builtin", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)([A-Za-z_][A-Za-z0-9_]*)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property", 4, "punctuation", 5, "property"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(\\()",
+        "styles": [1, "builtin", 3, "punctuation"]
+      },
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "multiString"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "=>|\\.\\.\\.|\\?\\?|==|!=|<=|>=|&&|\\|\\||[.()\\[\\]{},:?+\\-*/%<>!=|]",
+        "style": "punctuation"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "''",
+        "style": "string"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "multiString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "interpolationRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "directiveContent": [
+      {
+        "pattern": "\\bBCP[0-9]+\\b",
+        "style": "macro"
+      },
+      {
+        "pattern": "\\b[a-z][A-Za-z0-9-]*\\b",
+        "style": "macro"
+      },
+      {
+        "pattern": "${any}",
+        "style": "macro"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "name": "wgsl",
+  "fileSuffixes": [".wgsl"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "@[A-Za-z_][A-Za-z0-9_]*",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\b(struct)\\b([ \\t]+)([A-Za-z_][A-Za-z0-9_]*)([ \\t]*)(\\{)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(alias)\\b([ \\t]+)([A-Za-z_][A-Za-z0-9_]*)([ \\t]*)(=)",
+        "styles": [1, "keyword", 2, "punctuation", 3, "class", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(fn)\\b([ \\t]+)([A-Za-z_][A-Za-z0-9_]*)([ \\t]*)(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation", 5, "punctuation"]
+      },
+      {
+        "pattern": "\\b(const|let|override|var)\\b([ \\t]+)([A-Za-z_][A-Za-z0-9_]*)\\b",
+        "styles": [1, "keyword", 2, "punctuation", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(?:break|case|const|const_assert|continue|continuing|default|discard|else|enable|fn|for|if|let|loop|override|requires|return|struct|switch|var|while|alias)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:function|private|read|read_write|storage|uniform|workgroup|write)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:bool|f16|f32|i32|u32|vec2|vec2f|vec2h|vec2i|vec2u|vec3|vec3f|vec3h|vec3i|vec3u|vec4|vec4f|vec4h|vec4i|vec4u|mat2x2|mat2x2f|mat2x3|mat2x3f|mat2x4|mat2x4f|mat3x2|mat3x2f|mat3x3|mat3x3f|mat3x4|mat3x4f|mat4x2|mat4x2f|mat4x3|mat4x3f|mat4x4|mat4x4f|array|atomic|ptr|sampler|sampler_comparison|texture_1d|texture_2d|texture_2d_array|texture_3d|texture_cube|texture_cube_array|texture_depth_2d|texture_depth_2d_array|texture_depth_cube|texture_depth_cube_array|texture_depth_multisampled_2d|texture_multisampled_2d|texture_storage_1d|texture_storage_2d|texture_storage_2d_array|texture_storage_3d)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:true|false)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(:)(?:${whiteSpace}*)([A-Z][A-Za-z0-9_]*)\\b",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(->)(?:${whiteSpace}*)([A-Z][A-Za-z0-9_]*)\\b",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(\\.)([xyzwrgba]{1,4})\\b",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "(\\.)([A-Za-z_][A-Za-z0-9_]*)(?!\\s*\\()",
+        "styles": [1, "punctuation", 2, "property"]
+      },
+      {
+        "pattern": "([A-Za-z_][A-Za-z0-9_]*)(?:${whiteSpace}*)(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "0[xX][0-9a-fA-F]+u?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(?:\\b[0-9][0-9_]*\\.[0-9_]*|\\B\\.[0-9][0-9_]*|\\b[0-9][0-9_]*(?:[eE][+-]?[0-9][0-9_]*))(?:f|h)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b[0-9][0-9_]*(?:i|u)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[()\\[\\]{};,.]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "->|<=|>=|==|!=|&&|\\|\\||<<|>>|[+\\-*/%&|^!<>:=]",
+        "style": "punctuation"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    }
+  ]
+}

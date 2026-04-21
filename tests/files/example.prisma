@@ -1,0 +1,274 @@
+/// Production schema for the Launchpad platform.
+/// This example focuses on schema structure, relations, and indexing patterns.
+
+generator client {
+  provider        = "prisma-client"
+  output          = "./generated/client"
+  previewFeatures = ["multiSchema"]
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+  output   = "./generated/dbml"
+}
+
+datasource db {
+  provider     = "postgresql"
+  relationMode = "foreignKeys"
+  schemas      = ["public", "analytics"]
+}
+
+enum Role {
+  OWNER   @map("owner")
+  ADMIN   @map("admin")
+  MEMBER  @map("member")
+  BILLING @map("billing")
+
+  @@map("role")
+}
+
+enum EnvironmentKind {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+}
+
+enum DeploymentStatus {
+  QUEUED
+  BUILDING
+  READY
+  FAILED
+  ROLLED_BACK
+}
+
+enum AuditAction {
+  SIGNED_IN
+  PROJECT_CREATED
+  ENVIRONMENT_UPDATED
+  DEPLOYMENT_TRIGGERED
+  SECRET_ROTATED
+}
+
+model User {
+  id             String        @id @default(uuid()) @db.Uuid
+  email          String        @unique @db.VarChar(320)
+  displayName    String?       @db.VarChar(120)
+  avatarUrl      String?       @db.Text
+  timezone       String        @default("UTC") @db.VarChar(64)
+  featureFlags   String[]      @default([])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  memberships    Membership[]
+  accounts       Account[]
+  sessions       Session[]
+  auditLogs      AuditLog[]
+  apiTokens      ApiToken[]
+  deployments    Deployment[]  @relation("RequestedBy")
+
+  @@index([email, createdAt(sort: Desc)])
+  @@map("users")
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String   @db.Uuid
+  provider           String   @db.VarChar(64)
+  providerAccountId  String   @db.VarChar(191)
+  refreshToken       String?  @db.Text
+  accessToken        String?  @db.Text
+  expiresAt          Int?
+  scope              String?  @db.VarChar(255)
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId], map: "account_provider_account_id_key")
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @db.VarChar(255)
+  userId       String   @db.Uuid
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt(sort: Desc)])
+  @@map("sessions")
+}
+
+model Organization {
+  id             String        @id @default(uuid()) @db.Uuid
+  slug           String        @unique @db.VarChar(64)
+  name           String        @db.VarChar(120)
+  billingEmail   String?       @db.VarChar(320)
+  monthlySpend   Decimal       @default(0) @db.Decimal(10, 2)
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  memberships    Membership[]
+  projects       Project[]
+  webhooks       Webhook[]
+  auditLogs      AuditLog[]
+
+  @@index([name])
+  @@map("organizations")
+}
+
+model Membership {
+  userId         String       @db.Uuid
+  organizationId String       @db.Uuid
+  role           Role         @default(MEMBER)
+  invitedById    String?      @db.Uuid
+  joinedAt       DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+  @@index([organizationId, role])
+  @@map("organization_memberships")
+}
+
+model Project {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @db.Uuid
+  slug           String          @db.VarChar(64)
+  name           String          @db.VarChar(120)
+  description    String?         @db.Text
+  repositoryUrl  String?         @db.Text
+  isArchived     Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  environments   Environment[]
+  releases       Release[]
+  apiTokens      ApiToken[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, name])
+  @@map("projects")
+}
+
+model Environment {
+  id              String            @id @default(uuid()) @db.Uuid
+  projectId       String            @db.Uuid
+  slug            String            @db.VarChar(32)
+  kind            EnvironmentKind
+  domain          String?           @db.VarChar(255)
+  region          String            @default("eastus") @db.VarChar(32)
+  isProtected     Boolean           @default(false)
+  config          Json
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deployments     Deployment[]
+  featureFlags    FeatureFlag[]
+
+  @@unique([projectId, slug])
+  @@index([kind, region])
+  @@map("environments")
+}
+
+model FeatureFlag {
+  id             String      @id @default(cuid())
+  environmentId  String      @db.Uuid
+  key            String      @db.VarChar(80)
+  description    String?     @db.Text
+  enabled        Boolean     @default(false)
+  rules          Json        @default("[]")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  environment    Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, key])
+  @@map("feature_flags")
+}
+
+/* Releases are immutable snapshots that group one or more deployments.
+   The comment is intentionally multiline to exercise block-comment highlighting. */
+model Release {
+  id             String       @id @default(cuid())
+  projectId      String       @db.Uuid
+  version        String       @db.VarChar(32)
+  commitSha      String       @db.VarChar(40)
+  changelog      String?      @db.Text
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deployments    Deployment[]
+
+  @@unique([projectId, version])
+  @@index([commitSha])
+  @@map("releases")
+}
+
+model Deployment {
+  id                String           @id @default(cuid())
+  environmentId     String           @db.Uuid
+  releaseId         String?          @db.VarChar(25)
+  requestedById     String           @db.Uuid
+  status            DeploymentStatus @default(QUEUED)
+  imageTag          String           @db.VarChar(120)
+  buildLogUrl       String?          @db.Text
+  releasedAt        DateTime?
+  createdAt         DateTime         @default(now())
+  environment       Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  release           Release?         @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  requestedBy       User             @relation("RequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([environmentId, status, createdAt(sort: Desc)])
+  @@map("deployments")
+}
+
+model Webhook {
+  id              String        @id @default(cuid())
+  organizationId  String        @db.Uuid
+  name            String        @db.VarChar(80)
+  targetUrl       String        @db.Text
+  secret          String        @db.VarChar(128)
+  enabledEvents   String[]      @default(["deployment.ready", "deployment.failed"])
+  createdAt       DateTime      @default(now())
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, name])
+  @@map("webhooks")
+}
+
+model AuditLog {
+  id              String        @id @default(cuid())
+  organizationId  String?       @db.Uuid
+  userId          String?       @db.Uuid
+  action          AuditAction
+  resourceType    String        @db.VarChar(48)
+  resourceId      String?       @db.VarChar(64)
+  summary         String        @db.VarChar(255)
+  details         Json?
+  ipAddress       String?       @db.VarChar(64)
+  userAgent       String?       @db.Text
+  createdAt       DateTime      @default(now())
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+model ApiToken {
+  id             String   @id @default(cuid())
+  projectId      String?  @db.Uuid
+  userId         String?  @db.Uuid
+  name           String   @db.VarChar(80)
+  tokenHash      String   @unique @db.VarChar(255)
+  scopes         String[] @default(["read:deployments"])
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  project        Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("api_tokens")
+}
