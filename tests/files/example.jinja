@@ -1,0 +1,234 @@
+{# Dashboard layout with blocks, imports, raw output, and embedded assets. #}
+{% extends "layouts/admin_base.html" %}
+{% import "macros/forms.jinja" as forms %}
+{% import "macros/cards.jinja" as cards with context %}
+{% from "macros/navigation.jinja" import nav_link, breadcrumb_item %}
+{% set page_title = "Operations Dashboard" %}
+{% set release_tag = release_tag|default("dev") %}
+{% set feature_flags = {
+  "betaUsers": beta_users|default([]),
+  "showBilling": show_billing|default(true),
+  "showAudit": show_audit|default(false),
+  "showRollouts": show_rollouts|default(true)
+} %}
+{% set navigation = [
+  {"label": "Overview", "href": url_for("overview"), "icon": "home"},
+  {"label": "Queues", "href": url_for("queues"), "icon": "layers"},
+  {"label": "Reports", "href": url_for("reports"), "icon": "bar-chart-2"},
+  {"label": "Audit", "href": url_for("audit"), "icon": "shield"}
+] %}
+{% set summary = namespace(total=0, warnings=0, critical=0) %}
+
+{% macro render_stat(name, value, tone="neutral") -%}
+<div class="stat stat--{{ tone }}">
+  <span class="stat__name">{{ name }}</span>
+  <strong class="stat__value">{{ value }}</strong>
+</div>
+{%- endmacro %}
+
+{% macro render_alert(alert) -%}
+<li class="alert alert--{{ alert.level }}">
+  <span class="alert__title">{{ alert.title }}</span>
+  <span class="alert__owner">{{ alert.owner|default("unassigned") }}</span>
+  <time datetime="{{ alert.created_at }}">{{ alert.created_at|replace("T", " ") }}</time>
+</li>
+{%- endmacro %}
+
+{% block title %}{{ page_title }} - {{ tenant.name|title }}{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <meta name="release-tag" content="{{ release_tag }}">
+  <meta name="workspace-id" content="{{ workspace.id }}">
+  <link rel="preconnect" href="{{ cdn_base }}">
+{% endblock %}
+
+{% block shell %}
+<section class="hero" data-tenant="{{ tenant.slug }}">
+  <p class="eyebrow">Release {{ release_tag }}</p>
+  <h1>{{ page_title }}</h1>
+  <p class="hero__subtitle">
+    Welcome back, {{ current_user.display_name|default(current_user.email)|title }}.
+  </p>
+</section>
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  {% for crumb in breadcrumbs %}
+  {{ breadcrumb_item(crumb.label, crumb.href, active=loop.last) }}
+  {% endfor %}
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <ul class="sidebar__nav">
+      {% for item in navigation %}
+      <li class="{{ 'is-active' if request.path == item.href else '' }}">
+        {{ nav_link(item.label, item.href, icon=item.icon) }}
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% if current_user.is_admin %}
+    <p class="sidebar__hint">You can impersonate tenants and replay jobs.</p>
+    {% elif current_user.is_operator %}
+    <p class="sidebar__hint">Operator mode limits destructive actions.</p>
+    {% else %}
+    <p class="sidebar__hint">Viewer mode keeps mutations disabled.</p>
+    {% endif %}
+  </aside>
+
+  <main class="content">
+    {% with filters = request.args %}
+    <header class="toolbar">
+      <div class="toolbar__meta">
+        <span>Region: {{ filters.region|default("all") }}</span>
+        <span>Service: {{ filters.service|default("all") }}</span>
+        <span>Owner: {{ filters.owner|default("all") }}</span>
+      </div>
+      <div class="toolbar__actions">
+        {{ forms.search("query", filters.query|default(""), placeholder="Search jobs or incidents") }}
+        {{ forms.select("timeframe", filters.timeframe|default("24h"), options=timeframe_options) }}
+      </div>
+    </header>
+    {% endwith %}
+
+    {% filter trim %}
+      <section class="stats-grid">
+        {{ render_stat("Pending jobs", queue_metrics.pending, tone="accent") }}
+        {{ render_stat("Running jobs", queue_metrics.running, tone="info") }}
+        {{ render_stat("Failed jobs", queue_metrics.failed, tone="danger") }}
+        {{ render_stat("Latency p95", queue_metrics.latency_p95 ~ " ms", tone="warning") }}
+      </section>
+    {% endfilter %}
+
+    {% if incidents %}
+    <section class="panel panel--alerts">
+      <div class="panel__header">
+        <h2>Active incidents</h2>
+        <a href="{{ url_for('incidents') }}">View all</a>
+      </div>
+      <ul class="alerts">
+        {% for alert in incidents if alert.level != "info" %}
+        {{ render_alert(alert) }}
+        {% set summary.total = summary.total + 1 %}
+        {% if alert.level == "warning" %}
+          {% set summary.warnings = summary.warnings + 1 %}
+        {% elif alert.level == "critical" %}
+          {% set summary.critical = summary.critical + 1 %}
+        {% endif %}
+        {% else %}
+        <li class="alert alert--empty">No warning or critical incidents are open.</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% call cards.panel("Deployment queue", tone="accent") %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>ETA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in deployment_queue %}
+        <tr class="{{ 'is-blocked' if item.blocked else '' }}">
+          <td>
+            <a href="{{ url_for('service', slug=item.slug) }}">{{ item.name }}</a>
+          </td>
+          <td>{{ item.status|replace("_", " ")|title }}</td>
+          <td>{{ item.owner|default("platform") }}</td>
+          <td>{{ item.eta|default("n/a") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endcall %}
+
+    <section class="panel">
+      <div class="panel__header">
+        <h2>Scheduled rollouts</h2>
+        <span>{{ rollouts|length }} planned changes</span>
+      </div>
+      {% for rollout in rollouts %}
+      <article class="rollout rollout--{{ rollout.state }}">
+        <header>
+          <h3>{{ rollout.service }}</h3>
+          <span>{{ rollout.window }}</span>
+        </header>
+        <p>{{ rollout.summary }}</p>
+        {% if feature_flags.showRollouts and rollout.steps %}
+        <ol>
+          {% for step in rollout.steps %}
+          <li>
+            <strong>{{ step.name }}</strong>
+            <span>{{ step.owner }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+
+    {% include "partials/_support_links.jinja" %}
+
+    <section class="panel panel--summary">
+      <h2>Incident summary</h2>
+      <dl class="summary-list">
+        <div><dt>Total</dt><dd>{{ summary.total }}</dd></div>
+        <div><dt>Warnings</dt><dd>{{ summary.warnings }}</dd></div>
+        <div><dt>Critical</dt><dd>{{ summary.critical }}</dd></div>
+      </dl>
+    </section>
+
+    {% raw %}
+    <section class="panel panel--raw">
+      <pre class="code-sample">
+{% if current_user %}
+  {{ current_user.email }}
+{% endif %}
+      </pre>
+    </section>
+    {% endraw %}
+  </main>
+</div>
+
+<script>
+const dashboardConfig = {
+  tenantId: "{{ tenant.id }}",
+  tenantSlug: "{{ tenant.slug }}",
+  releaseTag: "{{ release_tag }}",
+  showAudit: {{ "true" if feature_flags.showAudit else "false" }},
+  endpoints: {
+    overview: "{{ url_for('overview') }}",
+    incidents: "{{ url_for('incidents') }}",
+    reports: "{{ url_for('reports') }}"
+  }
+};
+
+if (dashboardConfig.showAudit) {
+  console.info("Audit mode enabled for {{ tenant.slug }}");
+}
+</script>
+
+<style>
+:root {
+  --brand-hue: {{ brand_hue|default(210) }};
+  --brand-saturation: {{ brand_saturation|default(72) }}%;
+  --hero-image: url("{{ cdn_base }}/images/{{ tenant.slug }}/hero.png");
+}
+
+.hero {
+  background-image: linear-gradient(120deg, hsla(var(--brand-hue), var(--brand-saturation), 62%, 0.24), transparent),
+    var(--hero-image);
+}
+
+.panel--alerts .alert--critical {
+  border-left-color: hsl({{ critical_hue|default(4) }}, 72%, 54%);
+}
+</style>
+{% endblock %}

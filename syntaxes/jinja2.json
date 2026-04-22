@@ -1,0 +1,1222 @@
+{
+  "name": "jinja2",
+  "fileSuffixes": [".jinja", ".jinja2", ".j2"],
+  "variables": {
+    "tagName": "[A-Za-z][A-Za-z0-9:-]*",
+    "attrName": "[A-Za-z_:][A-Za-z0-9:._-]*",
+    "identifier": "[_A-Za-z][_0-9A-Za-z]*",
+    "escape": "\\\\(?:[0-9a-fA-F]{1,6}(?:${whiteSpace}|\\r?\\n)?|.)",
+    "identStart": "(?:[_a-zA-Z]|${escape})",
+    "identChar": "(?:[_a-zA-Z0-9-]|${escape})",
+    "ident": "-?${identStart}${identChar}*",
+    "customProperty": "--${identChar}+",
+    "number": "[+-]?(?:\\d*\\.\\d+|\\d+\\.\\d*|\\d+)",
+    "dimensionUnit": "%|px|r?em|ex|ch|lh|rlh|vw|vh|vmin|vmax|vb|vi|svw|svh|lvw|lvh|dvw|dvh|cqw|cqh|cqi|cqb|cqmin|cqmax|fr|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx|cm|mm|Q|in|pc|pt",
+    "valueKeyword": "inherit|initial|unset|revert(?:-layer)?|auto|none|normal|transparent|currentColor|block|inline(?:-block|-flex|-grid)?|flex|grid|contents|flow-root|relative|absolute|fixed|sticky|static|solid|dashed|dotted|double|hidden|visible|cover|contain|repeat(?:-x|-y)?|no-repeat|space|round|center|start|end|stretch|space-between|space-around|space-evenly|serif|sans-serif|monospace|disc|circle|square|decimal|inside|outside|uppercase|lowercase|capitalize|bold|bolder|lighter",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "entityRule": [
+      {
+        "pattern": "&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;",
+        "style": "annotation"
+      }
+    ],
+    "jinjaInlineCommentRule": [
+      {
+        "pattern": "(\\{#)(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment", 3, "comment"]
+      }
+    ],
+    "jinjaExpressionRule": [
+      {
+        "pattern": "(\\{\\{[-+]?)(.*?)([-+]?\\}\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"]
+      }
+    ],
+    "jinjaStatementRule": [
+      {
+        "pattern": "(\\{%-?)(.*?)(-?%\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"]
+      }
+    ],
+    "multilineDefaultTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "jinjaCommentDefault"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "jinjaExpressionDefault"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "jinjaStatementDefault"
+      }
+    ],
+    "multilineQuotedAttrTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "jinjaCommentQuotedAttr"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "jinjaExpressionQuotedAttr"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "jinjaStatementQuotedAttr"
+      }
+    ],
+    "multilineScriptTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "jinjaCommentScriptContent"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "jinjaExpressionScriptContent"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "jinjaStatementScriptContent"
+      }
+    ],
+    "styleCssSameLineCommentRule": [
+      {
+        "pattern": "(/\\*)(.*?)(\\*/)",
+        "styles": [1, "comment", 3, "comment"],
+        "subStates": [2, "styleCssCommentContent"]
+      }
+    ],
+    "styleCssSelectorRules": [
+      {
+        "pattern": "(::?)(-?${ident})(\\()",
+        "styles": [1, "punctuation", 2, "selector", 3, "punctuation"]
+      },
+      {
+        "pattern": "(::?)(-?${ident})",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "(\\.)(${ident})",
+        "styles": [1, "punctuation", 2, "class"]
+      },
+      {
+        "pattern": "(#)(${ident})",
+        "styles": [1, "punctuation", 2, "selector"]
+      },
+      {
+        "pattern": "(${ident})(\\|)(\\*)",
+        "styles": [1, "selector", 2, "punctuation", 3, "selector"]
+      },
+      {
+        "pattern": "(${ident})(\\|)(${ident})",
+        "styles": [1, "selector", 2, "punctuation", 3, "selector"]
+      },
+      {
+        "pattern": "\\*",
+        "style": "selector"
+      },
+      {
+        "pattern": "\\b(?:${ident})\\b",
+        "style": "selector"
+      }
+    ],
+    "styleCssValueRules": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "!important\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "${customProperty}",
+        "style": "variable"
+      },
+      {
+        "pattern": "#[0-9a-fA-F]{3,8}(?=[^A-Za-z0-9_-]|$)",
+        "style": "number"
+      },
+      {
+        "pattern": "\\bU\\+[0-9A-F?]+(?:-[0-9A-F]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${number})(/)(${number})",
+        "styles": [1, "number", 2, "punctuation", 3, "number"]
+      },
+      {
+        "pattern": "(${number})(${dimensionUnit})\\b",
+        "styles": [1, "number", 2, "keyword"]
+      },
+      {
+        "pattern": "(?:${number})\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "%|(?:${dimensionUnit})\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:${valueKeyword})\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${ident})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "[()\\[\\],/:.+\\-*]",
+        "style": "punctuation"
+      }
+    ],
+    "multilineStyleCssDefaultTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentDefault"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionDefault"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementDefault"
+      }
+    ],
+    "multilineStyleCssValueTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentValue"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionValue"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementValue"
+      }
+    ],
+    "multilineStyleCssDoubleStringDefaultTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentDoubleStringDefault"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionDoubleStringDefault"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementDoubleStringDefault"
+      }
+    ],
+    "multilineStyleCssSingleStringDefaultTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentSingleStringDefault"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionSingleStringDefault"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementSingleStringDefault"
+      }
+    ],
+    "multilineStyleCssDoubleStringValueTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentDoubleStringValue"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionDoubleStringValue"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementDoubleStringValue"
+      }
+    ],
+    "multilineStyleCssSingleStringValueTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssJinjaCommentSingleStringValue"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "styleCssJinjaExpressionSingleStringValue"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "styleCssJinjaStatementSingleStringValue"
+      }
+    ],
+    "inlineTemplateRules": [
+      {
+        "include": "jinjaInlineCommentRule"
+      },
+      {
+        "include": "jinjaExpressionRule"
+      },
+      {
+        "include": "jinjaStatementRule"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "(<!)(DOCTYPE)([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "string", 4, "punctuation"]
+      },
+      {
+        "pattern": "<!--",
+        "style": "comment",
+        "state": "htmlComment"
+      },
+      {
+        "pattern": "(\\{%-?)(\\s*raw\\b.*?)(-?%\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "rawBlockContent"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineDefaultTemplateRules"
+      },
+      {
+        "pattern": "(<)(script)(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "scriptContent"
+      },
+      {
+        "pattern": "(<)(style)(?:\\s[^>]*)?(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "styleContent"
+      },
+      {
+        "pattern": "(</?)(${tagName})(?:${whiteSpace}|(?=>)|(?=/?>))",
+        "styles": [1, "punctuation", 2, "keyword"],
+        "state": "tagInner"
+      },
+      {
+        "include": "entityRule"
+      }
+    ],
+    "tagInner": [
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "quotedAttrContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)${whiteSpace}*(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "property", 2, "punctuation", 3, "string", 5, "string"],
+        "subStates": [4, "quotedAttrContent"]
+      },
+      {
+        "pattern": "(${attrName})${whiteSpace}*(=)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "${attrName}",
+        "style": "property"
+      },
+      {
+        "pattern": "/?>",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "onLineEndState": "tagInner"
+      }
+    ],
+    "quotedAttrContent": [
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineQuotedAttrTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "entityRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "htmlComment": [
+      {
+        "pattern": "-->",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "jinjaCommentDefault": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "default"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "jinjaCommentDefault"
+      }
+    ],
+    "rawBlockContent": [
+      {
+        "pattern": "(\\{%-?)(\\s*endraw\\b.*?)(-?%\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "default"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "rawBlockContent"
+      }
+    ],
+    "scriptContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(script)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineScriptTemplateRules"
+      },
+      {
+        "importSyntax": "javascript"
+      }
+    ],
+    "styleContent": [
+      {
+        "pattern": "(</)${whiteSpace}*(style)${whiteSpace}*(>)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "default"
+      },
+      {
+        "include": "styleCssSameLineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "styleCssBlockCommentDefault"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "styleCssDoubleStringDefault"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "styleCssSingleStringDefault"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssDefaultTemplateRules"
+      },
+      {
+        "pattern": "(@property)${whiteSpace}+(${customProperty})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "(@(?:-[a-zA-Z]+-)?keyframes)${whiteSpace}+(${ident})",
+        "styles": [1, "keyword", 2, "selector"]
+      },
+      {
+        "pattern": "@[a-zA-Z-]+",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(\\()${whiteSpace}*(${customProperty}|${ident})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${customProperty})${whiteSpace}*(:)",
+        "styles": [1, "variable", 2, "punctuation"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${ident})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "([;{])${whiteSpace}*(${customProperty})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "([;{])${whiteSpace}*(${ident})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "([~|^$*]?=)${whiteSpace}*(${ident})",
+        "styles": [1, "punctuation", 2, "string"]
+      },
+      {
+        "pattern": "\\b(?:and|or|not|only)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(\\[)${whiteSpace}*(${customProperty}|${ident})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "[iIsS](?=${whiteSpace}*\\])",
+        "style": "builtin"
+      },
+      {
+        "pattern": "[~|^$*]?=",
+        "style": "punctuation"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "(${number})(${dimensionUnit})\\b",
+        "styles": [1, "number", 2, "keyword"]
+      },
+      {
+        "pattern": "(?:${number})\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(${ident})(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "includes": ["styleCssSelectorRules"]
+      },
+      {
+        "pattern": "[{}();:,>+~\\[\\]|=]",
+        "style": "punctuation"
+      }
+    ],
+    "styleCssValue": [
+      {
+        "include": "styleCssSameLineCommentRule"
+      },
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "styleCssBlockCommentValue"
+      },
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "styleCssDoubleStringValue"
+      },
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "styleCssSingleStringValue"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssValueTemplateRules"
+      },
+      {
+        "pattern": ";",
+        "style": "punctuation",
+        "state": "styleContent"
+      },
+      {
+        "pattern": "}",
+        "style": "punctuation",
+        "state": "styleContent"
+      },
+      {
+        "includes": ["styleCssValueRules"]
+      },
+      {
+        "onLineEndState": "styleCssValue"
+      }
+    ],
+    "styleCssCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "styleCssBlockCommentDefault": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "styleContent"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssBlockCommentDefault"
+      }
+    ],
+    "styleCssBlockCommentValue": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "styleCssValue"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssBlockCommentValue"
+      }
+    ],
+    "styleCssDoubleStringDefault": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "styleContent"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssDoubleStringDefaultTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "styleCssDoubleStringDefault"
+      }
+    ],
+    "styleCssSingleStringDefault": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "styleContent"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssSingleStringDefaultTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "styleCssSingleStringDefault"
+      }
+    ],
+    "styleCssDoubleStringValue": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "styleCssValue"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssDoubleStringValueTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "styleCssDoubleStringValue"
+      }
+    ],
+    "styleCssSingleStringValue": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "styleCssValue"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilineStyleCssSingleStringValueTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "styleCssSingleStringValue"
+      }
+    ],
+    "styleCssJinjaCommentDefault": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleContent"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentDefault"
+      }
+    ],
+    "styleCssJinjaCommentValue": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentValue"
+      }
+    ],
+    "styleCssJinjaCommentDoubleStringDefault": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssDoubleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentDoubleStringDefault"
+      }
+    ],
+    "styleCssJinjaCommentSingleStringDefault": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssSingleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentSingleStringDefault"
+      }
+    ],
+    "styleCssJinjaCommentDoubleStringValue": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssDoubleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentDoubleStringValue"
+      }
+    ],
+    "styleCssJinjaCommentSingleStringValue": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "styleCssSingleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "styleCssJinjaCommentSingleStringValue"
+      }
+    ],
+    "styleCssJinjaExpressionDefault": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionDefault"
+      }
+    ],
+    "styleCssJinjaExpressionValue": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionValue"
+      }
+    ],
+    "styleCssJinjaExpressionDoubleStringDefault": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleCssDoubleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionDoubleStringDefault"
+      }
+    ],
+    "styleCssJinjaExpressionSingleStringDefault": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleCssSingleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionSingleStringDefault"
+      }
+    ],
+    "styleCssJinjaExpressionDoubleStringValue": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleCssDoubleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionDoubleStringValue"
+      }
+    ],
+    "styleCssJinjaExpressionSingleStringValue": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "styleCssSingleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaExpressionSingleStringValue"
+      }
+    ],
+    "styleCssJinjaStatementDefault": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementDefault"
+      }
+    ],
+    "styleCssJinjaStatementValue": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleCssValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementValue"
+      }
+    ],
+    "styleCssJinjaStatementDoubleStringDefault": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleCssDoubleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementDoubleStringDefault"
+      }
+    ],
+    "styleCssJinjaStatementSingleStringDefault": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleCssSingleStringDefault"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementSingleStringDefault"
+      }
+    ],
+    "styleCssJinjaStatementDoubleStringValue": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleCssDoubleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementDoubleStringValue"
+      }
+    ],
+    "styleCssJinjaStatementSingleStringValue": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "styleCssSingleStringValue"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "styleCssJinjaStatementSingleStringValue"
+      }
+    ],
+    "jinjaCommentQuotedAttr": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "quotedAttrContent"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "jinjaCommentQuotedAttr"
+      }
+    ],
+    "jinjaCommentScriptContent": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "scriptContent"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "jinjaCommentScriptContent"
+      }
+    ],
+    "jinjaExpressionDefault": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "default"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "jinjaExpressionDefault"
+      }
+    ],
+    "jinjaExpressionQuotedAttr": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "quotedAttrContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "jinjaExpressionQuotedAttr"
+      }
+    ],
+    "jinjaExpressionScriptContent": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "scriptContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "jinjaExpressionScriptContent"
+      }
+    ],
+    "jinjaExpressionContent": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:if|elif|else|for|in|recursive|is|not|and|or|as|without|context)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|loop|super|self|caller|namespace)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|]",
+        "style": "punctuation"
+      }
+    ],
+    "jinjaStatementDefault": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "default"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "jinjaStatementDefault"
+      }
+    ],
+    "jinjaStatementQuotedAttr": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "quotedAttrContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "jinjaStatementQuotedAttr"
+      }
+    ],
+    "jinjaStatementScriptContent": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "scriptContent"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "jinjaStatementScriptContent"
+      }
+    ],
+    "jinjaStatementContent": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:if|elif|else|endif|for|endfor|in|recursive|block|endblock|extends|include|import|from|macro|endmacro|call|endcall|set|endset|filter|endfilter|with|endwith|trans|endtrans|pluralize|autoescape|endautoescape|raw|endraw|do|break|continue|is|not|and|or|as|without|context|scoped|required)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|loop|super|self|caller|namespace)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|]",
+        "style": "punctuation"
+      }
+    ]
+  }
+}
