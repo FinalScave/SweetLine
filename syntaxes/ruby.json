@@ -1,5 +1,6 @@
 {
   "name": "ruby",
+  "fileNames": ["Gemfile", "Rakefile", "Vagrantfile", "Podfile", "Fastfile", "Brewfile"],
   "fileSuffixes": [".rb", ".rake", ".gemspec", ".ru"],
   "variables": {
     "identifier": "[a-z_][A-Za-z0-9_]*[!?=]?",

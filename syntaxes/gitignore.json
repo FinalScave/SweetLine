@@ -1,6 +1,6 @@
 {
   "name": "gitignore",
-  "fileNames": [".gitignore"],
+  "fileNames": [".gitignore", ".dockerignore", ".npmignore", ".eslintignore", ".prettierignore"],
   "fileSuffixes": [".gitignore"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",

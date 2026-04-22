@@ -1,7 +1,7 @@
 {
   "name": "ini",
   "fileSuffixes": [".ini"],
-  "fileNames": [".editorconfig"],
+  "fileNames": [".editorconfig", ".gitconfig", ".gitmodules", ".npmrc"],
   "variables": {
     "whiteSpace": "[ \\t\\f]",
     "any": "[\\S\\s]",

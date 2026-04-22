@@ -1,5 +1,6 @@
 {
   "name": "groovy",
+  "fileNames": ["Jenkinsfile"],
   "fileSuffixes": [".groovy", ".gradle", ".gvy", ".gy", ".gsh"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
