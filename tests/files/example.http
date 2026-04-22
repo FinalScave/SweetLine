@@ -1,0 +1,186 @@
+@host = https://api.example.internal
+@edgeHost = https://edge.example.internal
+@graphqlHost = https://graphql.example.internal
+@tenantId = tenant-demo
+@userId = usr_1024
+@sessionId = ses_2048
+@flagKey = rollout-search-v2
+@reportId = rpt_7788
+@exportId = exp_9911
+@token = Bearer {{accessToken}}
+@accessToken = demo-access-token
+@webhookSecret = whsec_demo_value
+
+### Health check
+GET {{host}}/v1/health HTTP/1.1
+Accept: application/json
+X-Tenant-Id: {{tenantId}}
+X-Trace-Id: trace-health-001
+
+### List users
+GET {{host}}/v1/users?page=1&limit=25&sort=name HTTP/1.1
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+X-Client-Version: 2026.04
+
+### Fetch user details
+GET {{host}}/v1/users/{{userId}} HTTP/1.1
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+If-None-Match: "user-profile-{{userId}}"
+
+### Create session
+POST {{host}}/v1/sessions HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+X-Tenant-Id: {{tenantId}}
+
+{
+  "email": "operator@example.internal",
+  "password": "demo-password",
+  "remember": true,
+  "scopes": ["reports:read", "users:write"]
+}
+
+### Refresh session
+POST {{host}}/v1/sessions/{{sessionId}}/refresh HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+{
+  "reason": "background-sync",
+  "metadata": {
+    "source": "http-example",
+    "build": "2026.04"
+  }
+}
+
+### Patch user profile
+PATCH {{host}}/v1/users/{{userId}} HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+{
+  "displayName": "Platform Operator",
+  "timezone": "Asia/Shanghai",
+  "preferences": {
+    "digest": "weekly",
+    "showAudit": false
+  }
+}
+
+### Upload avatar metadata
+POST {{edgeHost}}/v1/uploads/avatar HTTP/1.1
+Content-Type: application/xml
+Accept: application/xml
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+<uploadRequest tenant="{{tenantId}}">
+  <user id="{{userId}}">operator@example.internal</user>
+  <contentType>image/png</contentType>
+  <checksum>2c26b46b68ffc68ff99b453c1d304134</checksum>
+</uploadRequest>
+
+### Start export
+POST {{host}}/v1/exports HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+{
+  "reportId": "{{reportId}}",
+  "format": "csv",
+  "filters": {
+    "region": "apac",
+    "state": ["done", "failed"]
+  }
+}
+
+### Poll export
+GET {{host}}/v1/exports/{{exportId}} HTTP/1.1
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+Prefer: wait=5
+
+### Download export
+GET {{host}}/v1/exports/{{exportId}}/download HTTP/1.1
+Accept: text/csv
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+Range: bytes=0-8191
+
+### Update feature flag
+PUT {{host}}/v1/feature-flags/{{flagKey}} HTTP/1.1
+Content-Type: application/xml
+Accept: application/xml
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+<flagUpdate key="{{flagKey}}">
+  <enabled>true</enabled>
+  <percentage>25</percentage>
+  <owner>search-platform</owner>
+</flagUpdate>
+
+### Send webhook replay
+POST {{edgeHost}}/v1/hooks/replay HTTP/1.1
+Content-Type: text/plain
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+X-Webhook-Signature: {{webhookSecret}}
+
+event=report.ready
+report_id={{reportId}}
+tenant_id={{tenantId}}
+status=delivered
+
+### GraphQL dashboard query
+POST {{graphqlHost}}/query HTTP/1.1
+Content-Type: application/graphql
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+query DashboardOverview {
+  viewer {
+    id
+    displayName
+  }
+  tenant(id: "{{tenantId}}") {
+    id
+    slug
+    rollouts {
+      id
+      service
+      state
+    }
+  }
+}
+
+### Trigger report rebuild
+POST {{host}}/v1/reports/{{reportId}}/rebuild HTTP/1.1
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+
+{
+  "priority": "high",
+  "notify": ["ops@example.internal", "reports@example.internal"]
+}
+
+### Delete session
+DELETE {{host}}/v1/sessions/{{sessionId}} HTTP/1.1
+Accept: application/json
+Authorization: {{token}}
+X-Tenant-Id: {{tenantId}}
+X-Revoke-All: false

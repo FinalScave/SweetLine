@@ -1,0 +1,343 @@
+{
+  "name": "http",
+  "fileSuffixes": [".http", ".rest"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_.-]*",
+    "headerName": "[A-Za-z][A-Za-z0-9-]*",
+    "methodName": "GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "templateVariableRule": [
+      {
+        "pattern": "(\\{\\{)(${identifier})(\\}\\})",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"]
+      }
+    ],
+    "separatorRule": [
+      {
+        "pattern": "^(?:${whiteSpace}*)(###)(.*)$",
+        "styles": [1, "punctuation", 2, "comment"],
+        "state": "default"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "^${whiteSpace}*(#|//)${any}*$",
+        "style": "comment"
+      }
+    ],
+    "variableDefinitionRule": [
+      {
+        "pattern": "^${whiteSpace}*(@)(${identifier})(?:${whiteSpace}*)(=)(?:${whiteSpace}*)(.*)$",
+        "styles": [1, "punctuation", 2, "variable", 3, "punctuation"],
+        "subStates": [4, "variableValueContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "include": "variableDefinitionRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${methodName})(?:${whiteSpace}+)([^\\s]+)(?:${whiteSpace}+(HTTP/[0-9.]+))?${whiteSpace}*$",
+        "styles": [1, "keyword", 3, "annotation"],
+        "subStates": [2, "requestTargetContent"],
+        "state": "headers"
+      }
+    ],
+    "headers": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "bodyPlain"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*json[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"],
+        "state": "headersJson"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*(?:xml|html)[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"],
+        "state": "headersXml"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*graphql[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"],
+        "state": "headersGraphql"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${headerName})(${whiteSpace}*:)${whiteSpace}*(.*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "plainBodyLine",
+        "state": "bodyPlain"
+      },
+      {
+        "onLineEndState": "headers"
+      }
+    ],
+    "headersJson": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "bodyJson"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*json[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${headerName})(${whiteSpace}*:)${whiteSpace}*(.*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jsonLine",
+        "state": "bodyJson"
+      },
+      {
+        "onLineEndState": "headersJson"
+      }
+    ],
+    "headersXml": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "bodyXml"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*(?:xml|html)[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${headerName})(${whiteSpace}*:)${whiteSpace}*(.*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "xmlLine",
+        "state": "bodyXml"
+      },
+      {
+        "onLineEndState": "headersXml"
+      }
+    ],
+    "headersGraphql": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "bodyGraphql"
+      },
+      {
+        "pattern": "^${whiteSpace}*(Content-Type)(${whiteSpace}*:)${whiteSpace}*([^\\r\\n]*graphql[^\\r\\n]*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${headerName})(${whiteSpace}*:)${whiteSpace}*(.*)$",
+        "styles": [1, "property", 2, "punctuation"],
+        "subStates": [3, "headerValueContent"]
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "graphqlLine",
+        "state": "bodyGraphql"
+      },
+      {
+        "onLineEndState": "headersGraphql"
+      }
+    ],
+    "variableValueContent": [
+      {
+        "include": "templateVariableRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "requestTargetContent": [
+      {
+        "include": "templateVariableRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "url"
+      }
+    ],
+    "headerValueContent": [
+      {
+        "include": "templateVariableRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[,;=]",
+        "style": "punctuation"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "plainBodyLine": [
+      {
+        "include": "templateVariableRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "jsonLine": [
+      {
+        "importSyntax": "json"
+      }
+    ],
+    "xmlLine": [
+      {
+        "importSyntax": "xml"
+      }
+    ],
+    "graphqlLine": [
+      {
+        "importSyntax": "graphql"
+      }
+    ],
+    "bodyPlain": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "include": "templateVariableRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "bodyPlain"
+      }
+    ],
+    "bodyJson": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "importSyntax": "json"
+      },
+      {
+        "onLineEndState": "bodyJson"
+      }
+    ],
+    "bodyXml": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "importSyntax": "xml"
+      },
+      {
+        "onLineEndState": "bodyXml"
+      }
+    ],
+    "bodyGraphql": [
+      {
+        "include": "separatorRule"
+      },
+      {
+        "importSyntax": "graphql"
+      },
+      {
+        "onLineEndState": "bodyGraphql"
+      }
+    ]
+  }
+}
