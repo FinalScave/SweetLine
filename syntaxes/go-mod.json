@@ -1,0 +1,66 @@
+{
+  "name": "go-mod",
+  "fileNames": ["go.mod", "go.work"],
+  "variables": {
+    "modulePath": "(?:[A-Za-z0-9][A-Za-z0-9._-]*)(?:/[A-Za-z0-9._~+-]+)+",
+    "localPath": "(?:\\./|\\.\\./|/)[^\\s()\\[\\],]+",
+    "identifier": "[A-Za-z_][A-Za-z0-9_.-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)(module|go|toolchain|tool|godebug|use|ignore|require|replace|exclude|retract)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "(${identifier})(=)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "${modulePath}",
+        "style": "variable"
+      },
+      {
+        "pattern": "${localPath}",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:v[0-9]+(?:\\.[0-9A-Za-z+._-]+)*|[0-9]+(?:\\.[0-9A-Za-z+._-]+)*)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "=>|[()\\[\\],]",
+        "style": "punctuation"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+go 1.22.3
+
+toolchain go1.22.5
+
+godebug x509sha1=1
+
+tool example.com/platform/tools/workspace-audit
+ignore example.com/platform/legacy/playground
+
+use (
+	.
+
+	// Core libraries
+	./libs/api
+	./libs/auth
+	./libs/audit
+	./libs/cache
+	./libs/cli
+	./libs/config
+	./libs/contracts
+	./libs/crypto
+	./libs/db
+	./libs/events
+	./libs/featureflags
+	./libs/files
+	./libs/httpclient
+	./libs/jobs
+	./libs/logging
+	./libs/messaging
+	./libs/metrics
+	./libs/notifications
+	./libs/observability
+	./libs/policy
+	./libs/queue
+	./libs/runtime
+	./libs/search
+	./libs/storage
+	./libs/ui
+
+	// Public services
+	./services/admin-api
+	./services/audit-api
+	./services/auth-api
+	./services/billing-api
+	./services/catalog-api
+	./services/edge-proxy
+	./services/export-api
+	./services/feature-api
+	./services/graphql-api
+	./services/identity-api
+	./services/import-api
+	./services/metrics-api
+	./services/notification-api
+	./services/policy-api
+	./services/profile-api
+	./services/public-api
+	./services/queue-api
+	./services/report-api
+	./services/search-api
+	./services/secrets-api
+	./services/session-api
+	./services/storage-api
+	./services/webhook-api
+	./services/workflow-api
+
+	// Background jobs
+	./jobs/audit-compactor
+	./jobs/billing-rollup
+	./jobs/cache-warmer
+	./jobs/export-cleaner
+	./jobs/file-indexer
+	./jobs/notification-digest
+	./jobs/policy-sync
+	./jobs/report-rebuilder
+	./jobs/search-backfill
+	./jobs/session-reaper
+	./jobs/storage-migrator
+	./jobs/webhook-replayer
+
+	// Tooling
+	./tools/config-doctor
+	./tools/dev-proxy
+	./tools/loadgen
+	./tools/release-lint
+	./tools/schema-sync
+	./tools/trace-tail
+	./tools/workspace-audit
+
+	// Shared repositories nearby
+	../shared/design-tokens
+	../shared/proto/contracts
+	../shared/sdk/go/admin
+	../shared/sdk/go/client
+	../shared/sdk/go/runtime
+	../shared/sdk/go/search
+	../shared/test-fixtures/http
+	../shared/test-fixtures/queue
+	../shared/test-fixtures/storage
+	../vendor/internal/opa-policies
+
+	// Absolute patch overlays on CI agents
+	/opt/platform/patches/echo
+	/opt/platform/patches/grpc
+	/opt/platform/patches/memberlist
+	/opt/platform/patches/opa
+)
+
+use ./experiments/latency-lab
+use ./experiments/query-sandbox
+use ../shared/examples/onboarding
+use ../shared/examples/reporting
+
+replace (
+	example.com/platform/common => ./libs/config
+	example.com/platform/contracts => ./libs/contracts
+	example.com/platform/identity => ./services/identity-api
+	example.com/platform/notifications => ./services/notification-api
+	example.com/platform/observability => ./libs/observability
+	example.com/platform/policy => ./services/policy-api
+	example.com/platform/queue => ./services/queue-api
+	example.com/platform/reports => ./services/report-api
+	example.com/platform/runtime => ./libs/runtime
+	example.com/platform/search => ./services/search-api
+	example.com/platform/storage => ./services/storage-api
+	example.com/platform/workflows => ./services/workflow-api
+	github.com/hashicorp/memberlist => ./third_party/memberlist
+	github.com/labstack/echo/v4 => /opt/platform/patches/echo
+	google.golang.org/grpc => /opt/platform/patches/grpc
+)
+
+// Workspace notes:
+// https://docs.example.internal/platform/workspace-layout
+// https://docs.example.internal/platform/release/process

@@ -1,0 +1,125 @@
+// Core cloud and runtime dependencies
+cloud.google.com/go/pubsub v1.42.0 h1:KkTQw6C2Q2B9fV4h2Hn0w9L2fP8=
+cloud.google.com/go/pubsub v1.42.0/go.mod h1:ZfKpL9U3u3cBrm8c4Sv5w2J9yNs=
+cloud.google.com/go/secretmanager v1.13.3 h1:PvL4g8Nq2D5bVm0r5Qx1t8Yp3We=
+cloud.google.com/go/secretmanager v1.13.3/go.mod h1:UoR7k2Fx4Lp8dQr3nBw6y5M1hJa=
+cloud.google.com/go/storage v1.43.0 h1:FmX5v7Pe3Qa1tCs8wLr4u2Hi0Nz=
+cloud.google.com/go/storage v1.43.0/go.mod h1:NrB8y4Sd6Vu2mKp9cJx3q7T5aLe=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0 h1:GdH8u5Wr2Mj6pQa1nZs4x7Cv9Bt=
+github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0/go.mod h1:RqT9m1Kx7Pu3dVn6bLc5w2Fs8Ye=
+github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0 h1:WsM3p7Hd4Lq9vCx2tFb8n5Jr1Uy=
+github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0/go.mod h1:YxD4n8Re5Ht1mKv7uQa3c9Lp2Zi=
+github.com/aws/aws-sdk-go-v2 v1.31.0 h1:BvT7q2Mn9Cp4zFx6hWr1d8Ks3Ua=
+github.com/aws/aws-sdk-go-v2 v1.31.0/go.mod h1:CdU8r3Np1Dq5aGy7jXs2e9Lt4Vb=
+github.com/aws/aws-sdk-go-v2/config v1.27.36 h1:DeV9s4Oq2Er6bHz8kYt3f1Mu5Wc=
+github.com/aws/aws-sdk-go-v2/config v1.27.36/go.mod h1:EfW1t5Pr3Fs7cJa9lZu4g2Nv6Xd=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.61.2 h1:FgX2u6Qs4Gt8dKb1mAv5h3Ow7Ye=
+github.com/aws/aws-sdk-go-v2/service/s3 v1.61.2/go.mod h1:GhY3v7Rt5Hu9eLc2nBw6j4Px8Zf=
+
+// Data and storage drivers
+github.com/go-sql-driver/mysql v1.8.1 h1:HiZ4w8Su6Iv1fMd3oCx7k5Qy9Ag=
+github.com/go-sql-driver/mysql v1.8.1/go.mod h1:IjA5x9Tv7Jw2gNe4pDy8l6Rz1Bh=
+github.com/jackc/pgx/v5 v5.7.1 h1:JkB6y1Uw8Kx3hOf5qEz9m7Sa2Ci=
+github.com/jackc/pgx/v5 v5.7.1/go.mod h1:KlC7z2Vx9Ly4iPg6rFa1n8Tb3Dj=
+github.com/jmoiron/sqlx v1.4.0 h1:LmD8a3Wy1Mz5jQh7sGb2o9Uc4Ek=
+github.com/jmoiron/sqlx v1.4.0/go.mod h1:MnE9b4Xz2Na6kRi8tHc3p1Vd5Fl=
+github.com/lib/pq v1.10.9 h1:NoF1c5Ya3Ob7lSj9uId4q2We6Gm=
+github.com/lib/pq v1.10.9/go.mod h1:OpG2d6Zb4Pc8mTk1vJe5r3Xf7Hn=
+github.com/minio/minio-go/v7 v7.0.78 h1:PqH3e7Ac5Qd9nUl2wKf6s4Yg8Io=
+github.com/minio/minio-go/v7 v7.0.78/go.mod h1:QrJ4f8Bd6Re1oVm3xLg7t5Zh9Jp=
+github.com/redis/go-redis/v9 v9.6.1 h1:RsK5g9Ce7Sf2pWn4yMh8u6Ai1Kq=
+github.com/redis/go-redis/v9 v9.6.1/go.mod h1:StL6h1Df8Tg3qXo5zNi9v7Bj2Lr=
+go.mongodb.org/mongo-driver v1.17.1 h1:TuM7i2Eg9Uh4rYp6aOj1w8Ck3Ms=
+go.mongodb.org/mongo-driver v1.17.1/go.mod h1:UvN8j3Fh1Vi5sZq7bPk2x9Dl4Nt=
+modernc.org/sqlite v1.33.1 h1:VwP9k4Gi2Wj6tAr8cQl3y1Em5Ou=
+modernc.org/sqlite v1.33.1/go.mod h1:WxQ1l5Hj3Xk7uBs9dRm4z2Fn6Pv=
+
+// Messaging and workflow
+github.com/IBM/sarama v1.43.3 h1:XyR2m6Ik4Yl8vCt1eSn5a3Go7Qw=
+github.com/IBM/sarama v1.43.3/go.mod h1:YzS3n7Jl5Zm9wDu2fTo6b4Hp8Rx=
+github.com/ThreeDotsLabs/watermill v1.3.7 h1:ZaT4o8Km6An1xEv3gUp7c5Iq9Sy=
+github.com/ThreeDotsLabs/watermill v1.3.7/go.mod h1:AbU5p9Ln7Bo2yFw4hVq8d6Jr1Tz=
+github.com/ThreeDotsLabs/watermill-kafka/v2 v2.2.1 h1:BcV6q1Mo8Cp3zGx5iWr9e7Ks2Ua=
+github.com/ThreeDotsLabs/watermill-kafka/v2 v2.2.1/go.mod h1:CdW7r2Np9Dq4aHy6jXs1f8Lt3Vb=
+github.com/cenkalti/backoff/v4 v4.3.0 h1:DeX8s3Oq1Er5bIz7kYt2g9Mu4Wc=
+github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:EfY9t4Pr2Fs6cJa8lZu3h1Nv5Xd=
+github.com/hashicorp/raft v1.7.1 h1:FgZ1u5Qs3Gt7dKb9mAv4i2Ow6Ye=
+github.com/hashicorp/raft v1.7.1/go.mod h1:GhA2v6Rt4Hu8eLc1nBw5j3Px7Zf=
+github.com/nats-io/nats.go v1.37.0 h1:HiB3w7Su5Iv9fMd2oCx6k4Qy8Ag=
+github.com/nats-io/nats.go v1.37.0/go.mod h1:IjC4x8Tv6Jw1gNe3pDy7l5Rz9Bh=
+github.com/rabbitmq/amqp091-go v1.10.0 h1:JkD5y9Uw7Kx2hOf4qEz8m6Sa1Ci=
+github.com/rabbitmq/amqp091-go v1.10.0/go.mod h1:KlE6z1Vx8Ly3iPg5rFa9n7Tb2Dj=
+github.com/robfig/cron/v3 v3.0.1 h1:LmF7a2Wy9Mz4jQh6sGb1o8Uc3Ek=
+github.com/robfig/cron/v3 v3.0.1/go.mod h1:MnG8b3Xz1Na5kRi7tHc2p9Vd4Fl=
+
+// Observability and metrics
+github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:NoH9c4Ya2Ob6lSj8uId3q1We5Gm=
+github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:OpI1d5Zb3Pc7mTk9vJe4r2Xf6Hn=
+github.com/prometheus/client_golang v1.20.4 h1:PqJ2e6Ac4Qd8nUl1wKf5s3Yg7Io=
+github.com/prometheus/client_golang v1.20.4/go.mod h1:QrK3f7Bd5Re9oVm2xLg6t4Zh8Jp=
+github.com/prometheus/common v0.60.1 h1:RsL4g8Ce6Sf1pWn3yMh7u5Ai9Kq=
+github.com/prometheus/common v0.60.1/go.mod h1:StM5h9Df7Tg2qXo4zNi8v6Bj1Lr=
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 h1:TuN6i1Eg8Uh3rYp5aOj9w7Ck2Ms=
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0/go.mod h1:UvP7j2Fh9Vi4sZq6bPk1x8Dl3Nt=
+go.opentelemetry.io/otel v1.31.0 h1:VwQ8k3Gi1Wj5tAr7cQl2y9Em4Ou=
+go.opentelemetry.io/otel v1.31.0/go.mod h1:WxR9l4Hj2Xk6uBs8dRm3z1Fn5Pv=
+go.opentelemetry.io/otel/sdk v1.31.0 h1:XyS1m5Ik3Yl7vCt9eSn4a2Go6Qw=
+go.opentelemetry.io/otel/sdk v1.31.0/go.mod h1:YzT2n6Jl4Zm8wDu1fTo5b3Hp7Rx=
+go.opentelemetry.io/otel/trace v1.31.0 h1:ZaU3o7Km5An9xEv2gUp6c4Iq8Sy=
+go.opentelemetry.io/otel/trace v1.31.0/go.mod h1:AbV4p8Ln6Bo1yFw3hVq7d5Jr9Tz=
+go.uber.org/zap v1.27.0 h1:BcW5q9Mo7Cp2zGx4iWr8e6Ks1Ua=
+go.uber.org/zap v1.27.0/go.mod h1:CdX6r1Np8Dq3aHy5jXs9f7Lt2Vb=
+
+// API and policy surfaces
+github.com/99designs/gqlgen v0.17.58 h1:DeY7s2Oq9Er4bIz6kYt1g8Mu3Wc=
+github.com/99designs/gqlgen v0.17.58/go.mod h1:EfZ8t3Pr1Fs5cJa7lZu2h9Nv4Xd=
+github.com/gin-gonic/gin v1.10.0 h1:FgA9u4Qs2Gt6dKb8mAv3i1Ow5Ye=
+github.com/gin-gonic/gin v1.10.0/go.mod h1:GhB1v5Rt3Hu7eLc9nBw4j2Px6Zf=
+github.com/go-chi/chi/v5 v5.1.0 h1:HiC2w6Su4Iv8fMd1oCx5k3Qy7Ag=
+github.com/go-chi/chi/v5 v5.1.0/go.mod h1:IjD3x7Tv5Jw9gNe2pDy6l4Rz8Bh=
+github.com/golang-jwt/jwt/v5 v5.2.1 h1:JkE4y8Uw6Kx1hOf3qEz7m5Sa9Ci=
+github.com/golang-jwt/jwt/v5 v5.2.1/go.mod h1:KlF5z9Vx7Ly2iPg4rFa8n6Tb1Dj=
+github.com/hashicorp/memberlist v0.5.1 h1:LmG6a1Wy8Mz3jQh5sGb9o7Uc2Ek=
+github.com/hashicorp/memberlist v0.5.1/go.mod h1:MnH7b2Xz9Na4kRi6tHc1p8Vd3Fl=
+github.com/hashicorp/vault/api v1.15.0 h1:NoI8c3Ya1Ob5lSj7uId2q9We4Gm=
+github.com/hashicorp/vault/api v1.15.0/go.mod h1:OpJ9d4Zb2Pc6mTk8vJe3r1Xf5Hn=
+github.com/labstack/echo/v4 v4.12.0 h1:PqK1e5Ac3Qd7nUl9wKf4s2Yg6Io=
+github.com/labstack/echo/v4 v4.12.0/go.mod h1:QrL2f6Bd4Re8oVm1xLg5t3Zh7Jp=
+github.com/open-policy-agent/opa v0.68.0 h1:RsM3g7Ce5Sf9pWn2yMh6u4Ai8Kq=
+github.com/open-policy-agent/opa v0.68.0/go.mod h1:StN4h8Df6Tg1qXo3zNi7v5Bj9Lr=
+golang.org/x/oauth2 v0.23.0 h1:TuP5i9Eg7Uh2rYp4aOj8w6Ck1Ms=
+golang.org/x/oauth2 v0.23.0/go.mod h1:UvQ6j1Fh8Vi3sZq5bPk9x7Dl2Nt=
+
+// CLI, config, and external integrations
+github.com/BurntSushi/toml v1.4.0 h1:VwR7k2Gi9Wj4tAr6cQl1y8Em3Ou=
+github.com/BurntSushi/toml v1.4.0/go.mod h1:WxS8l3Hj1Xk5uBs7dRm2z9Fn4Pv=
+github.com/charmbracelet/bubbletea v1.1.1 h1:XyT9m4Ik2Yl6vCt8eSn3a1Go5Qw=
+github.com/charmbracelet/bubbletea v1.1.1/go.mod h1:YzU1n5Jl3Zm7wDu9fTo4b2Hp6Rx=
+github.com/google/go-github/v61 v61.0.0 h1:ZaV2o6Km4An8xEv1gUp5c3Iq7Sy=
+github.com/google/go-github/v61 v61.0.0/go.mod h1:AbW3p7Ln5Bo9yFw2hVq6d4Jr8Tz=
+github.com/slack-go/slack v0.14.0 h1:BcX4q8Mo6Cp1zGx3iWr7e5Ks9Ua=
+github.com/slack-go/slack v0.14.0/go.mod h1:CdY5r9Np7Dq2aHy4jXs8f6Lt1Vb=
+github.com/spf13/cobra v1.8.1 h1:DeZ6s1Oq8Er3bIz5kYt9g7Mu2Wc=
+github.com/spf13/cobra v1.8.1/go.mod h1:EfA7t2Pr9Fs4cJa6lZu1h8Nv3Xd=
+github.com/spf13/viper v1.19.0 h1:FgB8u3Qs1Gt5dKb7mAv2i9Ow4Ye=
+github.com/spf13/viper v1.19.0/go.mod h1:GhC9v4Rt2Hu6eLc8nBw3j1Px5Zf=
+google.golang.org/grpc v1.67.1 h1:HiD1w5Su3Iv7fMd9oCx4k2Qy6Ag=
+google.golang.org/grpc v1.67.1/go.mod h1:IjE2x6Tv4Jw8gNe1pDy5l3Rz7Bh=
+google.golang.org/protobuf v1.35.1 h1:JkF3y7Uw5Kx9hOf2qEz6m4Sa8Ci=
+google.golang.org/protobuf v1.35.1/go.mod h1:KlG4z8Vx6Ly1iPg3rFa7n5Tb9Dj=
+gopkg.in/natefinch/lumberjack.v2 v2.2.1 h1:LmH5a9Wy7Mz2jQh4sGb8o6Uc1Ek=
+gopkg.in/natefinch/lumberjack.v2 v2.2.1/go.mod h1:MnI6b1Xz8Na3kRi5tHc9p7Vd2Fl=
+gopkg.in/yaml.v3 v3.0.1 h1:NoJ7c2Ya9Ob4lSj6uId1q8We3Gm=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:OpK8d3Zb1Pc5mTk7vJe2r9Xf4Hn=
+github.com/stretchr/testify v1.9.0 h1:PqL9e4Ac2Qd6nUl8wKf3s1Yg5Io=
+github.com/stretchr/testify v1.9.0/go.mod h1:QrM1f5Bd3Re7oVm9xLg4t2Zh6Jp=
+github.com/vektah/gqlparser/v2 v2.5.18 h1:RsN2g6Ce4Sf8pWn1yMh5u3Ai7Kq=
+github.com/vektah/gqlparser/v2 v2.5.18/go.mod h1:StP3h7Df5Tg9qXo2zNi6v4Bj8Lr=
+golang.org/x/crypto v0.28.0 h1:TuQ4i8Eg6Uh1rYp3aOj7w5Ck9Ms=
+golang.org/x/crypto v0.28.0/go.mod h1:UvR5j9Fh7Vi2sZq4bPk8x6Dl1Nt=
+golang.org/x/net v0.30.0 h1:VwS6k1Gi8Wj3tAr5cQl9y7Em2Ou=
+golang.org/x/net v0.30.0/go.mod h1:WxT7l2Hj9Xk4uBs6dRm1z8Fn3Pv=
+golang.org/x/sync v0.8.0 h1:XyU8m3Ik1Yl5vCt7eSn2a9Go4Qw=
+golang.org/x/sync v0.8.0/go.mod h1:YzV9n4Jl2Zm6wDu8fTo3b1Hp5Rx=
+golang.org/x/text v0.19.0 h1:ZaW1o5Km3An7xEv9gUp4c2Iq6Sy=
+golang.org/x/text v0.19.0/go.mod h1:AbX2p6Ln4Bo8yFw1hVq5d3Jr7Tz=

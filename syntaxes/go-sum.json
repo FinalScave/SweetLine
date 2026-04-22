@@ -1,0 +1,16 @@
+{
+  "name": "go-sum",
+  "fileNames": ["go.sum"],
+  "states": {
+    "default": [
+      {
+        "pattern": "^([^\\s]+)(?:\\s+)(v[^\\s]+)(?:\\s+)(h1:[A-Za-z0-9+/=]+)$",
+        "styles": [1, "variable", 2, "number", 3, "string"]
+      },
+      {
+        "pattern": "^//.*$",
+        "style": "comment"
+      }
+    ]
+  }
+}
