@@ -25,6 +25,7 @@ set(LINK_LIB)
 set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
 set(SRC_DIR ${CMAKE_PROJECT_DIR}/src)
 set(3DPARTY_DIR ${CMAKE_PROJECT_DIR}/3dparty)
+set(CORE_OBJECT_TARGET "${CMAKE_PROJECT_NAME}_core_objects")
 set(STATIC_LIB_NAME "${CMAKE_PROJECT_NAME}_static")
 set(SHARED_LIB_NAME "${CMAKE_PROJECT_NAME}")
 
@@ -84,17 +85,20 @@ elseif (UNIX AND NOT APPLE)
     add_definitions(-DLINUX)
 endif ()
 
+add_library(${CORE_OBJECT_TARGET} OBJECT ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
+set_target_properties(${CORE_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 # project shared/static lib
 if (BUILD_SHARED_LIB)
     include_directories(${SRC_DIR}/shared)
     file(GLOB_RECURSE C_FILES ${SRC_DIR}/shared/*.*)
     message(STATUS "add target: ${SHARED_LIB_NAME} as dynamic lib")
-    add_library(${SHARED_LIB_NAME} SHARED ${CORE_SOURCE_FILES} ${PLATFORM_FILES} ${C_FILES})
+    add_library(${SHARED_LIB_NAME} SHARED $<TARGET_OBJECTS:${CORE_OBJECT_TARGET}> ${C_FILES})
 endif ()
 if (BUILD_STATIC_LIB)
     add_definitions(-DONIG_STATIC=ON)
     message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
-    add_library(${STATIC_LIB_NAME} STATIC ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
+    add_library(${STATIC_LIB_NAME} STATIC $<TARGET_OBJECTS:${CORE_OBJECT_TARGET}>)
 endif ()
 
 # add library functions
@@ -195,6 +199,7 @@ endif ()
 
 # Unit tests
 if (BUILD_TESTING)
+    enable_testing()
     message(STATUS "Unit tests enabled")
     if (NOT ANDROID AND NOT OHOS AND NOT EMSCRIPTEN)
         add_subdirectory(${CMAKE_PROJECT_DIR}/tests)

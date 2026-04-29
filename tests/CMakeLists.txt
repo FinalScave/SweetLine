@@ -1,4 +1,4 @@
-set(TEST_PRODUCT_NAME test)
+set(TEST_PRODUCT_NAME unit_tests)
 add_definitions(-DCATCH_AMALGAMATED_CUSTOM_MAIN=ON)
 add_executable(${TEST_PRODUCT_NAME}
         ${3DPARTY_DIR}/include/catch2/catch_amalgamated.cpp
@@ -9,6 +9,7 @@ add_executable(${TEST_PRODUCT_NAME}
         indent_test.cpp
         syntax_test.cpp
 )
+target_sources(${TEST_PRODUCT_NAME} PRIVATE $<TARGET_OBJECTS:${CORE_OBJECT_TARGET}>)
 
 target_include_directories(${TEST_PRODUCT_NAME} PRIVATE
         ${3DPARTY_DIR}/include
@@ -16,8 +17,7 @@ target_include_directories(${TEST_PRODUCT_NAME} PRIVATE
 )
 
 target_link_libraries(${TEST_PRODUCT_NAME} PRIVATE
-        sweetline_static
+        ${LINK_LIB}
 )
 
-enable_testing()
 add_test(NAME UnitTests COMMAND ${TEST_PRODUCT_NAME})
