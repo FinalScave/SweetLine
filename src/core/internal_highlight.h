@@ -108,6 +108,8 @@ namespace NS_SWEETLINE {
 
     void ensureAnalyzedThrough(size_t inclusive_end_line);
 
+    TextPosition resolveCharBoundaryPosition(size_t char_index) const;
+
     void rebaseReusableTailFrom(size_t start_line, size_t end_line_exclusive);
 
     SharedPtr<DocumentHighlightSlice> buildValidSlice(const LineRange& visible_range) const;

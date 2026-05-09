@@ -284,6 +284,39 @@ TEST_CASE("Analyze Java comment transitions incrementally") {
   REQUIRE(updated_highlight->lines[4].spans.front().style_id == 8);
 }
 
+TEST_CASE("Analyze incremental by char index accepts EOF boundaries") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
+
+  SECTION("append at EOF on non-empty document") {
+    SharedPtr<Document> document = makeSharedPtr<Document>("Main.java", "class Main {}");
+    SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+    REQUIRE(analyzer != nullptr);
+    REQUIRE(analyzer->analyze() != nullptr);
+
+    const size_t original_total = analyzer->getDocument()->totalChars();
+    SharedPtr<DocumentHighlight> appended = analyzer->analyzeIncremental(original_total, original_total, "\n// tail");
+    REQUIRE(appended != nullptr);
+    REQUIRE(analyzer->getDocument()->getText() == "class Main {}\n// tail");
+
+    const size_t appended_total = analyzer->getDocument()->totalChars();
+    SharedPtr<DocumentHighlight> trimmed = analyzer->analyzeIncremental(appended_total - 5, appended_total, "");
+    REQUIRE(trimmed != nullptr);
+    REQUIRE(analyzer->getDocument()->getText() == "class Main {}\n//");
+  }
+
+  SECTION("insert into empty document") {
+    SharedPtr<Document> document = makeSharedPtr<Document>("Empty.java", "");
+    SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+    REQUIRE(analyzer != nullptr);
+
+    SharedPtr<DocumentHighlight> updated = analyzer->analyzeIncremental(0, 0, "class Empty {}");
+    REQUIRE(updated != nullptr);
+    REQUIRE(analyzer->getDocument()->getText() == "class Empty {}");
+    REQUIRE(analyzer->getDocument()->getLineCount() == 1);
+  }
+}
+
 TEST_CASE("Analyze incremental in visible line range") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));

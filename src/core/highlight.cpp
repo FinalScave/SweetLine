@@ -911,6 +911,23 @@ namespace NS_SWEETLINE {
     }
   }
 
+  TextPosition InternalDocumentAnalyzer::resolveCharBoundaryPosition(size_t char_index) const {
+    if (m_document_ == nullptr) {
+      return {};
+    }
+    const size_t line_count = m_document_->getLineCount();
+    if (line_count == 0) {
+      return {0, 0, 0};
+    }
+    const size_t total_chars = m_document_->totalChars();
+    char_index = std::min(char_index, total_chars);
+    if (char_index == total_chars) {
+      const size_t last_line = line_count - 1;
+      return {last_line, m_document_->getLineCharCount(last_line), total_chars};
+    }
+    return m_document_->charIndexToPosition(char_index);
+  }
+
   SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlight() {
     if (m_rule_ == nullptr) {
       return nullptr;
@@ -951,9 +968,8 @@ namespace NS_SWEETLINE {
   }
 
   SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text) {
-    TextPosition start_pos = m_document_->charIndexToPosition(start_index);
-    end_index = std::min(end_index, m_document_->totalChars());
-    TextPosition end_pos = m_document_->charIndexToPosition(end_index);
+    TextPosition start_pos = resolveCharBoundaryPosition(start_index);
+    TextPosition end_pos = resolveCharBoundaryPosition(end_index);
     return analyzeHighlightIncremental(TextRange{start_pos, end_pos}, new_text);
   }
 

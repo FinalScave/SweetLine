@@ -15,7 +15,7 @@ TEST_CASE("Patch Text") {
   REQUIRE(document.getLine(1).text == "行1: 你好");
   REQUIRE(document.getLine(2).text == "行2: World");
   REQUIRE(document.getLine(3).text == "行3: 结束");
-  REQUIRE(document.totalChars() == 25);
+  REQUIRE(document.totalChars() == 24);
   REQUIRE(document.charIndexOfLine(0) == 0);
   REQUIRE(document.charIndexOfLine(1) == 1);
   REQUIRE(document.charIndexOfLine(2) == 8);
@@ -23,17 +23,17 @@ TEST_CASE("Patch Text") {
   REQUIRE(document.charIndexToPosition(8) == TextPosition{2, 0, 8});
   REQUIRE(document.charIndexToPosition(18) == TextPosition{3, 0, 18});
 
-  // 单行更新：替换 "你好" 为 "您不好"
+  // Single-line patch replaces "你好" with "您不好"
   TextRange range = {{1, 4}, {1, 6}};
   PatchResult single_line_result = document.patch(range, "您不好");
   REQUIRE(single_line_result.line_delta == 0);
   REQUIRE(single_line_result.char_delta == 1);
   REQUIRE(document.getLine(1).text == "行1: 您不好");
-  REQUIRE(document.totalChars() == 26);
+  REQUIRE(document.totalChars() == 25);
   REQUIRE(document.charIndexOfLine(2) == 9);
   REQUIRE(document.charIndexOfLine(3) == 19);
 
-  // 跨行更新：替换 "World\n行3" 为 "宇宙\n最后一行"
+  // Multi-line patch replaces "World\n行3" with "宇宙\n最后一行"
   range = {{2, 4}, {3, 2}};
   PatchResult multi_line_result = document.patch(range, "宇宙\n最后一行");
   REQUIRE(multi_line_result.line_delta == 0);
@@ -41,26 +41,26 @@ TEST_CASE("Patch Text") {
   REQUIRE(document.getLineCount() == 4);
   REQUIRE(document.getLine(2).text == "行2: 宇宙");
   REQUIRE(document.getLine(3).text == "最后一行: 结束");
-  REQUIRE(document.totalChars() == 25);
+  REQUIRE(document.totalChars() == 24);
   REQUIRE(document.charIndexOfLine(2) == 9);
   REQUIRE(document.charIndexOfLine(3) == 16);
   REQUIRE(document.charIndexToPosition(16) == TextPosition{3, 0, 16});
 
-  // 插入文本
+  // Insert text
   TextPosition position = {2, 1};
   document.insert(position, "=====");
   REQUIRE(document.getLine(2).text == "行=====2: 宇宙");
-  REQUIRE(document.totalChars() == 30);
+  REQUIRE(document.totalChars() == 29);
   REQUIRE(document.charIndexOfLine(3) == 21);
 
-  // 删除文本
+  // Delete text
   range = {{1, 0}, {2, 9}};
   document.remove(range);
   REQUIRE(document.getLineCount() == 3);
   REQUIRE(document.getLine(0).text.empty());
   REQUIRE(document.getLine(1).text == "宇宙");
   REQUIRE(document.getLine(2).text == "最后一行: 结束");
-  REQUIRE(document.totalChars() == 13);
+  REQUIRE(document.totalChars() == 12);
   REQUIRE(document.charIndexOfLine(0) == 0);
   REQUIRE(document.charIndexOfLine(1) == 1);
   REQUIRE(document.charIndexOfLine(2) == 4);
@@ -75,11 +75,66 @@ TEST_CASE("Append Text Keeps Cached Indices In Sync") {
   REQUIRE(append_result.char_delta == 4);
   REQUIRE(document.getLineCount() == 2);
   REQUIRE(document.getLine(0).text == "第一行");
+  REQUIRE(document.getLine(0).ending == LineEnding::LF);
   REQUIRE(document.getLine(1).text == "第二行");
-  REQUIRE(document.totalChars() == 8);
+  REQUIRE(document.getLine(1).ending == LineEnding::NONE);
+  REQUIRE(document.getText() == "第一行\n第二行");
+  REQUIRE(document.totalChars() == 7);
   REQUIRE(document.charIndexOfLine(0) == 0);
   REQUIRE(document.charIndexOfLine(1) == 4);
   REQUIRE(document.charIndexToPosition(4) == TextPosition{1, 0, 4});
+}
+
+TEST_CASE("Split text preserves explicit line endings only") {
+  Document single_line_document("test.txt", "abc");
+  REQUIRE(single_line_document.getLineCount() == 1);
+  REQUIRE(single_line_document.getLine(0).ending == LineEnding::NONE);
+  REQUIRE(single_line_document.getText() == "abc");
+
+  Document lf_document("test.txt", "a\nb");
+  REQUIRE(lf_document.getLineCount() == 2);
+  REQUIRE(lf_document.getLine(0).ending == LineEnding::LF);
+  REQUIRE(lf_document.getLine(1).ending == LineEnding::NONE);
+  REQUIRE(lf_document.getText() == "a\nb");
+}
+
+TEST_CASE("Single-line patch preserves inserted newline endings") {
+  Document document("test.txt", "hello world");
+
+  PatchResult patch_result = document.patch({{0, 5}, {0, 5}}, "\n");
+  REQUIRE(patch_result.line_delta == 1);
+  REQUIRE(patch_result.char_delta == 1);
+  REQUIRE(document.getLineCount() == 2);
+  REQUIRE(document.getLine(0).text == "hello");
+  REQUIRE(document.getLine(0).ending == LineEnding::LF);
+  REQUIRE(document.getLine(1).text == " world");
+  REQUIRE(document.getLine(1).ending == LineEnding::NONE);
+  REQUIRE(document.getText() == "hello\n world");
+}
+
+TEST_CASE("Multi-line patch preserves merged line endings") {
+  Document document("test.txt", "ab\ncd\nef");
+
+  PatchResult delete_result = document.patch({{0, 1}, {1, 1}}, "");
+  REQUIRE(delete_result.line_delta == -1);
+  REQUIRE(document.getLineCount() == 2);
+  REQUIRE(document.getLine(0).text == "ad");
+  REQUIRE(document.getLine(0).ending == LineEnding::LF);
+  REQUIRE(document.getLine(1).text == "ef");
+  REQUIRE(document.getLine(1).ending == LineEnding::NONE);
+  REQUIRE(document.getText() == "ad\nef");
+
+  Document replace_document("test.txt", "ab\ncd\nef");
+  PatchResult replace_result = replace_document.patch({{0, 1}, {1, 1}}, "X\nY");
+  REQUIRE(replace_result.line_delta == 0);
+  REQUIRE(replace_document.getLineCount() == 3);
+  REQUIRE(replace_document.getLine(0).text == "aX");
+  REQUIRE(replace_document.getLine(0).ending == LineEnding::LF);
+  REQUIRE(replace_document.getLine(1).text == "Yd");
+  REQUIRE(replace_document.getLine(1).ending == LineEnding::LF);
+  REQUIRE(replace_document.getLine(2).text == "ef");
+  REQUIRE(replace_document.getLine(2).ending == LineEnding::NONE);
+  REQUIRE(replace_document.getText() == "aX\nYd\nef");
 }
 
 TEST_CASE("Patch Benchmark") {

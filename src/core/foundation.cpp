@@ -1,4 +1,3 @@
-#include <sstream>
 #include <stdexcept>
 #include <algorithm>
 #include "foundation.h"
@@ -143,9 +142,9 @@ namespace NS_SWEETLINE {
       rebuildLineMetrics();
     } else {
       rebuild_from_line = m_lines_.size() - 1;
-      // Append first line to the existing last line
+      const LineEnding appended_ending = new_lines[0].ending;
       m_lines_.back().text += new_lines.empty() ? "" : new_lines[0].text;
-      // Append subsequent lines
+      m_lines_.back().ending = appended_ending;
       for (size_t i = 1; i < new_lines.size(); ++i) {
         m_lines_.push_back(new_lines[i]);
       }
@@ -221,18 +220,27 @@ namespace NS_SWEETLINE {
     if (text.empty()) {
       return;
     }
-    std::stringstream ss(text);
-    U8String line;
-    while (std::getline(ss, line)) {
-      LineEnding ending = LineEnding::LF;
-      if (!line.empty() && line.back() == '\r') {
-        line = line.substr(0, line.length() - 1);
-        ending = LineEnding::CRLF;
+    size_t line_start = 0;
+    for (size_t i = 0; i < text.length(); ++i) {
+      if (text[i] != '\n' && text[i] != '\r') {
+        continue;
       }
-      result.push_back({line, ending});
+      const size_t line_end = i;
+      LineEnding ending = LineEnding::LF;
+      if (text[i] == '\r') {
+        if (i + 1 < text.length() && text[i + 1] == '\n') {
+          ending = LineEnding::CRLF;
+          ++i;
+        } else {
+          ending = LineEnding::CR;
+        }
+      }
+      result.push_back({text.substr(line_start, line_end - line_start), ending});
+      line_start = i + 1;
     }
-    // If text ends with newline, add an empty line
-    if (!text.empty() && text.back() == '\n') {
+    if (line_start < text.length()) {
+      result.push_back({text.substr(line_start), LineEnding::NONE});
+    } else if (!text.empty() && (text.back() == '\n' || text.back() == '\r')) {
       result.push_back({"", LineEnding::NONE});
     }
   }
@@ -274,6 +282,7 @@ namespace NS_SWEETLINE {
 
   PatchResult Document::patchSingleLine(const TextRange& range, const List<DocumentLine>& new_lines) {
     DocumentLine& line = m_lines_[range.start.line];
+    const LineEnding original_ending = line.ending;
     // Convert to byte positions for operation
     size_t start_byte = Utf8Util::charPosToBytePos(line.text, range.start.column);
     size_t end_byte = Utf8Util::charPosToBytePos(line.text, range.end.column);
@@ -285,23 +294,19 @@ namespace NS_SWEETLINE {
     }
 
     if (new_lines.size() == 1) {
-      // Replace range content directly with patch content
       line.text = line.text.substr(0, start_byte) + new_lines[0].text + line.text.substr(end_byte);
+      line.ending = original_ending;
       return {};
     } else {
-      // Truncate first line at range boundaries, prepend left side with new_lines[0]
       U8String rest_of_line = line.text.substr(end_byte);
       line.text = line.text.substr(0, start_byte) + new_lines[0].text;
-
-      // Insert new lines
+      line.ending = new_lines[0].ending;
       for (size_t i = 1; i < new_lines.size(); ++i) {
         m_lines_.insert(m_lines_.begin() + range.start.line + i, new_lines[i]);
       }
-
-      // Append the right remainder of the truncated first line to the last inserted line
-      if (!rest_of_line.empty()) {
-        m_lines_[range.start.line + new_lines.size() - 1].text += rest_of_line;
-      }
+      size_t last_line_index = range.start.line + new_lines.size() - 1;
+      m_lines_[last_line_index].text += rest_of_line;
+      m_lines_[last_line_index].ending = original_ending;
       PatchResult result;
       result.line_delta = static_cast<int32_t>(new_lines.size()) - 1;
       return result;
@@ -309,67 +314,48 @@ namespace NS_SWEETLINE {
   }
 
   PatchResult Document::patchMultipleLines(const TextRange& range, const List<DocumentLine>& new_lines) {
-    // First line
-    DocumentLine& first_line = m_lines_[range.start.line];
-    size_t start_byte = Utf8Util::charPosToBytePos(first_line.text, range.start.column);
+    const size_t start_line = range.start.line;
+    const size_t end_line = range.end.line;
+    DocumentLine& first_line = m_lines_[start_line];
+    const size_t start_byte = Utf8Util::charPosToBytePos(first_line.text, range.start.column);
+    const U8String left_side = first_line.text.substr(0, start_byte);
 
-    // Last line
-    DocumentLine& last_line = m_lines_[range.end.line];
-    size_t end_byte = Utf8Util::charPosToBytePos(last_line.text, range.end.column);
-    U8String rest_of_last_line = last_line.text.substr(end_byte);
-    LineEnding ending_of_last_line = last_line.ending;
+    const DocumentLine& last_line = m_lines_[end_line];
+    const size_t end_byte = Utf8Util::charPosToBytePos(last_line.text, range.end.column);
+    const U8String rest_of_last_line = last_line.text.substr(end_byte);
+    const LineEnding ending_of_last_line = last_line.ending;
 
-    // If patch text is empty, replace range with "", i.e. delete text in range
     if (new_lines.empty()) {
-      first_line.text = first_line.text.substr(0, start_byte) + rest_of_last_line;
-      // Delete lines in between range
-      if (range.end.line > range.start.line) {
-        size_t start_delete = range.start.line + 1;
-      size_t end_delete = range.end.line + 1; // +1, erase is [first, last)
-        if (end_delete > m_lines_.size()) {
-          end_delete = m_lines_.size();
-        }
-        if (start_delete < end_delete) {
-          m_lines_.erase(m_lines_.begin() + start_delete, m_lines_.begin() + end_delete);
-        }
+      first_line.text = left_side + rest_of_last_line;
+      first_line.ending = ending_of_last_line;
+      size_t start_delete = start_line + 1;
+      size_t end_delete = end_line + 1;
+      if (start_delete < end_delete) {
+        m_lines_.erase(m_lines_.begin() + start_delete, m_lines_.begin() + end_delete);
       }
       PatchResult result;
-      result.line_delta = -static_cast<int32_t>(range.end.line - range.start.line);
+      result.line_delta = -static_cast<int32_t>(end_line - start_line);
       return result;
     }
 
-    // Prepend left side of truncated range with the first line
-    first_line.text = first_line.text.substr(0, start_byte) + new_lines[0].text;
+    first_line.text = left_side + new_lines[0].text;
+    first_line.ending = new_lines.size() == 1 ? ending_of_last_line : new_lines[0].ending;
 
-    // Delete middle lines
-    size_t delete_count = range.end.line - range.start.line;
-    if (delete_count > 0) {
-      size_t delete_start = range.start.line + 1;
-      size_t delete_end = delete_start + delete_count;
-      if (delete_end > m_lines_.size()) {
-        delete_end = m_lines_.size();
-      }
-      if (delete_start < delete_end) {
-        m_lines_.erase(m_lines_.begin() + delete_start, m_lines_.begin() + delete_end);
-      }
+    size_t delete_start = start_line + 1;
+    size_t delete_end = end_line + 1;
+    if (delete_start < delete_end) {
+      m_lines_.erase(m_lines_.begin() + delete_start, m_lines_.begin() + delete_end);
     }
 
-    // Insert new lines
     for (size_t i = 1; i < new_lines.size(); ++i) {
-      m_lines_.insert(m_lines_.begin() + range.start.line + i, new_lines[i]);
+      m_lines_.insert(m_lines_.begin() + start_line + i, new_lines[i]);
     }
 
-    // Append right remainder of range to the last line
-    if (!rest_of_last_line.empty()) {
-      size_t last_new_line_index = range.start.line + new_lines.size() - 1;
-      if (last_new_line_index < m_lines_.size()) {
-        m_lines_[last_new_line_index].text += rest_of_last_line;
-      } else {
-        m_lines_.push_back({rest_of_last_line, ending_of_last_line});
-      }
-    }
+    size_t last_new_line_index = start_line + new_lines.size() - 1;
+    m_lines_[last_new_line_index].text += rest_of_last_line;
+    m_lines_[last_new_line_index].ending = ending_of_last_line;
     PatchResult result;
-    result.line_delta = static_cast<int32_t>(new_lines.size() - (range.end.line - range.start.line));
+    result.line_delta = static_cast<int32_t>(new_lines.size() - (end_line - start_line));
     return result;
   }
 
