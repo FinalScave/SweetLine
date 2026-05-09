@@ -23,7 +23,9 @@ namespace {
   static const char* kGroovySyntaxPath = SYNTAX_DIR"/groovy.json";
   static const char* kHlslSyntaxPath = SYNTAX_DIR"/hlsl.json";
   static const char* kJavascriptSyntaxPath = SYNTAX_DIR"/javascript.json";
+  static const char* kJsxSyntaxPath = SYNTAX_DIR"/jsx.json";
   static const char* kJasmSyntaxPath = SYNTAX_DIR"/jasm.json";
+  static const char* kTsxSyntaxPath = SYNTAX_DIR"/tsx.json";
   static const char* kTypescriptSyntaxPath = SYNTAX_DIR"/typescript.json";
   static const char* kCssSyntaxPath = SYNTAX_DIR"/css.json";
   static const char* kScssSyntaxPath = SYNTAX_DIR"/scss.json";
@@ -197,6 +199,45 @@ TEST_CASE("Highlight example.java Benchmark") {
   };
 }
 
+TEST_CASE("Visible range example.java Benchmarks") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  engine->compileSyntaxFromFile(kJavaSyntaxPath);
+  U8String code_txt = FileUtil::readString(kJavaExampleFilePath);
+  REQUIRE_FALSE(code_txt.empty());
+  const LineRange visible_range = {0, 80};
+  const TextRange insert_range = {{0, 0}, {0, 0}};
+  const U8String inserted_text = "// inserted\n";
+
+  SharedPtr<Document> sample_document = makeSharedPtr<Document>("example.java", code_txt);
+  SharedPtr<DocumentAnalyzer> sample_analyzer = engine->loadDocument(sample_document);
+  REQUIRE(sample_analyzer != nullptr);
+
+  BENCHMARK_ADVANCED("AnalyzeLineRange example.java Performance")(Catch::Benchmark::Chronometer meter) {
+    meter.measure([&] {
+      SharedPtr<Document> benchmark_document = makeSharedPtr<Document>("example.java", code_txt);
+      SharedPtr<DocumentAnalyzer> benchmark_analyzer = engine->loadDocument(benchmark_document);
+      return benchmark_analyzer->analyzeLineRange(visible_range);
+    });
+  };
+
+  BENCHMARK_ADVANCED("AnalyzeIncrementalInLineRange example.java Performance")(Catch::Benchmark::Chronometer meter) {
+    meter.measure([&] {
+      SharedPtr<Document> benchmark_document = makeSharedPtr<Document>("example.java", code_txt);
+      SharedPtr<DocumentAnalyzer> benchmark_analyzer = engine->loadDocument(benchmark_document);
+      return benchmark_analyzer->analyzeIncrementalInLineRange(insert_range, inserted_text, visible_range);
+    });
+  };
+
+  BENCHMARK_ADVANCED("AnalyzeIncremental example.java Performance")(Catch::Benchmark::Chronometer meter) {
+    meter.measure([&] {
+      SharedPtr<Document> benchmark_document = makeSharedPtr<Document>("example.java", code_txt);
+      SharedPtr<DocumentAnalyzer> benchmark_analyzer = engine->loadDocument(benchmark_document);
+      benchmark_analyzer->analyze();
+      return benchmark_analyzer->analyzeIncremental(insert_range, inserted_text);
+    });
+  };
+}
+
 
 TEST_CASE("Highlight example.t Benchmark") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
@@ -254,9 +295,12 @@ TEST_CASE("Analyze incremental in visible line range") {
   SharedPtr<DocumentAnalyzer> analyzer2 = engine->loadDocument(document2);
   SharedPtr<Document> document3 = makeSharedPtr<Document>("Main3.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer3 = engine->loadDocument(document3);
+  SharedPtr<Document> document4 = makeSharedPtr<Document>("Main4.java", code_txt);
+  SharedPtr<DocumentAnalyzer> analyzer4 = engine->loadDocument(document4);
   REQUIRE(analyzer != nullptr);
   REQUIRE(analyzer2 != nullptr);
   REQUIRE(analyzer3 != nullptr);
+  REQUIRE(analyzer4 != nullptr);
   SharedPtr<DocumentHighlight> initial = analyzer->analyze();
   SharedPtr<DocumentHighlight> initial2 = analyzer2->analyze();
   REQUIRE(initial != nullptr);
@@ -278,6 +322,24 @@ TEST_CASE("Analyze incremental in visible line range") {
   CHECK(cold_slice->total_line_count == analyzer3->getDocument()->getLineCount());
   CHECK(cold_slice->lines.empty());
 
+  SharedPtr<DocumentHighlightSlice> cold_range_slice = analyzer3->analyzeLineRange(visible_range);
+  REQUIRE(cold_range_slice != nullptr);
+  REQUIRE(cold_range_slice->start_line == visible_range.start_line);
+  REQUIRE(cold_range_slice->total_line_count == analyzer3->getDocument()->getLineCount());
+  REQUIRE(cold_range_slice->lines.size() == visible_range.line_count);
+  for (size_t i = 0; i < cold_range_slice->lines.size(); ++i) {
+    CHECK(cold_range_slice->lines[i] == initial->lines[cold_range_slice->start_line + i]);
+  }
+
+  SharedPtr<DocumentHighlightSlice> cold_cached_slice = analyzer3->getHighlightSlice(visible_range);
+  REQUIRE(cold_cached_slice != nullptr);
+  REQUIRE(cold_cached_slice->start_line == cold_range_slice->start_line);
+  REQUIRE(cold_cached_slice->total_line_count == cold_range_slice->total_line_count);
+  REQUIRE(cold_cached_slice->lines.size() == cold_range_slice->lines.size());
+  for (size_t i = 0; i < cold_cached_slice->lines.size(); ++i) {
+    CHECK(cold_cached_slice->lines[i] == cold_range_slice->lines[i]);
+  }
+
   TextRange range = {{0, 0}, {0, 0}};
   SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeIncrementalInLineRange(range, "// inserted\n", visible_range);
   SharedPtr<DocumentHighlight> full = analyzer2->analyzeIncremental(range, "// inserted\n");
@@ -288,6 +350,16 @@ TEST_CASE("Analyze incremental in visible line range") {
   REQUIRE(slice->lines.size() == visible_range.line_count);
   for (size_t i = 0; i < slice->lines.size(); ++i) {
     CHECK(slice->lines[i] == full->lines[slice->start_line + i]);
+  }
+
+  SharedPtr<DocumentHighlightSlice> cold_incremental_slice =
+    analyzer4->analyzeIncrementalInLineRange(range, "// inserted\n", visible_range);
+  REQUIRE(cold_incremental_slice != nullptr);
+  REQUIRE(cold_incremental_slice->start_line == visible_range.start_line);
+  REQUIRE(cold_incremental_slice->total_line_count == analyzer4->getDocument()->getLineCount());
+  REQUIRE(cold_incremental_slice->lines.size() == visible_range.line_count);
+  for (size_t i = 0; i < cold_incremental_slice->lines.size(); ++i) {
+    CHECK(cold_incremental_slice->lines[i] == full->lines[cold_incremental_slice->start_line + i]);
   }
 
   SharedPtr<DocumentHighlightSlice> cached_updated_slice = analyzer->getHighlightSlice(visible_range);
@@ -615,7 +687,9 @@ TEST_CASE("Infra syntaxes keep block heads, properties, traversals, and URLs dis
 TEST_CASE("Markup component syntaxes keep directives, bindings, scripts, styles, and URLs distinct") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavascriptSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJsxSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTypescriptSyntaxPath));
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTsxSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kCssSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kScssSyntaxPath));
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kLessSyntaxPath));

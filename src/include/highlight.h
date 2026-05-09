@@ -23,6 +23,7 @@ namespace NS_SWEETLINE {
 
     bool operator==(const TokenSpan& other) const;
     bool operator!=(const TokenSpan& other) const;
+    bool isReusableWith(const TokenSpan& other) const;
 
 #ifdef SWEETLINE_DEBUG
     void dump() const;
@@ -34,6 +35,7 @@ namespace NS_SWEETLINE {
     List<TokenSpan> spans;
     void pushOrMergeSpan(TokenSpan&& span);
     bool operator==(const LineHighlight& other) const;
+    bool isReusableWith(const LineHighlight& other) const;
     void toJson(U8String& result) const;
 
 #ifdef SWEETLINE_DEBUG
@@ -220,13 +222,18 @@ namespace NS_SWEETLINE {
     /// @return Highlight result for the entire managed document
     SharedPtr<DocumentHighlight> analyze() const;
 
+    /// Analyze enough lines to cover the requested line range and return the corresponding slice
+    /// @param visible_range The visible line range to analyze and return
+    /// @return Highlight slice for the specified line range
+    SharedPtr<DocumentHighlightSlice> analyzeLineRange(const LineRange& visible_range) const;
+
     /// Incrementally re-analyze the entire managed document based on patch content
     /// @param range The change range of the patch
     /// @param new_text The patched text
     /// @return Highlight result for the entire managed document
     SharedPtr<DocumentHighlight> analyzeIncremental(const TextRange& range, const U8String& new_text) const;
 
-    /// Incrementally analyze based on patch content, returning only a highlight slice for the specified line range
+    /// Incrementally analyze based on patch content, ensuring the requested line range is available in the cache
     /// @param range The change range of the patch
     /// @param new_text The patched text
     /// @param visible_range The visible line range to return
@@ -234,8 +241,7 @@ namespace NS_SWEETLINE {
     SharedPtr<DocumentHighlightSlice> analyzeIncrementalInLineRange(const TextRange& range, const U8String& new_text,
       const LineRange& visible_range) const;
 
-    /// Get highlight slice from the current cached result
-    /// Requires prior call to analyze or analyzeIncremental
+    /// Get highlight slice from the current cached result without triggering new analysis
     /// @param visible_range The visible line range to return
     /// @return Highlight slice for the specified line range
     SharedPtr<DocumentHighlightSlice> getHighlightSlice(const LineRange& visible_range) const;
@@ -255,7 +261,7 @@ namespace NS_SWEETLINE {
     /// @return HighlightConfig
     const HighlightConfig& getHighlightConfig() const;
 
-    /// Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
+    /// Perform indent guide analysis on the managed document (requires a full valid highlight cache)
     /// @return Indent guide analysis result
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
   private:

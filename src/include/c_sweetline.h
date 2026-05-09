@@ -200,6 +200,17 @@ SL_API sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_ha
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle);
 
+/// Analyze enough lines to cover the specified line range on a managed document
+/// @param analyzer_handle Document highlight analyzer handle
+/// @param visible_range Visible line range, array structure: [startLine],[lineCount]
+/// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
+/// @code
+/// Same format as sl_document_analyze_incremental_in_line_range:
+/// [flags, spanStride, startLine, totalLineCount, lineCount, lineEntry...]
+/// @endcode
+/// Note: the return value must be freed by calling sl_free_buffer after use
+SL_API int32_t* sl_document_analyze_line_range(sl_analyzer_handle_t analyzer_handle, int32_t* visible_range);
+
 /// Perform incremental highlight analysis on a managed document (called when document changes)
 /// @param analyzer_handle Document highlight analyzer handle
 /// @param changes_range Change range, array structure: [startLine],[startColumn],[endLine],[endColumn]
@@ -234,8 +245,7 @@ SL_API int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer_ha
 SL_API int32_t* sl_document_analyze_incremental_in_line_range(
   sl_analyzer_handle_t analyzer_handle, int32_t* changes_range, const char* new_text, int32_t* visible_range);
 
-/// Get highlight slice from the current cached document highlight result
-/// Requires prior call to sl_document_analyze or sl_document_analyze_incremental
+/// Get highlight slice from the current cached document highlight result without triggering new analysis
 /// @param analyzer_handle Document highlight analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:

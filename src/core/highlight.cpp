@@ -267,6 +267,14 @@ namespace NS_SWEETLINE {
     return !this->operator==(other);
   }
 
+  bool TokenSpan::isReusableWith(const TokenSpan& other) const {
+    return range.start.column == other.range.start.column
+      && range.end.column == other.range.end.column
+      && style_id == other.style_id
+      && state == other.state
+      && goto_state == other.goto_state;
+  }
+
 #ifdef SWEETLINE_DEBUG
   void TokenSpan::dump() const {
     const nlohmann::json json = *this;
@@ -702,93 +710,242 @@ namespace NS_SWEETLINE {
     m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(m_rule_, config);
   }
 
+  void InternalDocumentAnalyzer::resetAnalysisCache() {
+    if (m_highlight_ != nullptr) {
+      m_highlight_->reset();
+    }
+    m_line_syntax_states_.clear();
+    m_valid_line_count_ = 0;
+    m_reusable_tail_start_ = 0;
+    m_reusable_tail_lines_dirty_ = false;
+    m_reusable_tail_indices_dirty_ = false;
+  }
+
+  void InternalDocumentAnalyzer::invalidateAnalysisFrom(size_t line) {
+    m_valid_line_count_ = std::min(m_valid_line_count_, line);
+  }
+
+  void InternalDocumentAnalyzer::ensureCacheSize(size_t line_count) {
+    if (m_highlight_ == nullptr) {
+      m_highlight_ = makeSharedPtr<DocumentHighlight>();
+    }
+    if (m_highlight_->lines.size() < line_count) {
+      m_highlight_->lines.resize(line_count);
+    }
+    if (m_line_syntax_states_.size() < line_count) {
+      m_line_syntax_states_.resize(line_count, SyntaxRule::kDefaultStateId);
+    }
+  }
+
+  void InternalDocumentAnalyzer::syncCachedLinesAfterPatch(
+    size_t change_start_line, size_t old_end_line, int32_t line_delta, int32_t char_delta) {
+    if (m_highlight_ == nullptr) {
+      return;
+    }
+    size_t cached_line_count = m_highlight_->lines.size();
+    if (change_start_line >= cached_line_count) {
+      return;
+    }
+
+    size_t old_tail_begin = old_end_line + 1;
+    if (old_tail_begin >= cached_line_count) {
+      m_highlight_->lines.resize(change_start_line);
+      m_line_syntax_states_.resize(change_start_line);
+      m_valid_line_count_ = std::min(m_valid_line_count_, change_start_line);
+      m_reusable_tail_start_ = m_highlight_->lines.size();
+      m_reusable_tail_lines_dirty_ = false;
+      m_reusable_tail_indices_dirty_ = false;
+      return;
+    }
+
+    size_t new_tail_begin = old_tail_begin;
+    if (line_delta >= 0) {
+      new_tail_begin += static_cast<size_t>(line_delta);
+    } else {
+      new_tail_begin -= static_cast<size_t>(-line_delta);
+    }
+    if (line_delta > 0) {
+      m_highlight_->lines.insert(
+        m_highlight_->lines.begin() + static_cast<ptrdiff_t>(old_tail_begin),
+        static_cast<size_t>(line_delta), {});
+      m_line_syntax_states_.insert(
+        m_line_syntax_states_.begin() + static_cast<ptrdiff_t>(old_tail_begin),
+        static_cast<size_t>(line_delta), SyntaxRule::kDefaultStateId);
+    } else if (line_delta < 0) {
+      m_highlight_->lines.erase(
+        m_highlight_->lines.begin() + static_cast<ptrdiff_t>(new_tail_begin),
+        m_highlight_->lines.begin() + static_cast<ptrdiff_t>(old_tail_begin));
+      m_line_syntax_states_.erase(
+        m_line_syntax_states_.begin() + static_cast<ptrdiff_t>(new_tail_begin),
+        m_line_syntax_states_.begin() + static_cast<ptrdiff_t>(old_tail_begin));
+    }
+
+    m_valid_line_count_ = std::min(m_valid_line_count_, change_start_line);
+    m_reusable_tail_start_ = new_tail_begin;
+    m_reusable_tail_lines_dirty_ = line_delta != 0;
+    m_reusable_tail_indices_dirty_ = m_config_.show_index && char_delta != 0;
+  }
+
+  bool LineHighlight::isReusableWith(const LineHighlight& other) const {
+    if (spans.size() != other.spans.size()) {
+      return false;
+    }
+    const size_t size = spans.size();
+    for (size_t i = 0; i < size; ++i) {
+      if (!spans[i].isReusableWith(other.spans[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void InternalDocumentAnalyzer::rebaseReusableTailFrom(size_t start_line, size_t end_line_exclusive) {
+    if (m_document_ == nullptr
+      || m_highlight_ == nullptr
+      || start_line >= end_line_exclusive
+      || (!m_reusable_tail_lines_dirty_ && !m_reusable_tail_indices_dirty_)) {
+      return;
+    }
+    size_t total_line_count = std::min({end_line_exclusive, m_highlight_->lines.size(), m_document_->getLineCount()});
+    if (start_line >= total_line_count) {
+      return;
+    }
+    size_t line_start_index = m_reusable_tail_indices_dirty_ ? m_document_->charIndexOfLine(start_line) : 0;
+    for (size_t line = start_line; line < total_line_count; ++line) {
+      LineHighlight& line_highlight = m_highlight_->lines[line];
+      for (TokenSpan& span : line_highlight.spans) {
+        if (m_reusable_tail_lines_dirty_) {
+          span.range.start.line = line;
+          span.range.end.line = line;
+        }
+        if (m_reusable_tail_indices_dirty_) {
+          span.range.start.index = line_start_index + span.range.start.column;
+          span.range.end.index = line_start_index + span.range.end.column;
+        }
+      }
+      if (m_reusable_tail_indices_dirty_) {
+        line_start_index += m_document_->getLineCharCount(line);
+      }
+    }
+  }
+
+  SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::buildValidSlice(const LineRange& visible_range) const {
+    auto slice = makeSharedPtr<DocumentHighlightSlice>();
+    if (m_document_ == nullptr) {
+      return slice;
+    }
+    slice->total_line_count = m_document_->getLineCount();
+    slice->start_line = std::min(visible_range.start_line, slice->total_line_count);
+    if (visible_range.line_count == 0 || slice->start_line >= slice->total_line_count) {
+      return slice;
+    }
+    size_t available_count = slice->total_line_count - slice->start_line;
+    size_t slice_line_count = std::min(visible_range.line_count, available_count);
+    slice->lines.reserve(slice_line_count);
+    for (size_t i = 0; i < slice_line_count; ++i) {
+      size_t line = slice->start_line + i;
+      if (m_highlight_ == nullptr || line >= m_valid_line_count_ || line >= m_highlight_->lines.size()) {
+        break;
+      }
+      slice->lines.push_back(m_highlight_->lines[line]);
+    }
+    return slice;
+  }
+
+  void InternalDocumentAnalyzer::ensureAnalyzedThrough(size_t inclusive_end_line) {
+    if (m_rule_ == nullptr || m_document_ == nullptr) {
+      return;
+    }
+    const size_t line_count = m_document_->getLineCount();
+    if (line_count == 0) {
+      resetAnalysisCache();
+      return;
+    }
+    size_t target_line = std::min(inclusive_end_line, line_count - 1);
+    if (m_valid_line_count_ > target_line) {
+      return;
+    }
+
+    size_t comparable_cached_end = m_highlight_ == nullptr ? 0 : m_highlight_->lines.size();
+    size_t comparable_reusable_start = std::min(m_reusable_tail_start_, comparable_cached_end);
+    ensureCacheSize(target_line + 1);
+    size_t line_start_index = m_document_->charIndexOfLine(m_valid_line_count_);
+
+    while (m_valid_line_count_ <= target_line) {
+      size_t line = m_valid_line_count_;
+      int32_t current_state = line == 0 ? SyntaxRule::kDefaultStateId : m_line_syntax_states_[line - 1];
+      const DocumentLine& document_line = m_document_->getLine(line);
+      TextLineInfo info = {line, current_state, line_start_index};
+      LineAnalyzeResult result;
+      m_line_highlight_analyzer_->analyzeLine(document_line.text, info, result);
+
+      bool comparable_old = line >= comparable_reusable_start && line < comparable_cached_end;
+      int32_t old_state = comparable_old ? m_line_syntax_states_[line] : SyntaxRule::kDefaultStateId;
+      bool stable = comparable_old
+        && old_state == result.end_state
+        && result.highlight.isReusableWith(m_highlight_->lines[line]);
+
+      m_line_syntax_states_[line] = result.end_state;
+      m_highlight_->lines[line] = std::move(result.highlight);
+      m_valid_line_count_ = line + 1;
+      line_start_index += result.char_count + Document::getLineEndingWidth(document_line.ending);
+
+      if (stable) {
+        if (line + 1 < comparable_cached_end) {
+          rebaseReusableTailFrom(line + 1, comparable_cached_end);
+        }
+        m_valid_line_count_ = comparable_cached_end;
+        m_reusable_tail_start_ = comparable_cached_end;
+        m_reusable_tail_lines_dirty_ = false;
+        m_reusable_tail_indices_dirty_ = false;
+        if (m_valid_line_count_ <= target_line) {
+          line_start_index = m_document_->charIndexOfLine(m_valid_line_count_);
+        }
+      }
+    }
+
+    if (m_highlight_ != nullptr && m_valid_line_count_ >= m_highlight_->lines.size()) {
+      m_reusable_tail_start_ = m_highlight_->lines.size();
+      m_reusable_tail_lines_dirty_ = false;
+      m_reusable_tail_indices_dirty_ = false;
+    }
+  }
+
   SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlight() {
     if (m_rule_ == nullptr) {
       return nullptr;
     }
-    int32_t current_state = SyntaxRule::kDefaultStateId;
-    const size_t line_count = m_document_->getLineCount();
-    m_line_syntax_states_.resize(line_count, {});
-    m_highlight_->reset();
-    size_t line_start_index = 0;
-    for (size_t line_num = 0; line_num < line_count; ++line_num) {
-      TextLineInfo info = {line_num, current_state, line_start_index};
-      LineAnalyzeResult result;
-      const DocumentLine& document_line = m_document_->getLine(line_num);
-      m_line_highlight_analyzer_->analyzeLine(document_line.text, info, result);
-      m_line_syntax_states_[line_num] = result.end_state;
-      m_highlight_->addLine(std::move(result.highlight));
-      current_state = result.end_state;
-      line_start_index += result.char_count + Document::getLineEndingWidth(m_document_->getLine(line_num).ending);
+    resetAnalysisCache();
+    if (m_document_ != nullptr && m_document_->getLineCount() > 0) {
+      ensureAnalyzedThrough(m_document_->getLineCount() - 1);
     }
     return m_highlight_;
+  }
+
+  SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::analyzeHighlightLineRange(const LineRange& visible_range) {
+    if (m_rule_ == nullptr) {
+      return nullptr;
+    }
+    if (m_document_ != nullptr
+      && visible_range.line_count > 0
+      && visible_range.start_line < m_document_->getLineCount()) {
+      size_t end_line = visible_range.start_line + visible_range.line_count - 1;
+      ensureAnalyzedThrough(end_line);
+    }
+    return buildValidSlice(visible_range);
   }
 
   SharedPtr<DocumentHighlight> InternalDocumentAnalyzer::analyzeHighlightIncremental(const TextRange& range, const U8String& new_text) {
     if (m_rule_ == nullptr) {
       return nullptr;
     }
+    size_t old_end_line = range.end.line;
     PatchResult patch_result = m_document_->patch(range, new_text);
     size_t change_start_line = range.start.line;
-    size_t change_end_line = static_cast<int32_t>(range.end.line) + patch_result.line_delta;
-    m_line_syntax_states_[change_start_line] = change_start_line > 0 ? m_line_syntax_states_[change_start_line - 1] : SyntaxRule::kDefaultStateId;
-    if (patch_result.line_delta < 0) {
-      m_line_syntax_states_.erase(m_line_syntax_states_.begin() + range.end.line + patch_result.line_delta + 1,
-        m_line_syntax_states_.begin() + range.end.line + 1);
-      m_highlight_->lines.erase(m_highlight_->lines.begin() + range.end.line + patch_result.line_delta + 1,
-        m_highlight_->lines.begin() + range.end.line + 1);
-    } else if (patch_result.line_delta > 0) {
-      m_line_syntax_states_.insert(m_line_syntax_states_.begin() + range.end.line + 1, patch_result.line_delta, {});
-      m_highlight_->lines.insert(m_highlight_->lines.begin() + range.end.line + 1, patch_result.line_delta, {});
-    }
-
-    // Start analyzing from the patch start line until state stabilizes
-    int32_t current_state = m_line_syntax_states_[change_start_line];
-    size_t total_line_count = m_document_->getLineCount();
-    size_t line_start_index = m_document_->charIndexOfLine(change_start_line);
-    size_t line = change_start_line;
-    bool stable = false;
-    for (; line < total_line_count; ++line) {
-      if (stable) {
-        break;
-      }
-      int32_t old_state = m_line_syntax_states_[line];
-      TextLineInfo line_info = {line, current_state, line_start_index};
-      LineAnalyzeResult result;
-      const DocumentLine& document_line = m_document_->getLine(line);
-      m_line_highlight_analyzer_->analyzeLine(document_line.text, line_info, result);
-      m_line_syntax_states_[line] = result.end_state;
-      current_state = result.end_state;
-
-      // Finished analyzing line after patch range end, check if state has stabilized
-      if (line > change_end_line && old_state == current_state) {
-        /*stable = true;
-        for (size_t check_line = line + 1; check_line < total_line_count; ++check_line) {
-          if (line_states_[check_line] != highlight_->lines[check_line].spans.back().state) {
-            stable = false;
-            break;
-          }
-        }*/
-        // Maybe no need to iterate all subsequent lines to compare state;
-        // just checking this line's state and highlight consistency with pre-patch should suffice
-        const LineHighlight& old_line_highlight = m_highlight_->lines[line];
-        if (old_line_highlight == result.highlight) {
-          stable = true;
-        }
-      }
-      m_highlight_->lines[line] = std::move(result.highlight);
-      line_start_index += result.char_count + Document::getLineEndingWidth(m_document_->getLine(line).ending);
-    }
-    // Update indices of subsequent lines
-    if (m_config_.show_index) {
-      for (; line < total_line_count; ++line) {
-        LineHighlight& line_highlight = m_highlight_->lines[line];
-        for (TokenSpan& span : line_highlight.spans) {
-          span.range.start.index = line_start_index + span.range.start.column;
-          span.range.end.index = line_start_index + span.range.end.column;
-        }
-        line_start_index += m_document_->getLineCharCount(line);
-      }
+    syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
+    invalidateAnalysisFrom(change_start_line);
+    if (m_document_ != nullptr && m_document_->getLineCount() > 0) {
+      ensureAnalyzedThrough(m_document_->getLineCount() - 1);
     }
     return m_highlight_;
   }
@@ -802,20 +959,25 @@ namespace NS_SWEETLINE {
 
   SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::analyzeHighlightIncrementalInLineRange(
     const TextRange& range, const U8String& new_text, const LineRange& visible_range) {
-    SharedPtr<DocumentHighlight> highlight = analyzeHighlightIncremental(range, new_text);
-    return buildHighlightSlice(m_document_, highlight, visible_range);
+    if (m_rule_ == nullptr) {
+      return nullptr;
+    }
+    size_t old_end_line = range.end.line;
+    PatchResult patch_result = m_document_->patch(range, new_text);
+    size_t change_start_line = range.start.line;
+    syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
+    invalidateAnalysisFrom(change_start_line);
+    if (m_document_ != nullptr
+      && visible_range.line_count > 0
+      && visible_range.start_line < m_document_->getLineCount()) {
+      size_t end_line = visible_range.start_line + visible_range.line_count - 1;
+      ensureAnalyzedThrough(end_line);
+    }
+    return buildValidSlice(visible_range);
   }
 
   SharedPtr<DocumentHighlightSlice> InternalDocumentAnalyzer::getHighlightSlice(const LineRange& visible_range) const {
-    if (m_document_ == nullptr || m_highlight_ == nullptr || m_highlight_->lines.size() != m_document_->getLineCount()) {
-      auto slice = makeSharedPtr<DocumentHighlightSlice>();
-      if (m_document_ != nullptr) {
-        slice->total_line_count = m_document_->getLineCount();
-        slice->start_line = std::min(visible_range.start_line, slice->total_line_count);
-      }
-      return slice;
-    }
-    return buildHighlightSlice(m_document_, m_highlight_, visible_range);
+    return buildValidSlice(visible_range);
   }
 
   SharedPtr<Document> InternalDocumentAnalyzer::getDocument() const {
@@ -829,6 +991,9 @@ namespace NS_SWEETLINE {
   SharedPtr<IndentGuideResult> InternalDocumentAnalyzer::analyzeIndentGuides() {
     auto result = makeSharedPtr<IndentGuideResult>();
     if (m_rule_ == nullptr || m_highlight_ == nullptr || m_document_ == nullptr) {
+      return result;
+    }
+    if (m_valid_line_count_ != m_document_->getLineCount()) {
       return result;
     }
     if (!m_rule_->scope_rules_map.empty()) {
@@ -859,6 +1024,10 @@ namespace NS_SWEETLINE {
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyze() const {
     return analyzer_impl_->analyzeHighlight();
+  }
+
+  SharedPtr<DocumentHighlightSlice> DocumentAnalyzer::analyzeLineRange(const LineRange& visible_range) const {
+    return analyzer_impl_->analyzeHighlightLineRange(visible_range);
   }
 
   SharedPtr<DocumentHighlight> DocumentAnalyzer::analyzeIncremental(const TextRange& range, const U8String& new_text) const {

@@ -81,6 +81,8 @@ namespace NS_SWEETLINE {
 
     SharedPtr<DocumentHighlight> analyzeHighlight();
 
+    SharedPtr<DocumentHighlightSlice> analyzeHighlightLineRange(const LineRange& visible_range);
+
     SharedPtr<DocumentHighlight> analyzeHighlightIncremental(const TextRange& range, const U8String& new_text);
 
     SharedPtr<DocumentHighlight> analyzeHighlightIncremental(size_t start_index, size_t end_index, const U8String& new_text);
@@ -96,12 +98,30 @@ namespace NS_SWEETLINE {
 
     const HighlightConfig& getHighlightConfig() const;
   private:
+    void resetAnalysisCache();
+
+    void invalidateAnalysisFrom(size_t line);
+
+    void syncCachedLinesAfterPatch(size_t change_start_line, size_t old_end_line, int32_t line_delta, int32_t char_delta);
+
+    void ensureCacheSize(size_t line_count);
+
+    void ensureAnalyzedThrough(size_t inclusive_end_line);
+
+    void rebaseReusableTailFrom(size_t start_line, size_t end_line_exclusive);
+
+    SharedPtr<DocumentHighlightSlice> buildValidSlice(const LineRange& visible_range) const;
+
     SharedPtr<Document> m_document_;
     SharedPtr<DocumentHighlight> m_highlight_;
     SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     HighlightConfig m_config_;
     List<int32_t> m_line_syntax_states_;
+    size_t m_valid_line_count_ {0};
+    size_t m_reusable_tail_start_ {0};
+    bool m_reusable_tail_lines_dirty_ {false};
+    bool m_reusable_tail_indices_dirty_ {false};
     List<LineScopeState> m_line_scope_states_;
   };
 
