@@ -75,6 +75,7 @@ class DocumentAnalyzer {
     analyze(): DocumentHighlight;
     analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
     analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
+    analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
@@ -120,6 +121,7 @@ class LineAnalyzeResult {
 }
 ```
 
+`analyzeLineRange(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区。
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于从最近缓存的文档高亮结果中读取可见切片。
 
@@ -189,6 +191,7 @@ async function main() {
     const visibleRange = new sl.LineRange();
     visibleRange.startLine = 0;
     visibleRange.lineCount = 80;
+    const analyzed = docAnalyzer.analyzeLineRange(visibleRange);
     const visible = docAnalyzer.getHighlightSlice(visibleRange);
 
     // 导出 JSON

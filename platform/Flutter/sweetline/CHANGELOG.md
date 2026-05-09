@@ -1,3 +1,9 @@
+## 1.2.4
+
+* Align the package version with the latest cross-platform release.
+* Update README installation and routing guidance for `createAnalyzerByFileName(...)` and `createAnalyzerBySyntaxName(...)`.
+* Add `DocumentAnalyzer.analyzeLineRange(...)` and document its slice-analysis behavior.
+
 ## 1.2.2
 
 * Align the package version with the latest cross-platform release.

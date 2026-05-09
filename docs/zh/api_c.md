@@ -94,6 +94,11 @@ sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine, sl_docum
 // 全量分析
 int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer);
 
+// 按当前文档状态分析足够的行，并返回指定可见行范围切片
+// visible_range 数组结构: [startLine, lineCount]
+int32_t* sl_document_analyze_line_range(sl_analyzer_handle_t analyzer,
+                                          int32_t* visible_range);
+
 // 增量分析
 int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer,
                                           int32_t* changes_range,
@@ -116,6 +121,9 @@ int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
 // 托管文档缩进划线分析 (需先调用 sl_document_analyze 或 sl_document_analyze_incremental)
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 ```
+
+`sl_document_analyze_line_range(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区。
+`sl_document_get_highlight_slice(...)` 只读取最近缓存结果，不会触发新的分析。
 
 ### 内存管理
 

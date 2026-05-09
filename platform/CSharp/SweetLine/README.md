@@ -13,7 +13,7 @@ This package provides the .NET / C# binding over the SweetLine native core via P
 - Scope and indent guide analysis with `AnalyzeIndentGuides(...)`
 - Preprocessor macro support with `DefineMacro(...)` / `UndefineMacro(...)`
 - Style-ID mode and inline-style mode through `HighlightConfig`
-- Syntax loading from JSON string or file, plus file-extension lookup
+- Syntax loading from JSON string or file, plus file-name-based routing
 
 ## Install
 
@@ -30,6 +30,7 @@ Download the language rules you need from the repository `syntaxes/` directory:
 
 Then place the selected JSON files in your application resources or deployment directory and load them with `CompileSyntaxFromFile(...)`.
 After compiling the syntax rules, prefer `CreateAnalyzerByFileName(...)` or `LoadDocument(...)` with real file names so the core can resolve routing automatically.
+If the syntax is already known, `CreateAnalyzerBySyntaxName(...)` can be used to bypass routing.
 
 ## Quick Start
 
@@ -72,6 +73,10 @@ if (analyzer is not null)
 
     DocumentHighlight updated = analyzer.AnalyzeIncremental(editRange, "newText");
 
+    // Analyze enough lines from the current document state to cover the viewport
+    DocumentHighlightSlice analyzedVisible = analyzer.AnalyzeLineRange(
+        new LineRange(StartLine: 0, LineCount: 80));
+
     // Read the current visible window from the latest cached highlight result
     DocumentHighlightSlice visible = analyzer.GetHighlightSlice(
         new LineRange(StartLine: 0, LineCount: 80));
@@ -86,6 +91,7 @@ if (analyzer is not null)
 }
 ```
 
+Use `AnalyzeLineRange(...)` when the editor needs a visible slice and SweetLine should analyze enough lines from the current document state first.
 Use `GetHighlightSlice(...)` after `Analyze()` or `AnalyzeIncremental(...)` when the editor only needs the current viewport.
 Use `AnalyzeIncrementalInLineRange(...)` when you want to apply the edit and fetch the visible slice in one step.
 
@@ -145,9 +151,9 @@ Build or sync the native libraries under `prebuilt/windows/x64`, `prebuilt/linux
 `prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, and `prebuilt/osx/arm64` first.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.2
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.4
 
-dotnet nuget push artifacts/nuget/SweetLine.1.2.2.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.2.4.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate

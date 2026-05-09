@@ -387,6 +387,13 @@ export namespace SweetLineBindings {
         analyze(): DocumentHighlight;
 
         /**
+         * Analyze enough lines to cover the specified visible line range
+         * @param visibleRange Visible line range
+         * @return Highlight slice for the specified line range
+         */
+        analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice;
+
+        /**
          * Incrementally re-analyze the managed document based on patch content
          * @param range Change range of the patch
          * @param newText Patched text

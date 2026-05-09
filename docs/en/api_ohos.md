@@ -44,6 +44,7 @@ class DocumentAnalyzer {
   analyze(): DocumentHighlight;
   analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
   analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
+  analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
@@ -67,6 +68,7 @@ const document = new sweetline.Document("file:///Main.java", sourceCode);
 const documentAnalyzer = engine.loadDocument(document);
 if (documentAnalyzer) {
   documentAnalyzer.analyze();
+  const analyzed = documentAnalyzer.analyzeLineRange(new sweetline.LineRange(0, 80));
   const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
 }
 ```
@@ -75,6 +77,7 @@ if (documentAnalyzer) {
 
 - API naming largely follows WebAssembly/TypeScript style.
 - For incremental highlighting, prefer `DocumentAnalyzer`.
+- Use `analyzeLineRange(...)` when SweetLine should analyze enough lines for a visible range based on the current document state.
 - Use `getHighlightSlice(...)` after `analyze()` / `analyzeIncremental(...)` when only the visible line window is needed.
 - For indent guides, use `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`.
 - For build commands, see [Build Guide](api_build.md).

@@ -30,6 +30,19 @@ public class DocumentAnalyzer {
     }
 
     /**
+     * Perform highlight analysis for the specified visible line range
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Highlight slice for the specified line range
+     */
+    public DocumentHighlightSlice analyzeLineRange(LineRange visibleRange) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeLineRange(nativeHandle, visibleRange.startLine, visibleRange.lineCount);
+        return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * Incrementally re-analyze based on patch content, returningHighlight result for the entire text
      * @param range Change range of the patch
      * @param newText Patched text
@@ -175,6 +188,9 @@ public class DocumentAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyze(long handle);
+
+    @FastNative
+    private static native int[] nativeAnalyzeLineRange(long handle, int visibleStartLine, int visibleLineCount);
 
     @FastNative
     private static native int[] nativeAnalyzeChanges(long handle, long startPosition, long endPosition, String newText);

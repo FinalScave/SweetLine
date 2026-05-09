@@ -199,6 +199,7 @@ EMSCRIPTEN_BINDINGS(highlight) {
   emscripten::class_<DocumentAnalyzer>("DocumentAnalyzer")
     .smart_ptr<SharedPtr<DocumentAnalyzer>>("SharedPtr<DocumentAnalyzer>")
     .function("analyze", &DocumentAnalyzer::analyze)
+    .function("analyzeLineRange", &DocumentAnalyzer::analyzeLineRange)
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(const TextRange&, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("analyzeIncremental", emscripten::select_overload<SharedPtr<DocumentHighlight>(size_t, size_t, const U8String&) const>(&DocumentAnalyzer::analyzeIncremental))
     .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)

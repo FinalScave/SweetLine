@@ -14,7 +14,7 @@ wrappers.
 
 ```yaml
 dependencies:
-  sweetline: ^1.2.2
+  sweetline: ^1.2.4
 ```
 
 For local monorepo development you can also use a `path` dependency pointing to
@@ -75,6 +75,7 @@ final analyzer = engine.loadDocument(document)!;
 
 final full = analyzer.analyze();
 final changed = analyzer.analyzeIncremental(range, newText);
+final analyzed = analyzer.analyzeLineRange(const LineRange(0, 100));
 final slice = analyzer.analyzeIncrementalInLineRange(
   range,
   newText,
@@ -86,6 +87,9 @@ final guides = analyzer.analyzeIndentGuides();
 document.close();
 engine.close();
 ```
+
+`analyzeLineRange(...)` analyzes enough lines from the current document state to satisfy the requested visible range.
+`getHighlightSlice(...)` only reads the latest cached slice and does not trigger a new analysis.
 
 ### Syntax loading
 

@@ -39,7 +39,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.2.2
+  sweetline: ^1.2.4
 ```
 
 ## Load syntax rules
@@ -52,7 +52,8 @@ source repository's [`syntaxes/`](https://github.com/FinalScave/SweetLine/tree/m
 directory. In most cases you only need to copy the language files your app
 actually uses into Flutter assets. After compiling those JSON files, prefer
 `createAnalyzerByFileName(...)` or `loadDocument(...)` with real file names so
-the core can resolve syntax routing automatically.
+the core can resolve syntax routing automatically. If the syntax is already
+known, `createAnalyzerBySyntaxName(...)` is also available.
 
 In Flutter applications, loading syntax JSON from assets is the most direct
 approach:
@@ -136,6 +137,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
     }
 
     final fullHighlight = analyzer.analyze();
+    final analyzedSlice = analyzer.analyzeLineRange(const LineRange(0, 40));
 
     final slice = analyzer.analyzeIncrementalInLineRange(
       TextRange(
@@ -147,6 +149,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
     );
 
     print(fullHighlight.lines.length);
+    print(analyzedSlice.lines.length);
     print(slice.startLine);
     print(slice.totalLineCount);
   } finally {
@@ -179,6 +182,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
 
 - `analyze()`
 - `analyzeIncremental(TextRange range, String newText)`
+- `analyzeLineRange(LineRange visibleRange)`
 - `analyzeIncrementalInLineRange(TextRange range, String newText, LineRange visibleRange)`
 - `getHighlightSlice(LineRange visibleRange)`
 - `analyzeIndentGuides()`
@@ -238,5 +242,6 @@ Inline style contains:
 
 - `showIndex: true` makes `TextPosition.index` available in returned spans
 - `inlineStyle: true` returns inline color/font style instead of `styleId`
-- `createAnalyzerByFileName(...)` only works after loading syntax rules that declare matching `fileNames` or `fileSuffixes`
+- `analyzeLineRange(...)` analyzes enough lines from the current document state to satisfy the requested visible range
+- `createAnalyzerByFileName(...)` only works after loading syntax rules that declare matching `fileNames`, `fileSuffixes`, or `fileNamePatterns`
 - `createAnalyzerByFileName(...)` should be given a basename such as `main.dart`, `Dockerfile`, or `build.gradle.kts`

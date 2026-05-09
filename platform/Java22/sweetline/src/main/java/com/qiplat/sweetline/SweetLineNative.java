@@ -174,6 +174,10 @@ final class SweetLineNative {
     static final MethodHandle sl_document_analyze = downcall("sl_document_analyze",
             FunctionDescriptor.of(ADDRESS, ADDRESS));
 
+    // sl_document_analyze_line_range(pointer, int32_t*) -> int32_t*
+    static final MethodHandle sl_document_analyze_line_range = downcall("sl_document_analyze_line_range",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
     // sl_document_analyze_incremental(pointer, int32_t*, const char*) -> int32_t*
     static final MethodHandle sl_document_analyze_incremental = downcall("sl_document_analyze_incremental",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS, ADDRESS));

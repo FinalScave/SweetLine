@@ -60,15 +60,10 @@ application {
     }
 
     applicationDefaultJvmArgs = [
-            '--enable-preview',
             '--enable-native-access=ALL-UNNAMED',
             "-Djava.library.path=${nativeLibDir}",
             "-Dsweetline.lib.path=${nativeLibDir}"
     ]
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += ['--enable-preview']
 }
 
 run {
@@ -79,5 +74,5 @@ run {
 
 test {
     useJUnitPlatform()
-    jvmArgs '--enable-preview', '--enable-native-access=ALL-UNNAMED'
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
 }

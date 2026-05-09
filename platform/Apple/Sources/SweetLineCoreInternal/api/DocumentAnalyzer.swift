@@ -14,6 +14,14 @@ public final class DocumentAnalyzer {
         return try HighlightResultDecoder.decodeDocumentHighlight(from: data)
     }
 
+    public func analyzeLineRange(visibleRange: LineRange) throws -> DocumentHighlightSlice {
+        let data = try NativeInterop.withInt32Array([visibleRange.startLine, visibleRange.lineCount]) { visible in
+            let result = sl_document_analyze_line_range(nativeHandle, visible)
+            return try NativeInterop.copyInt32Prefix(from: result, initialCount: 5, totalCount: NativeInterop.countDocumentHighlightSliceInts)
+        }
+        return try HighlightResultDecoder.decodeDocumentHighlightSlice(from: data)
+    }
+
     public func analyzeIncremental(range: TextRange, newText: String) throws -> DocumentHighlight {
         let data = try NativeInterop.withCString(newText) { cText in
             try NativeInterop.withInt32Array([range.start.line, range.start.column, range.end.line, range.end.column]) { changeRange in
@@ -32,6 +40,14 @@ public final class DocumentAnalyzer {
                     return try NativeInterop.copyInt32Prefix(from: result, initialCount: 5, totalCount: NativeInterop.countDocumentHighlightSliceInts)
                 }
             }
+        }
+        return try HighlightResultDecoder.decodeDocumentHighlightSlice(from: data)
+    }
+
+    public func getHighlightSlice(visibleRange: LineRange) throws -> DocumentHighlightSlice {
+        let data = try NativeInterop.withInt32Array([visibleRange.startLine, visibleRange.lineCount]) { visible in
+            let result = sl_document_get_highlight_slice(nativeHandle, visible)
+            return try NativeInterop.copyInt32Prefix(from: result, initialCount: 5, totalCount: NativeInterop.countDocumentHighlightSliceInts)
         }
         return try HighlightResultDecoder.decodeDocumentHighlightSlice(from: data)
     }

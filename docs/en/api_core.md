@@ -269,6 +269,9 @@ public:
     // Full analysis
     SharedPtr<DocumentHighlight> analyze() const;
 
+    // Analyze enough lines to cover the requested visible line-range slice
+    SharedPtr<DocumentHighlightSlice> analyzeLineRange(const LineRange& visible_range) const;
+
     // Incremental analysis (by range)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         const TextRange& range, const U8String& new_text) const;
@@ -296,6 +299,7 @@ public:
 };
 ```
 
+`analyzeLineRange(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range and returns that slice.
 `analyzeIncrementalInLineRange(...)` is a convenience API that applies a patch and immediately returns a visible slice.
 `getHighlightSlice(...)` reuses the latest cached document highlight result without running a new analysis.
 
@@ -314,6 +318,7 @@ auto new_highlight = analyzer->analyzeIncremental(range, "modified");
 
 // Return only the visible slice [100, 100 + 60)
 LineRange visible {100, 60};
+auto analyzed_slice = analyzer->analyzeLineRange(visible);
 auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
 auto cached_slice = analyzer->getHighlightSlice(visible);
 

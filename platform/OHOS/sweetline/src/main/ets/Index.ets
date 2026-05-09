@@ -585,6 +585,22 @@ export namespace sweetline {
     }
 
     /**
+     * Analyze enough lines to cover the specified visible line range
+     * @param visibleRange Visible line range
+     * @returns Highlight slice for the specified line range
+     */
+    public analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice {
+      if (this.nativeHandle == 0) {
+        return new DocumentHighlightSlice();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeLineRange(
+        this.nativeHandle,
+        visibleRange.startLine, visibleRange.lineCount
+      );
+      return NativeBufferPack.readDocumentHighlightSlice(buffer);
+    }
+
+    /**
      * Incrementally re-analyze the text based on patch content
      * @param range Change range of the patch
      * @param newText Patched text

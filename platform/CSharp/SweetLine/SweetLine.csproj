@@ -13,7 +13,7 @@
 		<RepositoryUrl>https://github.com/FinalScave/SweetLine</RepositoryUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
-		<Version>1.2.2</Version>
+		<Version>1.2.4</Version>
 		<RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
 		<SweetLineNativeWinX64>$(RepoRoot)prebuilt\windows\x64\sweetline.dll</SweetLineNativeWinX64>
 		<SweetLineNativeLinuxX64>$(RepoRoot)prebuilt\linux\x86_64\libsweetline.so</SweetLineNativeLinuxX64>

@@ -75,6 +75,7 @@ class DocumentAnalyzer {
     analyze(): DocumentHighlight;
     analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
     analyzeIncremental(startOffset: number, endOffset: number, newText: string): DocumentHighlight;
+    analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
@@ -120,6 +121,7 @@ class LineAnalyzeResult {
 }
 ```
 
+`analyzeLineRange(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range.
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
 `getHighlightSlice(...)` reads a visible slice from the latest cached document highlight result.
 
@@ -189,6 +191,7 @@ async function main() {
     const visibleRange = new sl.LineRange();
     visibleRange.startLine = 0;
     visibleRange.lineCount = 80;
+    const analyzed = docAnalyzer.analyzeLineRange(visibleRange);
     const visible = docAnalyzer.getHighlightSlice(visibleRange);
 
     // Export JSON

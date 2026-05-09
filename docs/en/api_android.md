@@ -12,7 +12,7 @@ Android provides a Java API through JNI bindings. Class and function names are c
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.2.2'
+implementation 'com.qiplat:sweetline:1.2.4'
 ```
 
 Or import via source dependency by adding the `platform/Android/sweetline` module to your project.
@@ -101,6 +101,9 @@ public class DocumentAnalyzer {
     // Full analysis
     public DocumentHighlight analyze();
 
+    // Analyze enough lines to cover the requested visible line-range slice
+    public DocumentHighlightSlice analyzeLineRange(LineRange visibleRange);
+
     // Incremental analysis (by range)
     public DocumentHighlight analyzeIncremental(TextRange range, String newText);
 
@@ -129,6 +132,7 @@ public class DocumentAnalyzer {
 }
 ```
 
+`analyzeLineRange(...)` analyzes enough lines from the current document state to cover the requested visible range and returns that slice.
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns a slice.
 `getHighlightSlice(...)` reads a slice from the latest cached result produced by `analyze()` or `analyzeIncremental(...)`.
 

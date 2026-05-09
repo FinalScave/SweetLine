@@ -268,6 +268,23 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze(
   sl_analyzer_handle_t analyzer_handle,
 );
 
+/// Perform highlight analysis on a managed document, returning only a highlight slice for the specified line range
+/// @param analyzer_handle Document highlight analyzer handle
+/// @param visible_range Visible line range, array structure: [startLine],[lineCount]
+/// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
+/// @code
+/// Same format as sl_document_analyze_incremental_in_line_range:
+/// [flags, spanStride, startLine, totalLineCount, lineCount, lineEntry...]
+/// @endcode
+/// Note: the return value must be freed by calling sl_free_buffer after use
+@ffi.Native<
+  ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t, ffi.Pointer<ffi.Int32>)
+>(assetId: _sweetlineAssetId)
+external ffi.Pointer<ffi.Int32> sl_document_analyze_line_range(
+  sl_analyzer_handle_t analyzer_handle,
+  ffi.Pointer<ffi.Int32> visible_range,
+);
+
 /// Perform incremental highlight analysis on a managed document (called when document changes)
 /// @param analyzer_handle Document highlight analyzer handle
 /// @param changes_range Change range, array structure: [startLine],[startColumn],[endLine],[endColumn]

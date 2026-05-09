@@ -411,6 +411,27 @@ public sealed class DocumentAnalyzer : IDisposable {
 	}
 
 	/// <summary>
+	/// Performs highlight analysis and returns highlight slice in visible range.
+	/// </summary>
+	/// <param name="visibleRange">Visible line range (<c>startLine + lineCount</c>).</param>
+	/// <returns>Highlight slice for visible lines.</returns>
+	public DocumentHighlightSlice AnalyzeLineRange(LineRange visibleRange) {
+		EnsureOpen();
+
+		int[] packedVisibleRange = [visibleRange.StartLine, visibleRange.LineCount];
+		IntPtr resultPtr = SweetLineNative.DocumentAnalyzeLineRange(_handle, packedVisibleRange);
+		if (resultPtr == IntPtr.Zero) {
+			return new DocumentHighlightSlice();
+		}
+
+		try {
+			return BufferParser.ReadDocumentHighlightSlice(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
 	/// Performs incremental highlight analysis and returns full document result.
 	/// </summary>
 	/// <param name="range">Change range (line/column).</param>

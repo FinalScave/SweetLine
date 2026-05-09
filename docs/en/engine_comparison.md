@@ -83,6 +83,7 @@ Core capabilities include:
 - `analyzeText`
 - `analyze`
 - `analyzeIncremental`
+- `analyzeLineRange`
 - `getHighlightSlice`
 - `analyzeIncrementalInLineRange`
 - indent guide analysis

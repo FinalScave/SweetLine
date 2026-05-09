@@ -302,6 +302,14 @@ internal static class SweetLineNative {
 	internal static extern IntPtr DocumentAnalyze(IntPtr analyzerHandle);
 
 	/// <summary>
+	/// <c>sl_document_analyze_line_range(sl_analyzer_handle_t, int32_t*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_line_range", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr DocumentAnalyzeLineRange(
+		IntPtr analyzerHandle,
+		[In] int[] visibleRange);
+
+	/// <summary>
 	/// <c>sl_document_analyze_incremental(sl_analyzer_handle_t, int32_t*, const char*)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_incremental", CallingConvention = CallingConvention.Cdecl)]

@@ -15,6 +15,16 @@ This directory contains the Apple-side workspace for SweetLine.
 
 This workspace now builds as a Swift-direct-C Apple SDK backed by split `SweetLineCoreIOS.xcframework` and `SweetLineCoreOSX.xcframework` artifacts.
 
+## Swift API surface
+
+The Swift wrapper mirrors the managed-document workflow exposed by the core engine, including:
+
+- `DocumentAnalyzer.analyze()`
+- `DocumentAnalyzer.analyzeIncremental(range:newText:)`
+- `DocumentAnalyzer.analyzeLineRange(visibleRange:)`
+- `DocumentAnalyzer.getHighlightSlice(visibleRange:)`
+- `DocumentAnalyzer.analyzeIndentGuides()`
+
 ## Intended local workflow
 
 - Rebuild prebuilt Apple xcframework archives via `make build-prebuilt` (optional)

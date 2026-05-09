@@ -46,6 +46,34 @@ public class DocumentAnalyzer implements AutoCloseable {
     }
 
     /**
+     * Perform highlight analysis for the specified visible line range.
+     *
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Highlight slice for the specified line range
+     */
+    public DocumentHighlightSlice analyzeLineRange(LineRange visibleRange) {
+        ensureOpen();
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment visibleSeg = arena.allocate(JAVA_INT, 2);
+            visibleSeg.setAtIndex(JAVA_INT, 0, visibleRange.startLine());
+            visibleSeg.setAtIndex(JAVA_INT, 1, visibleRange.lineCount());
+
+            MemorySegment resultPtr = (MemorySegment) SweetLineNative.sl_document_analyze_line_range
+                    .invoke(handle, visibleSeg);
+            if (resultPtr.equals(MemorySegment.NULL)) {
+                return new DocumentHighlightSlice(0, 0, new ArrayList<>());
+            }
+            try {
+                return BufferParser.readDocumentHighlightSlice(resultPtr);
+            } finally {
+                SweetLineNative.sl_free_buffer.invoke(resultPtr);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to analyze document in line range", e);
+        }
+    }
+
+    /**
      * Incrementally re-analyze based on a text change, returning highlight for the entire document.
      *
      * @param range   Change range (start/end line and column)

@@ -36,13 +36,13 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ### Highly Extensible
 - JSON-based syntax rule configuration – add new language support without writing code
 - Variable substitution, `fragments` (`include` / `includes`), and pattern reuse to reduce rule redundancy
-- 33 built-in language syntax rules (Java, C/C++, Python, Kotlin, Rust, Go, TypeScript, etc.)
+- `100+` built-in syntax rule files covering mainstream languages, markup, configuration, template, and domain-specific syntaxes
 
 ### Cross-Platform
 - Core engine written in C++17
 - C API wrapper for easy FFI integration
-- Native support for Android (JNI), Java 22 (FFM), WebAssembly (Emscripten), HarmonyOS (NAPI), .NET/WinForms (P/Invoke)
-- Supports Windows, Linux, macOS and other desktop platforms
+- Native support for Android (JNI), Java 22 (FFM), Flutter/Dart (FFI), WebAssembly (Emscripten), HarmonyOS (NAPI), .NET/WinForms (P/Invoke), and Apple platforms
+- Supports Windows, Linux, macOS, mobile platforms, and other desktop scenarios
 
 ## Architecture Overview
 
@@ -51,8 +51,9 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 │                              SweetLine Architecture                               │
 ├────────────────────────────────────────────────────────────────────────────────────┤
 │ Application / Platform Bindings                                                   │
-│  Android(JNI) | Java22(FFM) | .NET/C#(P/Invoke) | WASM(Emscripten)               │
-│  HarmonyOS(NAPI) | C API(FFI) | C++ Native API                                    │
+│  Android(JNI) | Java22(FFM) | Flutter(Dart FFI) | .NET/C#(P/Invoke)              │
+│  WASM(Emscripten) | HarmonyOS(NAPI) | Apple(Swift/ObjC)                           │
+│  C API(FFI) | C++ Native API                                                      │
 ├────────────────────────────────────────────────────────────────────────────────────┤
 │                         SweetLine C++ Core (C++17)                                │
 │                                                                                    │
@@ -125,14 +126,19 @@ TextRange change_range { {2, 4}, {2, 8} };
 std::string new_text = "modified";
 auto new_highlight = analyzer->analyzeIncremental(change_range, new_text);
 
-// Read only the visible lines from the latest cached highlight result
 LineRange visible_range {100, 60};
-auto visible_slice = analyzer->getHighlightSlice(visible_range);
+
+// Analyze enough lines to cover the requested visible range
+auto analyzed_slice = analyzer->analyzeLineRange(visible_range);
+
+// Read only the visible lines from the latest cached highlight result
+auto cached_slice = analyzer->getHighlightSlice(visible_range);
 
 // Or combine patch + visible slice in one call
 auto updated_slice = analyzer->analyzeIncrementalInLineRange(change_range, new_text, visible_range);
 ```
 
+Use `analyzeLineRange()` when the renderer needs a visible slice and wants SweetLine to analyze enough lines from the current document state first.
 Use `getHighlightSlice()` after `analyze()` or `analyzeIncremental()` when the renderer only needs a visible window of lines.
 
 ### Java 22 (FFM) Usage
@@ -156,7 +162,7 @@ Running code requires native access enabled (for example `--enable-native-access
 
 ```groovy
 // build.gradle
-implementation 'com.qiplat:sweetline:1.2.2'
+implementation 'com.qiplat:sweetline:1.2.4'
 ```
 
 ```java
@@ -250,6 +256,7 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
 | [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
+| [Flutter API](docs/en/api_flutter.md) | Dart FFI wrapper API |
 | [Java 22 API](docs/en/api_java22.md) | Java 22 FFM API |
 | [.NET / WinForms API](docs/en/api_dotnet.md) | C# API (P/Invoke wrapper) |
 | [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |

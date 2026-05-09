@@ -44,6 +44,7 @@ class DocumentAnalyzer {
   analyze(): DocumentHighlight;
   analyzeIncremental(range: TextRange, newText: string): DocumentHighlight;
   analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
+  analyzeLineRange(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
@@ -67,6 +68,7 @@ const document = new sweetline.Document("file:///Main.java", sourceCode);
 const documentAnalyzer = engine.loadDocument(document);
 if (documentAnalyzer) {
   documentAnalyzer.analyze();
+  const analyzed = documentAnalyzer.analyzeLineRange(new sweetline.LineRange(0, 80));
   const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
 }
 ```
@@ -75,6 +77,7 @@ if (documentAnalyzer) {
 
 - API 命名风格整体与 WebAssembly/TypeScript 侧一致。
 - 编辑器场景建议优先使用 `DocumentAnalyzer` 做增量分析。
+- 当需要某个可见区切片，并希望 SweetLine 先基于当前文档状态分析足够的行时，使用 `analyzeLineRange(...)`。
 - 只需要当前可见窗口时，可在 `analyze()` / `analyzeIncremental(...)` 之后调用 `getHighlightSlice(...)`。
 - 缩进划线可使用 `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`。
 - 构建命令请参见 [构建文档](api_build.md)。

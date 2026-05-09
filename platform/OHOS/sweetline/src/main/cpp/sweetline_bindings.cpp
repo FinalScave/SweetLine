@@ -537,6 +537,25 @@ static napi_value DocumentAnalyzer_Analyze(napi_env env, napi_callback_info info
   return ConvertDocumentHighlightAsIntArray(env, analyzer->getHighlightConfig(), highlight);
 }
 
+/// Analyze enough lines to cover the specified visible line range
+/// args: [handle, visibleStartLine, visibleLineCount]
+static napi_value DocumentAnalyzer_AnalyzeLineRange(napi_env env, napi_callback_info info) {
+  size_t argc = 3;
+  napi_value args[3] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  int32_t visible_start_line = 0, visible_line_count = 0;
+  napi_get_value_int32(env, args[1], &visible_start_line);
+  napi_get_value_int32(env, args[2], &visible_line_count);
+  LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+  SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeLineRange(visible_range);
+  return ConvertDocumentHighlightSliceAsIntArray(env, analyzer->getHighlightConfig(), slice);
+}
+
 /// Incrementally re-analyze the text based on patch content (line/column range)
 static napi_value DocumentAnalyzer_AnalyzeChanges(napi_env env, napi_callback_info info) {
   size_t argc = 6;
@@ -913,6 +932,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     // DocumentAnalyzer
     {"DocumentAnalyzer_Delete", nullptr, DocumentAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Analyze", nullptr, DocumentAnalyzer_Analyze, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeLineRange", nullptr, DocumentAnalyzer_AnalyzeLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges", nullptr, DocumentAnalyzer_AnalyzeChanges, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChanges2", nullptr, DocumentAnalyzer_AnalyzeChanges2, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeChangesInLineRange", nullptr, DocumentAnalyzer_AnalyzeChangesInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},

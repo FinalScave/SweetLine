@@ -13,7 +13,7 @@ Flutter 包通过 Dart FFI 封装 SweetLine C API，并提供与 Android、Java 
 
 ```yaml
 dependencies:
-  sweetline: ^1.2.2
+  sweetline: ^1.2.4
 ```
 
 在 monorepo 本地开发时，也可以使用指向 `platform/Flutter/sweetline` 的
@@ -74,6 +74,7 @@ final analyzer = engine.loadDocument(document)!;
 
 final full = analyzer.analyze();
 final changed = analyzer.analyzeIncremental(range, newText);
+final analyzed = analyzer.analyzeLineRange(const LineRange(0, 100));
 final slice = analyzer.analyzeIncrementalInLineRange(
   range,
   newText,
@@ -85,6 +86,9 @@ final guides = analyzer.analyzeIndentGuides();
 document.close();
 engine.close();
 ```
+
+`analyzeLineRange(...)` 会基于当前文档状态分析足够的行，以覆盖请求的可见区。
+`getHighlightSlice(...)` 只读取最近缓存切片，不会触发新的分析。
 
 ### 语法文件加载
 

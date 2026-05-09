@@ -15,14 +15,14 @@ WinForms/.NET 封装基于 SweetLine C API 的 P/Invoke：
 ### NuGet
 
 ```bash
-dotnet add package SweetLine --version 1.2.2
+dotnet add package SweetLine --version 1.2.4
 ```
 
 或在 `.csproj` 中添加：
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="SweetLine" Version="1.2.2" />
+  <PackageReference Include="SweetLine" Version="1.2.4" />
 </ItemGroup>
 ```
 
@@ -62,6 +62,7 @@ if (analyzer != null)
 
 ## 增量分析
 
+`AnalyzeLineRange(...)` 会基于当前文档状态分析足够的行，以覆盖请求的可见区。
 `AnalyzeIncrementalInLineRange(...)` 会应用补丁并立即返回请求的切片。
 `GetHighlightSlice(...)` 则在 `Analyze()` 或 `AnalyzeIncremental(...)` 之后，从最新缓存结果中读取可见切片。
 
@@ -71,6 +72,8 @@ var changeRange = new TextRange(
     new TextPosition(line: 2, column: 8));
 
 DocumentHighlight updated = analyzer!.AnalyzeIncremental(changeRange, "modified");
+DocumentHighlightSlice analyzed = analyzer.AnalyzeLineRange(
+    new LineRange(startLine: 0, lineCount: 120));
 DocumentHighlightSlice visibleFromCache = analyzer.GetHighlightSlice(
     new LineRange(startLine: 0, lineCount: 120));
 DocumentHighlightSlice visible = analyzer.AnalyzeIncrementalInLineRange(

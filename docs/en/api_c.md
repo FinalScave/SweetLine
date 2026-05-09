@@ -94,6 +94,11 @@ sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine, sl_docum
 // Full analysis
 int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer);
 
+// Analyze enough lines to cover the requested visible line-range slice
+// visible_range layout: [startLine, lineCount]
+int32_t* sl_document_analyze_line_range(sl_analyzer_handle_t analyzer,
+                                          int32_t* visible_range);
+
 // Incremental analysis
 int32_t* sl_document_analyze_incremental(sl_analyzer_handle_t analyzer,
                                           int32_t* changes_range,
@@ -117,6 +122,9 @@ int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
 // (requires sl_document_analyze or sl_document_analyze_incremental first)
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 ```
+
+`sl_document_analyze_line_range(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range.
+`sl_document_get_highlight_slice(...)` only reads from the latest cached result and does not trigger a new analysis.
 
 ### Memory Management
 

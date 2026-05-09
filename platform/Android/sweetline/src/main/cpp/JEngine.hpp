@@ -310,6 +310,17 @@ public:
     return convertDocumentHighlightAsIntArray(env, highlight, analyzer->getHighlightConfig());
   }
 
+  static jintArray analyzeLineRange(JNIEnv* env, jclass clazz, jlong handle, jint visible_start_line,
+                                    jint visible_line_count) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+    SharedPtr<DocumentHighlightSlice> slice = analyzer->analyzeLineRange(visible_range);
+    return convertDocumentHighlightSliceAsIntArray(env, slice, analyzer->getHighlightConfig());
+  }
+
   static jintArray analyzeChanges(JNIEnv* env, jclass clazz, jlong handle, jlong start_position, jlong end_position, jstring new_text) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
@@ -382,6 +393,7 @@ public:
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeFinalizeAnalyzer", "(J)V", (void*) finalizeAnalyzer},
       {"nativeAnalyze", "(J)[I", (void*) analyze},
+      {"nativeAnalyzeLineRange", "(JII)[I", (void*) analyzeLineRange},
       {"nativeAnalyzeChanges", "(JJJLjava/lang/String;)[I", (void*) analyzeChanges},
       {"nativeAnalyzeChanges2", "(JIILjava/lang/String;)[I", (void*) analyzeChanges2},
       {"nativeAnalyzeChangesInLineRange", "(JJJLjava/lang/String;II)[I", (void*) analyzeChangesInLineRange},

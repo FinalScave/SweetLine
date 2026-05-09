@@ -269,6 +269,9 @@ public:
     // 全量分析
     SharedPtr<DocumentHighlight> analyze() const;
 
+    // 按当前文档状态分析足够的行，并返回指定可见行区域切片
+    SharedPtr<DocumentHighlightSlice> analyzeLineRange(const LineRange& visible_range) const;
+
     // 增量分析 (通过范围)
     SharedPtr<DocumentHighlight> analyzeIncremental(
         const TextRange& range, const U8String& new_text) const;
@@ -296,6 +299,7 @@ public:
 };
 ```
 
+`analyzeLineRange(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区，并直接返回该切片。
 `analyzeIncrementalInLineRange(...)` 是“应用补丁并立即返回切片”的便捷接口。
 `getHighlightSlice(...)` 则直接复用最近一次分析产生的缓存高亮结果，不会重新执行分析。
 
@@ -314,6 +318,7 @@ auto new_highlight = analyzer->analyzeIncremental(range, "modified");
 
 // 仅返回可见行范围 [100, 100 + 60) 的高亮切片
 LineRange visible {100, 60};
+auto analyzed_slice = analyzer->analyzeLineRange(visible);
 auto slice = analyzer->analyzeIncrementalInLineRange(range, "modified", visible);
 auto cached_slice = analyzer->getHighlightSlice(visible);
 

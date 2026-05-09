@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+- 同步平台包版本到 `1.2.4`，与当前跨平台发布版本保持一致
+- 补充 README 中 `HighlightEngine` 的 API 概览与基于文件名路由的说明
+- 补充 `DocumentAnalyzer.analyzeLineRange(...)` 的绑定与文档说明
+
 ## 1.2.2
 
 - HighlightEngine.createAnalyzerByExtension 更新为 createAnalyzerByFileName，统一使用基于文件名的自动路由
