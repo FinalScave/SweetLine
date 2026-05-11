@@ -57,7 +57,6 @@ parse_build_shared_args() {
 }
 
 # Shared Apple helpers
-APPLE_FRAMEWORK_NAME="SweetLineCore"
 APPLE_XCFRAMEWORK_IOS_NAME="SweetLineCoreIOS.xcframework"
 APPLE_XCFRAMEWORK_OSX_NAME="SweetLineCoreOSX.xcframework"
 
@@ -113,6 +112,11 @@ apple_prerequisite_status() {
 
   if ! command -v ditto >/dev/null 2>&1; then
     printf '%s\n' "Apple build skipped: ditto not found"
+    return 1
+  fi
+
+  if ! command -v lipo >/dev/null 2>&1; then
+    printf '%s\n' "Apple build skipped: lipo not found"
     return 1
   fi
 
