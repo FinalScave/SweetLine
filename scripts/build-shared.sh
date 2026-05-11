@@ -343,12 +343,13 @@ function build_apple_xcframework() {
   local xcframework_name="$3"
   local label="$4"
   local headers_dir="$PROJECT_DIR/src/include"
-  local apple_binaries_dir="$PROJECT_DIR/platform/Apple/binaries"
+  local apple_binaries_dir="$BUILD_DIR/apple-xcframework/binaries"
   local xcframework_dir="$apple_binaries_dir/$xcframework_name"
   local xcframework_zip="$output_dir/${xcframework_name}.zip"
 
   echo "============================= $label XCFramework ============================="
   mkdir -p "$output_dir"
+  mkdir -p "$apple_binaries_dir"
 
   verify_file_exists "$headers_dir" "Apple public headers directory"
   rm -rf "$xcframework_dir"
