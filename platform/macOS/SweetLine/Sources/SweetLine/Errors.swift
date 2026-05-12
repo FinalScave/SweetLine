@@ -19,6 +19,18 @@ public enum SweetLineError: Error, Sendable, Equatable, CustomStringConvertible 
 }
 
 public struct SyntaxCompileError: Error, Sendable, Equatable, CustomStringConvertible {
+    public static let ok: Int32 = 0
+    public static let jsonPropertyMissed: Int32 = -1
+    public static let jsonPropertyInvalid: Int32 = -2
+    public static let patternInvalid: Int32 = -3
+    public static let stateInvalid: Int32 = -4
+    public static let jsonInvalid: Int32 = -5
+    public static let fileNotExists: Int32 = -6
+    public static let fileInvalid: Int32 = -7
+    public static let importSyntaxNotFound: Int32 = -8
+    public static let stateReferenceNotFound: Int32 = -9
+    public static let inlineStyleReferenceNotFound: Int32 = -10
+
     public let code: Int32
     public let message: String
 

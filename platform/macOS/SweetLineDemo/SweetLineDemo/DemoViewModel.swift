@@ -16,7 +16,6 @@ final class DemoViewModel: ObservableObject {
 
     let themes = HighlightTheme.builtinThemes()
 
-    private static let importSyntaxMissingCode: Int32 = -8
     private static let yamlNonZeroWidthFile = "yaml(non zero width).json"
     private static let syntaxSampleFile = "json-sweetline.json"
 
@@ -164,7 +163,7 @@ final class DemoViewModel: ObservableObject {
                     compiledCount += 1
                     progressed = true
                     status = "Compiling \(compiledCount)/\(sources.count): \(source.fileName)"
-                } catch let error as SyntaxCompileError where error.code == Self.importSyntaxMissingCode {
+                } catch let error as SyntaxCompileError where error.code == SyntaxCompileError.importSyntaxNotFound {
                     nextPending.append(source)
                 } catch let error as SyntaxCompileError {
                     throw DemoError.syntaxCompile("Failed to compile \(source.fileName): \(error.message)")
