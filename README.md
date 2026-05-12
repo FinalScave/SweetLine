@@ -256,6 +256,7 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
 | [macOS Swift API](docs/en/api_macos.md) | Swift Package API on macOS |
+| [iOS Swift API](docs/en/api_ios.md) | Swift Package API on iOS |
 | [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
 | [Flutter API](docs/en/api_flutter.md) | Dart FFI wrapper API |
 | [Java 22 API](docs/en/api_java22.md) | Java 22 FFM API |
