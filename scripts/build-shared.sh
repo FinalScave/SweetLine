@@ -59,6 +59,7 @@ parse_build_shared_args() {
 # Shared Apple helpers
 APPLE_XCFRAMEWORK_IOS_NAME="SweetLineCoreIOS.xcframework"
 APPLE_XCFRAMEWORK_OSX_NAME="SweetLineCoreOSX.xcframework"
+APPLE_CORE_MODULE_NAME="SweetLineCore"
 
 apple_runtime_prebuilt_dir() {
   local output_root="$1"
@@ -133,6 +134,30 @@ verify_file_exists() {
   fi
 
   return 0
+}
+
+prepare_apple_xcframework_headers() {
+  local output_root="$1"
+  local module_name="${2:-$APPLE_CORE_MODULE_NAME}"
+  local headers_dir="$output_root/headers"
+  local include_dir="$headers_dir/sweetline"
+  local c_api_header="$PROJECT_DIR/src/include/c_sweetline.h"
+
+  verify_file_exists "$c_api_header" "SweetLine C API header" || return 1
+
+  rm -rf "$headers_dir"
+  mkdir -p "$include_dir"
+  cp -f "$c_api_header" "$include_dir/c_sweetline.h"
+  cat > "$headers_dir/module.modulemap" <<EOF
+module $module_name {
+  header "sweetline/c_sweetline.h"
+  export *
+}
+EOF
+
+  verify_file_exists "$headers_dir/module.modulemap" "Apple module map" || return 1
+  verify_file_exists "$include_dir/c_sweetline.h" "Apple C API header" || return 1
+  printf '%s\n' "$headers_dir"
 }
 
 copy_apple_dylib() {
@@ -346,7 +371,7 @@ function build_apple_xcframework() {
   local output_dir="$2"
   local xcframework_name="$3"
   local label="$4"
-  local headers_dir="$PROJECT_DIR/src/include"
+  local headers_dir=""
   local apple_binaries_dir="$BUILD_DIR/apple-xcframework/binaries"
   local xcframework_dir="$apple_binaries_dir/$xcframework_name"
   local xcframework_zip="$output_dir/${xcframework_name}.zip"
@@ -355,7 +380,7 @@ function build_apple_xcframework() {
   mkdir -p "$output_dir"
   mkdir -p "$apple_binaries_dir"
 
-  verify_file_exists "$headers_dir" "Apple public headers directory"
+  headers_dir="$(prepare_apple_xcframework_headers "$BUILD_DIR/apple-xcframework" "$APPLE_CORE_MODULE_NAME")" || return 1
   rm -rf "$xcframework_dir"
 
   if [ "$apple_scope" = "osx" ]; then
