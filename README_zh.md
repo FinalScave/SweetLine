@@ -255,6 +255,7 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [API 文档（索引）](docs/zh/api.md) | API 总入口与阅读顺序 |
 | [核心 API](docs/zh/api_core.md) | 核心概念与 C++ API |
 | [C API](docs/zh/api_c.md) | 面向 FFI 的 C 接口 |
+| [macOS Swift API](docs/zh/api_macos.md) | macOS 平台 Swift Package API |
 | [Android API](docs/zh/api_android.md) | Android 平台 Java/Kotlin API |
 | [Flutter API](docs/zh/api_flutter.md) | Dart FFI 封装 API |
 | [Java 22 API](docs/zh/api_java22.md) | Java 22 FFM API |

@@ -8,6 +8,7 @@ To reduce maintenance cost and improve readability, the API documentation is spl
 |------|------|------|
 | Core Concepts + C++ | [Core API](api_core.md) | Workflow, core data structures, and C++ APIs |
 | C / FFI | [C API](api_c.md) | Pure C interfaces and return buffer format |
+| macOS (Swift) | [macOS Swift API](api_macos.md) | Swift Package API and native artifact guide |
 | Android (Java/Kotlin) | [Android API](api_android.md) | JNI-based Java API |
 | Flutter / Dart | [Flutter API](api_flutter.md) | Dart FFI wrapper API |
 | Java 22 (FFM) | [Java 22 API](api_java22.md) | FFM wrapper API and native loading guide |

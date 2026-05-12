@@ -8,6 +8,7 @@
 |------|------|------|
 | 核心概念 + C++ | [核心 API](api_core.md) | 工作流程、核心数据结构与 C++ 接口 |
 | C / FFI | [C API](api_c.md) | C 语言接口与返回缓冲区格式 |
+| macOS (Swift) | [macOS Swift API](api_macos.md) | Swift Package API 与 Native 产物说明 |
 | Android (Java/Kotlin) | [Android API](api_android.md) | JNI 绑定的 Java API |
 | Flutter / Dart | [Flutter API](api_flutter.md) | Dart FFI 封装 API |
 | Java 22 (FFM) | [Java 22 API](api_java22.md) | FFM 封装 API 与 Native 加载说明 |
