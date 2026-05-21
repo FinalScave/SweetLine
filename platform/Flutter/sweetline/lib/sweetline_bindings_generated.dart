@@ -148,9 +148,9 @@ external sl_analyzer_handle_t sl_engine_create_text_analyzer(
   ffi.Pointer<ffi.Char> syntax_name,
 );
 
-/// Create a plain text highlight analyzer by file name (no incremental analysis support)
+/// Create a plain text highlight analyzer by file name or path (no incremental analysis support)
 /// @param engine_handle Highlight engine handle
-/// @param file_name File name or basename used for syntax routing
+/// @param file_name File name or path
 /// @return Plain text highlight analyzer handle
 @ffi.Native<
   sl_analyzer_handle_t Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)
@@ -268,7 +268,7 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze(
   sl_analyzer_handle_t analyzer_handle,
 );
 
-/// Perform highlight analysis on a managed document, returning only a highlight slice for the specified line range
+/// Analyze enough lines to cover the specified line range on a managed document
 /// @param analyzer_handle Document highlight analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
@@ -342,8 +342,7 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_incremental_in_line_range(
   ffi.Pointer<ffi.Int32> visible_range,
 );
 
-/// Get highlight slice from the current cached document highlight result
-/// Requires prior call to sl_document_analyze or sl_document_analyze_incremental
+/// Get highlight slice from the current cached document highlight result without triggering new analysis
 /// @param analyzer_handle Document highlight analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:

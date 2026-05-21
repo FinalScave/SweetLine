@@ -5,6 +5,7 @@ const _assetId = 'package:sweetline/lib/sweetline.dart';
 
 void main() {
   final packageRoot = Platform.script.resolve('../');
+  final repoRoot = packageRoot.resolve('../../../');
   final outputFile = File(
     packageRoot.resolve('lib/sweetline_bindings_generated.dart').toFilePath(),
   );
@@ -24,10 +25,10 @@ void main() {
           declaration.originalName.startsWith('sl_'),
     ),
     headers: Headers(
-      entryPoints: [packageRoot.resolve('src/c_sweetline.h')],
+      entryPoints: [repoRoot.resolve('include/sweetline/c_sweetline.h')],
       compilerOptions: [
-        '-I${packageRoot.resolve('src').toFilePath()}',
-        '-DSWEETLINE_EXPORTS',
+        '-I${repoRoot.resolve('include').toFilePath()}',
+        '-DSWEETLINE_EXPORT',
       ],
     ),
   ).generate();
