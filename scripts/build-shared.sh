@@ -141,7 +141,7 @@ prepare_apple_xcframework_headers() {
   local module_name="${2:-$APPLE_CORE_MODULE_NAME}"
   local headers_dir="$output_root/headers"
   local include_dir="$headers_dir/sweetline"
-  local c_api_header="$PROJECT_DIR/src/include/c_sweetline.h"
+  local c_api_header="$PROJECT_DIR/include/c_sweetline.h"
 
   verify_file_exists "$c_api_header" "SweetLine C API header" || return 1
 
@@ -310,9 +310,9 @@ function build_apple() {
     -G "$apple_generator"
     -DCMAKE_CXX_FLAGS=-std=c++17
     -DCMAKE_BUILD_TYPE=Release
-    -DBUILD_SHARED_LIB=ON
-    -DBUILD_STATIC_LIB=OFF
-    -DBUILD_TESTING=OFF
+    -DSWEETLINE_BUILD_SHARED=ON
+    -DSWEETLINE_BUILD_STATIC=OFF
+    -DSWEETLINE_BUILD_TESTS=OFF
     -DCMAKE_OSX_SYSROOT="$apple_sysroot"
     -DCMAKE_OSX_ARCHITECTURES="$apple_arch"
   )
@@ -437,7 +437,7 @@ function build_linux() {
         return 1
       }
       if [ ! -f "$linux_cache_file" ]; then
-        linux_toolchain_args+=("-DCMAKE_TOOLCHAIN_FILE=$PROJECT_DIR/scripts/cmake/linux-aarch64-toolchain.cmake")
+        linux_toolchain_args+=("-DCMAKE_TOOLCHAIN_FILE=$PROJECT_DIR/cmake/linux-aarch64-toolchain.cmake")
       fi
     elif [ "$linux_arch" = "x86_64" ]; then
       linux_prebuilt_dir="$OUTPUT_DIR/linux/x86_64"
@@ -451,8 +451,8 @@ function build_linux() {
       -G "Ninja" \
       -DCMAKE_CXX_FLAGS="-std=c++17 -fPIC" \
       -DCMAKE_BUILD_TYPE=Release \
-      -DBUILD_STATIC_LIB=OFF \
-      -DBUILD_TESTING=OFF \
+      -DSWEETLINE_BUILD_STATIC=OFF \
+      -DSWEETLINE_BUILD_TESTS=OFF \
       "${linux_toolchain_args[@]}"
     cmake --build "$linux_build_dir" --target "$TARGET_NAME" -j 12
     copy_built_libraries "$linux_build_dir/lib" "$linux_prebuilt_dir"
@@ -467,8 +467,8 @@ function build_emscripten() {
     -G "Ninja" \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_STATIC_LIB=OFF \
-    -DBUILD_TESTING=OFF
+    -DSWEETLINE_BUILD_STATIC=OFF \
+    -DSWEETLINE_BUILD_TESTS=OFF
   cmake --build $WASM_BUILD_DIR --target $WASM_TARGET_NAME -j 24
   copy_built_libraries "$WASM_BUILD_DIR/bin" "$WASM_PREBUILT_DIR"
 }
@@ -494,8 +494,8 @@ function build_android() {
     -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
     -DANDROID_PLATFORM=android-21 \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
-    -DBUILD_STATIC_LIB=OFF \
-    -DBUILD_TESTING=OFF
+    -DSWEETLINE_BUILD_STATIC=OFF \
+    -DSWEETLINE_BUILD_TESTS=OFF
   cmake --build $ANDROID_BUILD_DIR --target $TARGET_NAME -j 24
 
   local strip_tool
@@ -529,8 +529,8 @@ function build_ohos() {
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE="$OHOS_TOOLCHAIN" \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
-    -DBUILD_STATIC_LIB=OFF \
-    -DBUILD_TESTING=OFF
+    -DSWEETLINE_BUILD_STATIC=OFF \
+    -DSWEETLINE_BUILD_TESTS=OFF
   cmake --build $OHOS_BUILD_DIR --target $TARGET_NAME -j 24
   copy_built_libraries "$OHOS_BUILD_DIR/lib" "$OHOS_PREBUILT_DIR"
 }

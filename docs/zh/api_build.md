@@ -10,7 +10,7 @@
 
 ```bash
 mkdir build && cd build
-cmake .. -DBUILD_TESTING=ON
+cmake .. -DSWEETLINE_BUILD_TESTS=ON
 cmake --build .
 ```
 
@@ -47,10 +47,11 @@ emmake make
 
 | CMake 选项 | 默认值 | 说明 |
 |-----------|--------|------|
-| `BUILD_TESTING` | ON | 是否构建测试 |
-| `BUILD_SHARED_LIB` | ON | 是否构建动态库目标 |
-| `BUILD_STATIC_LIB` | ON | 是否构建静态库目标 |
+| `SWEETLINE_BUILD_TESTS` | 顶层构建默认 ON，作为子项目默认 OFF | 是否构建测试 |
+| `SWEETLINE_BUILD_SHARED` | ON | 是否构建动态库目标 |
+| `SWEETLINE_BUILD_STATIC` | ON | 是否构建静态库目标 |
+| `SWEETLINE_BUILD_WASM_EMBIND` | ON | 是否构建 Emscripten embind 目标 |
 
 说明：
-- 当启用 `EMSCRIPTEN` 时，`BUILD_SHARED_LIB` 会被强制设置为 `OFF`。
+- 当启用 `EMSCRIPTEN` 时，`SWEETLINE_BUILD_SHARED` 会跳过，因为该平台不使用普通动态库目标。
 - Android/OHOS/Emscripten 平台会自动跳过单元测试目标。

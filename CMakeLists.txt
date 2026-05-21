@@ -2,153 +2,106 @@ cmake_minimum_required(VERSION 3.10)
 project(sweetline)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
-# compiler special
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /utf-8")
+if (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(SWEETLINE_DEFAULT_BUILD_TESTS ON)
+else ()
+    set(SWEETLINE_DEFAULT_BUILD_TESTS OFF)
 endif ()
 
-# options
-option(BUILD_TESTING "Includes testing source for unit tests" ON)
-option(BUILD_SHARED_LIB "Build dynamic library" ON)
-option(BUILD_STATIC_LIB "Build static library" ON)
-add_definitions(-DTESTS_DIR="${CMAKE_SOURCE_DIR}/tests")
-add_definitions(-DSYNTAX_DIR="${CMAKE_SOURCE_DIR}/syntaxes")
-add_definitions(-DSWEETLINE_EXPORT=1)
-add_definitions(-DSWEETLINE_DEBUG=1)
+option(SWEETLINE_BUILD_TESTS "Build SweetLine tests" ${SWEETLINE_DEFAULT_BUILD_TESTS})
+option(SWEETLINE_BUILD_SHARED "Build SweetLine dynamic library" ON)
+option(SWEETLINE_BUILD_STATIC "Build SweetLine static library" ON)
+option(SWEETLINE_BUILD_WASM_EMBIND "Build SweetLine WebAssembly embind module" ON)
 
-# initial config
-set(LINK_LIB)
-set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
-set(SRC_DIR ${CMAKE_PROJECT_DIR}/src)
-set(3DPARTY_DIR ${CMAKE_PROJECT_DIR}/3dparty)
-set(CORE_OBJECT_TARGET "${CMAKE_PROJECT_NAME}_core_objects")
-set(STATIC_LIB_NAME "${CMAKE_PROJECT_NAME}_static")
-set(SHARED_LIB_NAME "${CMAKE_PROJECT_NAME}")
-
-# header search path
-list(APPEND INCLUDE_DIRS
-        ${SRC_DIR}/include
-        ${SRC_DIR}/core
-        ${3DPARTY_DIR}/include
-)
-include_directories(${INCLUDE_DIRS})
-
-# core source files
-file(GLOB_RECURSE CORE_SOURCE_FILES ${SRC_DIR}/core/*.*)
-
-# platform special
-set(PLATFORM_FILES)
-if (ANDROID)
-    file(GLOB_RECURSE PLATFORM_FILES ${CMAKE_PROJECT_DIR}/platform/Android/sweetline/src/main/cpp/*.*)
-    add_definitions(-DANDROID)
-    unset(STATIC_LIB)
-elseif (OHOS)
-    file(GLOB_RECURSE PLATFORM_FILES ${CMAKE_PROJECT_DIR}/platform/OHOS/sweetline/src/main/cpp/*.*)
-    add_definitions(-DOHOS)
-    unset(STATIC_LIB)
-elseif (WIN32)
-    add_definitions(-DWINDOWS -D_POSIX -D_POSIX_THREAD_SAFE_FUNCTIONS)
-elseif (EMSCRIPTEN)
-    add_definitions(-DWASM)
-    add_compile_options("-fexceptions")
-    set(BUILD_SHARED_LIB OFF)
-    file(GLOB_RECURSE WASM_FILES ${CMAKE_PROJECT_DIR}/platform/Emscripten/*.cpp)
-    message(STATUS "add target: sweetline for wasm")
-    add_executable("sweetline" ${WASM_FILES})
-    target_link_libraries("sweetline" PRIVATE ${STATIC_LIB_NAME}
-            "--bind"
-            "-fexceptions"
-            "-lNODEFS.js"
-            "-s WASM=1"
-            "-s MODULARIZE=1"
-            "-s NO_DISABLE_EXCEPTION_CATCHING=1"
-            "-s EXPORT_NAME='createSweetLine'"
-            "-s EXPORT_ES6=1"
-            "-s FORCE_FILESYSTEM=1"
-            "-s ALLOW_MEMORY_GROWTH=1"
-            "-s EXPORTED_RUNTIME_METHODS=[\"FS\"]"
-    )
-elseif (APPLE)
-    if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
-        set(IOS ON)
-        add_definitions(-DIOS)
-    else()
-        set(OSX ON)
-        add_definitions(-DOSX)
-    endif()
-elseif (UNIX AND NOT APPLE)
-    set(LINUX ON)
-    add_definitions(-DLINUX)
-endif ()
-
-add_library(${CORE_OBJECT_TARGET} OBJECT ${CORE_SOURCE_FILES} ${PLATFORM_FILES})
-set_target_properties(${CORE_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-# project shared/static lib
-if (BUILD_SHARED_LIB)
-    include_directories(${SRC_DIR}/shared)
-    file(GLOB_RECURSE C_FILES ${SRC_DIR}/shared/*.*)
-    message(STATUS "add target: ${SHARED_LIB_NAME} as dynamic lib")
-    add_library(${SHARED_LIB_NAME} SHARED $<TARGET_OBJECTS:${CORE_OBJECT_TARGET}> ${C_FILES})
-endif ()
-if (BUILD_STATIC_LIB)
-    add_definitions(-DONIG_STATIC=ON)
-    message(STATUS "add target: ${STATIC_LIB_NAME} as static lib")
-    add_library(${STATIC_LIB_NAME} STATIC $<TARGET_OBJECTS:${CORE_OBJECT_TARGET}>)
-endif ()
-
-# add library functions
-function(add_platform_library dir filename type)
-    if (${type} STREQUAL "STATIC")
-        add_library(${dir} STATIC IMPORTED)
-    elseif (${type} STREQUAL "SHARED")
-        add_library(${dir} SHARED IMPORTED)
-    else ()
-        message(FATAL_ERROR "Error: add_platform_library type must be STATIC/SHARED")
+if (EMSCRIPTEN)
+    if (NOT SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_TESTS AND NOT SWEETLINE_BUILD_WASM_EMBIND)
+        message(FATAL_ERROR "At least one of SWEETLINE_BUILD_STATIC, SWEETLINE_BUILD_TESTS, or SWEETLINE_BUILD_WASM_EMBIND must be enabled for Emscripten")
     endif ()
-    set(LIB_PATH)
+elseif (NOT SWEETLINE_BUILD_SHARED AND NOT SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_TESTS)
+    message(FATAL_ERROR "At least one of SWEETLINE_BUILD_SHARED, SWEETLINE_BUILD_STATIC, or SWEETLINE_BUILD_TESTS must be enabled")
+endif ()
+
+set(SWEETLINE_LINK_LIB)
+set(SWEETLINE_PROJECT_DIR ${PROJECT_SOURCE_DIR})
+set(SWEETLINE_SRC_DIR ${SWEETLINE_PROJECT_DIR}/src)
+set(SWEETLINE_PUBLIC_INCLUDE_DIR ${SWEETLINE_PROJECT_DIR}/include)
+set(SWEETLINE_CORE_OBJECT_TARGET "${PROJECT_NAME}_core_objects")
+set(SWEETLINE_C_API_OBJECT_TARGET "${PROJECT_NAME}_c_api_objects")
+set(SWEETLINE_STATIC_LIB_NAME "${PROJECT_NAME}_static")
+set(SWEETLINE_SHARED_LIB_NAME "${PROJECT_NAME}")
+
+include(cmake/SweetLineThirdParty.cmake)
+set(SWEETLINE_THIRD_PARTY_INCLUDE_DIRS
+        $<TARGET_PROPERTY:SweetLine3p::NlohmannJson,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:SweetLine3p::UtfCpp,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:SweetLine3p::Oniguruma,INTERFACE_INCLUDE_DIRECTORIES>
+)
+list(APPEND SWEETLINE_LINK_LIB SweetLine3p::Oniguruma)
+
+set(SWEETLINE_INCLUDE_DIRS
+        ${SWEETLINE_PUBLIC_INCLUDE_DIR}
+        ${SWEETLINE_SRC_DIR}
+)
+
+set(SWEETLINE_PLATFORM_FILES)
+if (ANDROID)
+    file(GLOB_RECURSE SWEETLINE_PLATFORM_FILES
+            ${SWEETLINE_PROJECT_DIR}/platform/Android/sweetline/src/main/cpp/*.*)
+    list(APPEND SWEETLINE_INCLUDE_DIRS ${SWEETLINE_PROJECT_DIR}/platform/Android/sweetline/src/main/cpp)
+elseif (OHOS)
+    file(GLOB_RECURSE SWEETLINE_PLATFORM_FILES
+            ${SWEETLINE_PROJECT_DIR}/platform/OHOS/sweetline/src/main/cpp/*.*)
+    list(APPEND SWEETLINE_INCLUDE_DIRS ${SWEETLINE_PROJECT_DIR}/platform/OHOS/sweetline/src/main/cpp)
+endif ()
+
+file(GLOB SWEETLINE_CORE_SOURCE_FILES ${SWEETLINE_SRC_DIR}/*.cpp)
+set(SWEETLINE_C_API_SOURCE_FILES ${SWEETLINE_SRC_DIR}/c_sweetline.cpp)
+list(REMOVE_ITEM SWEETLINE_CORE_SOURCE_FILES ${SWEETLINE_C_API_SOURCE_FILES})
+
+set(SWEETLINE_C_API_OBJECTS)
+
+function(sweetline_configure_compile_target target_name)
+    target_compile_features(${target_name} PRIVATE cxx_std_17)
+    target_include_directories(${target_name} PRIVATE
+            ${SWEETLINE_INCLUDE_DIRS}
+            ${SWEETLINE_THIRD_PARTY_INCLUDE_DIRS}
+    )
+    target_compile_definitions(${target_name} PRIVATE
+            TESTS_DIR="${PROJECT_SOURCE_DIR}/tests"
+            SYNTAX_DIR="${PROJECT_SOURCE_DIR}/syntaxes"
+            SWEETLINE_DEBUG=1
+            SWEETLINE_EXPORT=1
+            ONIG_STATIC=ON
+    )
+    if (MSVC)
+        target_compile_options(${target_name} PRIVATE /Zc:__cplusplus /utf-8)
+        target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX=1)
+    endif ()
     if (ANDROID)
-        set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/android/${CMAKE_ANDROID_ARCH_ABI}/${filename})
+        target_compile_definitions(${target_name} PRIVATE ANDROID)
     elseif (OHOS)
-        set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/ohos/${OHOS_ARCH}/${filename})
+        target_compile_definitions(${target_name} PRIVATE OHOS)
     elseif (WIN32)
-        if (MSVC)
-            if(CMAKE_BUILD_TYPE STREQUAL "Release")
-                set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/windows/msvc/release/${filename})
-            else ()
-                set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/windows/msvc/debug/${filename})
-            endif ()
+        target_compile_definitions(${target_name} PRIVATE WINDOWS _POSIX _POSIX_THREAD_SAFE_FUNCTIONS)
+    elseif (APPLE)
+        if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+            target_compile_definitions(${target_name} PRIVATE IOS)
         else ()
-            set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/windows/mingw64/${filename})
+            target_compile_definitions(${target_name} PRIVATE OSX)
         endif ()
     elseif (EMSCRIPTEN)
-        set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/emscripten/${filename})
-    elseif (IOS)
-        if (CMAKE_OSX_SYSROOT MATCHES ".*simulator.*" OR CMAKE_OSX_SYSROOT STREQUAL "iphonesimulator")
-            set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/ios/simulator-${CMAKE_OSX_ARCHITECTURES}/${filename})
-        else()
-            set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/ios/${CMAKE_OSX_ARCHITECTURES}/${filename})
-        endif()
-    elseif (OSX)
-        set(_OSX_ARCH ${CMAKE_OSX_ARCHITECTURES})
-        if (NOT _OSX_ARCH OR _OSX_ARCH STREQUAL "")
-            # CMAKE_OSX_ARCHITECTURES fallback to empty if host arch matches target, so detect host arch here
-            execute_process(COMMAND uname -m OUTPUT_VARIABLE _OSX_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-        endif()
-        set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/osx/${_OSX_ARCH}/${filename})
-    elseif (LINUX)
-        set(LIB_PATH ${3DPARTY_DIR}/lib/${dir}/linux/${CMAKE_SYSTEM_PROCESSOR}/${filename})
+        target_compile_options(${target_name} PRIVATE "-fexceptions")
+        target_compile_definitions(${target_name} PRIVATE WASM)
+    elseif (UNIX AND NOT APPLE)
+        target_compile_definitions(${target_name} PRIVATE LINUX)
     endif ()
-    message(STATUS "Add platform library: ${LIB_PATH}")
-    set_target_properties(${dir} PROPERTIES IMPORTED_LOCATION ${LIB_PATH})
-    set(LINK_LIB ${LINK_LIB} ${dir} PARENT_SCOPE)
 endfunction()
 
-function(resolve_apple_iconv_library out_var)
+function(resolve_sweetline_apple_iconv_library out_var)
     if (CMAKE_OSX_SYSROOT AND EXISTS "${CMAKE_OSX_SYSROOT}/usr/lib/libiconv.tbd")
         set(${out_var} "${CMAKE_OSX_SYSROOT}/usr/lib/libiconv.tbd" PARENT_SCOPE)
     else ()
@@ -156,66 +109,97 @@ function(resolve_apple_iconv_library out_var)
     endif ()
 endfunction()
 
-# add library
 if (ANDROID)
-    add_platform_library(oniguruma libonig.a STATIC)
-    find_library(ANDROID_LIB android)
-    find_library(LOG_LIB log)
-    set(LINK_LIB ${LINK_LIB} ${ANDROID_LIB} ${LOG_LIB})
+    find_library(SWEETLINE_ANDROID_LIB android)
+    find_library(SWEETLINE_LOG_LIB log)
+    list(APPEND SWEETLINE_LINK_LIB ${SWEETLINE_ANDROID_LIB} ${SWEETLINE_LOG_LIB})
 elseif (OHOS)
-    add_platform_library(oniguruma libonig.a STATIC)
-    set(LINK_LIB ${LINK_LIB} libace_napi.z.so libhilog_ndk.z.so)
+    list(APPEND SWEETLINE_LINK_LIB libace_napi.z.so libhilog_ndk.z.so)
 elseif (WIN32)
-    if (MSVC)
-        add_platform_library(oniguruma onig.lib STATIC)
-    else ()
-        add_platform_library(oniguruma libonig.a STATIC)
-    endif ()
-    set(LINK_LIB ${LINK_LIB} ws2_32)
-elseif (EMSCRIPTEN)
-    add_platform_library(oniguruma libonig.a STATIC)
-elseif (IOS)
-    add_platform_library(oniguruma libonig.a STATIC)
-    resolve_apple_iconv_library(ICONV_LIB)
-    set(LINK_LIB ${LINK_LIB} ${ICONV_LIB})
-elseif (OSX)
-    add_platform_library(oniguruma libonig.a STATIC)
-    resolve_apple_iconv_library(ICONV_LIB)
-    set(LINK_LIB ${LINK_LIB} ${ICONV_LIB})
-elseif (LINUX)
-    add_platform_library(oniguruma libonig.a STATIC)
+    list(APPEND SWEETLINE_LINK_LIB ws2_32)
+elseif (APPLE)
+    resolve_sweetline_apple_iconv_library(SWEETLINE_ICONV_LIB)
+    list(APPEND SWEETLINE_LINK_LIB ${SWEETLINE_ICONV_LIB})
 endif ()
 
-if (BUILD_SHARED_LIB)
-    target_link_libraries(${SHARED_LIB_NAME} PRIVATE ${LINK_LIB})
-endif ()
-# merge static libs
-if (BUILD_STATIC_LIB)
-    target_link_libraries(${STATIC_LIB_NAME} PRIVATE ${LINK_LIB})
-    include(scripts/MergeStaticLib.cmake)
-    get_target_property(ONIG_PATH oniguruma IMPORTED_LOCATION)
-    merge_static_libs(${STATIC_LIB_NAME} ${ONIG_PATH})
+add_library(${SWEETLINE_CORE_OBJECT_TARGET} OBJECT
+        ${SWEETLINE_CORE_SOURCE_FILES}
+        ${SWEETLINE_PLATFORM_FILES}
+)
+set_target_properties(${SWEETLINE_CORE_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+sweetline_configure_compile_target(${SWEETLINE_CORE_OBJECT_TARGET})
+
+if (NOT EMSCRIPTEN)
+    add_library(${SWEETLINE_C_API_OBJECT_TARGET} OBJECT ${SWEETLINE_C_API_SOURCE_FILES})
+    set_target_properties(${SWEETLINE_C_API_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    sweetline_configure_compile_target(${SWEETLINE_C_API_OBJECT_TARGET})
+    list(APPEND SWEETLINE_C_API_OBJECTS $<TARGET_OBJECTS:${SWEETLINE_C_API_OBJECT_TARGET}>)
 endif ()
 
-# Unit tests
-if (BUILD_TESTING)
+if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN)
+    message(STATUS "add target: ${SWEETLINE_SHARED_LIB_NAME} as dynamic lib")
+    add_library(${SWEETLINE_SHARED_LIB_NAME} SHARED
+            $<TARGET_OBJECTS:${SWEETLINE_CORE_OBJECT_TARGET}>
+            ${SWEETLINE_C_API_OBJECTS}
+    )
+    target_include_directories(${SWEETLINE_SHARED_LIB_NAME}
+            PUBLIC
+            $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:include/sweetline>
+    )
+    target_link_libraries(${SWEETLINE_SHARED_LIB_NAME} PRIVATE
+            SweetLine3p::NlohmannJson
+            SweetLine3p::UtfCpp
+            ${SWEETLINE_LINK_LIB}
+    )
+    add_library(SweetLine::sweetline ALIAS ${SWEETLINE_SHARED_LIB_NAME})
+elseif (SWEETLINE_BUILD_SHARED AND EMSCRIPTEN)
+    message(STATUS "skip target: ${SWEETLINE_SHARED_LIB_NAME} dynamic lib is not used for Emscripten")
+endif ()
+
+if (SWEETLINE_BUILD_STATIC)
+    message(STATUS "add target: ${SWEETLINE_STATIC_LIB_NAME} as static lib")
+    add_library(${SWEETLINE_STATIC_LIB_NAME} STATIC
+            $<TARGET_OBJECTS:${SWEETLINE_CORE_OBJECT_TARGET}>
+            ${SWEETLINE_C_API_OBJECTS}
+    )
+    target_include_directories(${SWEETLINE_STATIC_LIB_NAME}
+            PUBLIC
+            $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:include/sweetline>
+    )
+    target_compile_definitions(${SWEETLINE_STATIC_LIB_NAME} PUBLIC SWEETLINE_STATIC=1)
+    target_link_libraries(${SWEETLINE_STATIC_LIB_NAME} PRIVATE
+            SweetLine3p::NlohmannJson
+            SweetLine3p::UtfCpp
+            ${SWEETLINE_LINK_LIB}
+    )
+    add_library(SweetLine::sweetline_static ALIAS ${SWEETLINE_STATIC_LIB_NAME})
+
+    include(cmake/MergeStaticLib.cmake)
+    merge_static_libs(${SWEETLINE_STATIC_LIB_NAME} SweetLine3p::Oniguruma)
+endif ()
+
+if (EMSCRIPTEN AND SWEETLINE_BUILD_WASM_EMBIND)
+    include(cmake/SweetLineWasm.cmake)
+endif ()
+
+if (SWEETLINE_BUILD_TESTS)
     enable_testing()
     message(STATUS "Unit tests enabled")
     if (NOT ANDROID AND NOT OHOS AND NOT EMSCRIPTEN)
-        add_subdirectory(${CMAKE_PROJECT_DIR}/tests)
+        add_subdirectory(${SWEETLINE_PROJECT_DIR}/tests)
     endif ()
-endif()
+endif ()
 
-# config for installing
 include(GNUInstallDirs)
 set(INSTALL_TARGETS)
-if (BUILD_SHARED_LIB)
-    list(APPEND INSTALL_TARGETS ${SHARED_LIB_NAME})
+if (TARGET ${SWEETLINE_SHARED_LIB_NAME})
+    list(APPEND INSTALL_TARGETS ${SWEETLINE_SHARED_LIB_NAME})
 endif ()
-if (BUILD_STATIC_LIB)
-    list(APPEND INSTALL_TARGETS ${STATIC_LIB_NAME})
+if (TARGET ${SWEETLINE_STATIC_LIB_NAME})
+    list(APPEND INSTALL_TARGETS ${SWEETLINE_STATIC_LIB_NAME})
 endif ()
-# install lib and executable
 if (INSTALL_TARGETS)
     install(TARGETS ${INSTALL_TARGETS}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -230,12 +214,12 @@ if (INSTALL_TARGETS)
                         DESTINATION ${CMAKE_INSTALL_BINDIR}
                         OPTIONAL
                 )
-            endif()
-        endforeach()
-    endif()
+            endif ()
+        endforeach ()
+    endif ()
 endif ()
-# install headers
-install(DIRECTORY ${SRC_DIR}/include/
+
+install(DIRECTORY ${SWEETLINE_PUBLIC_INCLUDE_DIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sweetline
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )

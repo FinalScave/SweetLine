@@ -1,0 +1,10 @@
+Name: Oniguruma
+Version: 6.9.10
+Upstream: https://github.com/kkos/oniguruma
+License: BSD-2-Clause
+
+Files:
+  include/oniguruma/*.h
+  lib/emscripten/release/libonig.a
+  lib/*/*/release/libonig.a
+  lib/windows/x64/*/onig.lib

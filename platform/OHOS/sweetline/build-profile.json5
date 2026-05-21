@@ -3,7 +3,7 @@
   "buildOption": {
     "externalNativeOptions": {
       "path": "../../../CMakeLists.txt",
-      "arguments": "-DOHOS_STL=c++_shared",
+      "arguments": "-DOHOS_STL=c++_shared -DSWEETLINE_BUILD_SHARED=ON -DSWEETLINE_BUILD_STATIC=OFF -DSWEETLINE_BUILD_TESTS=OFF",
       "cppFlags": "",
       "abiFilters": ["arm64-v8a", "x86_64"]
     }

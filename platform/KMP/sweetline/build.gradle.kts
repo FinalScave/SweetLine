@@ -38,7 +38,7 @@ kotlin {
             cinterops {
                 val sweetline by creating {
                     defFile(project.file("src/nativeInterop/cinterop/sweetline.def"))
-                    includeDirs(repoRoot.resolve("src/include"))
+                    includeDirs(repoRoot.resolve("include"))
                 }
             }
         }
@@ -70,7 +70,13 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DANDROID_STL=c++_static", "-DANDROID=ON")
+                arguments += listOf(
+                    "-DANDROID_STL=c++_static",
+                    "-DANDROID=ON",
+                    "-DSWEETLINE_BUILD_SHARED=ON",
+                    "-DSWEETLINE_BUILD_STATIC=OFF",
+                    "-DSWEETLINE_BUILD_TESTS=OFF",
+                )
             }
         }
         ndk {

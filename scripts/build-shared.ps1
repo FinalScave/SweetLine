@@ -237,7 +237,7 @@ function Build-WindowsMsvc {
         "-DCMAKE_CXX_STANDARD=17",
         "-DCMAKE_CXX_STANDARD_REQUIRED=ON",
         "-DCMAKE_CXX_FLAGS=/std:c++17 /EHsc /utf-8",
-        "-DBUILD_TESTING=OFF"
+        "-DSWEETLINE_BUILD_TESTS=OFF"
     )
 
     Invoke-External -FilePath "cmake" -Arguments @(
@@ -263,7 +263,7 @@ function Build-Emscripten {
         "-G", "Ninja",
         "-DCMAKE_CXX_FLAGS=-std=c++17",
         "-DCMAKE_BUILD_TYPE=Release",
-        "-DBUILD_TESTING=OFF"
+        "-DSWEETLINE_BUILD_TESTS=OFF"
     )
 
     Invoke-External -FilePath "cmake" -Arguments @(
@@ -301,8 +301,8 @@ function Build-Android {
         "-DCMAKE_TOOLCHAIN_FILE=$toolchainFile",
         "-DANDROID_PLATFORM=android-21",
         "-DCMAKE_CXX_FLAGS=-std=c++17",
-        "-DBUILD_STATIC_LIB=OFF",
-        "-DBUILD_TESTING=OFF"
+        "-DSWEETLINE_BUILD_STATIC=OFF",
+        "-DSWEETLINE_BUILD_TESTS=OFF"
     )
 
     Invoke-External -FilePath "cmake" -Arguments @(
@@ -344,8 +344,8 @@ function Build-Ohos {
         "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_TOOLCHAIN_FILE=$OhosToolchain",
         "-DCMAKE_CXX_FLAGS=-std=c++17",
-        "-DBUILD_STATIC_LIB=OFF",
-        "-DBUILD_TESTING=OFF"
+        "-DSWEETLINE_BUILD_STATIC=OFF",
+        "-DSWEETLINE_BUILD_TESTS=OFF"
     )
 
     Invoke-External -FilePath "cmake" -Arguments @(
@@ -378,7 +378,7 @@ function Build-LinuxWsl {
     $projectDirWsl = Convert-ToWslPath -Path $ProjectDir
     $linuxBuildDirWsl = Convert-ToWslPath -Path $linuxBuildDir
     $linuxPrebuiltDirWsl = Convert-ToWslPath -Path $linuxPrebuiltDir
-    $linuxToolchainFileWsl = Convert-ToWslPath -Path (Join-Path $ProjectDir "scripts\\cmake\\linux-aarch64-toolchain.cmake")
+    $linuxToolchainFileWsl = Convert-ToWslPath -Path (Join-Path $ProjectDir "cmake\\linux-aarch64-toolchain.cmake")
 
     Write-Section "Linux $Arch (WSL)"
     $resolvedWslDistro = Resolve-WslBuildDistroName -WslPath $wsl -RequestedName $WslDistro
@@ -392,7 +392,7 @@ function Build-LinuxWsl {
         Write-Host "Distro: $resolvedWslDistro (auto-selected)"
     }
 
-    $cmakeConfigureCommand = "cmake '$projectDirWsl' -B '$linuxBuildDirWsl' -G 'Ninja' -DCMAKE_CXX_FLAGS='-std=c++17 -fPIC' -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=OFF -DBUILD_TESTING=OFF"
+    $cmakeConfigureCommand = "cmake '$projectDirWsl' -B '$linuxBuildDirWsl' -G 'Ninja' -DCMAKE_CXX_FLAGS='-std=c++17 -fPIC' -DCMAKE_BUILD_TYPE=Release -DSWEETLINE_BUILD_STATIC=OFF -DSWEETLINE_BUILD_TESTS=OFF"
     if ($Arch -eq "aarch64" -and -not (Test-Path $linuxCacheFile)) {
         $cmakeConfigureCommand += " -DCMAKE_TOOLCHAIN_FILE='$linuxToolchainFileWsl'"
     }

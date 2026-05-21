@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(_WIN32) || defined(_WIN64) || defined(WINDOWS)
+#if defined(SWEETLINE_STATIC)
+  #define SL_API
+#elif defined(_WIN32) || defined(_WIN64) || defined(WINDOWS)
   #ifdef SWEETLINE_EXPORT
     #define SL_API __declspec(dllexport)
   #else

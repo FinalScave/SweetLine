@@ -10,9 +10,20 @@ This document summarizes platform build commands and options.
 
 ```bash
 mkdir build && cd build
-cmake .. -DBUILD_TESTING=ON
+cmake .. -DSWEETLINE_BUILD_TESTS=ON
 cmake --build .
 ```
+
+### CMake Source Integration
+
+SweetLine can be embedded as a source dependency from another CMake project:
+
+```cmake
+add_subdirectory(path/to/SweetLine)
+target_link_libraries(my_target PRIVATE sweetline_static)
+```
+
+Use `sweetline` when you want the shared library target instead.
 
 ### Android (Gradle)
 
@@ -47,10 +58,11 @@ emmake make
 
 | CMake Option | Default | Description |
 |-------------|---------|-------------|
-| `BUILD_TESTING` | ON | Whether to build tests |
-| `BUILD_SHARED_LIB` | ON | Whether to build shared library target |
-| `BUILD_STATIC_LIB` | ON | Whether to build static library target |
+| `SWEETLINE_BUILD_TESTS` | ON for top-level builds, OFF as a subproject | Whether to build tests |
+| `SWEETLINE_BUILD_SHARED` | ON | Whether to build shared library target |
+| `SWEETLINE_BUILD_STATIC` | ON | Whether to build static library target |
+| `SWEETLINE_BUILD_WASM_EMBIND` | ON | Whether to build the Emscripten embind target |
 
 Notes:
-- When `EMSCRIPTEN` is enabled, `BUILD_SHARED_LIB` is forced to `OFF`.
+- When `EMSCRIPTEN` is enabled, `SWEETLINE_BUILD_SHARED` is skipped because normal dynamic libraries are not used there.
 - Unit tests are skipped automatically on Android/OHOS/Emscripten.
