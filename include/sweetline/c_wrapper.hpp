@@ -1,8 +1,8 @@
 #ifndef SWEETLINE_C_WRAPPER_HPP
 #define SWEETLINE_C_WRAPPER_HPP
 
-#include "c_sweetline.h"
-#include "highlight.h"
+#include "sweetline/c_sweetline.h"
+#include "sweetline/highlight.h"
 
 using namespace NS_SWEETLINE;
 

@@ -141,7 +141,7 @@ prepare_apple_xcframework_headers() {
   local module_name="${2:-$APPLE_CORE_MODULE_NAME}"
   local headers_dir="$output_root/headers"
   local include_dir="$headers_dir/sweetline"
-  local c_api_header="$PROJECT_DIR/include/c_sweetline.h"
+  local c_api_header="$PROJECT_DIR/include/sweetline/c_sweetline.h"
 
   verify_file_exists "$c_api_header" "SweetLine C API header" || return 1
 

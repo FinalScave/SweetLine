@@ -47,9 +47,9 @@ This document covers core concepts and the C++ API.
 ### Headers
 
 ```cpp
-#include "highlight.h"   // Core highlighting API
-#include "foundation.h"  // Base data structures
-#include "syntax.h"      // Syntax rule definitions
+#include "sweetline/highlight.h"   // Core highlighting API
+#include "sweetline/foundation.h"  // Base data structures
+#include "sweetline/syntax.h"      // Syntax rule definitions
 ```
 
 Namespace: `sweetline` (macro `NS_SWEETLINE`)
@@ -106,7 +106,7 @@ File-name-based routing uses the document base name and resolves syntaxes in thi
 #### Usage Example
 
 ```cpp
-#include "highlight.h"
+#include "sweetline/highlight.h"
 using namespace sweetline;
 
 auto engine = std::make_shared<HighlightEngine>();

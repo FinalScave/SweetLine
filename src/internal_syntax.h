@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <oniguruma/oniguruma.h>
 #include <nlohmann/json.hpp>
-#include "syntax.h"
+#include "sweetline/syntax.h"
 
 namespace NS_SWEETLINE {
   class HighlightEngine;

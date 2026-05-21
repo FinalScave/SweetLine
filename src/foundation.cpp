@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <algorithm>
-#include "foundation.h"
-#include "util.h"
+#include "sweetline/foundation.h"
+#include "sweetline/util.h"
 
 namespace NS_SWEETLINE {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);

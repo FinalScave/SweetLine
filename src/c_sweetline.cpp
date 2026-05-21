@@ -1,4 +1,4 @@
-#include "c_wrapper.hpp"
+#include "sweetline/c_wrapper.hpp"
 
 using namespace NS_SWEETLINE;
 

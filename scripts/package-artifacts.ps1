@@ -323,12 +323,15 @@ function Package-HeadersArtifacts {
 
     $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("sweetline-headers-" + [System.Guid]::NewGuid().ToString("N"))
     $stageDir = Join-Path $tempRoot "stage"
-    $stageIncludeDir = Join-Path $stageDir "include\sweetline"
+    $stageIncludeDir = Join-Path $stageDir "include"
     Ensure-Directory -Path $stageIncludeDir
 
     try {
         foreach ($file in $headerFiles) {
-            Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $stageIncludeDir $file.Name) -Force
+            $relativePath = Get-RelativePathNormalized -BasePath $SourceDir -TargetPath $file.FullName
+            $destinationPath = Join-Path $stageIncludeDir ($relativePath -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+            Ensure-Directory -Path (Split-Path -Parent $destinationPath)
+            Copy-Item -LiteralPath $file.FullName -Destination $destinationPath -Force
         }
 
         if ($IncludeChecksums) {

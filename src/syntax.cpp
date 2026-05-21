@@ -4,8 +4,8 @@
 #include <algorithm>
 
 #include "internal_syntax.h"
-#include "highlight.h"
-#include "util.h"
+#include "sweetline/highlight.h"
+#include "sweetline/util.h"
 
 namespace NS_SWEETLINE {
   struct SyntaxRuleRuntimeData {

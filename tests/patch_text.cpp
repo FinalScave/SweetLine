@@ -1,5 +1,5 @@
 #include <catch2/catch_amalgamated.hpp>
-#include "foundation.h"
+#include "sweetline/foundation.h"
 
 using namespace NS_SWEETLINE;
 

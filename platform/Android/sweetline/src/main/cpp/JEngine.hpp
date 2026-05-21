@@ -2,8 +2,8 @@
 #define SWEETLINE_JENGINE_HPP
 
 #include <jni.h>
-#include "c_wrapper.hpp"
-#include "util.h"
+#include "sweetline/c_wrapper.hpp"
+#include "sweetline/util.h"
 
 using namespace NS_SWEETLINE;
 

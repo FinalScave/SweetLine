@@ -1,7 +1,7 @@
 #ifndef SWEETLINE_INTERNAL_HIGHLIGHT_H
 #define SWEETLINE_INTERNAL_HIGHLIGHT_H
 
-#include "highlight.h"
+#include "sweetline/highlight.h"
 #include "internal_syntax.h"
 
 namespace NS_SWEETLINE {

@@ -145,7 +145,7 @@ if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN)
     target_include_directories(${SWEETLINE_SHARED_LIB_NAME}
             PUBLIC
             $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:include/sweetline>
+            $<INSTALL_INTERFACE:include>
     )
     target_link_libraries(${SWEETLINE_SHARED_LIB_NAME} PRIVATE
             SweetLine3p::NlohmannJson
@@ -166,7 +166,7 @@ if (SWEETLINE_BUILD_STATIC)
     target_include_directories(${SWEETLINE_STATIC_LIB_NAME}
             PUBLIC
             $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:include/sweetline>
+            $<INSTALL_INTERFACE:include>
     )
     target_compile_definitions(${SWEETLINE_STATIC_LIB_NAME} PUBLIC SWEETLINE_STATIC=1)
     target_link_libraries(${SWEETLINE_STATIC_LIB_NAME} PRIVATE
@@ -220,6 +220,6 @@ if (INSTALL_TARGETS)
 endif ()
 
 install(DIRECTORY ${SWEETLINE_PUBLIC_INCLUDE_DIR}/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sweetline
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )

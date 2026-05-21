@@ -2,7 +2,7 @@
 #define SWEETLINE_NAPIUTIL_H
 
 #include "napi/native_api.h"
-#include "c_wrapper.hpp"
+#include "sweetline/c_wrapper.hpp"
 #include <cstdint>
 #include <memory>
 #include <string>

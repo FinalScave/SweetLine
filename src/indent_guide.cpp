@@ -1,7 +1,7 @@
 #include <algorithm>
 
 #include "internal_highlight.h"
-#include "util.h"
+#include "sweetline/util.h"
 
 namespace NS_SWEETLINE {
   namespace {

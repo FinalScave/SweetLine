@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <nlohmann/json.hpp>
 #include "internal_highlight.h"
-#include "util.h"
+#include "sweetline/util.h"
 
 #ifdef SWEETLINE_DEBUG
   #define DUMP_JSON_TO_RESULT(json, result) result = json.dump(2);

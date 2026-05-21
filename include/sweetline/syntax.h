@@ -1,7 +1,7 @@
 #ifndef SWEETLINE_SYNTAX_H
 #define SWEETLINE_SYNTAX_H
 
-#include "macro.h"
+#include "sweetline/macro.h"
 
 namespace NS_SWEETLINE {
   /// Error thrown during syntax rule compilation

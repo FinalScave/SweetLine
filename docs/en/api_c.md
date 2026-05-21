@@ -11,7 +11,7 @@ The C API provides a pure C interface wrapper, suitable for FFI integration (e.g
 ### Header
 
 ```c
-#include "c_sweetline.h"
+#include "sweetline/c_sweetline.h"
 ```
 
 ### Error Codes
@@ -221,7 +221,7 @@ scopeState: 0=START, 1=END, 2=CONTENT
 ### Complete C Example
 
 ```c
-#include "c_sweetline.h"
+#include "sweetline/c_sweetline.h"
 #include <stdio.h>
 
 int main() {

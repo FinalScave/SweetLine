@@ -10,7 +10,7 @@
 #endif
 #include <fstream>
 #include <oniguruma/oniguruma.h>
-#include "util.h"
+#include "sweetline/util.h"
 
 #ifdef _WIN32
 std::string windowsGBKToUTF8(const std::string& gbk_str) {

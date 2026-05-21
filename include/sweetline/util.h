@@ -3,7 +3,7 @@
 
 #include <cstdarg>
 #include <cstdint>
-#include "macro.h"
+#include "sweetline/macro.h"
 
 namespace NS_SWEETLINE {
   /// UTF-8 string utility

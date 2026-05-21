@@ -2,8 +2,8 @@
 #define SWEETLINE_HIGHLIGHT_H
 
 #include <cstdint>
-#include "foundation.h"
-#include "syntax.h"
+#include "sweetline/foundation.h"
+#include "sweetline/syntax.h"
 
 namespace NS_SWEETLINE {
   /// Each matched highlight token span

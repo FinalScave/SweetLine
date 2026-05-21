@@ -7,7 +7,7 @@
 #endif
 
 #include <cstdint>
-#include "macro.h"
+#include "sweetline/macro.h"
 
 namespace NS_SWEETLINE {
   /// Text position descriptor

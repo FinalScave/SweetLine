@@ -1,6 +1,6 @@
 #include "napi/native_api.h"
 #include "napi_util.h"
-#include "highlight.h"
+#include "sweetline/highlight.h"
 #include "internal_highlight.h"
 #include <cstdint>
 

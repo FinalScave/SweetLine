@@ -1,5 +1,5 @@
 #include <oniguruma/oniguruma.h>
-#include "macro.h"
+#include "sweetline/macro.h"
 
 namespace NS_SWEETLINE {
   class StaticInitializer {

@@ -1,7 +1,7 @@
 #include <emscripten/bind.h>
 #include <unordered_set>
-#include "foundation.h"
-#include "highlight.h"
+#include "sweetline/foundation.h"
+#include "sweetline/highlight.h"
 #include "internal_highlight.h"
 
 using namespace NS_SWEETLINE;

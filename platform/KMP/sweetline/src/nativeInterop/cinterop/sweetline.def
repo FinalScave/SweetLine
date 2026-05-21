@@ -1,2 +1,2 @@
-headers = c_sweetline.h
-headerFilter = c_sweetline.h
+headers = sweetline/c_sweetline.h
+headerFilter = sweetline/c_sweetline.h

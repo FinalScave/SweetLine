@@ -1,8 +1,8 @@
 #include <unordered_set>
 #include <vector>
 #include <catch2/catch_amalgamated.hpp>
-#include "highlight.h"
-#include "util.h"
+#include "sweetline/highlight.h"
+#include "sweetline/util.h"
 
 using namespace NS_SWEETLINE;
 

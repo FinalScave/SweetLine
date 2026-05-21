@@ -47,9 +47,9 @@
 ### 头文件
 
 ```cpp
-#include "highlight.h"   // 核心高亮 API
-#include "foundation.h"  // 基础数据结构
-#include "syntax.h"      // 语法规则定义
+#include "sweetline/highlight.h"   // 核心高亮 API
+#include "sweetline/foundation.h"  // 基础数据结构
+#include "sweetline/syntax.h"      // 语法规则定义
 ```
 
 命名空间：`sweetline`（宏 `NS_SWEETLINE`）
@@ -106,7 +106,7 @@ public:
 #### 使用示例
 
 ```cpp
-#include "highlight.h"
+#include "sweetline/highlight.h"
 using namespace sweetline;
 
 auto engine = std::make_shared<HighlightEngine>();
