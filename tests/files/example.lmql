@@ -1,0 +1,174 @@
+# LMQL sample for SweetLine highlighting
+# Documentation reference: https://lmql.ai/docs/latest/language/reference.html
+
+import lmql
+from typing import Any
+from lmql.runtime.program_state import ProgramState
+
+
+def normalize_label(value: str) -> str:
+    label = value.strip().lower()
+    return label.replace(" ", "_")
+
+
+def prefix(prefix_text: str):
+    def decorator(value: str) -> str:
+        return prefix_text + value.strip()
+
+    return decorator
+
+
+@lmql.decorators.streaming
+def stream_token(value: str, context: ProgramState):
+    print("partial", value)
+
+
+@lmql.decorators.pre
+def cached_city(variable, context: ProgramState):
+    cache = {
+        "CITY": "Reykjavik"
+    }
+    return cache.get(variable.name, variable)
+
+
+sample(temperature=0.7, top_p=0.9)
+
+"Summarize the support case in one sentence: [SUMMARY]" where len(TOKENS(SUMMARY)) < 30
+
+if "refund" in SUMMARY.lower():
+    "Add a short risk note: [RISK]" where STOPS_AT(RISK, "\n")
+else:
+    "Add a short next step: [NEXT_STEP]" where STOPS_BEFORE(NEXT_STEP, ".")
+
+
+argmax
+    "Classify the customer tone as one of the approved labels.\n"
+    "Message: {SUMMARY}\n"
+    "Tone: [TONE]" where TONE in [" calm", " urgent", " angry"]
+from
+    "openai/gpt-4o-mini"
+distribution
+    TONE in [" calm", " urgent", " angry"]
+
+
+review = """The buyer likes the product, but delivery arrived late.
+The buyer also asked whether a replacement cable is available.
+"""
+
+"Review:\n{review}\n"
+"Extract a compact intent label: [@normalize_label INTENT]" where len(TOKENS(INTENT)) < 8
+
+
+for field in ["order_id", "product", "requested_action"]:
+    "Return {field}: [VALUE]" where STOPS_AT(VALUE, "\n")
+    print(field, VALUE.strip())
+
+
+question_bank = [
+    "Can the model answer from policy text?",
+    "Does the answer need a human review?",
+    "Can the output include a citation?"
+]
+
+answers = []
+for question in question_bank:
+    "Question: {question}\n"
+    "Answer yes or no: [ANSWER]" where ANSWER in [" yes", " no"]
+    answers.append(ANSWER.strip())
+
+
+beam(n=3)
+    "Draft a concise apology for an ecommerce delay.\n"
+    "Use a professional tone and avoid overpromising.\n"
+    "Apology: [@prefix('Draft: ') APOLOGY]" where STOPS_AT(APOLOGY, "\n")
+
+
+var(n=4, b=2)
+    "Generate a support macro title: [TITLE]" where len(TOKENS(TITLE)) < 12
+
+
+beam_sample(n=2, temperature=0.4)
+    "Create a short safety disclaimer for a travel recommendation.\n"
+    "Disclaimer: [DISCLAIMER]" where STOPS_BEFORE(DISCLAIMER, ".")
+
+
+def chain_of_thought(shots: int = 2):
+    '''lmql
+    "Think through the task privately and return only the final answer.\n"
+    "Reasoning sketch: [SCRATCH]" where len(TOKENS(SCRATCH)) < 80
+    "Final answer: [FINAL]" where STOPS_AT(FINAL, "\n")
+    '''
+
+
+argmax
+    "Q: What is the capital of Iceland?\n"
+    "A: [ANSWER: chain_of_thought(shots=2)]"
+where
+    len(TOKENS(ANSWER)) < 20
+
+
+"Generate a ticket id like ABC12: [TICKET:r\"[A-Z]{3}[0-9]{2}\"]"
+"Return a numeric priority from one to five: [PRIORITY:int]" where INT(PRIORITY)
+
+
+"""Create a JSON payload for a webhook.
+Use escaped braces so the prompt keeps literal object syntax:
+{{
+  "summary": "[STRING_VALUE]",
+  "priority": [INT_VALUE],
+  "tags": [["billing", "delivery"]]
+}}
+""" where STOPS_BEFORE(STRING_VALUE, "\"") and INT(INT_VALUE)
+
+
+async def score_candidate(candidate: str):
+    "Candidate response:\n{candidate}\n"
+    "Score from zero to ten: [SCORE:int]" where INT(SCORE) and len(TOKENS(SCORE)) < 3
+    return SCORE
+
+
+@lmql.query
+def routed_reply(customer_name: str, issue: str):
+    '''lmql
+    "Customer: {customer_name}\n"
+    "Issue: {issue}\n"
+    "Write a warm first sentence: [OPENING]" where STOPS_AT(OPENING, "\n")
+    if "invoice" in issue.lower():
+        "Mention billing support: [BILLING_NOTE]" where STOPS_AT(BILLING_NOTE, "\n")
+    else:
+        "Mention product support: [PRODUCT_NOTE]" where STOPS_AT(PRODUCT_NOTE, "\n")
+    "Close with one action item: [ACTION]" where len(TOKENS(ACTION)) < 20
+    '''
+
+
+facts = {
+    "policy_url": "https://example.com/policies/refunds",
+    "window_days": 30,
+    "team": "support-operations"
+}
+
+"Use this policy URL in the answer: {facts['policy_url']}\n"
+"Answer with one sentence: [POLICY_REPLY]" where \
+    STOPS_AT(POLICY_REPLY, ".") and \
+    len(TOKENS(POLICY_REPLY)) < 45
+
+
+while "sorry" not in POLICY_REPLY.lower():
+    "Revise to include a brief apology: [POLICY_REPLY]" where STOPS_AT(POLICY_REPLY, ".")
+
+
+argmax
+    "Cached city example: [@cached_city CITY]\n"
+    "Recommend one indoor activity in {CITY}: [ACTIVITY]" where STOPS_AT(ACTIVITY, "\n")
+
+
+summary_table = []
+for label in ["intent", "tone", "next_action"]:
+    "Provide {label}: [ITEM]" where STOPS_AT(ITEM, "\n")
+    summary_table.append((label, ITEM.strip()))
+
+
+print("intent", INTENT)
+print("tone", TONE)
+print("answers", answers)
+print("summary table", summary_table)

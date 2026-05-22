@@ -1,6 +1,6 @@
 {
   "name": "typescript",
-  "fileSuffixes": [".ts", ".mts", ".cts"],
+  "fileSuffixes": [".ts", ".mts", ".cts", ".genai.mts"],
   "variables": {
     "identifier": "[a-zA-Z_$]\\w*",
     "whiteSpace": "[ \\t\\f]",

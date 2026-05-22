@@ -1834,6 +1834,292 @@ TEST_CASE("Second batch language samples do not emit transparent spans") {
   }
 }
 
+TEST_CASE("AI-era syntaxes keep core declarations and template markers styled") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> syntax_files = {
+    "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json"
+  };
+  for (const U8String& syntax_file : syntax_files) {
+    CAPTURE(syntax_file);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/" + syntax_file));
+  }
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kNumber = 3;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kAnnotation = 9;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kProperty = 13;
+  constexpr int32_t kUrl = 16;
+
+  SharedPtr<TextAnalyzer> moonbit = engine->createAnalyzerBySyntaxName("moonbit");
+  REQUIRE(moonbit != nullptr);
+  SharedPtr<DocumentHighlight> moonbitHighlight = moonbit->analyzeText(
+    "pub struct Ticket {\n"
+    "  id: String\n"
+    "}\n"
+    "fn route(ticket: Ticket) -> String {\n"
+    "  \"https://example.com/mbt\"\n"
+    "}\n");
+  REQUIRE(moonbitHighlight != nullptr);
+  CHECK(styleAtColumn(moonbitHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitHighlight->lines[0], 4) == kKeyword);
+  CHECK(styleAtColumn(moonbitHighlight->lines[0], 11) == kClass);
+  CHECK(styleAtColumn(moonbitHighlight->lines[3], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitHighlight->lines[3], 3) == kMethod);
+  CHECK(styleAtColumn(moonbitHighlight->lines[4], 3) == kUrl);
+
+  SharedPtr<DocumentHighlight> moonbitRecordHighlight = moonbit->analyzeText(
+    "pub struct Customer {\n"
+    "  id: String\n"
+    "  tier: Tier\n"
+    "}\n"
+    "match tier {\n"
+    "  Team => 3\n"
+    "}\n"
+    "for a in b {\n"
+    "}\n"
+    "pub fn main {\n"
+    "}\n");
+  REQUIRE(moonbitRecordHighlight != nullptr);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[0], 4) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[0], 11) == kClass);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[1], 2) == kProperty);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[1], 6) == kBuiltin);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[2], 2) == kProperty);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[2], 8) == kClass);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[4], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[4], 6) == -1);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[7], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[7], 4) == -1);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[7], 6) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[7], 9) == -1);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[9], 0) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[9], 4) == kKeyword);
+  CHECK(styleAtColumn(moonbitRecordHighlight->lines[9], 7) == kMethod);
+
+  SharedPtr<TextAnalyzer> mojo = engine->createAnalyzerBySyntaxName("mojo");
+  REQUIRE(mojo != nullptr);
+  SharedPtr<DocumentHighlight> mojoHighlight = mojo->analyzeText(
+    "struct Router:\n"
+    "    fn score(self, ticket: Ticket) -> Float64:\n"
+    "        return 12.0\n");
+  REQUIRE(mojoHighlight != nullptr);
+  CHECK(styleAtColumn(mojoHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(mojoHighlight->lines[0], 7) == kClass);
+  CHECK(styleAtColumn(mojoHighlight->lines[1], 4) == kKeyword);
+  CHECK(styleAtColumn(mojoHighlight->lines[1], 7) == kMethod);
+  CHECK(styleAtColumn(mojoHighlight->lines[1], 27) == kClass);
+
+  SharedPtr<TextAnalyzer> bend = engine->createAnalyzerBySyntaxName("bend");
+  REQUIRE(bend != nullptr);
+  SharedPtr<DocumentHighlight> bendHighlight = bend->analyzeText(
+    "def checked route(ticket):\n"
+    "  return fork(IO/print(\"https://example.com/bend\"))\n");
+  REQUIRE(bendHighlight != nullptr);
+  CHECK(styleAtColumn(bendHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(bendHighlight->lines[0], 4) == kKeyword);
+  CHECK(styleAtColumn(bendHighlight->lines[0], 12) == kMethod);
+  CHECK(styleAtColumn(bendHighlight->lines[1], 2) == kKeyword);
+  CHECK(styleAtColumn(bendHighlight->lines[1], 9) == kBuiltin);
+  CHECK(styleAtColumn(bendHighlight->lines[1], 24) == kUrl);
+
+  SharedPtr<DocumentHighlight> bendImportHighlight = bend->analyzeText(
+    "import (lib/list/map, lib/list/fold)\n"
+    "import ./effects/io as effects_io\n");
+  REQUIRE(bendImportHighlight != nullptr);
+  CHECK(styleAtColumn(bendImportHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(bendImportHighlight->lines[0], 7) == kPunctuation);
+  CHECK(styleAtColumn(bendImportHighlight->lines[0], 8) == kString);
+  CHECK(styleAtColumn(bendImportHighlight->lines[0], 20) == kPunctuation);
+  CHECK(styleAtColumn(bendImportHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(bendImportHighlight->lines[1], 7) == kString);
+  CHECK(styleAtColumn(bendImportHighlight->lines[1], 20) == kKeyword);
+  CHECK(styleAtColumn(bendImportHighlight->lines[1], 23) == kVariable);
+
+  SharedPtr<DocumentHighlight> bendFunHighlight = bend->analyzeText(
+    "MakePair fst snd = Pair { fst: fst, snd: snd }\n"
+    "FunLength (Cons head tail) = (+ 1 (FunLength tail))\n"
+    "FunMapMaybe (Option/Some value) fn = (Option/Some (fn value))\n");
+  REQUIRE(bendFunHighlight != nullptr);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 0) == kMethod);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 9) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 13) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 19) == kClass);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 26) == kProperty);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 31) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 36) == kProperty);
+  CHECK(styleAtColumn(bendFunHighlight->lines[0], 41) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[1], 0) == kMethod);
+  CHECK(styleAtColumn(bendFunHighlight->lines[1], 11) == kClass);
+  CHECK(styleAtColumn(bendFunHighlight->lines[1], 16) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[1], 21) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[1], 45) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 0) == kMethod);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 13) == kClass);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 25) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 32) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 51) == kVariable);
+  CHECK(styleAtColumn(bendFunHighlight->lines[2], 54) == kVariable);
+
+  SharedPtr<TextAnalyzer> baml = engine->createAnalyzerBySyntaxName("baml");
+  REQUIRE(baml != nullptr);
+  SharedPtr<DocumentHighlight> bamlHighlight = baml->analyzeText(
+    "function RouteTicket(ticket: SupportTicket) -> RoutingDecision {\n"
+    "  prompt #\"Hello {{ ticket.subject }}\"#\n"
+    "}\n");
+  REQUIRE(bamlHighlight != nullptr);
+  CHECK(styleAtColumn(bamlHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(bamlHighlight->lines[0], 9) == kMethod);
+  CHECK(styleAtColumn(bamlHighlight->lines[0], 29) == kClass);
+  CHECK(styleAtColumn(bamlHighlight->lines[1], 2) == kKeyword);
+  CHECK(styleAtColumn(bamlHighlight->lines[1], 17) == kPunctuation);
+  CHECK(styleAtColumn(bamlHighlight->lines[1], 20) == kVariable);
+  CHECK(styleAtColumn(bamlHighlight->lines[1], 27) == kProperty);
+
+  SharedPtr<DocumentHighlight> bamlConfigHighlight = baml->analyzeText(
+    "client<llm> FastOpenAI {\n"
+    "  options {\n"
+    "    api_key env.OPENAI_API_KEY\n"
+    "  }\n"
+    "}\n"
+    "retry_policy ShortRetry {\n"
+    "  max_retries 2\n"
+    "  strategy \"exponential_backoff\"\n"
+    "}\n");
+  REQUIRE(bamlConfigHighlight != nullptr);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[0], 6) == kPunctuation);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[0], 7) == kBuiltin);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[0], 10) == kPunctuation);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[0], 12) == kClass);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[2], 4) == kProperty);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[2], 12) == kBuiltin);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[2], 15) == kPunctuation);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[2], 16) == kProperty);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[5], 0) == kKeyword);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[5], 13) == kClass);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[6], 2) == kProperty);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[6], 14) == kNumber);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[7], 2) == kProperty);
+  CHECK(styleAtColumn(bamlConfigHighlight->lines[7], 11) == kString);
+
+  SharedPtr<DocumentHighlight> bamlTestHighlight = baml->analyzeText(
+    "test DraftReplySmoke {\n"
+    "  functions [DraftReply]\n"
+    "  args {\n"
+    "    tone Formal\n"
+    "    decision {\n"
+    "      priority High\n"
+    "      team \"platform-support\"\n"
+    "      reason \"Deployment is blocked\"\n"
+    "      confidence 0.82\n"
+    "    }\n"
+    "  }\n"
+    "}\n");
+  REQUIRE(bamlTestHighlight != nullptr);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[0], 5) == kVariable);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[1], 2) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[2], 2) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[3], 4) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[3], 9) == kVariable);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[4], 4) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[5], 6) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[5], 15) == kVariable);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[6], 6) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[6], 11) == kString);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[7], 6) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[7], 13) == kString);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[8], 6) == kProperty);
+  CHECK(styleAtColumn(bamlTestHighlight->lines[8], 17) == kNumber);
+
+  SharedPtr<TextAnalyzer> lmql = engine->createAnalyzerBySyntaxName("lmql");
+  REQUIRE(lmql != nullptr);
+  SharedPtr<DocumentHighlight> lmqlHighlight = lmql->analyzeText(
+    "argmax\n"
+    "    \"Tone: [TONE]\" where TONE in [\" calm\"]\n"
+    "from\n"
+    "    \"openai/gpt-4o-mini\"\n");
+  REQUIRE(lmqlHighlight != nullptr);
+  CHECK(styleAtColumn(lmqlHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(lmqlHighlight->lines[1], 4) == kString);
+  CHECK(styleAtColumn(lmqlHighlight->lines[1], 12) == kVariable);
+  CHECK(styleAtColumn(lmqlHighlight->lines[1], 20) == kKeyword);
+  CHECK(styleAtColumn(lmqlHighlight->lines[2], 0) == kKeyword);
+
+  SharedPtr<DocumentHighlight> lmqlPythonHighlight = lmql->analyzeText(
+    "import lmql\n"
+    "from typing import Any\n"
+    "for a in b:\n"
+    "    pass\n"
+    "\"Summary: [SUMMARY]\" where len(TOKENS(SUMMARY)) < 30\n");
+  REQUIRE(lmqlPythonHighlight != nullptr);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[0], 7) == kVariable);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[1], 5) == kVariable);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[1], 12) == kKeyword);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[1], 19) == kClass);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[2], 0) == kKeyword);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[2], 4) == kVariable);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[2], 6) == kKeyword);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[2], 9) == kVariable);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[4], 11) == kVariable);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[4], 32) == kBuiltin);
+  CHECK(styleAtColumn(lmqlPythonHighlight->lines[4], 39) == kVariable);
+
+  SharedPtr<TextAnalyzer> prompty = engine->createAnalyzerBySyntaxName("prompty");
+  REQUIRE(prompty != nullptr);
+  SharedPtr<DocumentHighlight> promptyHighlight = prompty->analyzeText(
+    "---\n"
+    "name: demo\n"
+    "---\n"
+    "system:\n"
+    "Hello {{ user.name }}\n");
+  REQUIRE(promptyHighlight != nullptr);
+  CHECK(styleAtColumn(promptyHighlight->lines[0], 0) == kPunctuation);
+  CHECK(styleAtColumn(promptyHighlight->lines[1], 0) == kProperty);
+  CHECK(styleAtColumn(promptyHighlight->lines[3], 0) == kKeyword);
+  CHECK(styleAtColumn(promptyHighlight->lines[4], 6) == kPunctuation);
+  CHECK(styleAtColumn(promptyHighlight->lines[4], 9) == kVariable);
+}
+
+TEST_CASE("AI-era language samples do not emit transparent spans") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const List<U8String> syntax_files = {
+    "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json"
+  };
+  for (const U8String& syntax_file : syntax_files) {
+    CAPTURE(syntax_file);
+    REQUIRE_NOTHROW(engine->compileSyntaxFromFile(SYNTAX_DIR"/" + syntax_file));
+  }
+
+  const List<U8String> sample_files = {
+    TESTS_DIR"/files/example.mbt",
+    TESTS_DIR"/files/example.mojo",
+    TESTS_DIR"/files/example.bend",
+    TESTS_DIR"/files/example.baml",
+    TESTS_DIR"/files/example.lmql",
+    TESTS_DIR"/files/example.prompty"
+  };
+  for (const U8String& file_path : sample_files) {
+    CAPTURE(file_path);
+    U8String code_txt = FileUtil::readString(file_path);
+    REQUIRE_FALSE(code_txt.empty());
+    U8String file_name = std::filesystem::u8path(file_path).filename().u8string();
+    SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerByFileName(file_name);
+    REQUIRE(analyzer != nullptr);
+    SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code_txt);
+    requireNoTransparentSpans(highlight, file_name);
+  }
+}
+
 TEST_CASE("SVG routes cleanly alongside XML") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kXmlSyntaxPath));

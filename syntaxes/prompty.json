@@ -1,0 +1,366 @@
+{
+  "name": "prompty",
+  "fileSuffixes": [".prompty"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_-]*",
+    "propertyName": "[A-Za-z_][A-Za-z0-9_.-]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "yamlCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "commentContent"]
+      }
+    ],
+    "referenceRule": [
+      {
+        "pattern": "(\\$\\{)(env|file)(:)([^}]+)(\\})",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation", 4, "variable", 5, "punctuation"]
+      }
+    ],
+    "yamlValueRules": [
+      {
+        "include": "referenceRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^']*(?:''[^']*)*)'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:true|false|null|yes|no|on|off)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:string|integer|float|boolean|array|object|thread|image|file|audio|function|mcp|openapi|custom|key|reference|chat|responses|embedding|jinja2|mustache|handlebars)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b\\d{4}-\\d{2}-\\d{2}(?:[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?)?\\b",
+        "style": "annotation"
+      },
+      {
+        "pattern": "[+-]?\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${whiteSpace}+#${any}*",
+        "style": "comment"
+      },
+      {
+        "pattern": "[\\[\\]{},?:|>\\-]",
+        "style": "punctuation"
+      }
+    ],
+    "templateExpressionRule": [
+      {
+        "pattern": "(\\{\\{[-+]?)(.*?)([-+]?\\}\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "templateExpression"]
+      }
+    ],
+    "templateStatementRule": [
+      {
+        "pattern": "(\\{%-?)(.*?)(-?%\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "templateStatement"]
+      }
+    ],
+    "templateCommentRule": [
+      {
+        "pattern": "(\\{#)(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment", 3, "comment"]
+      }
+    ],
+    "templateRules": [
+      {
+        "include": "templateCommentRule"
+      },
+      {
+        "include": "templateStatementRule"
+      },
+      {
+        "include": "templateExpressionRule"
+      }
+    ],
+    "markdownInlineRules": [
+      {
+        "pattern": "(`)([^`]+)(`)",
+        "styles": [1, "punctuation", 2, "string", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\*\\*|__)(.*?)(\\*\\*|__)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"]
+      },
+      {
+        "pattern": "(\\*|_)(.*?)(\\*|_)",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(~~)(.*?)(~~)",
+        "styles": [1, "punctuation", 2, "comment", 3, "punctuation"]
+      },
+      {
+        "pattern": "(!)?(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))",
+        "styles": [1, "keyword", 2, "punctuation", 3, "annotation", 4, "punctuation", 5, "punctuation", 6, "string", 7, "punctuation"]
+      },
+      {
+        "include": "urlRule"
+      }
+    ],
+    "bodyRules": [
+      {
+        "pattern": "^(system|user|assistant|developer|tool)${whiteSpace}*(\\([^)]*\\))?${whiteSpace}*(:)",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "^(#{1,6})${whiteSpace}+(.*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "^(```)${whiteSpace}*([A-Za-z0-9_+-]*)${whiteSpace}*$",
+        "styles": [1, "punctuation", 2, "annotation"],
+        "state": "fencedCodeBlock"
+      },
+      {
+        "pattern": "^(>)${whiteSpace}*(.*)",
+        "styles": [1, "keyword", 2, "comment"]
+      },
+      {
+        "pattern": "^(\\*\\*\\*|---|___)${whiteSpace}*$",
+        "style": "keyword"
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)([-*+])${whiteSpace}+(\\[)([ xX])(\\])",
+        "styles": [1, "punctuation", 2, "punctuation", 3, "keyword", 4, "punctuation"]
+      },
+      {
+        "pattern": "^(?:${whiteSpace}*)([-*+])${whiteSpace}+",
+        "styles": [1, "punctuation"]
+      },
+      {
+        "pattern": "<!--.*?-->",
+        "style": "comment"
+      },
+      {
+        "pattern": "<!--",
+        "style": "comment",
+        "state": "htmlComment"
+      },
+      {
+        "pattern": "(</?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)(>)",
+        "styles": [1, "punctuation", 2, "annotation", 4, "punctuation"]
+      },
+      {
+        "includes": ["markdownInlineRules"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "^---${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "frontmatter"
+      },
+      {
+        "includes": ["templateRules"]
+      },
+      {
+        "include": "bodyRules"
+      }
+    ],
+    "frontmatter": [
+      {
+        "pattern": "^---${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "body"
+      },
+      {
+        "pattern": "^\\.\\.\\.${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "body"
+      },
+      {
+        "include": "yamlCommentRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)${whiteSpace}+(${propertyName})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${propertyName})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(-)${whiteSpace}+",
+        "styles": [1, "punctuation"]
+      },
+      {
+        "pattern": "[|>][+-]?${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "frontmatterBlockScalar"
+      },
+      {
+        "includes": ["yamlValueRules"]
+      }
+    ],
+    "frontmatterBlockScalar": [
+      {
+        "pattern": "^---${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "body"
+      },
+      {
+        "pattern": "^\\.\\.\\.${whiteSpace}*$",
+        "style": "punctuation",
+        "state": "body"
+      },
+      {
+        "pattern": "^${whiteSpace}*(-)${whiteSpace}+(${propertyName})${whiteSpace}*(:)",
+        "styles": [1, "punctuation", 2, "property", 3, "punctuation"],
+        "state": "frontmatter"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${propertyName})${whiteSpace}*(:)",
+        "styles": [1, "property", 2, "punctuation"],
+        "state": "frontmatter"
+      },
+      {
+        "include": "referenceRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "body": [
+      {
+        "includes": ["templateRules"]
+      },
+      {
+        "include": "bodyRules"
+      }
+    ],
+    "fencedCodeBlock": [
+      {
+        "pattern": "^```\\s*$",
+        "style": "punctuation",
+        "state": "body"
+      },
+      {
+        "includes": ["templateRules"]
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "htmlComment": [
+      {
+        "pattern": "-->",
+        "style": "comment",
+        "state": "body"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "templateExpression": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:if|else|for|in|is|not|and|or)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|null|loop)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|#^]",
+        "style": "punctuation"
+      }
+    ],
+    "templateStatement": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "\\b(?:if|elif|else|endif|for|endfor|in|set|endset|include|import|from|macro|endmacro|call|endcall|filter|endfilter|with|endwith|raw|endraw|do|break|continue|is|not|and|or|as)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|null|loop)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|#^]",
+        "style": "punctuation"
+      }
+    ],
+    "commentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

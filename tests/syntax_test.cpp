@@ -48,6 +48,7 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
     "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
     "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
     "qsharp.json", "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json",
+    "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json",
     "java-inlineStyle.json", "tiecode-inlineStyle.json", "yaml(non zero width).json"
   };
 
@@ -80,7 +81,8 @@ TEST_CASE("Create analyzers by file name for sample files") {
     "nginx.json", "gitignore.json", "diff.json", "ruby.json", "hcl.json", "terraform.json", "vue.json",
     "svelte.json", "fsharp.json", "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json",
     "erlang.json", "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json",
-    "qsharp.json", "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json"
+    "qsharp.json", "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json",
+    "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -88,6 +90,10 @@ TEST_CASE("Create analyzers by file name for sample files") {
   }
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(syntaxPath("markdown.json")));
+  REQUIRE(engine->getSyntaxRuleByFileName("README.mbt.md") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("README.mbt.md")->name == "markdown");
+  REQUIRE(engine->getSyntaxRuleByFileName("summary.genai.md") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("summary.genai.md")->name == "markdown");
 
   const List<U8String> sample_files = {
     TESTS_DIR"/files/example.abnf",
@@ -172,7 +178,13 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/BUILD.bazel",
     TESTS_DIR"/files/build.gradle.kts",
     TESTS_DIR"/files/example.qs",
-    TESTS_DIR"/files/example.riscv.s"
+    TESTS_DIR"/files/example.riscv.s",
+    TESTS_DIR"/files/example.mbt",
+    TESTS_DIR"/files/example.mojo",
+    TESTS_DIR"/files/example.bend",
+    TESTS_DIR"/files/example.baml",
+    TESTS_DIR"/files/example.lmql",
+    TESTS_DIR"/files/example.prompty"
   };
 
   for (const U8String& file_path : sample_files) {
@@ -227,7 +239,9 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   const List<U8String> files = {
     "r.json", "julia.json", "perl.json", "clojure.json", "elixir.json", "erlang.json",
     "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "qsharp.json",
-    "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json"
+    "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json",
+    "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json",
+    "javascript.json", "typescript.json"
   };
   for (const U8String& file_name : files) {
     CAPTURE(file_name);
@@ -255,6 +269,21 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   CHECK(engine->createAnalyzerByFileName("build.gradle.kts") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.qs") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.riscv.s") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.mbt") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("interface.mbti") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("script.mbtx") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("proof.mbtp") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.mojo") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.bend") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.baml") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.lmql") != nullptr);
+  CHECK(engine->createAnalyzerByFileName("example.prompty") != nullptr);
+  REQUIRE(engine->getSyntaxRuleByFileName("proofreader.genai.mjs") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("proofreader.genai.mjs")->name == "javascript");
+  REQUIRE(engine->getSyntaxRuleByFileName("audit.genai.js") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("audit.genai.js")->name == "javascript");
+  REQUIRE(engine->getSyntaxRuleByFileName("review.genai.mts") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("review.genai.mts")->name == "typescript");
 }
 
 TEST_CASE("Exact file names take priority over suffix routing") {

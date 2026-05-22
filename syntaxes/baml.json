@@ -1,0 +1,452 @@
+{
+  "name": "baml",
+  "fileSuffixes": [".baml"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "typeIdentifier": "[A-Z][A-Za-z0-9_]*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//+)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "annotationRule": [
+      {
+        "pattern": "(@@?)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "jinjaInlineCommentRule": [
+      {
+        "pattern": "(\\{#)(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment", 3, "comment"]
+      }
+    ],
+    "jinjaExpressionRule": [
+      {
+        "pattern": "(\\{\\{[-+]?)(.*?)([-+]?\\}\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"]
+      }
+    ],
+    "jinjaStatementRule": [
+      {
+        "pattern": "(\\{%-?)(.*?)(-?%\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"]
+      }
+    ],
+    "multilinePromptTemplateRules": [
+      {
+        "pattern": "(\\{#)(.*)$",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "jinjaCommentPrompt"
+      },
+      {
+        "pattern": "(\\{\\{[-+]?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaExpressionContent"],
+        "state": "jinjaExpressionPrompt"
+      },
+      {
+        "pattern": "(\\{%-?)(.*)$",
+        "styles": [1, "punctuation"],
+        "subStates": [2, "jinjaStatementContent"],
+        "state": "jinjaStatementPrompt"
+      }
+    ],
+    "inlineTemplateRules": [
+      {
+        "include": "jinjaInlineCommentRule"
+      },
+      {
+        "include": "jinjaExpressionRule"
+      },
+      {
+        "include": "jinjaStatementRule"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(client)(<)(llm)(>)${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "builtin", 4, "punctuation", 5, "class"]
+      },
+      {
+        "pattern": "\\b(function)\\b${whiteSpace}+(${typeIdentifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(class|enum|type_alias)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(retry_policy)\\b${whiteSpace}+(${identifier}|${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(test)\\b${whiteSpace}+(${identifier}|${typeIdentifier})",
+        "styles": [1, "keyword", 2, "variable"],
+        "state": "testBlock"
+      },
+      {
+        "pattern": "\\b(generator)\\b${whiteSpace}+(${identifier}|${typeIdentifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(prompt)\\b${whiteSpace}*(#\")",
+        "styles": [1, "keyword", 2, "string"],
+        "state": "promptBlock"
+      },
+      {
+        "pattern": "#\"",
+        "style": "string",
+        "state": "promptBlock"
+      },
+      {
+        "pattern": "^${whiteSpace}*(provider|options|model|api_key|base_url|headers|output_type|version|default_client_mode|temperature|max_tokens|top_p|args|functions|max_retries|strategy|type|delay_ms|multiplier|max_delay_ms|retry_policy)\\b",
+        "styles": [1, "property"]
+      },
+      {
+        "pattern": "\\b(env)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "builtin", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "\\b(?:function|class|enum|type_alias|client|prompt|test|generator|retry_policy|if|else|for|in|let|return|when)\\b",
+        "style": "keyword"
+      },
+      {
+        "include": "annotationRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(?!(?:function|class|enum|type_alias|client|prompt|test|generator|retry_policy)\\b)(${identifier})${whiteSpace}+(string|int|float|bool|null|image|audio|pdf|video|map)\\b",
+        "styles": [1, "property", 2, "builtin"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(?!(?:function|class|enum|type_alias|client|prompt|test|generator|retry_policy)\\b)(${identifier})${whiteSpace}+(${typeIdentifier})(\\[\\])?(\\?)?",
+        "styles": [1, "property", 2, "class", 3, "punctuation", 4, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(?!(?:function|class|enum|type_alias|client|prompt|test|generator|retry_policy)\\b)(${identifier})${whiteSpace}*(?=\\{)",
+        "styles": [1, "property"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(?!(?:function|class|enum|type_alias|client|prompt|test|generator|retry_policy)\\b)(${identifier})${whiteSpace}+(?=(?:\"|'|#\"|-?[0-9]|true\\b|false\\b|null\\b|${typeIdentifier}\\b|\\[|\\{))",
+        "styles": [1, "property"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${typeIdentifier})(?=${whiteSpace}*(?:,|@|$))",
+        "styles": [1, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "includes": ["doubleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b(?:string|int|float|bool|null|image|audio|pdf|video|map)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "(${identifier})(\\s*)(\\()",
+        "styles": [1, "method", 3, "punctuation"]
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "->|=>|==|!=|<=|>=|&&|\\|\\||[{}()\\[\\]<>,.:;=|?+\\-*/]",
+        "style": "punctuation"
+      }
+    ],
+    "testBlock": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(test)\\b${whiteSpace}+(${identifier}|${typeIdentifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(functions|args)\\b",
+        "styles": [1, "property"]
+      },
+      {
+        "pattern": "\\b(env)(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+        "styles": [1, "builtin", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(${typeIdentifier})(?=${whiteSpace}*(?:$|//))",
+        "styles": [1, "property", 2, "variable"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}*(\\{)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}+(?=(?:\"|'|#\"|-?[0-9]|true\\b|false\\b|null\\b|\\[|\\{))",
+        "styles": [1, "property"]
+      },
+      {
+        "includes": ["doubleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b(?:true|false|null)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "->|=>|==|!=|<=|>=|&&|\\|\\||[{}()\\[\\]<>,.:;=|?+\\-*/]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "testBlock"
+      }
+    ],
+    "promptBlock": [
+      {
+        "pattern": "\"#",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "include": "inlineTemplateRules"
+      },
+      {
+        "include": "multilinePromptTemplateRules"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      },
+      {
+        "onLineEndState": "promptBlock"
+      }
+    ],
+    "jinjaCommentPrompt": [
+      {
+        "pattern": "(.*?)(#\\})",
+        "styles": [1, "comment", 2, "comment"],
+        "state": "promptBlock"
+      },
+      {
+        "pattern": "${any}+",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "jinjaCommentPrompt"
+      }
+    ],
+    "jinjaExpressionPrompt": [
+      {
+        "pattern": "(.*?)([-+]?\\}\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaExpressionContent"],
+        "state": "promptBlock"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaExpressionContent"
+      },
+      {
+        "onLineEndState": "jinjaExpressionPrompt"
+      }
+    ],
+    "jinjaStatementPrompt": [
+      {
+        "pattern": "(.*?)(-?%\\})",
+        "styles": [2, "punctuation"],
+        "subStates": [1, "jinjaStatementContent"],
+        "state": "promptBlock"
+      },
+      {
+        "pattern": "${any}+",
+        "subState": "jinjaStatementContent"
+      },
+      {
+        "onLineEndState": "jinjaStatementPrompt"
+      }
+    ],
+    "jinjaExpressionContent": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "(${identifier}|_)(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "\\b(?:if|elif|else|for|in|recursive|is|not|and|or|as|without|context)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|loop|super|self|caller|namespace|ctx)\\b|_",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|]",
+        "style": "punctuation"
+      }
+    ],
+    "jinjaStatementContent": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "(\\|)(${identifier})",
+        "styles": [1, "punctuation", 2, "method"]
+      },
+      {
+        "pattern": "(${identifier}|_)(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "\\b(?:if|elif|else|endif|for|endfor|in|recursive|block|endblock|extends|include|import|from|macro|endmacro|call|endcall|set|endset|filter|endfilter|with|endwith|raw|endraw|do|break|continue|is|not|and|or|as|without|context)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|none|loop|super|self|caller|namespace|ctx)\\b|_",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "[()\\[\\]{}.,:+\\-*/%~=<>!|]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockComment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    },
+    {
+      "start": "(",
+      "end": ")"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
+}

@@ -1,0 +1,409 @@
+{
+  "name": "lmql",
+  "fileSuffixes": [".lmql"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "qualifiedIdentifier": "[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "queryEscapedDelimiterRule": [
+      {
+        "pattern": "\\[\\[|\\]\\]|\\{\\{|\\}\\}",
+        "style": "string"
+      }
+    ],
+    "queryPlaceholderRule": [
+      {
+        "pattern": "(\\[)((?:[^\\]\"']|\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*')+)(\\])",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "placeholderContent"]
+      }
+    ],
+    "queryInterpolationRule": [
+      {
+        "pattern": "(\\{)((?:[^{}\"']|\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*')+)(\\})",
+        "styles": [1, "punctuation", 3, "punctuation"],
+        "subStates": [2, "expressionContent"]
+      }
+    ],
+    "queryStringContentRules": [
+      {
+        "include": "queryEscapedDelimiterRule"
+      },
+      {
+        "include": "queryPlaceholderRule"
+      },
+      {
+        "include": "queryInterpolationRule"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\(?:\\r?\\n|.)",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "pythonExpressionRules": [
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|where|distribution)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:True|False|None)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:str|int|float|bool|list|dict|tuple|set|len|range|enumerate|zip|map|filter|sorted|sum|min|max|any|all|print|TOKENS|STOPS_AT|STOPS_BEFORE|INT|REGEX)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(${qualifiedIdentifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "->|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "placeholderDecoratorRule": [
+      {
+        "pattern": "(@)(${qualifiedIdentifier})${whiteSpace}*(\\()",
+        "styles": [1, "punctuation", 2, "annotation", 3, "punctuation"]
+      },
+      {
+        "pattern": "(@)(${qualifiedIdentifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(class)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation"]
+      },
+      {
+        "pattern": "\\b(class)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+(${qualifiedIdentifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(from)\\b${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}+(import)\\b${whiteSpace}+([A-Z][A-Za-z0-9_]*)",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "class"]
+      },
+      {
+        "pattern": "\\b(from)\\b${whiteSpace}+(${qualifiedIdentifier})${whiteSpace}+(import)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "keyword", 4, "variable"]
+      },
+      {
+        "pattern": "\\b(async)\\b${whiteSpace}+(def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "^${whiteSpace}*(argmax|sample|beam_sample|beam_var|beam|var|best_k)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(where|from|distribution)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\\b",
+        "styles": [1, "keyword"]
+      },
+      {
+        "pattern": "\\b(True|False|None)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(str|int|float|bool|list|dict|tuple|set|frozenset|bytes|bytearray|memoryview|complex|range|type|object)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(TOKENS|STOPS_AT|STOPS_BEFORE|INT|REGEX|len|set|super|print|enumerate|zip|map|filter|sorted|reversed|isinstance|hasattr|getattr|setattr|abs|all|any|min|max|sum|open|repr|round)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "(@)(${qualifiedIdentifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b[A-Z][A-Z0-9_]*\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}\"\"\")",
+        "style": "string",
+        "state": "tripleDoubleString"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}''')",
+        "style": "string",
+        "state": "tripleSingleString"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}\")",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}')",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "\\b0[xX][0-9a-fA-F_]+[jJ]?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?[jJ]?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "->|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(\\*\\*|\\*)${whiteSpace}*(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=,])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(True|False|None)\\b",
+        "styles": [1, "builtin"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}\")",
+        "style": "string",
+        "state": "doubleString"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}')",
+        "style": "string",
+        "state": "singleString"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()=*]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "doubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["queryStringContentRules"]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "singleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["queryStringContentRules"]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["queryStringContentRules"]
+      }
+    ],
+    "tripleSingleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["queryStringContentRules"]
+      }
+    ],
+    "placeholderContent": [
+      {
+        "include": "placeholderDecoratorRule"
+      },
+      {
+        "pattern": "\"(?:[^\"\\\\]|\\\\.)*\"",
+        "style": "string"
+      },
+      {
+        "pattern": "'(?:[^'\\\\]|\\\\.)*'",
+        "style": "string"
+      },
+      {
+        "pattern": "\\b(?:str|int|float|bool|list|dict|set|tuple)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:and|or|not|if|else|lambda|in|is)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(${qualifiedIdentifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      },
+      {
+        "pattern": "->|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "expressionContent": [
+      {
+        "includes": ["pythonExpressionRules"]
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

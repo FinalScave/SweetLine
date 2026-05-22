@@ -1,0 +1,287 @@
+{
+  "name": "bend",
+  "fileSuffixes": [".bend"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "typeIdentifier": "[A-Z][A-Za-z0-9_]*",
+    "symbolName": "[A-Za-z0-9_.\\-/]+",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "charLiteralRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "charContent"]
+      }
+    ],
+    "symbolLiteralRule": [
+      {
+        "pattern": "(`)([A-Za-z0-9+/]{0,4})(`)",
+        "styles": [1, "string", 2, "string", 3, "string"]
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|.)",
+        "style": "string"
+      }
+    ],
+    "constructorRule": [
+      {
+        "pattern": "(${typeIdentifier})(/)(${symbolName})",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      }
+    ],
+    "unscopedVariableRule": [
+      {
+        "pattern": "(\\$)(${identifier})",
+        "styles": [1, "punctuation", 2, "variable"]
+      }
+    ],
+    "fieldAccessRule": [
+      {
+        "pattern": "(${identifier}|${typeIdentifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      }
+    ],
+    "variableRule": [
+      {
+        "pattern": "\\b${identifier}\\b",
+        "style": "variable"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "#\\{",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "pattern": "#[0-9][0-9_]*\\b",
+        "style": "number"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(from)\\b${whiteSpace}+(${symbolName})${whiteSpace}+(import)\\b",
+        "styles": [1, "keyword", 2, "string", 3, "keyword"]
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+(${symbolName})${whiteSpace}+(as)${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "string", 3, "keyword", 4, "variable"]
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation"],
+        "state": "importList"
+      },
+      {
+        "pattern": "\\b(import)\\b${whiteSpace}+(${symbolName})",
+        "styles": [1, "keyword", 2, "string"]
+      },
+      {
+        "pattern": "\\b(def)\\b${whiteSpace}+(checked|unchecked)${whiteSpace}+(${symbolName})",
+        "styles": [1, "keyword", 2, "keyword", 3, "method"]
+      },
+      {
+        "pattern": "\\b(def)\\b${whiteSpace}+(${symbolName})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${symbolName})${whiteSpace}*(:)",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "^(?!${whiteSpace}*(?:bend|let|use|if|switch|match|fold|with|open|def|type|object|hvm|return|case|when|else|elif)\\b)${whiteSpace}*(${symbolName})(?=${whiteSpace}+[^\\n=]*=)",
+        "styles": [1, "method"]
+      },
+      {
+        "pattern": "\\b(type)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(object)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(hvm)\\b${whiteSpace}+(${symbolName})",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(case)\\b${whiteSpace}+(${typeIdentifier}/${symbolName}|_|\\*|[+-]?[0-9][0-9_]*)",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(open|with)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(?:return|if|elif|else|switch|case|match|fold|bend|when|open|with|let|use|lambda|in|for|ask|checked|unchecked|import|from|as)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\u03BB|@(?=[A-Za-z_$({])",
+        "style": "keyword"
+      },
+      {
+        "include": "constructorRule"
+      },
+      {
+        "pattern": "(?<![A-Za-z0-9_])(?:fork|wrap|undefer|range|IO/print|String/cons|String/nil|List/cons|List/nil|Tree/Node|Tree/Leaf|Nat/succ|Nat/zero)(?![A-Za-z0-9_])",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:u24|i24|f24|Any|None|String|List|Tree|IO|Nat|Result)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "unscopedVariableRule"
+      },
+      {
+        "include": "fieldAccessRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "(${symbolName})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)(?!=)",
+        "styles": [1, "property", 2, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([+\\-*/%&|^@]?=)(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "include": "variableRule"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "charLiteralRule", "symbolLiteralRule"]
+      },
+      {
+        "pattern": "[+-]?0[xX][0-9A-Fa-f_]+(?:\\.[0-9A-Fa-f_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[+-]?0[bB][01_]+(?:\\.[01_]+)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "[+-]?(?:[0-9][0-9_]*\\.[0-9_]+|[0-9][0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "->|<-|=>|==|!=|<=|>=|<<|>>|\\*\\*|[()\\[\\]{}.,:;@~$!+\\-*/%&|^<>=]",
+        "style": "punctuation"
+      }
+    ],
+    "importList": [
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "${symbolName}",
+        "style": "string"
+      },
+      {
+        "pattern": ",",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "importList"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "#\\}",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockComment"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "charContent": [
+      {
+        "include": "stringEscapeRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    },
+    {
+      "start": "(",
+      "end": ")"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
+}

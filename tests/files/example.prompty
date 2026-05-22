@@ -1,0 +1,196 @@
+---
+# Prompty sample for SweetLine highlighting
+name: support-resolution-agent
+displayName: Support Resolution Agent
+description: |
+  Produces concise customer support replies with policy grounding,
+  tool awareness, and structured output for downstream review.
+metadata:
+  authors:
+    - support-platform
+    - prompt-quality
+  tags: [customer-support, policy, triage]
+  version: "2.1.0"
+  owner: ${env:SUPPORT_PROMPTY_OWNER:prompt-team}
+model:
+  id: gpt-4o
+  provider: foundry
+  apiType: chat
+  connection:
+    kind: key
+    endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    apiKey: ${env:AZURE_OPENAI_API_KEY}
+  options:
+    temperature: 0.3
+    maxOutputTokens: 1400
+    topP: 0.9
+inputs:
+  - name: customerName
+    kind: string
+    description: Full name of the customer
+    required: true
+    example: Jane Doe
+  - name: locale
+    kind: string
+    description: Preferred response locale
+    default: en-US
+    enumValues: [en-US, en-GB, fr-FR, de-DE]
+  - name: ticket
+    kind: object
+    description: Ticket summary and normalized fields
+    required: true
+  - name: orderHistory
+    kind: array
+    description: Recent orders available to the assistant
+    default: []
+  - name: policyContext
+    kind: string
+    description: Policy text retrieved before rendering
+    required: true
+  - name: includeEscalation
+    kind: boolean
+    description: Whether escalation guidance should be shown
+    default: false
+outputs:
+  - name: answer
+    kind: string
+    description: Final reply sent to the customer
+  - name: sentiment
+    kind: string
+    enumValues: [positive, neutral, negative]
+  - name: nextAction
+    kind: string
+    description: Internal next action for the support team
+tools:
+  - name: lookup_order
+    kind: function
+    description: Look up an order by identifier
+    parameters:
+      - name: orderId
+        kind: string
+        required: true
+      - name: includeShipments
+        kind: boolean
+        default: true
+  - name: policy_search
+    kind: mcp
+    serverName: support-policy-server
+    connection:
+      kind: reference
+  - name: shipment_api
+    kind: openapi
+    specification: ${file:schemas/shipment.openapi.json}
+    connection:
+      kind: key
+      endpoint: https://api.example.com/shipments
+template:
+  format: jinja2
+  parser:
+    kind: prompty-chat
+sample:
+  customerName: Jane Doe
+  locale: en-US
+  includeEscalation: true
+  ticket:
+    id: TCK-2048
+    topic: delayed shipment
+    urgency: high
+    message: The tracking page has not moved for a week.
+  orderHistory:
+    - id: A100
+      status: delayed
+      date: 2026-05-13
+    - id: A101
+      status: delivered
+      date: 2026-04-29
+---
+system:
+# Support Reply Contract
+
+You are a support assistant for Contoso Commerce.
+Write in {{ locale }} and keep the reply direct, warm, and grounded.
+
+Use only the policy context and ticket data supplied below.
+Do not invent tracking events, compensation, or guarantees.
+
+Policy context:
+
+```text
+{{ policyContext }}
+```
+
+Customer:
+
+- Name: {{ customerName }}
+- Ticket id: {{ ticket.id }}
+- Topic: {{ ticket.topic }}
+- Urgency: {{ ticket.urgency }}
+
+{% if orderHistory %}
+Recent orders:
+{% for order in orderHistory %}
+- Order #{{ order.id }} is {{ order.status }} as of {{ order.date }}.
+{% endfor %}
+{% else %}
+No order history is available in the rendered context.
+{% endif %}
+
+{% if includeEscalation %}
+Escalation guidance is enabled for this ticket.
+{% else %}
+Escalation guidance is disabled unless policy text requires it.
+{% endif %}
+
+assistant:
+I will produce a customer-ready answer and an internal next action.
+
+user:
+Customer message:
+
+> {{ ticket.message }}
+
+Required response shape:
+
+- Acknowledge the issue without blame.
+- Cite the relevant policy in plain language.
+- Mention the specific order only if it appears in the provided data.
+- Offer one next action the support team can take.
+- Avoid private implementation details.
+
+{% set urgent_topics = ["delayed shipment", "missing item", "refund request"] %}
+{% if ticket.topic in urgent_topics %}
+Treat this as a priority support case.
+{% endif %}
+
+assistant:
+Draft the reply using this Markdown structure:
+
+**Hi {{ customerName }},**
+
+Opening acknowledgement.
+
+Policy-grounded explanation.
+
+Next action:
+
+- Concrete support action
+- Customer-facing expectation
+
+Internal review note:
+
+```json
+{
+  "ticket": "{{ ticket.id }}",
+  "topic": "{{ ticket.topic }}",
+  "requires_escalation": {{ includeEscalation | lower }}
+}
+```
+
+tool(policy_search):
+Search the policy knowledge base for the topic `{{ ticket.topic }}`.
+
+tool(lookup_order):
+Use `{{ ticket.id }}` only as ticket context. Do not treat it as an order id.
+
+developer:
+Return a concise final answer. If policy information is insufficient, say what is missing and request a human review.

@@ -1,6 +1,6 @@
 {
   "name": "markdown",
-  "fileSuffixes": [".md", ".markdown", ".mdown", ".mkd"],
+  "fileSuffixes": [".md", ".markdown", ".mdown", ".mkd", ".genai.md"],
   "variables": {
     "any": "[\\S\\s]",
     "whiteSpace": "[ \\t\\f]"

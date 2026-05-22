@@ -1,0 +1,397 @@
+{
+  "name": "mojo",
+  "fileSuffixes": [".mojo"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "typeIdentifier": "[A-Z][A-Za-z0-9_]*",
+    "qualifiedIdentifier": "[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(#)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "([rRbBuU]{0,2}\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "shortStringContent"]
+      }
+    ],
+    "singleQuotedStringRule": [
+      {
+        "pattern": "([rRbBuU]{0,2}')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "shortStringContent"]
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${typeIdentifier}|${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "stringInterpolationExprRule": [
+      {
+        "pattern": "\\{[^}]*\\}",
+        "style": "annotation"
+      }
+    ],
+    "stringEscapeRule": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      }
+    ],
+    "stringAnyCharRule": [
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(struct|trait)\\b${whiteSpace}+(${typeIdentifier})${whiteSpace}*(\\[)([^\\]]*)(\\])",
+        "styles": [1, "keyword", 2, "class", 3, "punctuation", 5, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "\\b(struct|trait)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "\\b(alias)\\b${whiteSpace}+(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "class"]
+      },
+      {
+        "pattern": "\\b(async)\\b${whiteSpace}+(fn|def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(async)\\b${whiteSpace}+(fn|def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fn|def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fn|def)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(let|var|alias)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(let|var)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(?:alias|and|as|async|await|borrowed|break|capturing|class|continue|def|del|elif|else|except|finally|fn|for|from|global|if|import|in|inout|is|lambda|let|mut|nonlocal|not|or|owned|pass|raise|raises|ref|return|self|struct|trait|try|var|while|with|yield)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:True|False|None)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:AnyType|Bool|DType|DynamicVector|Float16|Float32|Float64|Int|Int8|Int16|Int32|Int64|List|Dict|Optional|SIMD|String|StringLiteral|Tensor|Tuple|UInt8|UInt16|UInt32|UInt64|Variant|UnsafePointer|Pointer|Slice|Span|StaticTuple)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:print|len|range|enumerate|zip|map|filter|str|int|float|bool|isinstance|debug_assert|assert|rebind|origin)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "(@)(${qualifiedIdentifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=])(?!=)",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}\"\"\")",
+        "style": "string",
+        "state": "tripleDoubleString"
+      },
+      {
+        "pattern": "(?:[rRbBuUfF]{0,3}''')",
+        "style": "string",
+        "state": "tripleSingleString"
+      },
+      {
+        "pattern": "[fF]\"",
+        "style": "string",
+        "state": "fDoubleString"
+      },
+      {
+        "pattern": "[fF]'",
+        "style": "string",
+        "state": "fSingleString"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "->|=>|\\*\\*|//|<<|>>|<=|>=|==|!=|:=|[.()\\[\\]@%^&|+\\-*/<>=,{};:~]",
+        "style": "punctuation"
+      }
+    ],
+    "typeHeader": [
+      {
+        "pattern": "\\b(is|raises|where)\\b",
+        "style": "keyword"
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[:({]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[,\\[\\]().]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "typeHeader"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "(\\))${whiteSpace}*(raises)?${whiteSpace}*(->)",
+        "styles": [1, "punctuation", 2, "keyword", 3, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:owned|borrowed|inout|mut|out|ref|self)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=,])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:True|False|None)\\b",
+        "style": "builtin"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "singleQuotedStringRule"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]()=*.:]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "funcParams"
+      }
+    ],
+    "returnType": [
+      {
+        "pattern": "[:{]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:AnyType|Bool|DType|Float16|Float32|Float64|Int|Int8|Int16|Int32|Int64|List|Dict|Optional|SIMD|String|Tensor|Tuple|UInt8|UInt16|UInt32|UInt64|Variant)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]().]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "\\b(?:AnyType|Bool|DType|Float16|Float32|Float64|Int|Int8|Int16|Int32|Int64|List|Dict|Optional|SIMD|String|Tensor|Tuple|UInt8|UInt16|UInt32|UInt64|Variant)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:where|is|raises|fn|def|trait|struct)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]():.=|&?]",
+        "style": "punctuation"
+      }
+    ],
+    "tripleDoubleString": [
+      {
+        "pattern": "\"\"\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
+      }
+    ],
+    "tripleSingleString": [
+      {
+        "pattern": "'''",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "stringEscapeRule", "stringInterpolationExprRule", "stringAnyCharRule"]
+      }
+    ],
+    "fDoubleString": [
+      {
+        "pattern": "\"",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "fSingleString": [
+      {
+        "pattern": "'",
+        "style": "string",
+        "state": "default"
+      },
+      {
+        "includes": ["urlRule", "stringInterpolationExprRule", "stringEscapeRule", "stringAnyCharRule"]
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "shortStringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "include": "stringAnyCharRule"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ]
+  }
+}

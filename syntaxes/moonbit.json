@@ -1,0 +1,429 @@
+{
+  "name": "moonbit",
+  "fileSuffixes": [".mbt", ".mbti", ".mbtx", ".mbtp"],
+  "variables": {
+    "identifier": "[A-Za-z_][A-Za-z0-9_]*",
+    "typeIdentifier": "[A-Z][A-Za-z0-9_]*",
+    "qualifiedIdentifier": "[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*",
+    "whiteSpace": "[ \\t\\f]",
+    "any": "[\\S\\s]"
+  },
+  "fragments": {
+    "urlRule": [
+      {
+        "pattern": "(?:(?:https?|ftp)://|www\\.)[A-Za-z0-9._~:/?#\\[\\]@!$&()*+,;=%-]*[A-Za-z0-9_~/#@%=+-]",
+        "style": "url"
+      }
+    ],
+    "lineCommentRule": [
+      {
+        "pattern": "(//!?|///)(.*)",
+        "styles": [1, "comment", 2, "comment"],
+        "subStates": [2, "lineCommentContent"]
+      }
+    ],
+    "doubleQuotedStringRule": [
+      {
+        "pattern": "(\")((?:[^\"\\\\]|\\\\.)*)(\")",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "stringContent"]
+      }
+    ],
+    "charLiteralRule": [
+      {
+        "pattern": "(')((?:[^'\\\\]|\\\\.)*)(')",
+        "styles": [1, "string", 3, "string"],
+        "subStates": [2, "charContent"]
+      }
+    ],
+    "genericTypeRefRule": [
+      {
+        "pattern": "(${typeIdentifier}|${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])",
+        "styles": [1, "class", 2, "punctuation", 4, "punctuation"],
+        "subStates": [3, "genericType"]
+      }
+    ],
+    "packageAccessRule": [
+      {
+        "pattern": "(@)(${qualifiedIdentifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ],
+    "attributeRule": [
+      {
+        "pattern": "(#\\[)(${identifier})",
+        "styles": [1, "punctuation", 2, "annotation"]
+      }
+    ]
+  },
+  "states": {
+    "default": [
+      {
+        "pattern": "/\\*",
+        "style": "comment",
+        "state": "blockComment"
+      },
+      {
+        "include": "lineCommentRule"
+      },
+      {
+        "pattern": "\\b(pub(?:\\([^)]*\\))?)\\b${whiteSpace}+(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation", 6, "punctuation", 7, "punctuation"],
+        "subStates": [5, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(pub(?:\\([^)]*\\))?)\\b${whiteSpace}+(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "keyword", 3, "method", 4, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(pub(?:\\([^)]*\\))?)\\b${whiteSpace}+(fn)\\b${whiteSpace}+(${identifier})\\b",
+        "styles": [1, "keyword", 2, "keyword", 3, "method"]
+      },
+      {
+        "pattern": "\\b(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\[)([^\\]]*)(\\])${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation", 5, "punctuation", 6, "punctuation"],
+        "subStates": [4, "genericType"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fn)\\b${whiteSpace}+(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "method", 3, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "pattern": "\\b(fn)\\b${whiteSpace}+(${identifier})\\b",
+        "styles": [1, "keyword", 2, "method"]
+      },
+      {
+        "pattern": "\\b(pub(?:\\([^)]*\\))?)\\b${whiteSpace}+(struct|enum|trait|typealias|type)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "\\b(struct|enum|trait|typealias|type)\\b${whiteSpace}+(${typeIdentifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "typeHeader"
+      },
+      {
+        "pattern": "\\b(impl)\\b${whiteSpace}+(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "class"],
+        "state": "implHeader"
+      },
+      {
+        "pattern": "\\b(let|var|const)\\b${whiteSpace}+(mut)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable", 4, "punctuation", 5, "class"]
+      },
+      {
+        "pattern": "\\b(let|var|const)\\b${whiteSpace}+(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "keyword", 2, "variable", 3, "punctuation", 4, "class"]
+      },
+      {
+        "pattern": "\\b(let|var|const)\\b${whiteSpace}+(mut)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "keyword", 3, "variable"]
+      },
+      {
+        "pattern": "\\b(let|var|const)\\b${whiteSpace}+(${identifier})",
+        "styles": [1, "keyword", 2, "variable"]
+      },
+      {
+        "pattern": "\\b(?:as|async|await|break|catch|const|continue|derive|else|enum|extern|fn|for|guard|if|impl|in|is|let|loop|match|mut|priv|pub|raise|return|static|struct|test|trait|try|type|typealias|using|var|while|with)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:true|false|None|Some|Ok|Err)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b(?:Unit|Bool|Byte|Bytes|Char|Double|Float|Int|Int64|UInt|UInt64|String|Array|FixedArray|Map|Set|Option|Result|Json|Iter|Logger|Error)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "attributeRule"
+      },
+      {
+        "include": "packageAccessRule"
+      },
+      {
+        "pattern": "(${identifier})(::)(${typeIdentifier}|${identifier})",
+        "styles": [1, "class", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"]
+      },
+      {
+        "pattern": "(${identifier})(\\.)(${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "property"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "method", 2, "punctuation"],
+        "state": "funcParams"
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}*(:)${whiteSpace}*(Unit|Bool|Byte|Bytes|Char|Double|Float|Int|Int64|UInt|UInt64|String|Array|FixedArray|Map|Set|Option|Result|Json|Iter)\\b",
+        "styles": [1, "property", 2, "punctuation", 3, "builtin"]
+      },
+      {
+        "pattern": "^${whiteSpace}*(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "property", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "charLiteralRule"]
+      },
+      {
+        "pattern": "\\b0[xX][0-9A-Fa-f_]+(?:[uif](?:8|16|32|64)?)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[oO][0-7_]+(?:[uif](?:8|16|32|64)?)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b0[bB][01_]+(?:[uif](?:8|16|32|64)?)?\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?(?:[uif](?:8|16|32|64)?)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "\\.\\.<|=>|->|\\|>|\\.\\.|::|==|!=|<=|>=|&&|\\|\\||[.()\\[\\]{}#@?!%^&|+\\-*/<>=,;:]",
+        "style": "punctuation"
+      }
+    ],
+    "typeHeader": [
+      {
+        "pattern": "\\b(with|derive|extends)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:Unit|Bool|Byte|Bytes|Char|Double|Float|Int|Int64|UInt|UInt64|String|Array|FixedArray|Map|Set|Option|Result|Json|Iter)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[{=]",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[,\\[\\]():|&?]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "typeHeader"
+      }
+    ],
+    "implHeader": [
+      {
+        "pattern": "\\b(with|for)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "[,\\[\\]():|&?]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "implHeader"
+      }
+    ],
+    "funcParams": [
+      {
+        "pattern": "(\\))${whiteSpace}*(->)",
+        "styles": [1, "punctuation", 2, "punctuation"],
+        "state": "returnType"
+      },
+      {
+        "pattern": "\\)",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*(:)${whiteSpace}*(${typeIdentifier}|${identifier})",
+        "styles": [1, "variable", 2, "punctuation", 3, "class"]
+      },
+      {
+        "pattern": "(${identifier})${whiteSpace}*([=,])",
+        "styles": [1, "variable", 2, "punctuation"]
+      },
+      {
+        "pattern": "\\b(?:true|false|None|Some|Ok|Err)\\b",
+        "style": "builtin"
+      },
+      {
+        "includes": ["doubleQuotedStringRule", "charLiteralRule"]
+      },
+      {
+        "pattern": "\\b(?:[0-9][0-9_]*\\.?[0-9_]*(?:[eE][+-]?[0-9_]+)?)\\b",
+        "style": "number"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]{}():?=|&]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "funcParams"
+      }
+    ],
+    "returnType": [
+      {
+        "pattern": "\\{",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "=>",
+        "style": "punctuation",
+        "state": "default"
+      },
+      {
+        "pattern": "\\b(?:Unit|Bool|Byte|Bytes|Char|Double|Float|Int|Int64|UInt|UInt64|String|Array|FixedArray|Map|Set|Option|Result|Json|Iter)\\b",
+        "style": "builtin"
+      },
+      {
+        "include": "genericTypeRefRule"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]():|&?]",
+        "style": "punctuation"
+      },
+      {
+        "onLineEndState": "default"
+      }
+    ],
+    "genericType": [
+      {
+        "pattern": "\\b(with|as)\\b",
+        "style": "keyword"
+      },
+      {
+        "pattern": "\\b(?:Unit|Bool|Byte|Bytes|Char|Double|Float|Int|Int64|UInt|UInt64|String|Array|FixedArray|Map|Set|Option|Result|Json|Iter)\\b",
+        "style": "builtin"
+      },
+      {
+        "pattern": "\\b${typeIdentifier}\\b",
+        "style": "class"
+      },
+      {
+        "pattern": "${identifier}",
+        "style": "variable"
+      },
+      {
+        "pattern": "[,\\[\\]():|&?=]",
+        "style": "punctuation"
+      }
+    ],
+    "stringContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "\\\\\\([^)]*\\)",
+        "style": "annotation"
+      },
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "charContent": [
+      {
+        "pattern": "\\\\.",
+        "style": "string"
+      },
+      {
+        "pattern": "${any}",
+        "style": "string"
+      }
+    ],
+    "lineCommentContent": [
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      }
+    ],
+    "blockComment": [
+      {
+        "pattern": "\\*/",
+        "style": "comment",
+        "state": "default"
+      },
+      {
+        "include": "urlRule"
+      },
+      {
+        "pattern": "${any}",
+        "style": "comment"
+      },
+      {
+        "onLineEndState": "blockComment"
+      }
+    ]
+  },
+  "scopeRules": [
+    {
+      "start": "{",
+      "end": "}"
+    },
+    {
+      "start": "(",
+      "end": ")"
+    },
+    {
+      "start": "[",
+      "end": "]"
+    }
+  ]
+}
