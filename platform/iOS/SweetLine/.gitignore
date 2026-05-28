@@ -1,8 +1,0 @@
-.build/
-.swiftpm/
-Package.resolved
-DerivedData/
-xcuserdata/
-*.xcuserstate
-*.xcodeproj/project.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/

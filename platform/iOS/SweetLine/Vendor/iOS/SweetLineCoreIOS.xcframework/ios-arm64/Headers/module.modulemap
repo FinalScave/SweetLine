@@ -1,4 +1,0 @@
-module SweetLineCore {
-  header "sweetline/c_sweetline.h"
-  export *
-}
