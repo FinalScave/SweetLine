@@ -79,6 +79,7 @@ class DocumentAnalyzer {
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
+    analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
 }
 
 class LineRange {
@@ -95,6 +96,33 @@ class DocumentHighlightSlice {
 class DocumentHighlight {
     lines: LineHighlightList;
     toJson(): string;
+}
+
+class BranchPoint {
+    line: number;
+    column: number;
+}
+
+class IndentGuideLine {
+    column: number;
+    startLine: number;
+    endLine: number;
+    continuesBefore: boolean;
+    continuesAfter: boolean;
+    branches: BranchPointList;
+}
+
+class LineScopeState {
+    nestingLevel: number;
+    scopeState: number; // 0=START, 1=END, 2=CONTENT
+    scopeColumn: number;
+    indentLevel: number;
+}
+
+class IndentGuideResult {
+    startLine: number;
+    guideLines: IndentGuideLineList;
+    lineStates: LineScopeStateList;
 }
 
 class LineHighlight {
@@ -124,6 +152,7 @@ class LineAnalyzeResult {
 `analyzeLineRange(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区。
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于从最近缓存的文档高亮结果中读取可见切片。
+`analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
 
 ### 完整 WASM 示例
 

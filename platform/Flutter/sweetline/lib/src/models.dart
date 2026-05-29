@@ -133,16 +133,16 @@ class IndentGuideLine {
     this.column,
     this.startLine,
     this.endLine,
-    this.nestingLevel,
-    this.scopeRuleId, [
+    this.continuesBefore,
+    this.continuesAfter, [
     List<IndentGuideBranchPoint>? branches,
   ]) : branches = branches ?? <IndentGuideBranchPoint>[];
 
   final int column;
   final int startLine;
   final int endLine;
-  final int nestingLevel;
-  final int scopeRuleId;
+  final bool continuesBefore;
+  final bool continuesAfter;
   final List<IndentGuideBranchPoint> branches;
 }
 
@@ -166,11 +166,13 @@ class LineScopeState {
 
 class IndentGuideResult {
   IndentGuideResult({
+    this.startLine = 0,
     List<IndentGuideLine>? guideLines,
     List<LineScopeState>? lineStates,
   }) : guideLines = guideLines ?? <IndentGuideLine>[],
        lineStates = lineStates ?? <LineScopeState>[];
 
+  final int startLine;
   final List<IndentGuideLine> guideLines;
   final List<LineScopeState> lineStates;
 }

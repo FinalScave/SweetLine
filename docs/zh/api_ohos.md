@@ -48,6 +48,7 @@ class DocumentAnalyzer {
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
+  analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
 }
 ```
 
@@ -79,5 +80,5 @@ if (documentAnalyzer) {
 - 编辑器场景建议优先使用 `DocumentAnalyzer` 做增量分析。
 - 当需要某个可见区切片，并希望 SweetLine 先基于当前文档状态分析足够的行时，使用 `analyzeLineRange(...)`。
 - 只需要当前可见窗口时，可在 `analyze()` / `analyzeIncremental(...)` 之后调用 `getHighlightSlice(...)`。
-- 缩进划线可使用 `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`。
+- 缩进划线可使用 `TextAnalyzer.analyzeIndentGuides`、`DocumentAnalyzer.analyzeIndentGuides` 或 `DocumentAnalyzer.analyzeIndentGuidesInLineRange`；这些 API 不需要先执行高亮分析。
 - 构建命令请参见 [构建文档](api_build.md)。

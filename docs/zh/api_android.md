@@ -89,7 +89,7 @@ public class TextAnalyzer {
     // 单行分析
     public LineAnalyzeResult analyzeLine(String text, TextLineInfo info);
 
-    // 缩进划线分析 (内部会先进行高亮分析)
+    // 缩进划线分析
     public IndentGuideResult analyzeIndentGuides(String text);
 }
 ```
@@ -126,6 +126,7 @@ public class DocumentAnalyzer {
 
     // 缩进划线分析
     public IndentGuideResult analyzeIndentGuides();
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
 
     // 获取托管文档
     public Document getDocument();
@@ -135,6 +136,7 @@ public class DocumentAnalyzer {
 `analyzeLineRange(...)` 会基于当前文档状态分析足够的行，以覆盖请求的可见区，并直接返回该切片。
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于在 `analyze()` 或 `analyzeIncremental(...)` 之后直接读取最近缓存的可见区结果。
+`analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
 
 ### 数据结构
 
@@ -184,8 +186,32 @@ public class DocumentHighlightSlice {
 
 // 缩进划线分析结果
 public class IndentGuideResult {
+    public int startLine;
     public List<IndentGuideLine> guideLines;
     public List<LineScopeState> lineStates;
+}
+
+// Single indent guide segment
+public class IndentGuideLine {
+    public int column;
+    public int startLine;
+    public int endLine;
+    public boolean continuesBefore;
+    public boolean continuesAfter;
+    public List<BranchPoint> branches;
+
+    public static class BranchPoint {
+        public int line;
+        public int column;
+    }
+}
+
+// Per-line state returned by indent guide analysis
+public class LineScopeState {
+    public int nestingLevel;
+    public int scopeState;   // 0=START, 1=END, 2=CONTENT
+    public int scopeColumn;
+    public int indentLevel;
 }
 
 // 单行分析结果
@@ -250,6 +276,7 @@ TextRange changeRange = new TextRange(
 );
 DocumentHighlight newHighlight = docAnalyzer.analyzeIncremental(changeRange, "modified");
 DocumentHighlightSlice visible = docAnalyzer.getHighlightSlice(new LineRange(0, 120));
+IndentGuideResult visibleGuides = docAnalyzer.analyzeIndentGuidesInLineRange(new LineRange(0, 120));
 
 // 方式三: 直接转换为 Spannable (可直接用于 TextView)
 Spannable spannable = textAnalyzer.analyzeTextAsSpannable(sourceCode, styleId -> {

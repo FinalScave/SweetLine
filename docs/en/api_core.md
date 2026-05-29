@@ -196,11 +196,8 @@ public:
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
 
-    // Analyze indent guides
-    // Prefer the provided highlight, otherwise reuse the latest analyzeText cache
-    // If no highlight is available, fallback to indentation-only analysis
-    SharedPtr<IndentGuideResult> analyzeIndentGuides(
-        const U8String& text, const SharedPtr<DocumentHighlight>& highlight = nullptr);
+    // Analyze indent guides without requiring highlight analysis
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
 
     // Get current highlight configuration
     const HighlightConfig& getHighlightConfig() const;
@@ -244,17 +241,9 @@ analyzer->analyzeLine("public class Hello {", info, result);
 
 ```cpp
 auto analyzer = engine->createAnalyzerBySyntaxName("python");
-auto highlight = analyzer->analyzeText(source_code);
 
-// Explicitly pass highlight
-auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
-
-// Omit highlight and reuse the latest analyzeText cache
-auto guides2 = analyzer->analyzeIndentGuides(source_code);
-
-// If no cache is available, it falls back to indentation-only analysis
-auto fresh_analyzer = engine->createAnalyzerBySyntaxName("python");
-auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
+// Indent guides do not require a prior highlight pass
+auto guides = analyzer->analyzeIndentGuides(source_code);
 ```
 
 ---
@@ -294,14 +283,18 @@ public:
     // Get current highlight configuration
     const HighlightConfig& getHighlightConfig() const;
 
-    // Analyze indent guides (call analyze or analyzeIncremental first)
+    // Analyze indent guides for the full managed document
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
+
+    // Analyze indent guides for a visible line range
+    SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
 };
 ```
 
 `analyzeLineRange(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range and returns that slice.
 `analyzeIncrementalInLineRange(...)` is a convenience API that applies a patch and immediately returns a visible slice.
 `getHighlightSlice(...)` reuses the latest cached document highlight result without running a new analysis.
+`analyzeIndentGuidesInLineRange(...)` analyzes indent guides for a visible range directly from the managed document text and does not require cached highlight state.
 
 #### Usage Example
 
@@ -324,6 +317,7 @@ auto cached_slice = analyzer->getHighlightSlice(visible);
 
 // Build indent guides
 auto guides = analyzer->analyzeIndentGuides();
+auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible);
 ```
 
 ---
@@ -374,6 +368,46 @@ struct DocumentHighlightSlice {
     size_t start_line {0};
     size_t total_line_count {0};
     List<LineHighlight> lines;
+};
+
+// Scope state for a line in indent guide analysis
+enum struct ScopeState {
+    START = 0,
+    END,
+    CONTENT
+};
+
+// Per-line state returned by indent guide analysis
+struct LineScopeState {
+    int32_t nesting_level {-1};
+    ScopeState scope_state {ScopeState::CONTENT};
+    int32_t scope_column {0};
+    int32_t indent_level {0};
+};
+
+// Single vertical indent guide segment
+struct IndentGuideLine {
+    struct BranchPoint {
+        int32_t line {0};
+        int32_t column {0};
+    };
+
+    int32_t column {0};
+    int32_t start_line {0};
+    int32_t end_line {0};
+    int32_t nesting_level {0};
+    int32_t scope_rule_id {-1};
+    bool continues_before {false};
+    bool continues_after {false};
+    List<BranchPoint> branches;
+};
+
+// Indent guide analysis result
+struct IndentGuideResult {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<IndentGuideLine> guide_lines;
+    List<LineScopeState> line_states;
 };
 
 // Inline style

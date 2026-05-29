@@ -265,6 +265,18 @@ actual class DocumentAnalyzer internal constructor(private val handle: MemorySeg
         return result.readAndFree(IndentGuideResult(), ::readIndentGuideResult)
     }
 
+    actual fun analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult {
+        ensureOpen()
+        return confined { arena ->
+            val visible = arena.allocate(JAVA_INT, 2)
+            visible.setAtIndex(JAVA_INT, 0, visibleRange.startLine)
+            visible.setAtIndex(JAVA_INT, 1, visibleRange.lineCount)
+            val result = SweetLineJvmNative.slDocumentAnalyzeIndentGuidesInLineRange
+                .invokeWithArguments(handle, visible) as MemorySegment
+            result.readAndFree(IndentGuideResult(), ::readIndentGuideResult)
+        }
+    }
+
     actual fun close() {
         closed = true
     }
@@ -376,6 +388,10 @@ private object SweetLineJvmNative {
     val slDocumentAnalyzeIndentGuides: MethodHandle = downcall(
         "sl_document_analyze_indent_guides",
         FunctionDescriptor.of(ADDRESS, ADDRESS),
+    )
+    val slDocumentAnalyzeIndentGuidesInLineRange: MethodHandle = downcall(
+        "sl_document_analyze_indent_guides_in_line_range",
+        FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
     )
     val slFreeBuffer: MethodHandle = downcall(
         "sl_free_buffer",

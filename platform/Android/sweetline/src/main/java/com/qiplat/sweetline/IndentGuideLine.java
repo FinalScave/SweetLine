@@ -36,13 +36,13 @@ public class IndentGuideLine {
      */
     public int endLine;
     /**
-     * Nesting level (0-based)
+     * Whether the guide continues from before the returned slice
      */
-    public int nestingLevel;
+    public boolean continuesBefore;
     /**
-     * Associated ScopeRule ID (matching pair mode), -1 for indentation mode
+     * Whether the guide continues after the returned slice
      */
-    public int scopeRuleId;
+    public boolean continuesAfter;
     /**
      * Branch point list (line/column positions of else/case etc.)
      */
@@ -51,11 +51,11 @@ public class IndentGuideLine {
     public IndentGuideLine() {
     }
 
-    public IndentGuideLine(int column, int startLine, int endLine, int nestingLevel, int scopeRuleId) {
+    public IndentGuideLine(int column, int startLine, int endLine, boolean continuesBefore, boolean continuesAfter) {
         this.column = column;
         this.startLine = startLine;
         this.endLine = endLine;
-        this.nestingLevel = nestingLevel;
-        this.scopeRuleId = scopeRuleId;
+        this.continuesBefore = continuesBefore;
+        this.continuesAfter = continuesAfter;
     }
 }

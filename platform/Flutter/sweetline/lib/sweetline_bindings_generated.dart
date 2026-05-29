@@ -161,7 +161,7 @@ external sl_analyzer_handle_t sl_engine_create_text_analyzer_by_file_name(
 );
 
 /// Perform full highlight analysis on a text
-/// @param analyzer_handle Plain text highlight analyzer handle
+/// @param analyzer_handle Plain text analyzer handle
 /// @param text Full text content
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
@@ -230,8 +230,8 @@ external ffi.Pointer<ffi.Int32> sl_text_analyze_line(
   ffi.Pointer<ffi.Int32> line_info,
 );
 
-/// Perform indent guide analysis on plain text (requires prior call to sl_text_analyze for highlight results)
-/// @param analyzer_handle Plain text highlight analyzer handle
+/// Perform indent guide analysis on plain text
+/// @param analyzer_handle Plain text analyzer handle
 /// @param text Text content
 /// @return Analysis result, format same as sl_document_analyze_indent_guides
 /// Note: the return value must be freed by calling sl_free_buffer after use
@@ -256,7 +256,7 @@ external sl_analyzer_handle_t sl_engine_load_document(
 );
 
 /// Perform full highlight analysis on a managed document (typically called once after initial document load)
-/// @param analyzer_handle Document highlight analyzer handle
+/// @param analyzer_handle Document analyzer handle
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
 /// Same format as sl_text_analyze:
@@ -269,7 +269,7 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze(
 );
 
 /// Analyze enough lines to cover the specified line range on a managed document
-/// @param analyzer_handle Document highlight analyzer handle
+/// @param analyzer_handle Document analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
 /// @code
@@ -359,18 +359,19 @@ external ffi.Pointer<ffi.Int32> sl_document_get_highlight_slice(
   ffi.Pointer<ffi.Int32> visible_range,
 );
 
-/// Perform indent guide analysis on a managed document (requires prior call to sl_document_analyze or sl_document_analyze_incremental)
-/// @param analyzer_handle Document highlight analyzer handle
+/// Perform indent guide analysis on a managed document
+/// @param analyzer_handle Document analyzer handle
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
-/// result[0] = number of indent guide lines (guide_count)
-/// result[1] = fixed field count per guide line (stride=6)
-/// result[2] = number of line states (line_count)
-/// result[3] = field count per line state (4)
-/// Followed by guide_count guide line entries, each with structure:
-/// [column, start_line, end_line, nesting_level, scope_rule_id, branch_count, branch_line_0, branch_column_0, ...]
-/// Note: actual length per guide line = stride + branch_count * 2
-/// Followed by line_count line state entries, each with structure:
+/// result[0] = slice start line
+/// result[1] = number of line states
+/// result[2] = number of indent guide lines
+/// Followed by guide line entries:
+/// [column, start_line, end_line, flags, branch_count, branch_line_0, branch_column_0, ...]
+/// flags:
+///   bit0: continuesBefore
+///   bit1: continuesAfter
+/// Followed by line state entries:
 /// [nesting_level, scope_state, scope_column, indent_level]
 /// where scope_state: 0=START, 1=END, 2=CONTENT
 /// @endcode
@@ -378,6 +379,19 @@ external ffi.Pointer<ffi.Int32> sl_document_get_highlight_slice(
 @ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
 external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides(
   sl_analyzer_handle_t analyzer_handle,
+);
+
+/// Perform indent guide analysis for the requested visible line range on a managed document
+/// @param analyzer_handle Document analyzer handle
+/// @param visible_range Visible line range, array structure: [startLine],[lineCount]
+/// @return Analysis result, format same as sl_document_analyze_indent_guides
+/// Note: the return value must be freed by calling sl_free_buffer after use
+@ffi.Native<
+  ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t, ffi.Pointer<ffi.Int32>)
+>(assetId: _sweetlineAssetId)
+external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides_in_line_range(
+  sl_analyzer_handle_t analyzer_handle,
+  ffi.Pointer<ffi.Int32> visible_range,
 );
 
 /// Free the memory of analysis results. All analysis functions returning int32_t*

@@ -195,6 +195,11 @@ final class SweetLineNative {
     static final MethodHandle sl_document_analyze_indent_guides = downcall("sl_document_analyze_indent_guides",
             FunctionDescriptor.of(ADDRESS, ADDRESS));
 
+    // sl_document_analyze_indent_guides_in_line_range(pointer, int32_t*) -> int32_t*
+    static final MethodHandle sl_document_analyze_indent_guides_in_line_range = downcall(
+            "sl_document_analyze_indent_guides_in_line_range",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
     // sl_free_buffer(int32_t*) -> void
     static final MethodHandle sl_free_buffer = downcall("sl_free_buffer",
             FunctionDescriptor.ofVoid(ADDRESS));

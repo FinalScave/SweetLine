@@ -317,19 +317,17 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "do",
-      "end": "done"
-    },
-    {
-      "start": "then",
-      "end": "fi",
-      "branches": ["elif", "else"]
-    },
-    {
-      "start": "case",
-      "end": "esac"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'" },
+      { "kind": "string", "start": "`", "end": "`", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "word", "start": "do", "end": "done" },
+      { "kind": "word", "start": "then", "end": "fi", "branches": ["elif","else"] },
+      { "kind": "word", "start": "case", "end": "esac" }
+    ]
+  }
 }

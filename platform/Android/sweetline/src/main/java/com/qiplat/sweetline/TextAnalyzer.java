@@ -62,7 +62,7 @@ public class TextAnalyzer {
     }
 
     /**
-     * Perform indent guide analysis on a text (internally performs highlight analysis first)
+     * Perform indent guide analysis on a text.
      *
      * @param text Full text content
      * @return Indent guide analysis result

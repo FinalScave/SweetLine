@@ -24,6 +24,7 @@ const NativeMock: Record<string, Object> = {
   'DocumentAnalyzer_GetHighlightSlice': (handle: number, visibleStartLine: number, visibleLineCount: number): Int32Array => { return new Int32Array(0); },
   'DocumentAnalyzer_GetDocument': (handle: number): number => { return 0; },
   'DocumentAnalyzer_AnalyzeIndentGuides': (handle: number): Int32Array => { return new Int32Array(0); },
+  'DocumentAnalyzer_AnalyzeIndentGuidesInLineRange': (handle: number, visibleStartLine: number, visibleLineCount: number): Int32Array => { return new Int32Array(0); },
   'HighlightEngine_Create': (configBits: number): number => { return 0; },
   'HighlightEngine_Delete': (handle: number): void => {},
   'HighlightEngine_RegisterStyleName': (handle: number, styleName: string, styleId: number): boolean => { return true; },

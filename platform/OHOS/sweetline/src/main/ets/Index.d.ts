@@ -213,26 +213,30 @@ export declare namespace sweetline {
      */
     public endLine: number;
     /**
-     * Nesting level (0-based)
+     * Whether the guide continues from before the returned slice
      */
-    public nestingLevel: number;
+    public continuesBefore: boolean;
     /**
-     * Associated ScopeRule ID (matching pair mode), -1 for indentation mode
+     * Whether the guide continues after the returned slice
      */
-    public scopeRuleId: number;
+    public continuesAfter: boolean;
     /**
      * Branch point list (line/column positions of else/case etc.)
      */
     public branches: Array<BranchPoint>;
 
     public constructor();
-    public constructor(column: number, startLine: number, endLine: number, nestingLevel: number, scopeRuleId: number);
+    public constructor(column: number, startLine: number, endLine: number, continuesBefore: boolean, continuesAfter: boolean);
   }
 
   /**
    * Indent guide analysis result
    */
   export class IndentGuideResult {
+    /**
+     * Actual start line of the returned slice
+     */
+    public startLine: number;
     /**
      * All vertical guide lines
      */
@@ -379,7 +383,7 @@ export declare namespace sweetline {
      */
     public analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
     /**
-     * Perform indent guide analysis on a text (performs highlight analysis internally)）
+     * Perform indent guide analysis on a text.
      * @param text Full text content
      * @returns Indent guide analysis result
      */
@@ -432,10 +436,17 @@ export declare namespace sweetline {
     public analyzeIncrementalByIndex(startIndex: number, endIndex: number, newText: string): DocumentHighlight;
 
     /**
-     * Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
+     * Perform indent guide analysis on the managed document
      * @returns Indent guide analysis result
      */
     public analyzeIndentGuides(): IndentGuideResult;
+
+    /**
+     * Perform indent guide analysis for the specified visible line range
+     * @param visibleRange Visible line range
+     * @returns Indent guide analysis result for the specified line range
+     */
+    public analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
 
     /**
      * Get the managed document

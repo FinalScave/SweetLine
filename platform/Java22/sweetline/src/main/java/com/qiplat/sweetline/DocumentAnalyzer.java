@@ -176,7 +176,6 @@ public class DocumentAnalyzer implements AutoCloseable {
 
     /**
      * Perform indent guide analysis on the managed document.
-     * Requires prior call to {@link #analyze()} or {@link #analyzeIncremental(TextRange, String)}.
      *
      * @return Indent guide analysis result
      */
@@ -194,6 +193,34 @@ public class DocumentAnalyzer implements AutoCloseable {
             }
         } catch (Throwable e) {
             throw new RuntimeException("Failed to analyze indent guides", e);
+        }
+    }
+
+    /**
+     * Perform indent guide analysis for the specified visible line range.
+     *
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Indent guide analysis result for the specified line range
+     */
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange) {
+        ensureOpen();
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment visibleSeg = arena.allocate(JAVA_INT, 2);
+            visibleSeg.setAtIndex(JAVA_INT, 0, visibleRange.startLine());
+            visibleSeg.setAtIndex(JAVA_INT, 1, visibleRange.lineCount());
+
+            MemorySegment resultPtr = (MemorySegment) SweetLineNative.sl_document_analyze_indent_guides_in_line_range
+                    .invoke(handle, visibleSeg);
+            if (resultPtr.equals(MemorySegment.NULL)) {
+                return new IndentGuideResult();
+            }
+            try {
+                return BufferParser.readIndentGuideResult(resultPtr);
+            } finally {
+                SweetLineNative.sl_free_buffer.invoke(resultPtr);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to analyze indent guides in line range", e);
         }
     }
 

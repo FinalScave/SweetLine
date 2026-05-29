@@ -22,6 +22,24 @@ namespace {
     engine->registerStyleName("url", 16);
     return engine;
   }
+
+  U8String makeBraceScopeSyntax(const U8String& name, const U8String& suffix) {
+    return R"({
+  "name": ")" + name + R"(",
+  "fileSuffixes": [")" + suffix + R"("],
+  "states": {
+    "default": [
+      { "pattern": "[{}]", "style": "punctuation" }
+    ]
+  },
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
+})";
+  }
 }
 
 TEST_CASE("Indent example.java") {
@@ -32,16 +50,13 @@ TEST_CASE("Indent example.java") {
   SharedPtr<Document> document = makeSharedPtr<Document>("example.java", code_txt);
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   REQUIRE(analyzer != nullptr);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  REQUIRE(highlight != nullptr);
-  REQUIRE(highlight->lines.size() == document->getLineCount());
   SharedPtr<IndentGuideResult> res = analyzer->analyzeIndentGuides();
   REQUIRE(res != nullptr);
   REQUIRE_FALSE(res->guide_lines.empty());
   REQUIRE(res->line_states.size() == document->getLineCount());
 }
 
-TEST_CASE("ScopeRules ignores markers in string/comment for style id mode") {
+TEST_CASE("ScopeRules ignores markers in string/comment without highlight") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = R"({
   "name": "toy",
@@ -53,16 +68,20 @@ TEST_CASE("ScopeRules ignores markers in string/comment for style id mode") {
       { "pattern": "[{}]", "style": "punctuation" }
     ]
   },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "//" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
 })";
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
   SharedPtr<Document> document = makeSharedPtr<Document>("example.toy", "{\n  \"}\" // comment {\n}");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  REQUIRE(highlight != nullptr);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
@@ -85,17 +104,18 @@ TEST_CASE("ScopeRules closes innermost block when end token is shared") {
       { "pattern": "\\b(function|then|else|end)\\b", "style": "keyword" }
     ]
   },
-  "scopeRules": [
-    { "start": "function", "end": "end" },
-    { "start": "then", "end": "end", "branches": ["else"] }
-  ]
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "word", "start": "function", "end": "end" },
+      { "kind": "word", "start": "then", "end": "end", "branches": ["else"] }
+    ]
+  }
 })";
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
   SharedPtr<Document> document = makeSharedPtr<Document>("example.ll", "function\n  then\n  else\n  end\nend");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  REQUIRE(highlight != nullptr);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
@@ -123,24 +143,11 @@ TEST_CASE("ScopeRules closes innermost block when end token is shared") {
 
 TEST_CASE("ScopeRules keeps nesting level for unclosed blocks at EOF") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  const U8String syntax = R"({
-  "name": "brace",
-  "fileSuffixes": [".br"],
-  "states": {
-    "default": [
-      { "pattern": "[{}]", "style": "punctuation" }
-    ]
-  },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
-})";
+  const U8String syntax = makeBraceScopeSyntax("brace", ".br");
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
   SharedPtr<Document> document = makeSharedPtr<Document>("example.br", "{\n  {");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  REQUIRE(highlight != nullptr);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
@@ -163,24 +170,11 @@ TEST_CASE("ScopeRules keeps nesting level for unclosed blocks at EOF") {
 
 TEST_CASE("ScopeRules guide column uses min of start and end columns") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  const U8String syntax = R"({
-  "name": "braceCol",
-  "fileSuffixes": [".bc"],
-  "states": {
-    "default": [
-      { "pattern": "[{}]", "style": "punctuation" }
-    ]
-  },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
-})";
+  const U8String syntax = makeBraceScopeSyntax("braceCol", ".bc");
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
   SharedPtr<Document> document = makeSharedPtr<Document>("example.bc", "if (ok) {\n    run();\n}");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyze();
-  REQUIRE(highlight != nullptr);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
@@ -188,62 +182,48 @@ TEST_CASE("ScopeRules guide column uses min of start and end columns") {
   CHECK(result->guide_lines[0].column == 0);
 }
 
-TEST_CASE("TextAnalyzer reuses cached highlight for scope indent guides") {
+TEST_CASE("TextAnalyzer indent guides are independent from highlight analysis") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  const U8String syntax = R"({
-  "name": "braceCached",
-  "fileSuffixes": [".bc2"],
-  "states": {
-    "default": [
-      { "pattern": "[{}]", "style": "punctuation" }
-    ]
-  },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
-})";
+  const U8String syntax = makeBraceScopeSyntax("braceText", ".bt");
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("braceCached");
+  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("braceText");
   REQUIRE(analyzer != nullptr);
 
   const U8String text = "{\n    x\n}";
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
-  REQUIRE(highlight != nullptr);
+  SharedPtr<IndentGuideResult> before = analyzer->analyzeIndentGuides(text);
+  REQUIRE(before != nullptr);
+  REQUIRE(before->guide_lines.size() == 1);
 
-  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text);
-  REQUIRE(result != nullptr);
-  REQUIRE(result->guide_lines.size() == 1);
-  CHECK(result->guide_lines[0].start_line == 0);
-  CHECK(result->guide_lines[0].end_line == 2);
-  CHECK(result->guide_lines[0].scope_rule_id == 0);
+  REQUIRE(analyzer->analyzeText(text) != nullptr);
+
+  SharedPtr<IndentGuideResult> after = analyzer->analyzeIndentGuides(text);
+  REQUIRE(after != nullptr);
+  CHECK(after->guide_lines == before->guide_lines);
+  CHECK(after->line_states == before->line_states);
+  CHECK(after->guide_lines[0].start_line == 0);
+  CHECK(after->guide_lines[0].end_line == 2);
+  CHECK(after->guide_lines[0].column == 0);
+  CHECK(after->guide_lines[0].scope_rule_id == 0);
 }
 
-TEST_CASE("TextAnalyzer falls back to indentation guides without cached highlight") {
+TEST_CASE("DocumentAnalyzer analyzes visible indent guides without highlight") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  const U8String syntax = R"({
-  "name": "braceFallback",
-  "fileSuffixes": [".bf"],
-  "states": {
-    "default": [
-      { "pattern": "[{}]", "style": "punctuation" }
-    ]
-  },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
-})";
+  const U8String syntax = makeBraceScopeSyntax("braceVisible", ".bv");
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
-  SharedPtr<TextAnalyzer> analyzer = engine->createAnalyzerBySyntaxName("braceFallback");
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.bv", "{\n  a\n  b\n}");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   REQUIRE(analyzer != nullptr);
 
-  const U8String text = "{\n    x\n}";
-  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text);
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange({1, 2});
   REQUIRE(result != nullptr);
+  CHECK(result->start_line == 1);
+  CHECK(result->total_line_count == 4);
+  REQUIRE(result->line_states.size() == 2);
   REQUIRE(result->guide_lines.size() == 1);
   CHECK(result->guide_lines[0].start_line == 1);
-  CHECK(result->guide_lines[0].end_line == 1);
-  CHECK(result->guide_lines[0].column == 4);
-  CHECK(result->guide_lines[0].scope_rule_id == -1);
+  CHECK(result->guide_lines[0].end_line == 2);
+  CHECK(result->guide_lines[0].continues_before);
+  CHECK(result->guide_lines[0].continues_after);
 }

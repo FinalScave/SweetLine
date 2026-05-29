@@ -89,7 +89,7 @@ public class TextAnalyzer {
     // Single line analysis
     public LineAnalyzeResult analyzeLine(String text, TextLineInfo info);
 
-    // Indent guide analysis (internally runs highlight analysis first)
+    // Indent guide analysis
     public IndentGuideResult analyzeIndentGuides(String text);
 }
 ```
@@ -126,6 +126,7 @@ public class DocumentAnalyzer {
 
     // Indent guide analysis
     public IndentGuideResult analyzeIndentGuides();
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
 
     // Get managed document
     public Document getDocument();
@@ -135,6 +136,7 @@ public class DocumentAnalyzer {
 `analyzeLineRange(...)` analyzes enough lines from the current document state to cover the requested visible range and returns that slice.
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns a slice.
 `getHighlightSlice(...)` reads a slice from the latest cached result produced by `analyze()` or `analyzeIncremental(...)`.
+`analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
 
 ### Data Structures
 
@@ -184,8 +186,32 @@ public class DocumentHighlightSlice {
 
 // Indent guide analysis result
 public class IndentGuideResult {
+    public int startLine;
     public List<IndentGuideLine> guideLines;
     public List<LineScopeState> lineStates;
+}
+
+// Single indent guide segment
+public class IndentGuideLine {
+    public int column;
+    public int startLine;
+    public int endLine;
+    public boolean continuesBefore;
+    public boolean continuesAfter;
+    public List<BranchPoint> branches;
+
+    public static class BranchPoint {
+        public int line;
+        public int column;
+    }
+}
+
+// Per-line state returned by indent guide analysis
+public class LineScopeState {
+    public int nestingLevel;
+    public int scopeState;   // 0=START, 1=END, 2=CONTENT
+    public int scopeColumn;
+    public int indentLevel;
 }
 
 // Single line analysis result
@@ -250,6 +276,7 @@ TextRange changeRange = new TextRange(
 );
 DocumentHighlight newHighlight = docAnalyzer.analyzeIncremental(changeRange, "modified");
 DocumentHighlightSlice visible = docAnalyzer.getHighlightSlice(new LineRange(0, 120));
+IndentGuideResult visibleGuides = docAnalyzer.analyzeIndentGuidesInLineRange(new LineRange(0, 120));
 
 // Option 3: Convert to Spannable directly (for use with TextView)
 Spannable spannable = textAnalyzer.analyzeTextAsSpannable(sourceCode, styleId -> {

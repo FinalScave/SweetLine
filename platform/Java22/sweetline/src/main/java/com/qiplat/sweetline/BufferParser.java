@@ -206,42 +206,41 @@ final class BufferParser {
      * Parse indent guide analysis result from native buffer.
      * <p>Layout:
      * <pre>
-     * buffer[0] = guide_lines count
-     * buffer[1] = fixed field count per guide_line (stride=6)
-     * buffer[2] = line_states count
-     * buffer[3] = field count per line_state (4)
+     * buffer[0] = start line
+     * buffer[1] = line state count
+     * buffer[2] = guide line count
      * Followed by guide_lines data (variable length due to branches)
      * Followed by line_states data
      * </pre>
      */
     static IndentGuideResult readIndentGuideResult(MemorySegment bufferPtr) {
-        IndentGuideResult result = new IndentGuideResult();
         if (bufferPtr.equals(MemorySegment.NULL)) {
-            return result;
+            return new IndentGuideResult();
         }
 
-        MemorySegment header = bufferPtr.reinterpret(4L * JAVA_INT.byteSize());
-        int guideCount = header.getAtIndex(JAVA_INT, 0);
-        // buffer[1] = stride (unused, we read dynamically due to variable branch count)
-        int lineStateCount = header.getAtIndex(JAVA_INT, 2);
-        // buffer[3] = lineStateStride (always 4)
+        MemorySegment header = bufferPtr.reinterpret(3L * JAVA_INT.byteSize());
+        int startLine = header.getAtIndex(JAVA_INT, 0);
+        int lineStateCount = Math.max(header.getAtIndex(JAVA_INT, 1), 0);
+        int guideCount = Math.max(header.getAtIndex(JAVA_INT, 2), 0);
+        IndentGuideResult result = new IndentGuideResult(startLine, new ArrayList<>(), new ArrayList<>());
 
         // The actual size may be larger due to branches, use a generous reinterpret upper bound.
         // A better approach: first scan guide lines to compute real size.
         // Since we need sequential access, reinterpret with a generous upper bound.
-        long maxSize = 4L + (long) guideCount * 1024 + (long) lineStateCount * 4; // generous
+        long maxSize = 3L + (long) guideCount * 1024 + (long) lineStateCount * 4; // generous
         MemorySegment buffer = bufferPtr.reinterpret(maxSize * JAVA_INT.byteSize());
 
-        int idx = 4;
+        int idx = 3;
         for (int i = 0; i < guideCount; i++) {
             int column = buffer.getAtIndex(JAVA_INT, idx++);
             int guidStartLine = buffer.getAtIndex(JAVA_INT, idx++);
             int guidEndLine = buffer.getAtIndex(JAVA_INT, idx++);
-            int nestingLevel = buffer.getAtIndex(JAVA_INT, idx++);
-            int scopeRuleId = buffer.getAtIndex(JAVA_INT, idx++);
-            int branchCount = buffer.getAtIndex(JAVA_INT, idx++);
+            int flags = buffer.getAtIndex(JAVA_INT, idx++);
+            boolean continuesBefore = (flags & 1) != 0;
+            boolean continuesAfter = (flags & (1 << 1)) != 0;
+            int branchCount = Math.max(buffer.getAtIndex(JAVA_INT, idx++), 0);
 
-            IndentGuideLine guide = new IndentGuideLine(column, guidStartLine, guidEndLine, nestingLevel, scopeRuleId);
+            IndentGuideLine guide = new IndentGuideLine(column, guidStartLine, guidEndLine, continuesBefore, continuesAfter);
             for (int j = 0; j < branchCount; j++) {
                 int bLine = buffer.getAtIndex(JAVA_INT, idx++);
                 int bColumn = buffer.getAtIndex(JAVA_INT, idx++);

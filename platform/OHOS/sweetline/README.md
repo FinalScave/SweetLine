@@ -136,6 +136,8 @@ if (analyzer) {
 }
 ```
 
+缩进引导线分析直接基于文本执行，不需要先执行高亮分析。托管文档场景可使用 `analyzeIndentGuidesInLineRange(visibleRange)` 只分析当前可见行范围。
+
 ### 内联样式模式
 
 ```typescript
@@ -194,7 +196,8 @@ const engine = new sweetline.HighlightEngine(config);
 | `analyzeLineRange(visibleRange)` | 按当前文档状态分析足够的行，并返回指定行范围切片 |
 | `analyzeIncrementalInLineRange(range, newText, visibleRange)` | 增量分析后，仅返回指定行范围切片 |
 | `getHighlightSlice(visibleRange)` | 从当前缓存高亮结果中直接截取指定行范围 |
-| `analyzeIndentGuides()` | 基于托管文档当前高亮结果执行缩进引导线分析 |
+| `analyzeIndentGuides()` | 分析托管文档的缩进引导线 |
+| `analyzeIndentGuidesInLineRange(visibleRange)` | 分析指定可见行范围的缩进引导线 |
 | `getDocument()` | 获取当前关联的托管文档 |
 
 ### 数据类

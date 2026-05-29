@@ -387,11 +387,15 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "{",
-      "end": "}",
-      "branches": ["else", "elseif", "catch", "finally"]
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "blockComment", "start": "<#", "end": "#>" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "`" },
+      { "kind": "string", "start": "'", "end": "'" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}", "branches": ["else","elseif","catch","finally"] }
+    ]
+  }
 }

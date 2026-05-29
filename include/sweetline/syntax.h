@@ -82,6 +82,7 @@ namespace NS_SWEETLINE {
 
   struct StateRule;
   struct ScopeRule;
+  struct ScopeSkipRule;
   struct SyntaxRuleRuntimeData;
   class SyntaxRuleCompiler;
   /// Syntax rule definition
@@ -104,10 +105,10 @@ namespace NS_SWEETLINE {
     HashMap<int32_t, StateRule> state_rules_map;
     /// Map from state name to ID
     HashMap<U8String, int32_t> state_id_map;
-    /// Map from scope rule ID to ScopeRule
-    HashMap<int32_t, ScopeRule> scope_rules_map;
-    /// Style IDs to skip during scope analysis (e.g. string/comment/char)
-    HashSet<int32_t> scope_skip_style_ids;
+    /// Scope rules used by indent guide analysis
+    List<ScopeRule> scope_rules;
+    /// Lexical skip rules used by scope analysis
+    List<ScopeSkipRule> scope_skip_rules;
 
     bool containsInlineStyle(int32_t style_id);
     InlineStyle& getInlineStyle(int32_t style_id);

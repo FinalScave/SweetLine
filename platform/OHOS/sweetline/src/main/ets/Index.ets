@@ -270,25 +270,25 @@ export namespace sweetline {
      */
     public endLine: number = 0;
     /**
-     * Nesting level (0-based)
+     * Whether the guide continues from before the returned slice
      */
-    public nestingLevel: number = 0;
+    public continuesBefore: boolean = false;
     /**
-     * Associated ScopeRule ID (matching pair mode), -1 for indentation mode
+     * Whether the guide continues after the returned slice
      */
-    public scopeRuleId: number = -1;
+    public continuesAfter: boolean = false;
     /**
      * Branch point list (line/column positions of else/case etc.)
      */
     public branches: Array<BranchPoint> = [];
 
     public constructor(column: number = 0, startLine: number = 0, endLine: number = 0,
-                       nestingLevel: number = 0, scopeRuleId: number = -1) {
+                       continuesBefore: boolean = false, continuesAfter: boolean = false) {
       this.column = column;
       this.startLine = startLine;
       this.endLine = endLine;
-      this.nestingLevel = nestingLevel;
-      this.scopeRuleId = scopeRuleId;
+      this.continuesBefore = continuesBefore;
+      this.continuesAfter = continuesAfter;
     }
   }
 
@@ -296,6 +296,10 @@ export namespace sweetline {
    * Indent guide analysis result
    */
   export class IndentGuideResult {
+    /**
+     * Actual start line of the returned slice
+     */
+    public startLine: number = 0;
     /**
      * All vertical guide lines
      */
@@ -545,7 +549,7 @@ export namespace sweetline {
     }
 
     /**
-     * Perform indent guide analysis on a text (performs highlight analysis internally)）
+     * Perform indent guide analysis on a text.
      * @param text Full text content
      * @returns Indent guide analysis result
      */
@@ -673,7 +677,7 @@ export namespace sweetline {
     }
 
     /**
-     * Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
+     * Perform indent guide analysis on the managed document
      * @returns Indent guide analysis result
      */
     public analyzeIndentGuides(): IndentGuideResult {
@@ -681,6 +685,22 @@ export namespace sweetline {
         return new IndentGuideResult();
       }
       let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeIndentGuides(this.nativeHandle);
+      return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
+    /**
+     * Perform indent guide analysis for the specified visible line range
+     * @param visibleRange Visible line range
+     * @returns Indent guide analysis result for the specified line range
+     */
+    public analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult {
+      if (this.nativeHandle == 0) {
+        return new IndentGuideResult();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeIndentGuidesInLineRange(
+        this.nativeHandle,
+        visibleRange.startLine, visibleRange.lineCount
+      );
       return NativeBufferPack.readIndentGuideResult(buffer);
     }
 
@@ -1019,23 +1039,23 @@ export namespace sweetline {
 
     static readIndentGuideResult(buffer: Int32Array): IndentGuideResult {
       const result = new IndentGuideResult();
-      if (!buffer || buffer.length < 4) {
+      if (!buffer || buffer.length < 3) {
         return result;
       }
-      const guideCount = buffer[0];
-      // buffer[1] = stride (unused, we read dynamically)
-      const lineStateCount = buffer[2];
-      // buffer[3] = lineStateStride (4)
+      result.startLine = buffer[0];
+      const lineStateCount = Math.max(buffer[1], 0);
+      const guideCount = Math.max(buffer[2], 0);
 
-      let idx = 4;
+      let idx = 3;
       for (let i = 0; i < guideCount; i++) {
         let guide = new IndentGuideLine();
         guide.column = buffer[idx++];
         guide.startLine = buffer[idx++];
         guide.endLine = buffer[idx++];
-        guide.nestingLevel = buffer[idx++];
-        guide.scopeRuleId = buffer[idx++];
-        let branchCount = buffer[idx++];
+        let flags = buffer[idx++];
+        guide.continuesBefore = (flags & 1) != 0;
+        guide.continuesAfter = (flags & (1 << 1)) != 0;
+        let branchCount = Math.max(buffer[idx++], 0);
         for (let j = 0; j < branchCount; j++) {
           let bp = new BranchPoint();
           bp.line = buffer[idx++];

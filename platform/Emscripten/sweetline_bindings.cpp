@@ -157,14 +157,15 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .property("column", &IndentGuideLine::column)
     .property("startLine", &IndentGuideLine::start_line)
     .property("endLine", &IndentGuideLine::end_line)
-    .property("nestingLevel", &IndentGuideLine::nesting_level)
-    .property("scopeRuleId", &IndentGuideLine::scope_rule_id)
+    .property("continuesBefore", &IndentGuideLine::continues_before)
+    .property("continuesAfter", &IndentGuideLine::continues_after)
     .property("branches", &IndentGuideLine::branches);
   BIND_LIST(IndentGuideLine, "IndentGuideLineList")
   BIND_LIST(LineScopeState, "LineScopeStateList")
 
   emscripten::class_<IndentGuideResult>("IndentGuideResult")
     .smart_ptr<SharedPtr<IndentGuideResult>>("SharedPtr<IndentGuideResult>")
+    .property("startLine", &IndentGuideResult::start_line)
     .property("guideLines", &IndentGuideResult::guide_lines)
     .property("lineStates", &IndentGuideResult::line_states);
 
@@ -205,7 +206,8 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("analyzeIncrementalInLineRange", &DocumentAnalyzer::analyzeIncrementalInLineRange)
     .function("getHighlightSlice", &DocumentAnalyzer::getHighlightSlice)
     .function("getDocument", &DocumentAnalyzer::getDocument)
-    .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides);
+    .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides)
+    .function("analyzeIndentGuidesInLineRange", &DocumentAnalyzer::analyzeIndentGuidesInLineRange);
 
   emscripten::class_<HighlightConfig>("HighlightConfig")
     .constructor<>()

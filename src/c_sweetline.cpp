@@ -151,8 +151,7 @@ int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle, con
   if (analyzer == nullptr) {
     return nullptr;
   }
-  SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(text);
-  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text, highlight);
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides(text);
   size_t total_size = computeIndentGuideResultBufferSize(result);
   int32_t* buffer = new int32_t[total_size];
   writeIndentGuideResult(result, buffer);
@@ -251,6 +250,19 @@ int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle)
     return nullptr;
   }
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  size_t total_size = computeIndentGuideResultBufferSize(result);
+  int32_t* buffer = new int32_t[total_size];
+  writeIndentGuideResult(result, buffer);
+  return buffer;
+}
+
+int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t analyzer_handle, int32_t* visible_range) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr || visible_range == nullptr) {
+    return nullptr;
+  }
+  LineRange range = {static_cast<size_t>(visible_range[0]), static_cast<size_t>(visible_range[1])};
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange(range);
   size_t total_size = computeIndentGuideResultBufferSize(result);
   int32_t* buffer = new int32_t[total_size];
   writeIndentGuideResult(result, buffer);

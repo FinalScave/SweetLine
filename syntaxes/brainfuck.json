@@ -48,10 +48,10 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "[",
-      "end": "]"
-    }
-  ]
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "delimiter", "start": "[", "end": "]" }
+    ]
+  }
 }

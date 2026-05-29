@@ -609,54 +609,25 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "module",
-      "end": "endmodule"
-    },
-    {
-      "start": "primitive",
-      "end": "endprimitive"
-    },
-    {
-      "start": "function",
-      "end": "endfunction"
-    },
-    {
-      "start": "task",
-      "end": "endtask"
-    },
-    {
-      "start": "begin",
-      "end": "end"
-    },
-    {
-      "start": "case",
-      "end": "endcase"
-    },
-    {
-      "start": "casex",
-      "end": "endcase"
-    },
-    {
-      "start": "casez",
-      "end": "endcase"
-    },
-    {
-      "start": "generate",
-      "end": "endgenerate"
-    },
-    {
-      "start": "specify",
-      "end": "endspecify"
-    },
-    {
-      "start": "table",
-      "end": "endtable"
-    },
-    {
-      "start": "fork",
-      "end": "join"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "//" },
+      { "kind": "blockComment", "start": "/*", "end": "*/" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "word", "start": "module", "end": "endmodule" },
+      { "kind": "word", "start": "primitive", "end": "endprimitive" },
+      { "kind": "word", "start": "function", "end": "endfunction" },
+      { "kind": "word", "start": "task", "end": "endtask" },
+      { "kind": "word", "start": "begin", "end": "end" },
+      { "kind": "word", "start": "case", "end": "endcase" },
+      { "kind": "word", "start": "casex", "end": "endcase" },
+      { "kind": "word", "start": "casez", "end": "endcase" },
+      { "kind": "word", "start": "generate", "end": "endgenerate" },
+      { "kind": "word", "start": "specify", "end": "endspecify" },
+      { "kind": "word", "start": "table", "end": "endtable" },
+      { "kind": "word", "start": "fork", "end": "join" }
+    ]
+  }
 }

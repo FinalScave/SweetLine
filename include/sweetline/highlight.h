@@ -75,20 +75,6 @@ namespace NS_SWEETLINE {
     List<LineHighlight> lines;
   };
 
-  /// Scope block region (defined by matching pairs like {}/begin-end)
-  struct ScopeBlock {
-    /// Scope start position
-    TextPosition start;
-    /// Scope end position
-    TextPosition end;
-    /// Branch positions in the scope tree
-    List<TextPosition> branches;
-
-#ifdef SWEETLINE_DEBUG
-    void dump() const;
-#endif
-  };
-
   /// Scope state
   enum struct ScopeState : int8_t {
     /// Scope start
@@ -133,6 +119,10 @@ namespace NS_SWEETLINE {
     int32_t nesting_level {0};
     /// Associated ScopeRule ID (matching pair mode), -1 for indentation mode
     int32_t scope_rule_id {-1};
+    /// Whether the guide continues from before the returned slice
+    bool continues_before {false};
+    /// Whether the guide continues after the returned slice
+    bool continues_after {false};
     /// Branch point list (line/column positions of else/case etc.)
     List<BranchPoint> branches;
 
@@ -141,6 +131,10 @@ namespace NS_SWEETLINE {
 
   /// Indent guide analysis result
   struct IndentGuideResult {
+    /// Actual start line of the returned slice
+    size_t start_line {0};
+    /// Total line count of the analyzed document
+    size_t total_line_count {0};
     /// All vertical guide lines
     List<IndentGuideLine> guide_lines;
     /// Scope state for each line
@@ -197,13 +191,9 @@ namespace NS_SWEETLINE {
     void analyzeLine(const U8String& text, const TextLineInfo& line_info, LineAnalyzeResult& result) const;
 
     /// Perform indent guide analysis on a text
-    /// Prefers the provided highlight result, then falls back to the cached result from analyzeText
-    /// If no highlight result is available, falls back to pure indentation analysis
     /// @param text Full text content
-    /// @param highlight Optional highlight analysis result
     /// @return Indent guide analysis result
-    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text,
-      const SharedPtr<DocumentHighlight>& highlight = nullptr);
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
 
     /// Get the current highlight configuration
     const HighlightConfig& getHighlightConfig() const;
@@ -211,7 +201,6 @@ namespace NS_SWEETLINE {
     SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     HighlightConfig m_config_;
-    SharedPtr<DocumentHighlight> m_cached_highlight_;
   };
 
   class InternalDocumentAnalyzer;
@@ -261,9 +250,14 @@ namespace NS_SWEETLINE {
     /// @return HighlightConfig
     const HighlightConfig& getHighlightConfig() const;
 
-    /// Perform indent guide analysis on the managed document (requires a full valid highlight cache)
+    /// Perform indent guide analysis on the managed document
     /// @return Indent guide analysis result
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
+
+    /// Perform indent guide analysis for the requested line range
+    /// @param visible_range The visible line range to analyze and return
+    /// @return Indent guide analysis result for the specified line range
+    SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
   private:
     friend class HighlightEngine;
     DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,

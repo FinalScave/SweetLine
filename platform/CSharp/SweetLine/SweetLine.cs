@@ -542,6 +542,27 @@ public sealed class DocumentAnalyzer : IDisposable {
 	}
 
 	/// <summary>
+	/// Performs indent guide analysis for the specified visible line range.
+	/// </summary>
+	/// <param name="visibleRange">Visible line range (<c>startLine + lineCount</c>).</param>
+	/// <returns>Indent guide analysis result for the specified line range.</returns>
+	public IndentGuideResult AnalyzeIndentGuidesInLineRange(LineRange visibleRange) {
+		EnsureOpen();
+
+		int[] packedVisibleRange = [visibleRange.StartLine, visibleRange.LineCount];
+		IntPtr resultPtr = SweetLineNative.DocumentAnalyzeIndentGuidesInLineRange(_handle, packedVisibleRange);
+		if (resultPtr == IntPtr.Zero) {
+			return new IndentGuideResult();
+		}
+
+		try {
+			return BufferParser.ReadIndentGuideResult(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
 	/// Marks this analyzer as closed.
 	/// </summary>
 	public void Close() {
@@ -767,10 +788,9 @@ internal static class BufferParser {
 	/// <remarks>
 	/// Layout:
 	/// <code>
-	/// buffer[0] = guideCount
-	/// buffer[1] = guideStride (fixed head fields, currently 6)
-	/// buffer[2] = lineStateCount
-	/// buffer[3] = lineStateStride (currently 4)
+	/// buffer[0] = startLine
+	/// buffer[1] = lineStateCount
+	/// buffer[2] = guideCount
 	/// followed by guide data and line-state data
 	/// </code>
 	/// </remarks>
@@ -780,19 +800,21 @@ internal static class BufferParser {
 			return result;
 		}
 
-		int guideCount = Math.Max(ReadInt(bufferPtr, 0), 0);
-		int lineStateCount = Math.Max(ReadInt(bufferPtr, 2), 0);
+		result.StartLine = ReadInt(bufferPtr, 0);
+		int lineStateCount = Math.Max(ReadInt(bufferPtr, 1), 0);
+		int guideCount = Math.Max(ReadInt(bufferPtr, 2), 0);
 
-		int index = 4;
+		int index = 3;
 		for (int i = 0; i < guideCount; i++) {
 			int column = ReadInt(bufferPtr, index++);
 			int startLine = ReadInt(bufferPtr, index++);
 			int endLine = ReadInt(bufferPtr, index++);
-			int nestingLevel = ReadInt(bufferPtr, index++);
-			int scopeRuleId = ReadInt(bufferPtr, index++);
+			int flags = ReadInt(bufferPtr, index++);
+			bool continuesBefore = (flags & 1) != 0;
+			bool continuesAfter = (flags & (1 << 1)) != 0;
 			int branchCount = Math.Max(ReadInt(bufferPtr, index++), 0);
 
-			IndentGuideLine line = new(column, startLine, endLine, nestingLevel, scopeRuleId);
+			IndentGuideLine line = new(column, startLine, endLine, continuesBefore, continuesAfter);
 			for (int j = 0; j < branchCount; j++) {
 				int branchLine = ReadInt(bufferPtr, index++);
 				int branchColumn = ReadInt(bufferPtr, index++);

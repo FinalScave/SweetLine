@@ -203,6 +203,14 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
             ?: IndentGuideResult()
     }
 
+    actual fun analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult {
+        return nativeHandle.ifOpenOrNull {
+            NativeBufferParser.readIndentGuideResult(
+                nativeAnalyzeIndentGuidesInLineRange(it, visibleRange.startLine, visibleRange.lineCount),
+            )
+        } ?: IndentGuideResult()
+    }
+
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
@@ -250,6 +258,11 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
         ): IntArray?
 
         @JvmStatic private external fun nativeAnalyzeIndentGuides(handle: Long): IntArray?
+        @JvmStatic private external fun nativeAnalyzeIndentGuidesInLineRange(
+            handle: Long,
+            visibleStartLine: Int,
+            visibleLineCount: Int,
+        ): IntArray?
         @JvmStatic private external fun nativeGetDocument(handle: Long): Long
     }
 }

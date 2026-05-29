@@ -202,6 +202,26 @@ class DocumentAnalyzer {
     );
   }
 
+  IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange) {
+    _ensureOpen();
+    return using((arena) {
+      final visiblePtr = arena.allocate<ffi.Int32>(2 * ffi.sizeOf<ffi.Int32>());
+      final visibleValues = visiblePtr.asTypedList(2);
+      visibleValues[0] = visibleRange.startLine;
+      visibleValues[1] = visibleRange.lineCount;
+
+      final resultPtr = bindings.sl_document_analyze_indent_guides_in_line_range(
+        _handle,
+        visiblePtr,
+      );
+      return _parseOwnedBuffer(
+        resultPtr,
+        IndentGuideResult(),
+        _BufferParser.readIndentGuideResult,
+      );
+    });
+  }
+
   void close() {
     _closed = true;
   }

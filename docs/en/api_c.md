@@ -81,7 +81,7 @@ int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer, const char* text);
 // Single line analysis
 int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, int32_t* line_info);
 
-// Indent guide analysis for plain text (requires sl_text_analyze first)
+// Indent guide analysis for plain text; no highlight pass is required
 int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
@@ -119,8 +119,12 @@ int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
                                           int32_t* visible_range);
 
 // Indent guide analysis for managed document
-// (requires sl_document_analyze or sl_document_analyze_incremental first)
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
+
+// Indent guide analysis for a visible line range
+// visible_range layout: [startLine, lineCount]
+int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t analyzer,
+                                                          int32_t* visible_range);
 ```
 
 `sl_document_analyze_line_range(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range.
@@ -200,20 +204,22 @@ followed by lineCount line entries:
   followed by spanCount * spanStride values
 ```
 
-Indent guide analysis `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides`
-returns:
+Indent guide analysis `sl_text_analyze_indent_guides`,
+`sl_document_analyze_indent_guides`, and
+`sl_document_analyze_indent_guides_in_line_range` return:
 
 ```
-result[0] = number of indent guides (guide_count)
-result[1] = fixed field count per guide (stride = 6)
-result[2] = number of line states (line_count)
-result[3] = field count per line state (line_stride = 4)
+result[0] = slice start line (start_line)
+result[1] = number of line states (line_state_count)
+result[2] = number of indent guides (guide_count)
 
 Then follow guide_count guide records:
-[column, startLine, endLine, nestingLevel, scopeRuleId, branchCount, branchLine0, branchColumn0, ...]
-Actual length of each guide record = stride + branchCount * 2
+[column, startLine, endLine, flags, branchCount, branchLine0, branchColumn0, ...]
+flags bit0: continuesBefore
+flags bit1: continuesAfter
+Actual length of each guide record = 5 + branchCount * 2
 
-Then follow line_count line-state records:
+Then follow line_state_count line-state records:
 [nestingLevel, scopeState, scopeColumn, indentLevel]
 scopeState: 0=START, 1=END, 2=CONTENT
 ```

@@ -8,6 +8,10 @@ import java.util.List;
  */
 public class IndentGuideResult {
     /**
+     * Actual start line of the returned slice
+     */
+    public int startLine;
+    /**
      * All vertical guide lines
      */
     public List<IndentGuideLine> guideLines = new ArrayList<>();

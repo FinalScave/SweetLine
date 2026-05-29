@@ -253,23 +253,23 @@ public final class NativeBufferPack {
 
     public static IndentGuideResult readIndentGuideResult(int[] buffer) {
         IndentGuideResult result = new IndentGuideResult();
-        if (buffer == null || buffer.length < 4) {
+        if (buffer == null || buffer.length < 3) {
             return result;
         }
-        int guideCount = buffer[0];
-        // buffer[1] = stride (unused, we read dynamically)
-        int lineStateCount = buffer[2];
-        int lineStateStride = buffer[3];
+        result.startLine = buffer[0];
+        int lineStateCount = Math.max(buffer[1], 0);
+        int guideCount = Math.max(buffer[2], 0);
 
-        int idx = 4;
+        int idx = 3;
         for (int i = 0; i < guideCount; i++) {
             IndentGuideLine guide = new IndentGuideLine();
             guide.column = buffer[idx++];
             guide.startLine = buffer[idx++];
             guide.endLine = buffer[idx++];
-            guide.nestingLevel = buffer[idx++];
-            guide.scopeRuleId = buffer[idx++];
-            int branchCount = buffer[idx++];
+            int flags = buffer[idx++];
+            guide.continuesBefore = (flags & 1) != 0;
+            guide.continuesAfter = (flags & (1 << 1)) != 0;
+            int branchCount = Math.max(buffer[idx++], 0);
             for (int j = 0; j < branchCount; j++) {
                 IndentGuideLine.BranchPoint bp = new IndentGuideLine.BranchPoint();
                 bp.line = buffer[idx++];

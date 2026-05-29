@@ -196,29 +196,29 @@ public sealed class IndentGuideLine {
 	public int StartLine { get; }
 	/// <summary>End line number.</summary>
 	public int EndLine { get; }
-	/// <summary>Nesting level (0-based).</summary>
-	public int NestingLevel { get; }
-	/// <summary>Associated scope rule ID, -1 in indentation mode.</summary>
-	public int ScopeRuleId { get; }
+	/// <summary>Whether the guide continues from before the returned slice.</summary>
+	public bool ContinuesBefore { get; }
+	/// <summary>Whether the guide continues after the returned slice.</summary>
+	public bool ContinuesAfter { get; }
 	/// <summary>Branch points on this guide line.</summary>
 	public List<BranchPoint> Branches { get; }
 
-	public IndentGuideLine(int column, int startLine, int endLine, int nestingLevel, int scopeRuleId)
-		: this(column, startLine, endLine, nestingLevel, scopeRuleId, []) {
+	public IndentGuideLine(int column, int startLine, int endLine, bool continuesBefore, bool continuesAfter)
+		: this(column, startLine, endLine, continuesBefore, continuesAfter, []) {
 	}
 
 	public IndentGuideLine(
 		int column,
 		int startLine,
 		int endLine,
-		int nestingLevel,
-		int scopeRuleId,
+		bool continuesBefore,
+		bool continuesAfter,
 		List<BranchPoint>? branches) {
 		Column = column;
 		StartLine = startLine;
 		EndLine = endLine;
-		NestingLevel = nestingLevel;
-		ScopeRuleId = scopeRuleId;
+		ContinuesBefore = continuesBefore;
+		ContinuesAfter = continuesAfter;
 		Branches = branches ?? [];
 	}
 }
@@ -227,6 +227,8 @@ public sealed class IndentGuideLine {
 /// Indent guide analysis result.
 /// </summary>
 public sealed class IndentGuideResult {
+	/// <summary>Actual start line of the returned slice.</summary>
+	public int StartLine { get; set; }
 	/// <summary>All vertical guide lines.</summary>
 	public List<IndentGuideLine> GuideLines { get; } = [];
 	/// <summary>Per-line block scope states.</summary>

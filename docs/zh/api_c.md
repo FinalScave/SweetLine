@@ -81,7 +81,7 @@ int32_t* sl_text_analyze(sl_analyzer_handle_t analyzer, const char* text);
 // 单行分析
 int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, int32_t* line_info);
 
-// 纯文本缩进划线分析 (需先调用 sl_text_analyze)
+// Plain text indent guide analysis; no highlight pass is required
 int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
@@ -118,8 +118,13 @@ int32_t* sl_document_analyze_incremental_in_line_range(sl_analyzer_handle_t anal
 int32_t* sl_document_get_highlight_slice(sl_analyzer_handle_t analyzer,
                                           int32_t* visible_range);
 
-// 托管文档缩进划线分析 (需先调用 sl_document_analyze 或 sl_document_analyze_incremental)
+// 托管文档缩进划线分析
 int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
+
+// 可见行范围缩进划线分析
+// visible_range 数组结构: [startLine, lineCount]
+int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t analyzer,
+                                                          int32_t* visible_range);
 ```
 
 `sl_document_analyze_line_range(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区。
@@ -198,19 +203,21 @@ result[4] = lineCount (切片行数)
   后续是 spanCount * spanStride 个字段
 ```
 
-缩进划线分析 `sl_text_analyze_indent_guides` / `sl_document_analyze_indent_guides` 返回格式：
+缩进划线分析 `sl_text_analyze_indent_guides`、`sl_document_analyze_indent_guides`
+和 `sl_document_analyze_indent_guides_in_line_range` 返回格式：
 
 ```
-result[0] = 缩进划线数量 (guide_count)
-result[1] = 每条划线固定字段数 (stride = 6)
-result[2] = 行状态数量 (line_count)
-result[3] = 每行状态字段数 (line_stride = 4)
+result[0] = 切片起始行 (start_line)
+result[1] = 行状态数量 (line_state_count)
+result[2] = 缩进划线数量 (guide_count)
 
 之后是 guide_count 条划线记录：
-[column, startLine, endLine, nestingLevel, scopeRuleId, branchCount, branchLine0, branchColumn0, ...]
-每条实际长度 = stride + branchCount * 2
+[column, startLine, endLine, flags, branchCount, branchLine0, branchColumn0, ...]
+flags bit0: continuesBefore
+flags bit1: continuesAfter
+每条实际长度 = 5 + branchCount * 2
 
-之后是 line_count 条行状态记录：
+之后是 line_state_count 条行状态记录：
 [nestingLevel, scopeState, scopeColumn, indentLevel]
 scopeState: 0=START, 1=END, 2=CONTENT
 ```

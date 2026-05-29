@@ -74,11 +74,53 @@ namespace NS_SWEETLINE {
 #endif
   };
 
-  /// Scope rule for indent guides (defining scope start/end markers and branch keywords)
-  struct ScopeRule {
-    /// Scope start text (e.g. {, @begin)
+  /// Scope rule matching strategy
+  enum struct ScopeRuleKind : int8_t {
+    /// Literal delimiter pair such as braces
+    DELIMITER = 0,
+    /// Word pair such as begin/end
+    WORD,
+    /// Indentation-based block start marker
+    INDENT_START
+  };
+
+  /// Scope skip matching strategy
+  enum struct ScopeSkipKind : int8_t {
+    /// Line comment that skips the rest of the line
+    LINE_COMMENT = 0,
+    /// Block comment that may span multiple lines
+    BLOCK_COMMENT,
+    /// String literal
+    STRING
+  };
+
+  /// Lexical skip rule for scope analysis
+  struct ScopeSkipRule {
+    /// Skip rule kind
+    ScopeSkipKind kind {ScopeSkipKind::STRING};
+    /// Skip start text
     U8String start;
-    /// Scope end text (e.g. }, @end)
+    /// Skip end text
+    U8String end;
+    /// Escape text used by string-like skips
+    U8String escape;
+    /// Whether this skip can continue across line boundaries
+    bool multi_line {false};
+    /// ID, generated after parsing
+    int32_t rule_id {0};
+
+#ifdef SWEETLINE_DEBUG
+    void dump() const;
+#endif
+  };
+
+  /// Scope rule for indent guides
+  struct ScopeRule {
+    /// Scope rule kind
+    ScopeRuleKind kind {ScopeRuleKind::DELIMITER};
+    /// Scope start text
+    U8String start;
+    /// Scope end text
     U8String end;
     /// Branch keywords
     std::unordered_set<U8String> branch_keywords;

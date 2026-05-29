@@ -492,7 +492,7 @@ static napi_value TextAnalyzer_AnalyzeLine(napi_env env, napi_callback_info info
   return ConvertLineAnalyzeResultAsIntArray(env, analyzer->getHighlightConfig(), result);
 }
 
-/// Perform indent guide analysis on plain text (internally performs highlight analysis first)
+/// Perform indent guide analysis on plain text
 /// args: [handle, text]
 static napi_value TextAnalyzer_AnalyzeIndentGuides(napi_env env, napi_callback_info info) {
   size_t argc = 2;
@@ -668,6 +668,25 @@ static napi_value DocumentAnalyzer_AnalyzeIndentGuides(napi_env env, napi_callba
     return getNapiUndefined(env);
   }
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  return ConvertIndentGuideResultAsIntArray(env, result);
+}
+
+/// Perform indent guide analysis for the requested visible line range
+/// args: [handle, visibleStartLine, visibleLineCount]
+static napi_value DocumentAnalyzer_AnalyzeIndentGuidesInLineRange(napi_env env, napi_callback_info info) {
+  size_t argc = 3;
+  napi_value args[3] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  int32_t visible_start_line = 0, visible_line_count = 0;
+  napi_get_value_int32(env, args[1], &visible_start_line);
+  napi_get_value_int32(env, args[2], &visible_line_count);
+  LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange(visible_range);
   return ConvertIndentGuideResultAsIntArray(env, result);
 }
 
@@ -938,6 +957,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"DocumentAnalyzer_AnalyzeChangesInLineRange", nullptr, DocumentAnalyzer_AnalyzeChangesInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_GetHighlightSlice", nullptr, DocumentAnalyzer_GetHighlightSlice, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeIndentGuides", nullptr, DocumentAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeIndentGuidesInLineRange", nullptr, DocumentAnalyzer_AnalyzeIndentGuidesInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_GetDocument", nullptr, DocumentAnalyzer_GetDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
     // HighlightEngine
     {"HighlightEngine_Create", nullptr, HighlightEngine_Create, nullptr, nullptr, nullptr, napi_default, nullptr},

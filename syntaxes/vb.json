@@ -272,10 +272,13 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "{",
-      "end": "}"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "'" },
+      { "kind": "string", "start": "\"", "end": "\"" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
 }

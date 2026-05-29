@@ -128,21 +128,23 @@ final class _BufferParser {
   static IndentGuideResult readIndentGuideResult(
     ffi.Pointer<ffi.Int32> bufferPtr,
   ) {
-    final result = IndentGuideResult();
     if (bufferPtr == ffi.nullptr) {
-      return result;
+      return IndentGuideResult();
     }
 
-    final guideCount = _clampNonNegative(_readInt(bufferPtr, 0));
-    final lineStateCount = _clampNonNegative(_readInt(bufferPtr, 2));
+    final startLine = _readInt(bufferPtr, 0);
+    final lineStateCount = _clampNonNegative(_readInt(bufferPtr, 1));
+    final guideCount = _clampNonNegative(_readInt(bufferPtr, 2));
+    final result = IndentGuideResult(startLine: startLine);
 
-    var index = 4;
+    var index = 3;
     for (var i = 0; i < guideCount; i++) {
       final column = _readInt(bufferPtr, index++);
       final startLine = _readInt(bufferPtr, index++);
       final endLine = _readInt(bufferPtr, index++);
-      final nestingLevel = _readInt(bufferPtr, index++);
-      final scopeRuleId = _readInt(bufferPtr, index++);
+      final flags = _readInt(bufferPtr, index++);
+      final continuesBefore = (flags & 1) != 0;
+      final continuesAfter = (flags & (1 << 1)) != 0;
       final branchCount = _clampNonNegative(_readInt(bufferPtr, index++));
 
       final branches = <IndentGuideBranchPoint>[];
@@ -157,8 +159,8 @@ final class _BufferParser {
           column,
           startLine,
           endLine,
-          nestingLevel,
-          scopeRuleId,
+          continuesBefore,
+          continuesAfter,
           branches,
         ),
       );

@@ -115,8 +115,8 @@ data class IndentGuideLine(
     val column: Int,
     val startLine: Int,
     val endLine: Int,
-    val nestingLevel: Int,
-    val scopeRuleId: Int,
+    val continuesBefore: Boolean,
+    val continuesAfter: Boolean,
     val branches: List<BranchPoint> = emptyList(),
 ) {
     data class BranchPoint(
@@ -139,6 +139,7 @@ data class LineScopeState(
  * Indent guide analysis result.
  */
 data class IndentGuideResult(
+    val startLine: Int = 0,
     val guideLines: List<IndentGuideLine> = emptyList(),
     val lineStates: List<LineScopeState> = emptyList(),
 )

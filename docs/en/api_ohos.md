@@ -48,6 +48,7 @@ class DocumentAnalyzer {
   analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
+  analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
 }
 ```
 
@@ -79,5 +80,5 @@ if (documentAnalyzer) {
 - For incremental highlighting, prefer `DocumentAnalyzer`.
 - Use `analyzeLineRange(...)` when SweetLine should analyze enough lines for a visible range based on the current document state.
 - Use `getHighlightSlice(...)` after `analyze()` / `analyzeIncremental(...)` when only the visible line window is needed.
-- For indent guides, use `TextAnalyzer.analyzeIndentGuides` / `DocumentAnalyzer.analyzeIndentGuides`.
+- For indent guides, use `TextAnalyzer.analyzeIndentGuides`, `DocumentAnalyzer.analyzeIndentGuides`, or `DocumentAnalyzer.analyzeIndentGuidesInLineRange`; these APIs do not require a highlight pass.
 - For build commands, see [Build Guide](api_build.md).

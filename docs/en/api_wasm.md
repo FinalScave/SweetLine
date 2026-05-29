@@ -79,6 +79,7 @@ class DocumentAnalyzer {
     analyzeIncrementalInLineRange(range: TextRange, newText: string, visibleRange: LineRange): DocumentHighlightSlice;
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
+    analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
 }
 
 class LineRange {
@@ -95,6 +96,33 @@ class DocumentHighlightSlice {
 class DocumentHighlight {
     lines: LineHighlightList;
     toJson(): string;
+}
+
+class BranchPoint {
+    line: number;
+    column: number;
+}
+
+class IndentGuideLine {
+    column: number;
+    startLine: number;
+    endLine: number;
+    continuesBefore: boolean;
+    continuesAfter: boolean;
+    branches: BranchPointList;
+}
+
+class LineScopeState {
+    nestingLevel: number;
+    scopeState: number; // 0=START, 1=END, 2=CONTENT
+    scopeColumn: number;
+    indentLevel: number;
+}
+
+class IndentGuideResult {
+    startLine: number;
+    guideLines: IndentGuideLineList;
+    lineStates: LineScopeStateList;
 }
 
 class LineHighlight {
@@ -124,6 +152,7 @@ class LineAnalyzeResult {
 `analyzeLineRange(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range.
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
 `getHighlightSlice(...)` reads a visible slice from the latest cached document highlight result.
+`analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
 
 ### Complete WASM Example
 

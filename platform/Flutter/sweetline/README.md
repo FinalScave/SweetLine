@@ -186,6 +186,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `analyzeIncrementalInLineRange(TextRange range, String newText, LineRange visibleRange)`
 - `getHighlightSlice(LineRange visibleRange)`
 - `analyzeIndentGuides()`
+- `analyzeIndentGuidesInLineRange(LineRange visibleRange)`
 
 ## Result models
 
@@ -206,6 +207,26 @@ Highlight result for a specified visible line range:
 DocumentHighlightSlice.startLine
 DocumentHighlightSlice.totalLineCount
 DocumentHighlightSlice.lines
+```
+
+### `IndentGuideResult`
+
+Indent guide analysis result:
+
+```dart
+IndentGuideResult.startLine
+IndentGuideResult.guideLines
+IndentGuideResult.lineStates
+IndentGuideLine.column
+IndentGuideLine.startLine
+IndentGuideLine.endLine
+IndentGuideLine.continuesBefore
+IndentGuideLine.continuesAfter
+IndentGuideLine.branches
+LineScopeState.nestingLevel
+LineScopeState.scopeState
+LineScopeState.scopeColumn
+LineScopeState.indentLevel
 ```
 
 ### `TokenSpan`

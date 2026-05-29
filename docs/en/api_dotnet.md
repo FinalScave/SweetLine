@@ -57,6 +57,8 @@ if (analyzer != null)
 {
     DocumentHighlight result = analyzer.Analyze();
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
+    IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
+        new LineRange(startLine: 0, lineCount: 120));
 }
 ```
 
@@ -65,6 +67,7 @@ if (analyzer != null)
 `AnalyzeLineRange(...)` analyzes enough lines from the current document state to satisfy the requested visible range.
 `AnalyzeIncrementalInLineRange(...)` applies a patch and returns the requested slice immediately.
 `GetHighlightSlice(...)` reads a visible slice from the latest cached result after `Analyze()` or `AnalyzeIncremental(...)`.
+`AnalyzeIndentGuides(...)` and `AnalyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
 
 ```csharp
 var changeRange = new TextRange(

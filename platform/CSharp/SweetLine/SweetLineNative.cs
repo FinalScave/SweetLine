@@ -343,6 +343,14 @@ internal static class SweetLineNative {
 	internal static extern IntPtr DocumentAnalyzeIndentGuides(IntPtr analyzerHandle);
 
 	/// <summary>
+	/// <c>sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t, int32_t*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_indent_guides_in_line_range", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr DocumentAnalyzeIndentGuidesInLineRange(
+		IntPtr analyzerHandle,
+		[In] int[] visibleRange);
+
+	/// <summary>
 	/// <c>sl_free_buffer(int32_t*)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_free_buffer", CallingConvention = CallingConvention.Cdecl)]

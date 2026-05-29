@@ -74,6 +74,8 @@ namespace NS_SWEETLINE {
       int32_t syntax_state, const MatchResult& match_result) const;
   };
 
+  class ScopeGuideAnalyzer;
+
   class InternalDocumentAnalyzer {
   public:
     explicit InternalDocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,
@@ -94,6 +96,8 @@ namespace NS_SWEETLINE {
 
     SharedPtr<IndentGuideResult> analyzeIndentGuides();
 
+    SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range);
+
     SharedPtr<Document> getDocument() const;
 
     const HighlightConfig& getHighlightConfig() const;
@@ -101,6 +105,8 @@ namespace NS_SWEETLINE {
     void resetAnalysisCache();
 
     void invalidateAnalysisFrom(size_t line);
+
+    void invalidateIndentGuidesFrom(size_t line);
 
     void syncCachedLinesAfterPatch(size_t change_start_line, size_t old_end_line, int32_t line_delta, int32_t char_delta);
 
@@ -118,42 +124,78 @@ namespace NS_SWEETLINE {
     SharedPtr<DocumentHighlight> m_highlight_;
     SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
+    UniquePtr<ScopeGuideAnalyzer> m_scope_guide_analyzer_;
     HighlightConfig m_config_;
     List<int32_t> m_line_syntax_states_;
     size_t m_valid_line_count_ {0};
     size_t m_reusable_tail_start_ {0};
     bool m_reusable_tail_lines_dirty_ {false};
     bool m_reusable_tail_indices_dirty_ {false};
-    List<LineScopeState> m_line_scope_states_;
   };
 
-  /// Indent guide analyzer (post-processing phase independent of highlight analysis)
-  class IndentGuideAnalyzer {
+  /// Indent guide analyzer independent of highlight analysis
+  class ScopeGuideAnalyzer {
   public:
-    /// Scope-based analysis using scopeRules (Strategy A)
-    static void analyzeByScopeRules(
-      const SharedPtr<SyntaxRule>& rule,
+    explicit ScopeGuideAnalyzer(const SharedPtr<SyntaxRule>& rule,
       const SharedPtr<Document>& document,
-      const SharedPtr<DocumentHighlight>& highlight,
-      SharedPtr<IndentGuideResult>& result);
+      const HighlightConfig& config = HighlightConfig::kDefault);
 
-    /// Indentation-based block analysis (Strategy B)
-    static void analyzeByIndentation(
-      const SharedPtr<Document>& document,
-      int32_t tab_size,
-      SharedPtr<IndentGuideResult>& result);
+    SharedPtr<IndentGuideResult> analyzeLineRange(const LineRange& visible_range);
 
-    /// Indentation-based block analysis with start markers (Python hybrid mode)
-    static void analyzeByIndentationWithStart(
-      const SharedPtr<SyntaxRule>& rule,
-      const SharedPtr<Document>& document,
-      const SharedPtr<DocumentHighlight>& highlight,
-      int32_t tab_size,
-      SharedPtr<IndentGuideResult>& result);
+    void invalidateFrom(size_t line);
+
+    void reset();
+
+    static int32_t computeLeadingWhitespace(const U8String& text, int32_t tab_size);
 
   private:
-    /// Compute the leading whitespace column count of a line (with tab expansion)
-    static int32_t computeLeadingWhitespace(const U8String& text, int32_t tab_size);
+    struct ActiveScope {
+      const ScopeRule* rule {nullptr};
+      ScopeRuleKind kind {ScopeRuleKind::DELIMITER};
+      int32_t start_line {0};
+      int32_t start_indent {0};
+      int32_t guide_column {0};
+      int32_t guide_index {-1};
+      List<IndentGuideLine::BranchPoint> branches;
+    };
+
+    struct ActiveSkip {
+      bool active {false};
+      const ScopeSkipRule* rule {nullptr};
+    };
+
+    struct ScanState {
+      ActiveSkip skip;
+      List<ActiveScope> scopes;
+    };
+
+    struct Checkpoint {
+      size_t line {0};
+      ScanState state;
+    };
+
+    struct ScanContext {
+      SharedPtr<IndentGuideResult> result;
+      size_t visible_start {0};
+      size_t visible_end {0};
+    };
+
+    void analyzeByScopeRules(const LineRange& visible_range, SharedPtr<IndentGuideResult>& result);
+
+    ScanState getStateForLine(size_t line);
+
+    void saveCheckpoint(size_t line, const ScanState& state);
+
+    void scanLine(size_t line, ScanState& state, ScanContext* context);
+
+    SharedPtr<SyntaxRule> m_rule_;
+    SharedPtr<Document> m_document_;
+    HighlightConfig m_config_;
+    List<const ScopeSkipRule*> m_ordered_skip_rules_;
+    List<const ScopeRule*> m_ordered_scope_rules_;
+    List<Checkpoint> m_checkpoints_;
+    size_t m_checkpoint_interval_ {256};
+    size_t m_lookahead_lines_ {128};
   };
 
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
@@ -162,9 +204,9 @@ namespace NS_SWEETLINE {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TokenSpan, range, style_id, inline_style, state, goto_state);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LineHighlight, spans);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DocumentHighlight, lines)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ScopeBlock, start, end, branches)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine::BranchPoint, line, column)
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine, column, start_line, end_line, nesting_level, scope_rule_id, branches)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine, column, start_line, end_line, nesting_level, scope_rule_id,
+    continues_before, continues_after, branches)
 }
 
 #endif //SWEETLINE_INTERNAL_HIGHLIGHT_H

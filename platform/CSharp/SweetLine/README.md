@@ -88,6 +88,8 @@ if (analyzer is not null)
         new LineRange(StartLine: 0, LineCount: 80));
 
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
+    IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
+        new LineRange(StartLine: 0, LineCount: 80));
 }
 ```
 
@@ -114,7 +116,9 @@ LineAnalyzeResult lineResult = textAnalyzer!.AnalyzeLine("int x = 42;", lineInfo
 | `DocumentHighlightSlice` | Visible-range result with `StartLine`, `TotalLineCount`, and sliced lines |
 | `LineHighlight` | Token span list for a single line |
 | `TokenSpan` | Highlight range plus `StyleId` or `InlineStyle` |
-| `IndentGuideResult` | `GuideLines` and per-line `LineStates` |
+| `IndentGuideResult` | `StartLine`, `GuideLines`, and per-line `LineStates` |
+| `IndentGuideLine` | `Column`, `StartLine`, `EndLine`, continuation flags, and `Branches` |
+| `LineScopeState` | `NestingLevel`, `ScopeState`, `ScopeColumn`, and `IndentLevel` |
 | `LineAnalyzeResult` | Single-line highlight, `EndState`, and `CharCount` |
 
 ## Native Library

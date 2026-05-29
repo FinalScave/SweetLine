@@ -158,25 +158,27 @@ internal object NativeBufferParser {
     }
 
     fun readIndentGuideResult(buffer: IntArray?): IndentGuideResult {
-        if (buffer == null || buffer.size < 4) {
+        if (buffer == null || buffer.size < 3) {
             return IndentGuideResult()
         }
         return readIndentGuideResult { index -> buffer.getOrElse(index) { 0 } }
     }
 
     fun readIndentGuideResult(read: (Int) -> Int): IndentGuideResult {
-        val guideCount = read(0).coerceAtLeast(0)
-        val lineStateCount = read(2).coerceAtLeast(0)
+        val startLine = read(0)
+        val lineStateCount = read(1).coerceAtLeast(0)
+        val guideCount = read(2).coerceAtLeast(0)
         val guideLines = ArrayList<IndentGuideLine>(guideCount)
         val lineStates = ArrayList<LineScopeState>(lineStateCount)
-        var index = 4
+        var index = 3
 
         repeat(guideCount) {
             val column = read(index++)
             val startLine = read(index++)
             val endLine = read(index++)
-            val nestingLevel = read(index++)
-            val scopeRuleId = read(index++)
+            val flags = read(index++)
+            val continuesBefore = (flags and 1) != 0
+            val continuesAfter = (flags and (1 shl 1)) != 0
             val branchCount = read(index++).coerceAtLeast(0)
             val branches = ArrayList<IndentGuideLine.BranchPoint>(branchCount)
             repeat(branchCount) {
@@ -189,8 +191,8 @@ internal object NativeBufferParser {
                 column = column,
                 startLine = startLine,
                 endLine = endLine,
-                nestingLevel = nestingLevel,
-                scopeRuleId = scopeRuleId,
+                continuesBefore = continuesBefore,
+                continuesAfter = continuesAfter,
                 branches = branches,
             )
         }
@@ -203,7 +205,7 @@ internal object NativeBufferParser {
                 indentLevel = read(index++),
             )
         }
-        return IndentGuideResult(guideLines, lineStates)
+        return IndentGuideResult(startLine, guideLines, lineStates)
     }
 
     private fun isValidSpanStride(stride: Int, hasStartIndex: Boolean, inlineStyle: Boolean): Boolean {

@@ -120,6 +120,7 @@ public class DocumentAnalyzer implements AutoCloseable {
             TextRange range, String newText, LineRange visibleRange);
     public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
     public void close();
 }
 ```
@@ -127,6 +128,7 @@ public class DocumentAnalyzer implements AutoCloseable {
 `analyzeLineRange(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区。
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于在 `analyze()` 或 `analyzeIncremental(...)` 之后，从最近缓存结果中读取可见切片。
+`analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
 
 ---
 
@@ -193,6 +195,8 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
                         new LineRange(0, 80));
 
                 IndentGuideResult guides = analyzer.analyzeIndentGuides();
+                IndentGuideResult visibleGuides = analyzer.analyzeIndentGuidesInLineRange(
+                        new LineRange(0, 80));
             }
         }
     }

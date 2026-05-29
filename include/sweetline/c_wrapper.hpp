@@ -177,16 +177,15 @@ inline size_t computeDocumentHighlightSliceBufferSize(const SharedPtr<DocumentHi
 }
 
 inline size_t computeIndentGuideResultBufferSize(const SharedPtr<IndentGuideResult>& result) {
-  size_t total_size = 4; // guide_count + stride + line_state_count + line_state_stride
+  size_t total_size = 3; // start_line + line_state_count + guide_count
   if (result == nullptr) {
     return total_size;
   }
   size_t guide_data_size = 0;
   for (const IndentGuideLine& g : result->guide_lines) {
-    guide_data_size += 6 + g.branches.size() * 2; // fixed 6 fields + variable branches
+    guide_data_size += 5 + g.branches.size() * 2; // fixed guide fields + variable branches
   }
-  constexpr size_t line_state_stride = 4;
-  total_size += guide_data_size + result->line_states.size() * line_state_stride;
+  total_size += guide_data_size + result->line_states.size() * 4;
   return total_size;
 }
 
@@ -251,21 +250,25 @@ inline void writeDocumentHighlightSlice(const SharedPtr<DocumentHighlightSlice>&
 
 inline void writeIndentGuideResult(const SharedPtr<IndentGuideResult>& result, int32_t* buffer) {
   size_t line_state_count = result == nullptr ? 0 : result->line_states.size();
-  constexpr int32_t line_state_stride = 4;
-  buffer[0] = static_cast<int32_t>(result == nullptr ? 0 : result->guide_lines.size());
-  buffer[1] = 6; // stride (fixed fields per guide_line, excluding variable branches)
-  buffer[2] = static_cast<int32_t>(line_state_count);
-  buffer[3] = line_state_stride;
+  buffer[0] = static_cast<int32_t>(result == nullptr ? 0 : result->start_line);
+  buffer[1] = static_cast<int32_t>(line_state_count);
+  buffer[2] = static_cast<int32_t>(result == nullptr ? 0 : result->guide_lines.size());
   if (result == nullptr) {
     return;
   }
-  size_t idx = 4;
+  size_t idx = 3;
   for (const IndentGuideLine& g : result->guide_lines) {
+    int32_t flags = 0;
+    if (g.continues_before) {
+      flags |= 1;
+    }
+    if (g.continues_after) {
+      flags |= 1 << 1;
+    }
     buffer[idx++] = g.column;
     buffer[idx++] = g.start_line;
     buffer[idx++] = g.end_line;
-    buffer[idx++] = g.nesting_level;
-    buffer[idx++] = g.scope_rule_id;
+    buffer[idx++] = flags;
     buffer[idx++] = static_cast<int32_t>(g.branches.size());
     for (const auto& bp : g.branches) {
       buffer[idx++] = bp.line;

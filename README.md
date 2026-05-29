@@ -26,6 +26,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 - Built on [Oniguruma](https://github.com/kkos/oniguruma) regex engine for fast pattern matching
 - Incremental update algorithm that only reanalyzes changed portions, ideal for real-time editor highlighting
 - Multi-line state preservation to avoid full document reanalysis
+- Scope-based indent guides can be analyzed for the full document or a visible line range without running highlighting first
 
 ### High Accuracy
 - Finite State Machine (FSM) based model supporting complex syntax rule nesting
@@ -136,6 +137,9 @@ auto cached_slice = analyzer->getHighlightSlice(visible_range);
 
 // Or combine patch + visible slice in one call
 auto updated_slice = analyzer->analyzeIncrementalInLineRange(change_range, new_text, visible_range);
+
+// Indent guides are independent from highlighting and can be sliced to the viewport
+auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible_range);
 ```
 
 Use `analyzeLineRange()` when the renderer needs a visible slice and wants SweetLine to analyze enough lines from the current document state first.

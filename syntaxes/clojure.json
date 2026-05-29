@@ -177,18 +177,15 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "(",
-      "end": ")"
-    },
-    {
-      "start": "[",
-      "end": "]"
-    },
-    {
-      "start": "{",
-      "end": "}"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": ";" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "(", "end": ")" },
+      { "kind": "delimiter", "start": "[", "end": "]" },
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
 }

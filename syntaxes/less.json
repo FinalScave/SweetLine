@@ -473,10 +473,14 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "\\{",
-      "end": "\\}"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "blockComment", "start": "/*", "end": "*/" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
 }

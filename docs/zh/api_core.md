@@ -196,11 +196,8 @@ public:
     void analyzeLine(const U8String& text, const TextLineInfo& line_info,
                      LineAnalyzeResult& result) const;
 
-    // 缩进划线分析
-    // 优先使用传入的高亮结果，其次复用 analyzeText 最近一次缓存
-    // 如果没有可用高亮结果，则回退到纯缩进分析
-    SharedPtr<IndentGuideResult> analyzeIndentGuides(
-        const U8String& text, const SharedPtr<DocumentHighlight>& highlight = nullptr);
+    // 缩进划线分析，不需要先执行高亮分析
+    SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
 
     // 获取当前高亮配置
     const HighlightConfig& getHighlightConfig() const;
@@ -244,17 +241,9 @@ analyzer->analyzeLine("public class Hello {", info, result);
 
 ```cpp
 auto analyzer = engine->createAnalyzerBySyntaxName("python");
-auto highlight = analyzer->analyzeText(source_code);
 
-// 显式传入高亮结果
-auto guides1 = analyzer->analyzeIndentGuides(source_code, highlight);
-
-// 省略 highlight 时，自动复用最近一次 analyzeText 的缓存
-auto guides2 = analyzer->analyzeIndentGuides(source_code);
-
-// 如果没有可用缓存，则自动回退到按缩进分析
-auto fresh_analyzer = engine->createAnalyzerBySyntaxName("python");
-auto guides3 = fresh_analyzer->analyzeIndentGuides(source_code);
+// 缩进划线不需要先执行高亮分析
+auto guides = analyzer->analyzeIndentGuides(source_code);
 ```
 
 ---
@@ -294,14 +283,18 @@ public:
     // 获取当前高亮配置
     const HighlightConfig& getHighlightConfig() const;
 
-    // 缩进划线分析 (需先调用 analyze 或 analyzeIncremental)
+    // 分析整个托管文档的缩进划线
     SharedPtr<IndentGuideResult> analyzeIndentGuides() const;
+
+    // 分析可见行范围的缩进划线
+    SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
 };
 ```
 
 `analyzeLineRange(...)` 会基于当前托管文档状态分析足够的行，以覆盖请求的可见区，并直接返回该切片。
 `analyzeIncrementalInLineRange(...)` 是“应用补丁并立即返回切片”的便捷接口。
 `getHighlightSlice(...)` 则直接复用最近一次分析产生的缓存高亮结果，不会重新执行分析。
+`analyzeIndentGuidesInLineRange(...)` 会直接基于托管文档文本分析可见区缩进划线，不依赖缓存高亮结果。
 
 #### 使用示例
 
@@ -324,6 +317,7 @@ auto cached_slice = analyzer->getHighlightSlice(visible);
 
 // 生成缩进划线
 auto guides = analyzer->analyzeIndentGuides();
+auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible);
 ```
 
 ---
@@ -374,6 +368,46 @@ struct DocumentHighlightSlice {
     size_t start_line {0};
     size_t total_line_count {0};
     List<LineHighlight> lines;
+};
+
+// Scope state for a line in indent guide analysis
+enum struct ScopeState {
+    START = 0,
+    END,
+    CONTENT
+};
+
+// Per-line state returned by indent guide analysis
+struct LineScopeState {
+    int32_t nesting_level {-1};
+    ScopeState scope_state {ScopeState::CONTENT};
+    int32_t scope_column {0};
+    int32_t indent_level {0};
+};
+
+// Single vertical indent guide segment
+struct IndentGuideLine {
+    struct BranchPoint {
+        int32_t line {0};
+        int32_t column {0};
+    };
+
+    int32_t column {0};
+    int32_t start_line {0};
+    int32_t end_line {0};
+    int32_t nesting_level {0};
+    int32_t scope_rule_id {-1};
+    bool continues_before {false};
+    bool continues_after {false};
+    List<BranchPoint> branches;
+};
+
+// Indent guide analysis result
+struct IndentGuideResult {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<IndentGuideLine> guide_lines;
+    List<LineScopeState> line_states;
 };
 
 // 内联样式

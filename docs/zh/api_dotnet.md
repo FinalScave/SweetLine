@@ -57,6 +57,8 @@ if (analyzer != null)
 {
     DocumentHighlight result = analyzer.Analyze();
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
+    IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
+        new LineRange(startLine: 0, lineCount: 120));
 }
 ```
 
@@ -65,6 +67,7 @@ if (analyzer != null)
 `AnalyzeLineRange(...)` 会基于当前文档状态分析足够的行，以覆盖请求的可见区。
 `AnalyzeIncrementalInLineRange(...)` 会应用补丁并立即返回请求的切片。
 `GetHighlightSlice(...)` 则在 `Analyze()` 或 `AnalyzeIncremental(...)` 之后，从最新缓存结果中读取可见切片。
+`AnalyzeIndentGuides(...)` 和 `AnalyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
 
 ```csharp
 var changeRange = new TextRange(

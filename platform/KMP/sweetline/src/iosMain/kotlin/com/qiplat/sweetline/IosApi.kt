@@ -14,6 +14,7 @@ import sweetline.sl_document_analyze
 import sweetline.sl_document_analyze_incremental
 import sweetline.sl_document_analyze_incremental_in_line_range
 import sweetline.sl_document_analyze_indent_guides
+import sweetline.sl_document_analyze_indent_guides_in_line_range
 import sweetline.sl_document_analyze_line_range
 import sweetline.sl_document_get_highlight_slice
 import sweetline.sl_document_handle_t
@@ -215,6 +216,20 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: sl_
 
     actual fun analyzeIndentGuides(): IndentGuideResult {
         val result = nativeHandle?.let { sl_document_analyze_indent_guides(it) } ?: return IndentGuideResult()
+        return try {
+            NativeBufferParser.readIndentGuideResult { index -> result.read(index) }
+        } finally {
+            sl_free_buffer(result)
+        }
+    }
+
+    actual fun analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult {
+        val result = memScoped {
+            val range = allocArray<IntVar>(2)
+            range[0] = visibleRange.startLine
+            range[1] = visibleRange.lineCount
+            nativeHandle?.let { sl_document_analyze_indent_guides_in_line_range(it, range) }
+        } ?: return IndentGuideResult()
         return try {
             NativeBufferParser.readIndentGuideResult { index -> result.read(index) }
         } finally {

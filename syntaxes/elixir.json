@@ -392,15 +392,15 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "do",
-      "end": "end",
-      "branches": ["else", "catch", "rescue", "after"]
-    },
-    {
-      "start": "fn",
-      "end": "end"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "word", "start": "do", "end": "end", "branches": ["else","catch","rescue","after"] },
+      { "kind": "word", "start": "fn", "end": "end" }
+    ]
+  }
 }

@@ -172,15 +172,15 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "if",
-      "end": "endif",
-      "branches": ["elif", "else"]
-    },
-    {
-      "start": "foreach",
-      "end": "endforeach"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "word", "start": "if", "end": "endif", "branches": ["elif","else"] },
+      { "kind": "word", "start": "foreach", "end": "endforeach" }
+    ]
+  }
 }

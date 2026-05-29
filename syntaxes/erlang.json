@@ -429,34 +429,19 @@
       }
     ]
   },
-  "scopeRules": [
-    {
-      "start": "begin",
-      "end": "end"
-    },
-    {
-      "start": "case",
-      "end": "end",
-      "branches": ["of", "when", "catch", "after", "else"]
-    },
-    {
-      "start": "if",
-      "end": "end",
-      "branches": ["when", "else"]
-    },
-    {
-      "start": "receive",
-      "end": "end",
-      "branches": ["after", "when"]
-    },
-    {
-      "start": "try",
-      "end": "end",
-      "branches": ["of", "catch", "after"]
-    },
-    {
-      "start": "fun",
-      "end": "end"
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "%" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "word", "start": "begin", "end": "end" },
+      { "kind": "word", "start": "case", "end": "end", "branches": ["of","when","catch","after","else"] },
+      { "kind": "word", "start": "if", "end": "end", "branches": ["when","else"] },
+      { "kind": "word", "start": "receive", "end": "end", "branches": ["after","when"] },
+      { "kind": "word", "start": "try", "end": "end", "branches": ["of","catch","after"] },
+      { "kind": "word", "start": "fun", "end": "end" }
+    ]
+  }
 }

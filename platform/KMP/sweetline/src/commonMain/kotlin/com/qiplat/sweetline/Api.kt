@@ -58,5 +58,6 @@ expect class DocumentAnalyzer {
 
     fun getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice
     fun analyzeIndentGuides(): IndentGuideResult
+    fun analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult
     fun close()
 }

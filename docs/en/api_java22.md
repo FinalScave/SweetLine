@@ -120,6 +120,7 @@ public class DocumentAnalyzer implements AutoCloseable {
             TextRange range, String newText, LineRange visibleRange);
     public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
     public void close();
 }
 ```
@@ -127,6 +128,7 @@ public class DocumentAnalyzer implements AutoCloseable {
 `analyzeLineRange(...)` analyzes enough lines from the current managed document state to satisfy the requested visible range.
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
 `getHighlightSlice(...)` reads a visible slice from the latest cached result after `analyze()` or `analyzeIncremental(...)`.
+`analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
 
 ---
 
@@ -193,6 +195,8 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
                         new LineRange(0, 80));
 
                 IndentGuideResult guides = analyzer.analyzeIndentGuides();
+                IndentGuideResult visibleGuides = analyzer.analyzeIndentGuidesInLineRange(
+                        new LineRange(0, 80));
             }
         }
     }

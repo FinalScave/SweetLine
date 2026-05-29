@@ -78,7 +78,6 @@ public class TextAnalyzer implements AutoCloseable {
 
     /**
      * Perform indent guide analysis on a text.
-     * Internally performs highlight analysis first.
      *
      * @param text Full text content
      * @return Indent guide analysis result

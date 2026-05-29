@@ -39,7 +39,10 @@ A complete syntax rule JSON file has the following structure:
     "default": [ ... ],
     "stateName": [ ... ]
   },
-  "scopeRules": [ ... ]
+  "scopeRules": {
+    "skips": [ ... ],
+    "rules": [ ... ]
+  }
 }
 ```
 
@@ -60,7 +63,7 @@ A complete syntax rule JSON file has the following structure:
 | `fragments` | object | No | Reusable rule arrays that can be referenced by `include` / `includes` |
 | `styles` | array | No | Inline style definitions (only for `inline_style` mode) |
 | `states` | object | Yes | State machine definitions containing all states and their matching rules |
-| `scopeRules` | array | No | Scope rule definitions (for folding/indent guides) |
+| `scopeRules` | object | No | Scope analysis rules used by indent guides |
 
 ---
 
@@ -451,43 +454,66 @@ If `)` is not encountered on the current line, the next line automatically retur
 
 ## scopeRules - Scope Rules
 
-`scopeRules` defines scope markers for editor folding and indent guides. It supports two modes: normal start/end marker mode (`start` + `end`) and indentation start-marker mode (`end` is an empty string).
+`scopeRules` defines lexical skip regions and scope markers for indent guides. It scans raw text directly, so it does not require highlight analysis.
 
 ```json
 {
-  "scopeRules": [
-    {
-      "start": "{",
-      "end": "}",
-      "branches": ["case"]
-    }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "//" },
+      { "kind": "blockComment", "start": "/*", "end": "*/" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}", "branches": ["case"] }
+    ]
+  }
 }
 ```
 
+### Skip Rules
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `start` | string | Code block start marker |
-| `end` | string | Code block end marker; can be empty string `""` |
-| `branches` | string[] | Optional, branch keywords within the block (e.g., `case` in switch) |
+| `kind` | string | `lineComment`, `blockComment`, or `string` |
+| `start` | string | Text that starts the skipped region |
+| `end` | string | Text that ends the skipped region; required except for `lineComment`, and defaults to `start` for `string` |
+| `escape` | string | Optional escape sequence for string-like skips |
+| `multiLine` | boolean | Whether the skip can continue across lines; `blockComment` always behaves as multiline |
 
-### Indentation Start-Marker Mode (`end: ""`)
+### Scope Rules
 
-When **all** `scopeRules` use `end: ""`, the engine enables indentation start-marker mode: after matching a `start` marker, scope end is determined by indentation fallback from the next line onward.
+| Field | Type | Description |
+|-------|------|-------------|
+| `kind` | string | `delimiter`, `word`, or `indentStart` |
+| `start` | string | Scope start marker |
+| `end` | string | Scope end marker; required for `delimiter` and `word`, omitted for `indentStart` |
+| `branches` | string[] | Optional branch keywords within the block, such as `case` in `switch` |
+
+`delimiter` matches literal marker text. `word` also requires word boundaries around the marker. `indentStart` starts a scope at a marker such as `:` and closes it when indentation falls back.
+
+### Indentation Start-Marker Mode
 
 ```json
 {
-  "scopeRules": [
-    { "start": ":", "end": "" }
-  ]
+  "scopeRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "#" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" },
+      { "kind": "string", "start": "'", "end": "'", "escape": "\\" }
+    ],
+    "rules": [
+      { "kind": "indentStart", "start": ":" }
+    ]
+  }
 }
 ```
 
 This is a common Python pattern: after `:`, the following indented block is treated as one scope.
 
 **Notes:**
-- Do not mix `end: ""` rules with non-empty `end` rules; mixed rules are processed in normal start/end mode
-- `start` / `end` / `branches` are matched by highlighted token text, not regex patterns
+- `start` / `end` / `branches` are literal text markers, not regex patterns
+- Put comment and string delimiters in `skips` so scope markers inside them are ignored
 
 ---
 
@@ -671,9 +697,11 @@ Here is a complete simplified Java syntax rule example:
       }
     ]
   },
-  "scopeRules": [
-    { "start": "{", "end": "}" }
-  ]
+  "scopeRules": {
+    "rules": [
+      { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  }
 }
 ```
 

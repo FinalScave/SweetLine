@@ -82,6 +82,7 @@ final slice = analyzer.analyzeIncrementalInLineRange(
 );
 final visible = analyzer.getHighlightSlice(const LineRange(0, 100));
 final guides = analyzer.analyzeIndentGuides();
+final visibleGuides = analyzer.analyzeIndentGuidesInLineRange(const LineRange(0, 100));
 
 document.close();
 engine.close();
@@ -89,6 +90,7 @@ engine.close();
 
 `analyzeLineRange(...)` 会基于当前文档状态分析足够的行，以覆盖请求的可见区。
 `getHighlightSlice(...)` 只读取最近缓存切片，不会触发新的分析。
+`analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 不需要先执行高亮分析。
 
 ### 语法文件加载
 

@@ -351,14 +351,6 @@ namespace NS_SWEETLINE {
   }
 #endif
 
-  // ===================================== LineState ============================================
-#ifdef SWEETLINE_DEBUG
-  void ScopeBlock::dump() const {
-    nlohmann::json json = *this;
-    std::cout << json.dump(2) << std::endl;
-  }
-#endif
-
   // ===================================== LineScopeState ============================================
   bool LineScopeState::operator==(const LineScopeState& other) const {
     return nesting_level == other.nesting_level
@@ -372,7 +364,8 @@ namespace NS_SWEETLINE {
 
   bool IndentGuideLine::operator==(const IndentGuideLine &other) const {
     return start_line == other.start_line && end_line == other.end_line
-      && column == other.column && scope_rule_id == other.scope_rule_id;
+      && column == other.column && scope_rule_id == other.scope_rule_id
+      && continues_before == other.continues_before && continues_after == other.continues_after;
   }
 
   // ===================================== HighlightConfig ============================================
@@ -380,7 +373,7 @@ namespace NS_SWEETLINE {
 
   // ===================================== TextAnalyzer ============================================
   TextAnalyzer::TextAnalyzer(const SharedPtr<SyntaxRule>& rule, const HighlightConfig& config)
-    : m_rule_(rule), m_config_(config), m_cached_highlight_(nullptr) {
+    : m_rule_(rule), m_config_(config) {
     m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(rule, config);
   }
 
@@ -400,7 +393,6 @@ namespace NS_SWEETLINE {
         line_start_index += result.char_count + Document::getLineEndingWidth(lines[line_num].ending);
       }
     }
-    m_cached_highlight_ = highlight;
     return highlight;
   }
 
@@ -412,40 +404,10 @@ namespace NS_SWEETLINE {
     return m_line_highlight_analyzer_->getHighlightConfig();
   }
 
-  SharedPtr<IndentGuideResult> TextAnalyzer::analyzeIndentGuides(const U8String& text, const SharedPtr<DocumentHighlight>& highlight) {
-    auto result = makeSharedPtr<IndentGuideResult>();
+  SharedPtr<IndentGuideResult> TextAnalyzer::analyzeIndentGuides(const U8String& text) {
     auto temp_doc = makeSharedPtr<Document>("", text);
-    if (temp_doc == nullptr) {
-      return result;
-    }
-    SharedPtr<DocumentHighlight> active_highlight = highlight;
-    if (active_highlight == nullptr && m_cached_highlight_ != nullptr) {
-      active_highlight = m_cached_highlight_;
-    }
-    if (active_highlight != nullptr && active_highlight->lines.size() != temp_doc->getLineCount()) {
-      active_highlight = nullptr;
-    }
-    bool can_use_scope_rules = m_rule_ != nullptr && !m_rule_->scope_rules_map.empty() && active_highlight != nullptr;
-    if (can_use_scope_rules) {
-    // Check if all ScopeRule are indent-based (end == "")
-      bool all_indent_based = true;
-      bool has_indent_based = false;
-      for (const auto& [id, br] : m_rule_->scope_rules_map) {
-        if (br.end.empty()) {
-          has_indent_based = true;
-        } else {
-          all_indent_based = false;
-        }
-      }
-      if (all_indent_based && has_indent_based) {
-        IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, temp_doc, active_highlight, m_config_.tab_size, result);
-      } else {
-        IndentGuideAnalyzer::analyzeByScopeRules(m_rule_, temp_doc, active_highlight, result);
-      }
-    } else {
-      IndentGuideAnalyzer::analyzeByIndentation(temp_doc, m_config_.tab_size, result);
-    }
-    return result;
+    ScopeGuideAnalyzer analyzer(m_rule_, temp_doc, m_config_);
+    return analyzer.analyzeLineRange({0, temp_doc == nullptr ? 0 : temp_doc->getLineCount()});
   }
 
   // ===================================== LineHighlightAnalyzer ============================================
@@ -708,6 +670,7 @@ namespace NS_SWEETLINE {
     const HighlightConfig& config): m_document_(document), m_rule_(rule), m_config_(config) {
     m_highlight_ = makeSharedPtr<DocumentHighlight>();
     m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(m_rule_, config);
+    m_scope_guide_analyzer_ = makeUniquePtr<ScopeGuideAnalyzer>(m_rule_, m_document_, config);
   }
 
   void InternalDocumentAnalyzer::resetAnalysisCache() {
@@ -723,6 +686,12 @@ namespace NS_SWEETLINE {
 
   void InternalDocumentAnalyzer::invalidateAnalysisFrom(size_t line) {
     m_valid_line_count_ = std::min(m_valid_line_count_, line);
+  }
+
+  void InternalDocumentAnalyzer::invalidateIndentGuidesFrom(size_t line) {
+    if (m_scope_guide_analyzer_ != nullptr) {
+      m_scope_guide_analyzer_->invalidateFrom(line);
+    }
   }
 
   void InternalDocumentAnalyzer::ensureCacheSize(size_t line_count) {
@@ -961,6 +930,7 @@ namespace NS_SWEETLINE {
     size_t change_start_line = range.start.line;
     syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
     invalidateAnalysisFrom(change_start_line);
+    invalidateIndentGuidesFrom(change_start_line);
     if (m_document_ != nullptr && m_document_->getLineCount() > 0) {
       ensureAnalyzedThrough(m_document_->getLineCount() - 1);
     }
@@ -983,6 +953,7 @@ namespace NS_SWEETLINE {
     size_t change_start_line = range.start.line;
     syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
     invalidateAnalysisFrom(change_start_line);
+    invalidateIndentGuidesFrom(change_start_line);
     if (m_document_ != nullptr
       && visible_range.line_count > 0
       && visible_range.start_line < m_document_->getLineCount()) {
@@ -1005,32 +976,17 @@ namespace NS_SWEETLINE {
   }
 
   SharedPtr<IndentGuideResult> InternalDocumentAnalyzer::analyzeIndentGuides() {
-    auto result = makeSharedPtr<IndentGuideResult>();
-    if (m_rule_ == nullptr || m_highlight_ == nullptr || m_document_ == nullptr) {
-      return result;
+    if (m_scope_guide_analyzer_ == nullptr || m_document_ == nullptr) {
+      return makeSharedPtr<IndentGuideResult>();
     }
-    if (m_valid_line_count_ != m_document_->getLineCount()) {
-      return result;
+    return m_scope_guide_analyzer_->analyzeLineRange({0, m_document_->getLineCount()});
+  }
+
+  SharedPtr<IndentGuideResult> InternalDocumentAnalyzer::analyzeIndentGuidesInLineRange(const LineRange& visible_range) {
+    if (m_scope_guide_analyzer_ == nullptr) {
+      return makeSharedPtr<IndentGuideResult>();
     }
-    if (!m_rule_->scope_rules_map.empty()) {
-      bool all_indent_based = true;
-      bool has_indent_based = false;
-      for (const auto& [id, br] : m_rule_->scope_rules_map) {
-        if (br.end.empty()) {
-          has_indent_based = true;
-        } else {
-          all_indent_based = false;
-        }
-      }
-      if (all_indent_based && has_indent_based) {
-        IndentGuideAnalyzer::analyzeByIndentationWithStart(m_rule_, m_document_, m_highlight_, m_config_.tab_size, result);
-      } else {
-        IndentGuideAnalyzer::analyzeByScopeRules(m_rule_, m_document_, m_highlight_, result);
-      }
-    } else {
-      IndentGuideAnalyzer::analyzeByIndentation(m_document_, m_config_.tab_size, result);
-    }
-    return result;
+    return m_scope_guide_analyzer_->analyzeLineRange(visible_range);
   }
 
   // ===================================== DocumentAnalyzer ============================================
@@ -1073,6 +1029,10 @@ namespace NS_SWEETLINE {
 
   SharedPtr<IndentGuideResult> DocumentAnalyzer::analyzeIndentGuides() const {
     return analyzer_impl_->analyzeIndentGuides();
+  }
+
+  SharedPtr<IndentGuideResult> DocumentAnalyzer::analyzeIndentGuidesInLineRange(const LineRange& visible_range) const {
+    return analyzer_impl_->analyzeIndentGuidesInLineRange(visible_range);
   }
 
   // ===================================== HighlightEngine ============================================

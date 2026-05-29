@@ -152,7 +152,7 @@ public class DocumentAnalyzer {
     }
 
     /**
-     * Perform indent guide analysis on the managed document (requires prior call to analyze or analyzeIncremental)
+     * Perform indent guide analysis on the managed document
      * @return Indent guide analysis result
      */
     public IndentGuideResult analyzeIndentGuides() {
@@ -160,6 +160,19 @@ public class DocumentAnalyzer {
             return null;
         }
         int[] buffer = nativeAnalyzeIndentGuides(nativeHandle);
+        return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
+    /**
+     * Perform indent guide analysis for the specified visible line range
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Indent guide analysis result for the specified line range
+     */
+    public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeIndentGuidesInLineRange(nativeHandle, visibleRange.startLine, visibleRange.lineCount);
         return NativeBufferPack.readIndentGuideResult(buffer);
     }
 
@@ -207,6 +220,9 @@ public class DocumentAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeIndentGuides(long handle);
+
+    @FastNative
+    private static native int[] nativeAnalyzeIndentGuidesInLineRange(long handle, int visibleStartLine, int visibleLineCount);
 
     @CriticalNative
     private static native long nativeGetDocument(long handle);

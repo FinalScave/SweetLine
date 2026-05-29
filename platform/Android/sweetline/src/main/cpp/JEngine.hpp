@@ -381,6 +381,17 @@ public:
     return convertIndentGuideResultAsIntArray(env, result);
   }
 
+  static jintArray analyzeIndentGuidesInLineRange(JNIEnv* env, jclass clazz, jlong handle,
+                                                  jint visible_start_line, jint visible_line_count) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+    SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange(visible_range);
+    return convertIndentGuideResultAsIntArray(env, result);
+  }
+
   static jlong getDocument(jlong handle) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
@@ -399,6 +410,7 @@ public:
       {"nativeAnalyzeChangesInLineRange", "(JJJLjava/lang/String;II)[I", (void*) analyzeChangesInLineRange},
       {"nativeGetHighlightSlice", "(JII)[I", (void*) getHighlightSlice},
       {"nativeAnalyzeIndentGuides", "(J)[I", (void*) analyzeIndentGuides},
+      {"nativeAnalyzeIndentGuidesInLineRange", "(JII)[I", (void*) analyzeIndentGuidesInLineRange},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
   };
 
