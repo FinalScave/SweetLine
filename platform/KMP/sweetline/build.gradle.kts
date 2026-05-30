@@ -1,15 +1,75 @@
+import java.util.Properties
+import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.mavenPublish)
 }
 
+description = "Kotlin Multiplatform wrapper for the SweetLine native syntax highlighting engine."
 group = "com.qiplat"
 version = "1.2.5"
 
 val repoRoot = rootProject.projectDir.resolve("../..").normalize()
 val generatedJvmNativeResourcesDir = layout.buildDirectory.dir("generated/resources/jvm/main")
+val localPublishProps = Properties()
+val localPublishPropsFile = rootProject.file(".gradle/publish.properties")
+if (localPublishPropsFile.exists()) {
+    localPublishPropsFile.inputStream().use(localPublishProps::load)
+}
+
+fun String?.toNonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
+
+fun getPublishConfig(name: String): String? =
+    providers.gradleProperty(name).orNull.toNonBlank()
+        ?: providers.environmentVariable(name).orNull.toNonBlank()
+        ?: providers.environmentVariable(name.replace('.', '_').uppercase()).orNull.toNonBlank()
+        ?: localPublishProps.getProperty(name).toNonBlank()
+
+fun setProjectPropertyIfMissing(name: String, value: String?) {
+    val publishValue = value.toNonBlank() ?: return
+    if (providers.gradleProperty(name).orNull.toNonBlank() != null) {
+        return
+    }
+    runCatching {
+        gradle.startParameter.projectProperties.putIfAbsent(name, publishValue)
+    }
+    project.extensions.extraProperties.set(name, publishValue)
+    rootProject.extensions.extraProperties.set(name, publishValue)
+    System.setProperty("org.gradle.project.$name", publishValue)
+}
+
+fun setExtraPublishProperty(name: String, value: String?) {
+    val publishValue = value.toNonBlank() ?: return
+    project.extensions.extraProperties.set(name, publishValue)
+    rootProject.extensions.extraProperties.set(name, publishValue)
+}
+
+setProjectPropertyIfMissing(
+    "mavenCentralUsername",
+    getPublishConfig("mavenCentralUsername") ?: getPublishConfig("sonatype.username"),
+)
+setProjectPropertyIfMissing(
+    "mavenCentralPassword",
+    getPublishConfig("mavenCentralPassword") ?: getPublishConfig("sonatype.password"),
+)
+
+val defaultGpgExecutable = if (System.getProperty("os.name").lowercase().contains("windows")) {
+    "gpg.exe"
+} else {
+    "gpg"
+}
+setExtraPublishProperty("signing.gnupg.executable", getPublishConfig("signing.gnupg.executable") ?: defaultGpgExecutable)
+setExtraPublishProperty("signing.gnupg.keyName", getPublishConfig("signing.gnupg.keyName"))
+setExtraPublishProperty("signing.gnupg.passphrase", getPublishConfig("signing.gnupg.passphrase"))
+
+plugins.withId("signing") {
+    extensions.configure<SigningExtension>("signing") {
+        useGpgCmd()
+    }
+}
 
 kotlin {
     jvmToolchain(22)
@@ -94,6 +154,37 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+    coordinates(group.toString(), "sweetline-kmp", version.toString())
+
+    pom {
+        name.set("SweetLine KMP")
+        description.set(project.description)
+        url.set("https://github.com/FinalScave/SweetLine")
+        licenses {
+            license {
+                name.set("LGPL-2.1-or-later")
+                url.set("https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
+            }
+        }
+        developers {
+            developer {
+                name.set("Scave")
+                email.set("iscave@163.com")
+                organization.set("Mobile IPE")
+                organizationUrl.set("https://github.com/mobile-ipe")
+            }
+        }
+        scm {
+            connection.set("scm:git:https://github.com/FinalScave/SweetLine.git")
+            developerConnection.set("scm:git:https://github.com/FinalScave/SweetLine")
+            url.set("https://github.com/FinalScave/SweetLine")
+        }
     }
 }
 
