@@ -12,12 +12,14 @@ namespace {
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
   static const char* kKotlinSyntaxPath = SYNTAX_DIR"/kotlin.json";
   static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
+  static const char* kCangjieExampleFilePath = TESTS_DIR"/files/example.cj";
   static const char* kAbnfSyntaxPath = SYNTAX_DIR"/abnf.json";
   static const char* kAsmAarch64SyntaxPath = SYNTAX_DIR"/asm-aarch64.json";
   static const char* kAsmAttSyntaxPath = SYNTAX_DIR"/asm-att.json";
   static const char* kAsmIntelSyntaxPath = SYNTAX_DIR"/asm-intel.json";
   static const char* kBatchSyntaxPath = SYNTAX_DIR"/batch.json";
   static const char* kBrainfuckSyntaxPath = SYNTAX_DIR"/brainfuck.json";
+  static const char* kCangjieSyntaxPath = SYNTAX_DIR"/cangjie.json";
   static const char* kDtsSyntaxPath = SYNTAX_DIR"/dts.json";
   static const char* kGlslSyntaxPath = SYNTAX_DIR"/glsl.json";
   static const char* kGroovySyntaxPath = SYNTAX_DIR"/groovy.json";
@@ -1832,6 +1834,149 @@ TEST_CASE("Second batch language samples do not emit transparent spans") {
     SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code_txt);
     requireNoTransparentSpans(highlight, file_name);
   }
+}
+
+TEST_CASE("Cangjie declarations and literals keep core styles") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kCangjieSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kNumber = 3;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kAnnotation = 9;
+  constexpr int32_t kBuiltin = 10;
+  constexpr int32_t kUrl = 16;
+
+  SharedPtr<TextAnalyzer> cangjie = engine->createAnalyzerBySyntaxName("cangjie");
+  REQUIRE(cangjie != nullptr);
+  SharedPtr<DocumentHighlight> highlight = cangjie->analyzeText(
+    "package demo.routing\n"
+    "public class Router<T> where T <: Notifier {\n"
+    "  public func route(ticket: Ticket): Result<User> {\n"
+    "    let retries: UInt32 = 0x10u32\n"
+    "    let ratio = 0x1.fp4f64\n"
+    "    let body = \"https://example.com/${ticket.id}\"\n"
+    "    match true { case _ => return Result<User>() }\n"
+    "  }\n"
+    "}\n"
+    "main() { println(\"ready\") }\n");
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 10);
+
+  CHECK(styleAtColumn(highlight->lines[0], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[0], 8) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[1], 0) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 7) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 13) == kClass);
+  CHECK(styleAtColumn(highlight->lines[1], 19) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[1], 23) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 40) == kClass);
+  CHECK(styleAtColumn(highlight->lines[2], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[2], 9) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[2], 14) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[2], 20) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[2], 28) == kClass);
+  CHECK(styleAtColumn(highlight->lines[2], 37) == kClass);
+  CHECK(styleAtColumn(highlight->lines[2], 44) == kClass);
+  CHECK(styleAtColumn(highlight->lines[3], 4) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[3], 8) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[3], 17) == kClass);
+  CHECK(styleAtColumn(highlight->lines[3], 26) == kNumber);
+  CHECK(styleAtColumn(highlight->lines[4], 16) == kNumber);
+  CHECK(styleAtColumn(highlight->lines[5], 16) == kUrl);
+  CHECK(styleAtColumn(highlight->lines[5], 37) == kAnnotation);
+  CHECK(styleAtColumn(highlight->lines[6], 4) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[6], 10) == kBuiltin);
+  CHECK(styleAtColumn(highlight->lines[6], 17) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[6], 32) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[6], 39) == kClass);
+  CHECK(styleAtColumn(highlight->lines[9], 0) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[9], 9) == kBuiltin);
+  CHECK(styleAtColumn(highlight->lines[9], 17) == kString);
+}
+
+TEST_CASE("Cangjie bindings and member access keep semantic styles") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kCangjieSyntaxPath));
+
+  constexpr int32_t kKeyword = 1;
+  constexpr int32_t kString = 2;
+  constexpr int32_t kClass = 5;
+  constexpr int32_t kMethod = 6;
+  constexpr int32_t kVariable = 7;
+  constexpr int32_t kPunctuation = 8;
+  constexpr int32_t kProperty = 13;
+
+  SharedPtr<TextAnalyzer> cangjie = engine->createAnalyzerBySyntaxName("cangjie");
+  REQUIRE(cangjie != nullptr);
+  SharedPtr<DocumentHighlight> highlight = cangjie->analyzeText(
+    "public class Router {\n"
+    "  public init(channel: String, retry: UInt32) {\n"
+    "    this.channel = channel\n"
+    "    this.headers[\"trace\"] = channel\n"
+    "  }\n"
+    "  func route(items: Array<String>): Unit {\n"
+    "    for item in items {\n"
+    "      println(item)\n"
+    "    }\n"
+    "    try {\n"
+    "      send()\n"
+    "    } catch (error: Exception) {\n"
+    "      println(error)\n"
+    "    }\n"
+    "  }\n"
+    "}\n");
+  REQUIRE(highlight != nullptr);
+  REQUIRE(highlight->lines.size() >= 16);
+
+  CHECK(styleAtColumn(highlight->lines[1], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 9) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[1], 14) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[1], 23) == kClass);
+  CHECK(styleAtColumn(highlight->lines[1], 31) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[1], 38) == kClass);
+
+  CHECK(styleAtColumn(highlight->lines[2], 4) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[2], 8) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[2], 9) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 9) == kProperty);
+  CHECK(styleAtColumn(highlight->lines[3], 16) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[3], 17) == kString);
+
+  CHECK(styleAtColumn(highlight->lines[5], 2) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[5], 7) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[5], 13) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[5], 20) == kClass);
+  CHECK(styleAtColumn(highlight->lines[5], 26) == kClass);
+  CHECK(styleAtColumn(highlight->lines[5], 37) == kClass);
+
+  CHECK(styleAtColumn(highlight->lines[6], 4) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[6], 8) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[6], 13) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[6], 16) == kVariable);
+
+  CHECK(styleAtColumn(highlight->lines[10], 6) == kMethod);
+  CHECK(styleAtColumn(highlight->lines[11], 6) == kKeyword);
+  CHECK(styleAtColumn(highlight->lines[11], 12) == kPunctuation);
+  CHECK(styleAtColumn(highlight->lines[11], 13) == kVariable);
+  CHECK(styleAtColumn(highlight->lines[11], 20) == kClass);
+}
+
+TEST_CASE("Cangjie sample does not emit transparent spans") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kCangjieSyntaxPath));
+
+  U8String code_txt = FileUtil::readString(kCangjieExampleFilePath);
+  REQUIRE_FALSE(code_txt.empty());
+
+  SharedPtr<TextAnalyzer> cangjie = engine->createAnalyzerBySyntaxName("cangjie");
+  REQUIRE(cangjie != nullptr);
+  SharedPtr<DocumentHighlight> highlight = cangjie->analyzeText(code_txt);
+  requireNoTransparentSpans(highlight, "example.cj");
 }
 
 TEST_CASE("AI-era syntaxes keep core declarations and template markers styled") {

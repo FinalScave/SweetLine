@@ -37,7 +37,7 @@ TEST_CASE("Compile built-in syntaxes from syntaxes directory") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
     "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json", "c.json",
-    "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
+    "cangjie.json", "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
     "hlsl.json", "iapp.json", "jasm.json", "java.json", "javascript.json", "jsx.json", "json-sweetline.json", "kotlin.json",
     "latex.json", "less.json", "lua.json", "lyrics.json", "nix.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "smali.json", "sql.json", "svg.json", "swift.json",
@@ -71,7 +71,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const List<U8String> files = {
     "abnf.json", "asm-aarch64.json", "asm-att.json", "asm-intel.json", "batch.json", "brainfuck.json", "c.json",
-    "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
+    "cangjie.json", "cpp.json", "csharp.json", "csv.json", "dart.json", "dts.json", "glsl.json", "go.json", "groovy.json",
     "hlsl.json", "iapp.json", "jasm.json", "java.json", "javascript.json", "jsx.json", "json-sweetline.json", "kotlin.json",
     "latex.json", "less.json", "lua.json", "lyrics.json", "nix.json", "objc.json", "php.json",
     "powershell.json", "python.json", "rust.json", "shell.json", "smali.json", "sql.json", "svg.json", "swift.json",
@@ -101,6 +101,7 @@ TEST_CASE("Create analyzers by file name for sample files") {
     TESTS_DIR"/files/example.bat",
     TESTS_DIR"/files/example.bf",
     TESTS_DIR"/files/example.c",
+    TESTS_DIR"/files/example.cj",
     TESTS_DIR"/files/example.cpp",
     TESTS_DIR"/files/example.cs",
     TESTS_DIR"/files/example.csv",
@@ -241,6 +242,7 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
     "asm-riscv.json", "starlark.json", "bazel.json", "gradle.json", "gradle-kts.json", "qsharp.json",
     "haskell.json", "systemverilog.json", "solidity.json", "meson.json", "just.json",
     "moonbit.json", "mojo.json", "bend.json", "baml.json", "lmql.json", "prompty.json",
+    "cangjie.json",
     "javascript.json", "typescript.json"
   };
   for (const U8String& file_name : files) {
@@ -278,6 +280,8 @@ TEST_CASE("New syntaxes create analyzers for exact-name and safe-suffix routes")
   CHECK(engine->createAnalyzerByFileName("example.baml") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.lmql") != nullptr);
   CHECK(engine->createAnalyzerByFileName("example.prompty") != nullptr);
+  REQUIRE(engine->getSyntaxRuleByFileName("example.cj") != nullptr);
+  CHECK(engine->getSyntaxRuleByFileName("example.cj")->name == "cangjie");
   REQUIRE(engine->getSyntaxRuleByFileName("proofreader.genai.mjs") != nullptr);
   CHECK(engine->getSyntaxRuleByFileName("proofreader.genai.mjs")->name == "javascript");
   REQUIRE(engine->getSyntaxRuleByFileName("audit.genai.js") != nullptr);
