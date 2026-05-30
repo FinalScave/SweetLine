@@ -70,7 +70,7 @@ TEST_CASE("F# keeps keywords, types, let bindings, attributes, and preprocessor 
   CHECK(styleAtColumn(highlight->lines[10], 3) == kUrl);          // block comment URL
 }
 
-TEST_CASE("F# indent guides cover offside blocks and delimiters") {
+TEST_CASE("F# indent guides fall back to indentation") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kFsharpSyntaxPath));
 
@@ -106,12 +106,12 @@ TEST_CASE("F# indent guides cover offside blocks and delimiters") {
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
-  CHECK(findGuideByPosition(*result, 0, 2, 7) != nullptr);
-  CHECK(findGuideByPosition(*result, 4, 3, 5) != nullptr);
-  CHECK(findGuideByPosition(*result, 0, 7, 13) != nullptr);
-  CHECK(findGuideByPosition(*result, 0, 13, 25) != nullptr);
-  CHECK(findGuideByPosition(*result, 4, 15, 18) != nullptr);
-  CHECK(findGuideByPosition(*result, 4, 19, 25) != nullptr);
-  CHECK(findGuideByPosition(*result, 8, 20, 25) != nullptr);
+  REQUIRE_FALSE(result->guide_lines.empty());
+  for (const IndentGuideLine& guide : result->guide_lines) {
+    CHECK(guide.scope_rule_id == -1);
+  }
+  CHECK(findGuideByColumn(*result, 0) != nullptr);
+  CHECK(findGuideByColumn(*result, 4) != nullptr);
+  CHECK(findGuideByColumn(*result, 8) != nullptr);
   CHECK(findGuideByPosition(*result, 16, 19, 25) == nullptr);
 }
