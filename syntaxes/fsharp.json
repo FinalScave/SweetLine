@@ -592,7 +592,17 @@
       { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
     ],
     "rules": [
-      { "kind": "delimiter", "start": "(", "end": ")" }
+      { "kind": "delimiter", "start": "(", "end": ")" },
+      { "kind": "delimiter", "start": "{", "end": "}" },
+      { "kind": "delimiter", "start": "[", "end": "]" },
+      { "kind": "indentStart", "start": "=" },
+      { "kind": "indentStart", "start": "->" },
+      { "kind": "indentStart", "start": "then" },
+      { "kind": "indentStart", "start": "else" },
+      { "kind": "indentStart", "start": "do" },
+      { "kind": "indentStart", "start": "try" },
+      { "kind": "indentStart", "start": "with" },
+      { "kind": "indentStart", "start": "finally" }
     ]
   }
 }

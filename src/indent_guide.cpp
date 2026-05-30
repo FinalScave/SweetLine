@@ -42,7 +42,10 @@ namespace NS_SWEETLINE {
       if (!matchesAt(text, byte_pos, token)) {
         return false;
       }
-      return kind != ScopeRuleKind::WORD || hasWordBoundary(text, byte_pos, token);
+      if (kind == ScopeRuleKind::WORD || (kind == ScopeRuleKind::INDENT_START && isWordToken(token))) {
+        return hasWordBoundary(text, byte_pos, token);
+      }
+      return true;
     }
 
     bool matchesBranchToken(const U8String& text, size_t byte_pos, const U8String& token) {

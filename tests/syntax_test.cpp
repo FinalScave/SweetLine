@@ -3,31 +3,12 @@
 #include <catch2/catch_amalgamated.hpp>
 #include "sweetline/highlight.h"
 #include "sweetline/util.h"
+#include "test_helpers.h"
 
 using namespace NS_SWEETLINE;
+using namespace NS_SWEETLINE_TEST;
 
 namespace {
-  SharedPtr<HighlightEngine> makeTestHighlightEngine(const HighlightConfig& config = HighlightConfig::kDefault) {
-    SharedPtr<HighlightEngine> engine = makeSharedPtr<HighlightEngine>(config);
-    engine->registerStyleName("keyword", 1);
-    engine->registerStyleName("string", 2);
-    engine->registerStyleName("number", 3);
-    engine->registerStyleName("comment", 4);
-    engine->registerStyleName("class", 5);
-    engine->registerStyleName("method", 6);
-    engine->registerStyleName("variable", 7);
-    engine->registerStyleName("punctuation", 8);
-    engine->registerStyleName("annotation", 9);
-    engine->registerStyleName("builtin", 10);
-    engine->registerStyleName("preprocessor", 11);
-    engine->registerStyleName("macro", 12);
-    engine->registerStyleName("property", 13);
-    engine->registerStyleName("lifetime", 14);
-    engine->registerStyleName("selector", 15);
-    engine->registerStyleName("url", 16);
-    return engine;
-  }
-
   U8String syntaxPath(const U8String& file_name) {
     return U8String(SYNTAX_DIR) + "/" + file_name;
   }

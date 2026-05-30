@@ -1,5 +1,9 @@
 set(TEST_PRODUCT_NAME unit_tests)
 
+file(GLOB TEST_LANGUAGE_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/languages/*.cpp"
+)
+
 add_executable(${TEST_PRODUCT_NAME}
         tests_main.cpp
         foundation_crlf_test.cpp
@@ -7,6 +11,7 @@ add_executable(${TEST_PRODUCT_NAME}
         highlight_test.cpp
         indent_test.cpp
         syntax_test.cpp
+        ${TEST_LANGUAGE_SOURCES}
 )
 
 target_sources(${TEST_PRODUCT_NAME} PRIVATE

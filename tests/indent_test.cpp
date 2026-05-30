@@ -1,30 +1,11 @@
 #include <catch2/catch_amalgamated.hpp>
 #include "sweetline/highlight.h"
-#include "sweetline/util.h"
+#include "test_helpers.h"
 
 using namespace NS_SWEETLINE;
+using namespace NS_SWEETLINE_TEST;
 
 namespace {
-  static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
-  static const char* kPythonSyntaxPath = SYNTAX_DIR"/python.json";
-  static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
-  static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
-
-  SharedPtr<HighlightEngine> makeTestHighlightEngine() {
-    SharedPtr<HighlightEngine> engine = makeSharedPtr<HighlightEngine>();
-    engine->registerStyleName("keyword", 1);
-    engine->registerStyleName("string", 2);
-    engine->registerStyleName("number", 3);
-    engine->registerStyleName("comment", 4);
-    engine->registerStyleName("class", 5);
-    engine->registerStyleName("method", 6);
-    engine->registerStyleName("variable", 7);
-    engine->registerStyleName("punctuation", 8);
-    engine->registerStyleName("annotation", 9);
-    engine->registerStyleName("url", 16);
-    return engine;
-  }
-
   U8String makeBraceScopeSyntax(const U8String& name, const U8String& suffix) {
     return R"({
   "name": ")" + name + R"(",
@@ -55,28 +36,6 @@ namespace {
 })";
   }
 
-  const IndentGuideLine* findGuideByColumn(const IndentGuideResult& result, int32_t column) {
-    for (const IndentGuideLine& guide : result.guide_lines) {
-      if (guide.column == column) {
-        return &guide;
-      }
-    }
-    return nullptr;
-  }
-}
-
-TEST_CASE("Indent example.java") {
-  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kJavaSyntaxPath));
-  U8String code_txt = FileUtil::readString(kJavaExampleFilePath);
-  REQUIRE_FALSE(code_txt.empty());
-  SharedPtr<Document> document = makeSharedPtr<Document>("example.java", code_txt);
-  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  REQUIRE(analyzer != nullptr);
-  SharedPtr<IndentGuideResult> res = analyzer->analyzeIndentGuides();
-  REQUIRE(res != nullptr);
-  REQUIRE_FALSE(res->guide_lines.empty());
-  REQUIRE(res->line_states.size() == document->getLineCount());
 }
 
 TEST_CASE("ScopeRules ignores markers in string/comment without highlight") {
@@ -238,38 +197,36 @@ TEST_CASE("ScopeRules indentStart uses parent indent column") {
   CHECK(result->guide_lines[0].end_line == 2);
 }
 
-TEST_CASE("Python indentStart guides use block header columns") {
+TEST_CASE("ScopeRules indentStart word tokens require word boundaries") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kPythonSyntaxPath));
+  const U8String syntax = R"({
+  "name": "wordIndentStart",
+  "fileSuffixes": [".wis"],
+  "states": {
+    "default": [
+      { "pattern": "[^\\n]+", "style": "keyword" }
+    ]
+  },
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "indentStart", "start": "do" }
+    ]
+  }
+})";
 
-  SharedPtr<Document> document = makeSharedPtr<Document>("example.py",
-    "def collect_notes(root):\n"
-    "    notes = []\n"
-    "    for path in root.rglob(\"*.md\"):\n"
-    "        if path.name.startswith(\"_\"):\n"
-    "            continue\n"
-    "    return notes\n"
-    "print(collect_notes(\"docs\"))");
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.wis", "todo\n    ignored\ndo\n    child\nnext");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   REQUIRE(analyzer != nullptr);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
   REQUIRE(result != nullptr);
-  REQUIRE(result->guide_lines.size() == 3);
-
-  const IndentGuideLine* function_guide = findGuideByColumn(*result, 0);
-  const IndentGuideLine* loop_guide = findGuideByColumn(*result, 4);
-  const IndentGuideLine* condition_guide = findGuideByColumn(*result, 8);
-  REQUIRE(function_guide != nullptr);
-  REQUIRE(loop_guide != nullptr);
-  REQUIRE(condition_guide != nullptr);
-
-  CHECK(function_guide->start_line == 0);
-  CHECK(function_guide->end_line == 6);
-  CHECK(loop_guide->start_line == 2);
-  CHECK(loop_guide->end_line == 5);
-  CHECK(condition_guide->start_line == 3);
-  CHECK(condition_guide->end_line == 5);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
+  CHECK(result->guide_lines[0].start_line == 2);
+  CHECK(result->guide_lines[0].end_line == 4);
 }
 
 TEST_CASE("Indentation fallback anchors guides to previous nonblank line") {
@@ -384,38 +341,6 @@ TEST_CASE("Indentation fallback reports continuation for visible slices") {
   CHECK(result->guide_lines[0].end_line == 1);
   CHECK(result->guide_lines[0].continues_before);
   CHECK(result->guide_lines[0].continues_after);
-}
-
-TEST_CASE("Tiecode indentation fallback anchors event and method blocks") {
-  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
-  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTiecodeSyntaxPath));
-
-  SharedPtr<Document> document = makeSharedPtr<Document>("example.t",
-    "类 启动窗口:窗口\n"
-    "    事件 启动窗口:创建完毕()\n"
-    "        变量 网站2:文本 = \"http://***.**\"\n"
-    "        提示网址1()\n"
-    "    结束 事件\n"
-    "结束 类");
-  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
-  REQUIRE(analyzer != nullptr);
-
-  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
-  REQUIRE(result != nullptr);
-  REQUIRE(result->guide_lines.size() == 2);
-
-  const IndentGuideLine* class_guide = findGuideByColumn(*result, 0);
-  const IndentGuideLine* event_guide = findGuideByColumn(*result, 4);
-  REQUIRE(class_guide != nullptr);
-  REQUIRE(event_guide != nullptr);
-  CHECK(class_guide->start_line == 0);
-  CHECK(class_guide->end_line == 5);
-  CHECK(class_guide->start_line + 1 == 1);
-  CHECK(class_guide->end_line - 1 == 4);
-  CHECK(event_guide->start_line == 1);
-  CHECK(event_guide->end_line == 4);
-  CHECK(event_guide->start_line + 1 == 2);
-  CHECK(event_guide->end_line - 1 == 3);
 }
 
 TEST_CASE("TextAnalyzer indent guides are independent from highlight analysis") {
