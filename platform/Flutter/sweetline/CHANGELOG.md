@@ -1,3 +1,7 @@
+## 1.2.5
+
+* Update indent guide analysis to support visible-range-only analysis.
+
 ## 1.2.4
 
 * Align the package version with the latest cross-platform release.

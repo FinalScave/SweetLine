@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.qiplat"
-version = "1.2.4"
+version = "1.2.5"
 
 val repoRoot = rootProject.projectDir.resolve("../..").normalize()
 val generatedJvmNativeResourcesDir = layout.buildDirectory.dir("generated/resources/jvm/main")
