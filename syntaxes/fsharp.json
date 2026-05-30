@@ -592,7 +592,6 @@
       { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
     ],
     "rules": [
-      { "kind": "delimiter", "start": "(", "end": ")" },
       { "kind": "delimiter", "start": "{", "end": "}" },
       { "kind": "delimiter", "start": "[", "end": "]" },
       { "kind": "indentStart", "start": "=" },

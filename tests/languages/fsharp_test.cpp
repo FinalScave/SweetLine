@@ -113,4 +113,5 @@ TEST_CASE("F# indent guides cover offside blocks and delimiters") {
   CHECK(findGuideByPosition(*result, 4, 15, 18) != nullptr);
   CHECK(findGuideByPosition(*result, 4, 19, 25) != nullptr);
   CHECK(findGuideByPosition(*result, 8, 20, 25) != nullptr);
+  CHECK(findGuideByPosition(*result, 16, 19, 25) == nullptr);
 }
