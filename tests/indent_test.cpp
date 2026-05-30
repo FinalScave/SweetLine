@@ -6,6 +6,8 @@ using namespace NS_SWEETLINE;
 
 namespace {
   static const char* kJavaSyntaxPath = SYNTAX_DIR"/java.json";
+  static const char* kPythonSyntaxPath = SYNTAX_DIR"/python.json";
+  static const char* kTiecodeSyntaxPath = SYNTAX_DIR"/tiecode.json";
   static const char* kJavaExampleFilePath = TESTS_DIR"/files/example.java";
 
   SharedPtr<HighlightEngine> makeTestHighlightEngine() {
@@ -39,6 +41,27 @@ namespace {
     ]
   }
 })";
+  }
+
+  U8String makeIndentOnlySyntax(const U8String& name, const U8String& suffix) {
+    return R"({
+  "name": ")" + name + R"(",
+  "fileSuffixes": [")" + suffix + R"("],
+  "states": {
+    "default": [
+      { "pattern": "[^\\n]+", "style": "keyword" }
+    ]
+  }
+})";
+  }
+
+  const IndentGuideLine* findGuideByColumn(const IndentGuideResult& result, int32_t column) {
+    for (const IndentGuideLine& guide : result.guide_lines) {
+      if (guide.column == column) {
+        return &guide;
+      }
+    }
+    return nullptr;
   }
 }
 
@@ -180,6 +203,219 @@ TEST_CASE("ScopeRules guide column uses min of start and end columns") {
   REQUIRE(result != nullptr);
   REQUIRE(result->guide_lines.size() == 1);
   CHECK(result->guide_lines[0].column == 0);
+}
+
+TEST_CASE("ScopeRules indentStart uses parent indent column") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "indentStartColumn",
+  "fileSuffixes": [".isc"],
+  "states": {
+    "default": [
+      { "pattern": "[:]", "style": "punctuation" },
+      { "pattern": "[^\\n]+", "style": "keyword" }
+    ]
+  },
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "indentStart", "start": ":" }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.isc", "if ok:\n    run()\nend");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
+  CHECK(result->guide_lines[0].start_line == 0);
+  CHECK(result->guide_lines[0].end_line == 2);
+}
+
+TEST_CASE("Python indentStart guides use block header columns") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kPythonSyntaxPath));
+
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.py",
+    "def collect_notes(root):\n"
+    "    notes = []\n"
+    "    for path in root.rglob(\"*.md\"):\n"
+    "        if path.name.startswith(\"_\"):\n"
+    "            continue\n"
+    "    return notes\n"
+    "print(collect_notes(\"docs\"))");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 3);
+
+  const IndentGuideLine* function_guide = findGuideByColumn(*result, 0);
+  const IndentGuideLine* loop_guide = findGuideByColumn(*result, 4);
+  const IndentGuideLine* condition_guide = findGuideByColumn(*result, 8);
+  REQUIRE(function_guide != nullptr);
+  REQUIRE(loop_guide != nullptr);
+  REQUIRE(condition_guide != nullptr);
+
+  CHECK(function_guide->start_line == 0);
+  CHECK(function_guide->end_line == 6);
+  CHECK(loop_guide->start_line == 2);
+  CHECK(loop_guide->end_line == 5);
+  CHECK(condition_guide->start_line == 3);
+  CHECK(condition_guide->end_line == 5);
+}
+
+TEST_CASE("Indentation fallback anchors guides to previous nonblank line") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeIndentOnlySyntax("indentOnly", ".io");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.io", "event\n    first\n    second\ndone");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+
+  const IndentGuideLine& guide = result->guide_lines[0];
+  CHECK(guide.column == 0);
+  CHECK(guide.start_line == 0);
+  CHECK(guide.end_line == 3);
+  CHECK(guide.start_line + 1 == 1);
+  CHECK(guide.end_line - 1 == 2);
+  CHECK(guide.scope_rule_id == -1);
+}
+
+TEST_CASE("Indentation fallback uses parent indent columns") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeIndentOnlySyntax("indentColumns", ".ic");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.ic", "root\n  child\n      grand\n  sibling\ndone");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 2);
+
+  const IndentGuideLine* outer = findGuideByColumn(*result, 0);
+  const IndentGuideLine* inner = findGuideByColumn(*result, 2);
+  REQUIRE(outer != nullptr);
+  REQUIRE(inner != nullptr);
+  CHECK(outer->start_line == 0);
+  CHECK(outer->end_line == 4);
+  CHECK(outer->start_line + 1 == 1);
+  CHECK(outer->end_line - 1 == 3);
+  CHECK(inner->start_line == 1);
+  CHECK(inner->end_line == 3);
+  CHECK(inner->start_line + 1 == 2);
+  CHECK(inner->end_line - 1 == 2);
+}
+
+TEST_CASE("Indentation fallback reports parent columns for tabs") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeIndentOnlySyntax("indentTabs", ".it");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.it", "root\n\tchild\n\t\tgrand\n\tchild2\ndone");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 2);
+
+  const IndentGuideLine* outer = findGuideByColumn(*result, 0);
+  const IndentGuideLine* inner = findGuideByColumn(*result, 1);
+  REQUIRE(outer != nullptr);
+  REQUIRE(inner != nullptr);
+  CHECK(outer->start_line == 0);
+  CHECK(outer->end_line == 4);
+  CHECK(inner->start_line == 1);
+  CHECK(inner->end_line == 3);
+}
+
+TEST_CASE("Indentation fallback keeps guides through blank lines") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeIndentOnlySyntax("indentBlank", ".ib");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.ib", "root\n\n    child\n\nnext");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].start_line == 0);
+  CHECK(result->guide_lines[0].end_line == 4);
+  CHECK(result->guide_lines[0].start_line + 1 == 1);
+  CHECK(result->guide_lines[0].end_line - 1 == 3);
+}
+
+TEST_CASE("Indentation fallback reports continuation for visible slices") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeIndentOnlySyntax("indentVisible", ".iv");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.iv", "root\n    child1\n    child2\ndone");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange({1, 1});
+  REQUIRE(result != nullptr);
+  CHECK(result->start_line == 1);
+  CHECK(result->total_line_count == 4);
+  REQUIRE(result->line_states.size() == 1);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
+  CHECK(result->guide_lines[0].start_line == 1);
+  CHECK(result->guide_lines[0].end_line == 1);
+  CHECK(result->guide_lines[0].continues_before);
+  CHECK(result->guide_lines[0].continues_after);
+}
+
+TEST_CASE("Tiecode indentation fallback anchors event and method blocks") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  REQUIRE_NOTHROW(engine->compileSyntaxFromFile(kTiecodeSyntaxPath));
+
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.t",
+    "类 启动窗口:窗口\n"
+    "    事件 启动窗口:创建完毕()\n"
+    "        变量 网站2:文本 = \"http://***.**\"\n"
+    "        提示网址1()\n"
+    "    结束 事件\n"
+    "结束 类");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+  REQUIRE(analyzer != nullptr);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 2);
+
+  const IndentGuideLine* class_guide = findGuideByColumn(*result, 0);
+  const IndentGuideLine* event_guide = findGuideByColumn(*result, 4);
+  REQUIRE(class_guide != nullptr);
+  REQUIRE(event_guide != nullptr);
+  CHECK(class_guide->start_line == 0);
+  CHECK(class_guide->end_line == 5);
+  CHECK(class_guide->start_line + 1 == 1);
+  CHECK(class_guide->end_line - 1 == 4);
+  CHECK(event_guide->start_line == 1);
+  CHECK(event_guide->end_line == 4);
+  CHECK(event_guide->start_line + 1 == 2);
+  CHECK(event_guide->end_line - 1 == 3);
 }
 
 TEST_CASE("TextAnalyzer indent guides are independent from highlight analysis") {

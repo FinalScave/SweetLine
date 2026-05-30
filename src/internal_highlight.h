@@ -154,6 +154,7 @@ namespace NS_SWEETLINE {
       ScopeRuleKind kind {ScopeRuleKind::DELIMITER};
       int32_t start_line {0};
       int32_t start_indent {0};
+      int32_t guide_indent {0};
       int32_t guide_column {0};
       int32_t guide_index {-1};
       List<IndentGuideLine::BranchPoint> branches;
@@ -167,6 +168,10 @@ namespace NS_SWEETLINE {
     struct ScanState {
       ActiveSkip skip;
       List<ActiveScope> scopes;
+      bool has_last_nonblank_line {false};
+      int32_t last_nonblank_line {0};
+      int32_t last_nonblank_indent {0};
+      int32_t last_nonblank_column {0};
     };
 
     struct Checkpoint {

@@ -60,6 +60,17 @@ namespace NS_SWEETLINE {
       return static_cast<int32_t>(Utf8Util::bytePosToCharPos(text, byte_pos));
     }
 
+    int32_t leadingWhitespaceColumn(const U8String& text) {
+      int32_t column = 0;
+      for (char ch : text) {
+        if (ch != ' ' && ch != '\t') {
+          break;
+        }
+        ++column;
+      }
+      return column;
+    }
+
     size_t findSkipEnd(const U8String& text, size_t byte_pos, const ScopeSkipRule& rule) {
       size_t pos = byte_pos;
       while (pos < text.size()) {
@@ -280,6 +291,7 @@ namespace NS_SWEETLINE {
     const U8String& text = m_document_->getLine(line).text;
     const bool blank_line = isBlankLine(text);
     const int32_t indent_column = blank_line ? -1 : computeLeadingWhitespace(text, m_config_.tab_size);
+    const int32_t indent_char_column = blank_line ? -1 : leadingWhitespaceColumn(text);
     const bool visible = context != nullptr && line >= context->visible_start && line <= context->visible_end;
     const size_t visible_index = visible ? line - context->visible_start : 0;
     const bool use_indentation_only = m_rule_ == nullptr || m_rule_->scope_rules.empty();
@@ -348,11 +360,11 @@ namespace NS_SWEETLINE {
           && indent_column <= scope.start_indent;
         bool should_close_pure_indent = use_indentation_only
           && scope.rule == nullptr
-          && scope.guide_column > indent_column;
+          && scope.guide_indent > indent_column;
         if (!should_close_indent && !should_close_pure_indent) {
           continue;
         }
-        int32_t end_line = line == 0 ? 0 : static_cast<int32_t>(line - 1);
+        int32_t end_line = static_cast<int32_t>(line);
         closeScope(static_cast<size_t>(i), end_line, scope.guide_column, false);
       }
     }
@@ -371,26 +383,38 @@ namespace NS_SWEETLINE {
 
     if (use_indentation_only) {
       if (!blank_line) {
-        int32_t next_column = m_config_.tab_size;
-        if (!state.scopes.empty()) {
-          next_column = state.scopes.back().guide_column + m_config_.tab_size;
-        }
-        while (next_column <= indent_column) {
+        if (state.has_last_nonblank_line && indent_column > state.last_nonblank_indent) {
+          ActiveScope scope;
+          scope.kind = ScopeRuleKind::INDENT_START;
+          scope.start_line = state.last_nonblank_line;
+          scope.start_indent = state.last_nonblank_indent;
+          scope.guide_indent = indent_column;
+          scope.guide_column = state.last_nonblank_column;
+          state.scopes.push_back(std::move(scope));
+          if (context != nullptr && state.scopes.back().start_line <= static_cast<int32_t>(context->visible_end)) {
+            openGuide(state.scopes.back(), static_cast<int32_t>(state.scopes.size()) - 1,
+              state.scopes.back().start_line < static_cast<int32_t>(context->visible_start));
+          }
+        } else if (!state.has_last_nonblank_line && indent_column > 0) {
           ActiveScope scope;
           scope.kind = ScopeRuleKind::INDENT_START;
           scope.start_line = static_cast<int32_t>(line);
-          scope.start_indent = next_column - m_config_.tab_size;
-          scope.guide_column = next_column;
+          scope.start_indent = 0;
+          scope.guide_indent = indent_column;
+          scope.guide_column = 0;
           state.scopes.push_back(std::move(scope));
-          if (visible) {
+          if (context != nullptr && state.scopes.back().start_line <= static_cast<int32_t>(context->visible_end)) {
             openGuide(state.scopes.back(), static_cast<int32_t>(state.scopes.size()) - 1, false);
           }
-          next_column += m_config_.tab_size;
         }
         if (visible) {
           LineScopeState& line_state = context->result->line_states[visible_index];
           line_state.nesting_level = static_cast<int32_t>(state.scopes.size());
         }
+        state.has_last_nonblank_line = true;
+        state.last_nonblank_line = static_cast<int32_t>(line);
+        state.last_nonblank_indent = indent_column;
+        state.last_nonblank_column = indent_char_column;
       }
       return;
     }
@@ -498,8 +522,11 @@ namespace NS_SWEETLINE {
         scope.kind = scope_rule->kind;
         scope.start_line = static_cast<int32_t>(line);
         scope.start_indent = blank_line ? 0 : indent_column;
-        scope.guide_column = scope_rule->kind == ScopeRuleKind::INDENT_START
+        scope.guide_indent = scope_rule->kind == ScopeRuleKind::INDENT_START
           ? scope.start_indent + m_config_.tab_size
+          : token_column;
+        scope.guide_column = scope_rule->kind == ScopeRuleKind::INDENT_START
+          ? scope.start_indent
           : token_column;
         state.scopes.push_back(std::move(scope));
         if (visible) {
