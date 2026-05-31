@@ -84,7 +84,7 @@ public class TextAnalyzer {
         nativeHandle = 0;
     }
 
-    @FastNative
+    @CriticalNative
     private static native void nativeFinalize(long handle);
 
     @FastNative

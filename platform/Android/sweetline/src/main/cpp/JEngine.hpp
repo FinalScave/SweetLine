@@ -10,11 +10,23 @@ using namespace NS_SWEETLINE;
 template <typename TCollection>
 static jobjectArray makeStringArray(JNIEnv* env, const TCollection& values) {
   jclass string_class = env->FindClass("java/lang/String");
-  jobjectArray array = env->NewObjectArray(static_cast<jsize>(values.size()), string_class, env->NewStringUTF(""));
+  if (string_class == nullptr) {
+    return nullptr;
+  }
+  jstring empty_string = env->NewStringUTF("");
+  jobjectArray array = env->NewObjectArray(static_cast<jsize>(values.size()), string_class, empty_string);
+  env->DeleteLocalRef(empty_string);
+  if (array == nullptr) {
+    env->DeleteLocalRef(string_class);
+    return nullptr;
+  }
   size_t index = 0;
   for (const U8String& value: values) {
-    env->SetObjectArrayElement(array, static_cast<jsize>(index++), env->NewStringUTF(value.c_str()));
+    jstring item = env->NewStringUTF(value.c_str());
+    env->SetObjectArrayElement(array, static_cast<jsize>(index++), item);
+    env->DeleteLocalRef(item);
   }
+  env->DeleteLocalRef(string_class);
   return array;
 }
 
@@ -131,8 +143,12 @@ public:
 
   static void RegisterMethods(JNIEnv *env) {
     jclass java_class = env->FindClass(kJClassName);
+    if (java_class == nullptr) {
+      return;
+    }
     env->RegisterNatives(java_class, kJMethods,
                          sizeof(kJMethods) / sizeof(JNINativeMethod));
+    env->DeleteLocalRef(java_class);
   }
 };
 
@@ -172,8 +188,12 @@ public:
 
   static void RegisterMethods(JNIEnv *env) {
     jclass java_class = env->FindClass(kJClassName);
+    if (java_class == nullptr) {
+      return;
+    }
     env->RegisterNatives(java_class, kJMethods,
                          sizeof(kJMethods) / sizeof(JNINativeMethod));
+    env->DeleteLocalRef(java_class);
   }
 };
 
@@ -245,7 +265,16 @@ public:
       return nullptr;
     }
     const char* c_text = env->GetStringUTFChars(text, nullptr);
-    TextLineInfo line_info = unpackTextLineInfo(env->GetIntArrayElements(info, nullptr));
+    if (c_text == nullptr) {
+      return nullptr;
+    }
+    jint* info_buffer = env->GetIntArrayElements(info, nullptr);
+    if (info_buffer == nullptr) {
+      env->ReleaseStringUTFChars(text, c_text);
+      return nullptr;
+    }
+    TextLineInfo line_info = unpackTextLineInfo(info_buffer);
+    env->ReleaseIntArrayElements(info, info_buffer, JNI_ABORT);
     LineAnalyzeResult analyze_result;
     analyzer->analyzeLine(c_text, line_info, analyze_result);
     env->ReleaseStringUTFChars(text, c_text);
@@ -289,8 +318,12 @@ public:
 
   static void RegisterMethods(JNIEnv *env) {
     jclass java_class = env->FindClass(kJClassName);
+    if (java_class == nullptr) {
+      return;
+    }
     env->RegisterNatives(java_class, kJMethods,
                          sizeof(kJMethods) / sizeof(JNINativeMethod));
+    env->DeleteLocalRef(java_class);
   }
 };
 
@@ -416,8 +449,12 @@ public:
 
   static void RegisterMethods(JNIEnv *env) {
     jclass java_class = env->FindClass(kJClassName);
+    if (java_class == nullptr) {
+      return;
+    }
     env->RegisterNatives(java_class, kJMethods,
                          sizeof(kJMethods) / sizeof(JNINativeMethod));
+    env->DeleteLocalRef(java_class);
   }
 };
 
@@ -564,8 +601,12 @@ public:
 
   static void RegisterMethods(JNIEnv *env) {
     jclass java_class = env->FindClass(kJClassName);
+    if (java_class == nullptr) {
+      return;
+    }
     env->RegisterNatives(java_class, kJMethods,
                          sizeof(kJMethods) / sizeof(JNINativeMethod));
+    env->DeleteLocalRef(java_class);
   }
 };
 
