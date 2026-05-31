@@ -39,7 +39,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.2.5
+  sweetline: ^1.2.6
 ```
 
 ## Load syntax rules

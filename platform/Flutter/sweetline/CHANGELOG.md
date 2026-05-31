@@ -1,3 +1,7 @@
+## 1.2.6
+
+* Fix memory leak issues.
+
 ## 1.2.5
 
 * Update indent guide analysis to support visible-range-only analysis.

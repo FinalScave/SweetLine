@@ -5,7 +5,7 @@ plugins {
 
 description = "Cross-platform code highlight engine"
 group = 'com.qiplat'
-version = '1.2.5'
+version = '1.2.6'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_22
