@@ -129,7 +129,7 @@ add_library(${SWEETLINE_CORE_OBJECT_TARGET} OBJECT
 set_target_properties(${SWEETLINE_CORE_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 sweetline_configure_compile_target(${SWEETLINE_CORE_OBJECT_TARGET})
 
-if (NOT EMSCRIPTEN)
+if (NOT EMSCRIPTEN AND (SWEETLINE_BUILD_STATIC OR SWEETLINE_BUILD_TESTS OR (SWEETLINE_BUILD_SHARED AND NOT APPLE)))
     add_library(${SWEETLINE_C_API_OBJECT_TARGET} OBJECT ${SWEETLINE_C_API_SOURCE_FILES})
     set_target_properties(${SWEETLINE_C_API_OBJECT_TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     sweetline_configure_compile_target(${SWEETLINE_C_API_OBJECT_TARGET})
@@ -138,10 +138,19 @@ endif ()
 
 if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN)
     message(STATUS "add target: ${SWEETLINE_SHARED_LIB_NAME} as dynamic lib")
-    add_library(${SWEETLINE_SHARED_LIB_NAME} SHARED
-            $<TARGET_OBJECTS:${SWEETLINE_CORE_OBJECT_TARGET}>
-            ${SWEETLINE_C_API_OBJECTS}
-    )
+    if (APPLE)
+        add_library(${SWEETLINE_SHARED_LIB_NAME} SHARED
+                ${SWEETLINE_CORE_SOURCE_FILES}
+                ${SWEETLINE_C_API_SOURCE_FILES}
+                ${SWEETLINE_PLATFORM_FILES}
+        )
+        sweetline_configure_compile_target(${SWEETLINE_SHARED_LIB_NAME})
+    else ()
+        add_library(${SWEETLINE_SHARED_LIB_NAME} SHARED
+                $<TARGET_OBJECTS:${SWEETLINE_CORE_OBJECT_TARGET}>
+                ${SWEETLINE_C_API_OBJECTS}
+        )
+    endif ()
     target_include_directories(${SWEETLINE_SHARED_LIB_NAME}
             PUBLIC
             $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
