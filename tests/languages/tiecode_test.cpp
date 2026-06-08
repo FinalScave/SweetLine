@@ -70,7 +70,10 @@ TEST_CASE("Tiecode highlights operators, generic types, legacy separators, annot
     "事件 根布局.显示按钮:被单击()",
     "code #this #标题 #cls<启动窗口> #ncls<窗口> #mem<根布局.取根布局()> #sys<line>",
     "@组件配置({提示=[[第一行 \"双引号\"",
-    "第二行]]})"
+    "第二行]]})",
+    "返回 本对象",
+    "本对象.标题 = 可空标题",
+    "父对象.刷新()"
   };
 
   U8String code;
@@ -80,7 +83,7 @@ TEST_CASE("Tiecode highlights operators, generic types, legacy separators, annot
   }
   SharedPtr<DocumentHighlight> highlight = analyzer->analyzeText(code);
   REQUIRE(highlight != nullptr);
-  REQUIRE(highlight->lines.size() >= 13);
+  REQUIRE(highlight->lines.size() >= 16);
 
   constexpr int32_t kKeyword = 1;
   constexpr int32_t kString = 2;
@@ -158,6 +161,17 @@ TEST_CASE("Tiecode highlights operators, generic types, legacy separators, annot
   CHECK(styleAtText(highlight->lines[11], lines[11], "\"") == kString);
   CHECK(styleAtText(highlight->lines[12], lines[12], "第二行") == kString);
   CHECK(styleAtText(highlight->lines[12], lines[12], "]]") == kString);
+
+  CHECK(styleAtText(highlight->lines[13], lines[13], "返回") == kKeyword);
+  CHECK(styleAtText(highlight->lines[13], lines[13], "本对象") == kKeyword);
+
+  CHECK(styleAtText(highlight->lines[14], lines[14], "本对象") == kKeyword);
+  CHECK(styleAtText(highlight->lines[14], lines[14], ".") == kPunctuation);
+  CHECK(styleAtText(highlight->lines[14], lines[14], "标题") == kProperty);
+
+  CHECK(styleAtText(highlight->lines[15], lines[15], "父对象") == kKeyword);
+  CHECK(styleAtText(highlight->lines[15], lines[15], ".") == kPunctuation);
+  CHECK(styleAtText(highlight->lines[15], lines[15], "刷新") == kMethod);
 }
 
 TEST_CASE("Highlight example.t Benchmark") {

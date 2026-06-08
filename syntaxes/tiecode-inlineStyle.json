@@ -569,6 +569,15 @@
     ],
     "memberAccessRule": [
       {
+        "pattern": "(?<!${identifierChar})(本对象|父对象)(?!${identifierChar})(\\.)(${identifier})${whiteSpace}*(\\()",
+        "styles": [1, "keyword", 2, "punctuation", 3, "method", 4, "punctuation"],
+        "state": "callParams"
+      },
+      {
+        "pattern": "(?<!${identifierChar})(本对象|父对象)(?!${identifierChar})(\\.)(${identifier})",
+        "styles": [1, "keyword", 2, "punctuation", 3, "property"]
+      },
+      {
         "pattern": "(${qualifiedIdentifier})(\\.)(${identifier})${whiteSpace}*(\\()",
         "styles": [1, "variable", 2, "punctuation", 3, "method", 4, "punctuation"],
         "state": "callParams"
