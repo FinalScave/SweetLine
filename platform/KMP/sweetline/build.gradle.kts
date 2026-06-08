@@ -168,8 +168,8 @@ mavenPublishing {
         url.set("https://github.com/FinalScave/SweetLine")
         licenses {
             license {
-                name.set("LGPL-2.1-or-later")
-                url.set("https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
+                name.set("MIT License")
+                url.set("https://opensource.org/license/mit")
             }
         }
         developers {

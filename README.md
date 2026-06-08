@@ -285,6 +285,10 @@ See the `syntaxes/` directory for the available grammar set, and the [Syntax Rul
 - **Optimize regular expressions**: Avoid overly complex backtracking-intensive patterns; use `variables` to reuse common patterns
 - **Design state machines carefully**: Control the number of states and ensure every state has a clear exit path
 
+## License
+
+SweetLine is released under the [MIT License](./LICENSE).
+
 ## Contributing
 
 We welcome contributions to the SweetLine highlighting engine! If you'd like to participate, feel free to fork the repository, make changes, and submit merge requests. For syntax-related work, we recommend using the skills in [`skills/`](skills) together with the [Contributing Guide](docs/en/join.md).

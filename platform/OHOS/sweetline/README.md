@@ -235,4 +235,4 @@ const engine = new sweetline.HighlightEngine(config);
 
 ## 开源协议
 
-本项目基于 [LGPL-2.1](./LICENSE) 协议发布。
+本项目基于 [MIT License](./LICENSE) 协议发布。

@@ -128,8 +128,8 @@ centralPortal {
         url = "https://github.com/FinalScave/SweetLine"
         licenses {
             license {
-                name = "LGPL-2.1-or-later"
-                url = "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
+                name = "MIT License"
+                url = "https://opensource.org/license/mit"
             }
         }
         developers {
