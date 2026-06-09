@@ -163,9 +163,9 @@ When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCoreIOS.xcframework
 `dotnet pack` extracts it into the NuGet package automatically.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.6
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.7
 
-dotnet nuget push artifacts/nuget/SweetLine.1.2.6.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.2.7.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate
