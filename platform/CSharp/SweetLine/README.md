@@ -130,13 +130,18 @@ This package bundles:
 - `runtimes/linux-arm64/native/libsweetline.so`
 - `runtimes/osx-x64/native/libsweetline.dylib`
 - `runtimes/osx-arm64/native/libsweetline.dylib`
+- `runtimes/android-arm64/native/libsweetline.so`
+- `runtimes/android-x64/native/libsweetline.so`
+- `native/ios/SweetLineCoreIOS.xcframework`
 
-Native resolver search order:
+Android native assets are consumed from the NuGet runtime folders by .NET for Android and are placed in the APK/AAB automatically.
+iOS native assets are added to consuming application projects through a NuGet `buildTransitive` target:
 
-1. `SWEETLINE_LIB_PATH` environment variable, either a file path or a directory
-2. App base directory / current directory
-3. `runtimes/{rid}/native/` folders and common build output directories
-4. System default loader
+- `net8.0-ios` consumers receive a `NativeReference` to `SweetLineCoreIOS.xcframework`
+
+Set `SweetLineDisableIosNativeReference=true` in the application project to opt out of the iOS `NativeReference` and provide the native reference yourself.
+
+Desktop native loading checks `SWEETLINE_LIB_PATH`, local application folders, runtime native folders, and the system loader.
 
 Override example:
 
@@ -147,12 +152,15 @@ $env:SWEETLINE_LIB_PATH = "C:\path\to\native"
 ## Requirements
 
 - .NET 8.0 or newer
-- Windows x64, Linux x64/arm64, or macOS x64/arm64 for bundled native binaries
+- Windows x64, Linux x64/arm64, macOS x64/arm64, Android arm64/x64, or iOS arm64/simulator-arm64 for bundled native binaries
 
 ## Pack and Publish
 
 Build or sync the native libraries under `prebuilt/windows/x64`, `prebuilt/linux/x86_64`,
-`prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, and `prebuilt/osx/arm64` first.
+`prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, `prebuilt/osx/arm64`,
+`prebuilt/android/arm64-v8a`, `prebuilt/android/x86_64`, and `prebuilt/ios` first.
+When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCoreIOS.xcframework.zip`;
+`dotnet pack` extracts it into the NuGet package automatically.
 
 ```bash
 dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.6

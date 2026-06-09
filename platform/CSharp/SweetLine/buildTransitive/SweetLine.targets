@@ -1,0 +1,18 @@
+<Project>
+	<PropertyGroup>
+		<_SweetLinePackageRoot>$(MSBuildThisFileDirectory)..\</_SweetLinePackageRoot>
+		<_SweetLineTargetPlatform Condition="'$(TargetFramework)' != ''">$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</_SweetLineTargetPlatform>
+		<SweetLineDisableIosNativeReference Condition="'$(SweetLineDisableIosNativeReference)' == ''">$(SweetLineDisableBundledNative)</SweetLineDisableIosNativeReference>
+		<_SweetLineIosDylib Condition="'$(RuntimeIdentifier)' == 'iossimulator-arm64'">$(_SweetLinePackageRoot)native\ios\SweetLineCoreIOS.xcframework\ios-arm64-simulator\libsweetline.dylib</_SweetLineIosDylib>
+		<_SweetLineIosDylib Condition="'$(_SweetLineIosDylib)' == ''">$(_SweetLinePackageRoot)native\ios\SweetLineCoreIOS.xcframework\ios-arm64\libsweetline.dylib</_SweetLineIosDylib>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(SweetLineDisableIosNativeReference)' != 'true' and '$(_SweetLineTargetPlatform)' == 'ios'">
+		<NativeReference Include="$(_SweetLineIosDylib)">
+			<Kind>Dynamic</Kind>
+			<IsCxx>true</IsCxx>
+			<CopyToAppBundle>true</CopyToAppBundle>
+			<RelativePath>libsweetline.dylib</RelativePath>
+		</NativeReference>
+	</ItemGroup>
+</Project>
