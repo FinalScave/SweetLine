@@ -199,6 +199,9 @@ public:
     // Analyze indent guides without requiring highlight analysis
     SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
 
+    // Analyze bracket pairs without requiring highlight analysis
+    SharedPtr<BracketPairResult> analyzeBracketPairs(const U8String& text);
+
     // Get current highlight configuration
     const HighlightConfig& getHighlightConfig() const;
 };
@@ -246,6 +249,15 @@ auto analyzer = engine->createAnalyzerBySyntaxName("python");
 auto guides = analyzer->analyzeIndentGuides(source_code);
 ```
 
+#### Bracket Pair Analysis
+
+```cpp
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
+
+// Bracket pairs do not require a prior highlight pass
+auto brackets = analyzer->analyzeBracketPairs(source_code);
+```
+
 ---
 
 ### DocumentAnalyzer
@@ -288,6 +300,12 @@ public:
 
     // Analyze indent guides for a visible line range
     SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
+
+    // Analyze bracket pairs for the full managed document
+    SharedPtr<BracketPairResult> analyzeBracketPairs() const;
+
+    // Analyze bracket pairs for a visible line range
+    SharedPtr<BracketPairResult> analyzeBracketPairsInLineRange(const LineRange& visible_range) const;
 };
 ```
 
@@ -295,6 +313,7 @@ public:
 `analyzeIncrementalInLineRange(...)` is a convenience API that applies a patch and immediately returns a visible slice.
 `getHighlightSlice(...)` reuses the latest cached document highlight result without running a new analysis.
 `analyzeIndentGuidesInLineRange(...)` analyzes indent guides for a visible range directly from the managed document text and does not require cached highlight state.
+`analyzeBracketPairsInLineRange(...)` scans enough surrounding text to return visible bracket tokens with known partners when they can be resolved.
 
 #### Usage Example
 
@@ -318,6 +337,10 @@ auto cached_slice = analyzer->getHighlightSlice(visible);
 // Build indent guides
 auto guides = analyzer->analyzeIndentGuides();
 auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible);
+
+// Build bracket pairs for rainbow bracket rendering
+auto brackets = analyzer->analyzeBracketPairs();
+auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible);
 ```
 
 ---
@@ -408,6 +431,35 @@ struct IndentGuideResult {
     size_t total_line_count {0};
     List<IndentGuideLine> guide_lines;
     List<LineScopeState> line_states;
+};
+
+enum struct BracketTokenKind {
+    OPEN = 0,
+    CLOSE
+};
+
+enum struct BracketMatchState {
+    MATCHED = 0,
+    UNMATCHED,
+    UNKNOWN
+};
+
+struct BracketToken {
+    TextRange range;
+    int32_t depth {0};
+    BracketTokenKind kind {BracketTokenKind::OPEN};
+    BracketMatchState match_state {BracketMatchState::UNKNOWN};
+    TextRange partner_range;
+};
+
+struct LineBracketPairs {
+    List<BracketToken> tokens;
+};
+
+struct BracketPairResult {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<LineBracketPairs> lines;
 };
 
 // Inline style

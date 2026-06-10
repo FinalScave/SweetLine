@@ -166,6 +166,10 @@ final class SweetLineNative {
     static final MethodHandle sl_text_analyze_indent_guides = downcall("sl_text_analyze_indent_guides",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
 
+    // sl_text_analyze_bracket_pairs(pointer, const char*) -> int32_t*
+    static final MethodHandle sl_text_analyze_bracket_pairs = downcall("sl_text_analyze_bracket_pairs",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
     // sl_engine_load_document(pointer, pointer) -> pointer
     static final MethodHandle sl_engine_load_document = downcall("sl_engine_load_document",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
@@ -198,6 +202,15 @@ final class SweetLineNative {
     // sl_document_analyze_indent_guides_in_line_range(pointer, int32_t*) -> int32_t*
     static final MethodHandle sl_document_analyze_indent_guides_in_line_range = downcall(
             "sl_document_analyze_indent_guides_in_line_range",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
+    // sl_document_analyze_bracket_pairs(pointer) -> int32_t*
+    static final MethodHandle sl_document_analyze_bracket_pairs = downcall("sl_document_analyze_bracket_pairs",
+            FunctionDescriptor.of(ADDRESS, ADDRESS));
+
+    // sl_document_analyze_bracket_pairs_in_line_range(pointer, int32_t*) -> int32_t*
+    static final MethodHandle sl_document_analyze_bracket_pairs_in_line_range = downcall(
+            "sl_document_analyze_bracket_pairs_in_line_range",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
 
     // sl_free_buffer(int32_t*) -> void

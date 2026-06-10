@@ -177,6 +177,31 @@ public class DocumentAnalyzer {
     }
 
     /**
+     * Perform bracket pair analysis on the managed document
+     * @return Bracket pair analysis result
+     */
+    public BracketPairResult analyzeBracketPairs() {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeBracketPairs(nativeHandle);
+        return NativeBufferPack.readBracketPairResult(buffer);
+    }
+
+    /**
+     * Perform bracket pair analysis for the specified visible line range
+     * @param visibleRange Visible line range (startLine + lineCount)
+     * @return Bracket pair analysis result for the specified line range
+     */
+    public BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeBracketPairsInLineRange(nativeHandle, visibleRange.startLine, visibleRange.lineCount);
+        return NativeBufferPack.readBracketPairResultSlice(buffer);
+    }
+
+    /**
      * Get the managed document
      * @return {@link Document}
      */
@@ -223,6 +248,12 @@ public class DocumentAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeIndentGuidesInLineRange(long handle, int visibleStartLine, int visibleLineCount);
+
+    @FastNative
+    private static native int[] nativeAnalyzeBracketPairs(long handle);
+
+    @FastNative
+    private static native int[] nativeAnalyzeBracketPairsInLineRange(long handle, int visibleStartLine, int visibleLineCount);
 
     @CriticalNative
     private static native long nativeGetDocument(long handle);

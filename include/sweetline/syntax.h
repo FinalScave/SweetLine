@@ -83,6 +83,7 @@ namespace NS_SWEETLINE {
   struct StateRule;
   struct ScopeRule;
   struct ScopeSkipRule;
+  struct BracketRule;
   struct SyntaxRuleRuntimeData;
   class SyntaxRuleCompiler;
   /// Syntax rule definition
@@ -109,6 +110,10 @@ namespace NS_SWEETLINE {
     List<ScopeRule> scope_rules;
     /// Lexical skip rules used by scope analysis
     List<ScopeSkipRule> scope_skip_rules;
+    /// Bracket pair rules used by bracket pair analysis
+    List<BracketRule> bracket_rules;
+    /// Lexical skip rules used by bracket pair analysis
+    List<ScopeSkipRule> bracket_skip_rules;
 
     bool containsInlineStyle(int32_t style_id);
     InlineStyle& getInlineStyle(int32_t style_id);

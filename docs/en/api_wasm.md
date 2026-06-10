@@ -69,6 +69,7 @@ class TextAnalyzer {
     analyzeText(text: string): DocumentHighlight;
     analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
     analyzeIndentGuides(text: string): IndentGuideResult;
+    analyzeBracketPairs(text: string): BracketPairResult;
 }
 
 class DocumentAnalyzer {
@@ -80,6 +81,8 @@ class DocumentAnalyzer {
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
     analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
+    analyzeBracketPairs(): BracketPairResult;
+    analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult;
 }
 
 class LineRange {
@@ -125,6 +128,24 @@ class IndentGuideResult {
     lineStates: LineScopeStateList;
 }
 
+class BracketToken {
+    range: TextRange;
+    depth: number;
+    kind: number;
+    matchState: number;
+    partnerRange: TextRange;
+}
+
+class LineBracketPairs {
+    tokens: BracketTokenList;
+}
+
+class BracketPairResult {
+    startLine: number;
+    totalLineCount: number;
+    lines: LineBracketPairsList;
+}
+
 class LineHighlight {
     spans: TokenSpanList;
     toJson(): string;
@@ -153,6 +174,7 @@ class LineAnalyzeResult {
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
 `getHighlightSlice(...)` reads a visible slice from the latest cached document highlight result.
 `analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
+`analyzeBracketPairs(...)` and `analyzeBracketPairsInLineRange(...)` analyze raw text for bracket tokens and do not require a highlight pass.
 
 ### Complete WASM Example
 

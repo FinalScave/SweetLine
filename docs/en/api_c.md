@@ -83,6 +83,9 @@ int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, i
 
 // Indent guide analysis for plain text; no highlight pass is required
 int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
+
+// Bracket pair analysis for plain text; no highlight pass is required
+int32_t* sl_text_analyze_bracket_pairs(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
 ### Incremental Analysis
@@ -124,6 +127,14 @@ int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 // Indent guide analysis for a visible line range
 // visible_range layout: [startLine, lineCount]
 int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t analyzer,
+                                                          int32_t* visible_range);
+
+// Bracket pair analysis for managed document
+int32_t* sl_document_analyze_bracket_pairs(sl_analyzer_handle_t analyzer);
+
+// Bracket pair analysis for a visible line range
+// visible_range layout: [startLine, lineCount]
+int32_t* sl_document_analyze_bracket_pairs_in_line_range(sl_analyzer_handle_t analyzer,
                                                           int32_t* visible_range);
 ```
 
@@ -223,6 +234,48 @@ Then follow line_state_count line-state records:
 [nestingLevel, scopeState, scopeColumn, indentLevel]
 scopeState: 0=START, 1=END, 2=CONTENT
 ```
+
+Bracket pair analysis `sl_text_analyze_bracket_pairs` and
+`sl_document_analyze_bracket_pairs` return:
+
+```
+result[0] = flags
+            bit0: hasStartIndex
+result[1] = bracketStride
+result[2] = lineCount
+followed by lineCount line entries:
+  lineEntry[0] = bracket token count
+  followed by tokenCount * bracketStride values
+```
+
+Bracket pair visible range analysis `sl_document_analyze_bracket_pairs_in_line_range` returns:
+
+```
+result[0] = flags
+            bit0: hasStartIndex
+result[1] = bracketStride
+result[2] = startLine
+result[3] = totalLineCount
+result[4] = lineCount
+followed by lineCount line entries:
+  lineEntry[0] = bracket token count
+  followed by tokenCount * bracketStride values
+```
+
+Bracket token payload:
+
+```
+common fields:
+[column, length, depth, kind, matchState, partnerLine, partnerColumn, partnerLength]
+
+if show_index=true:
+[column, length, startIndex, depth, kind, matchState,
+ partnerLine, partnerColumn, partnerLength, partnerStartIndex]
+```
+
+`kind`: `0=OPEN`, `1=CLOSE`.
+`matchState`: `0=MATCHED`, `1=UNMATCHED`, `2=UNKNOWN`.
+Partner fields are `-1` when no known partner exists.
 
 ### Complete C Example
 

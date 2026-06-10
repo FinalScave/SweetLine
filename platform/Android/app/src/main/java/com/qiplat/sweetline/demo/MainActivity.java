@@ -8,6 +8,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Spannable;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.CharacterStyle;
@@ -28,15 +29,18 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.ColorUtils;
 
+import com.google.android.material.card.MaterialCardView;
+import com.qiplat.sweetline.BracketPairResult;
+import com.qiplat.sweetline.BracketToken;
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.HighlightConfig;
 import com.qiplat.sweetline.HighlightEngine;
 import com.qiplat.sweetline.InlineStyle;
+import com.qiplat.sweetline.LineBracketPairs;
 import com.qiplat.sweetline.SpannableStyleFactory;
 import com.qiplat.sweetline.SyntaxCompileError;
 import com.qiplat.sweetline.util.AssetUtils;
-import com.google.android.material.card.MaterialCardView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,6 +63,14 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
             "java-inlineStyle.json",
             "tiecode-inlineStyle.json"
     );
+    private static final int[] BRACKET_PALETTE = {
+            0xFF7DD3FC,
+            0xFFF9A8D4,
+            0xFFFDE047,
+            0xFF86EFAC,
+            0xFFC4B5FD,
+            0xFFFDBA74
+    };
 
     private static boolean commonEngineConfigured = false;
     private static boolean inlineStyleEngineConfigured = false;
@@ -515,6 +527,7 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
                 spanText.setText(testCode);
                 return;
             }
+            applyRainbowBrackets(highlightedText);
             spanText.setText(highlightedText);
         } catch (Exception e) {
             Log.e(TAG, "Failed to highlight sample: " + sample.assetFileName, e);
@@ -555,9 +568,50 @@ public class MainActivity extends AppCompatActivity implements SpannableStyleFac
         if (newHighlightedText == null) {
             return;
         }
+        applyRainbowBrackets(newHighlightedText);
         int selectionStart = spanText.getSelectionStart();
         spanText.setText(newHighlightedText);
         spanText.setSelection(selectionStart);
+    }
+
+    private void applyRainbowBrackets(@NonNull Spannable text) {
+        if (analyzer == null) {
+            return;
+        }
+        BracketPairResult result = analyzer.analyzeBracketPairs();
+        if (result == null || result.lines == null) {
+            return;
+        }
+        int textLength = text.length();
+        for (LineBracketPairs line : result.lines) {
+            if (line == null || line.tokens == null) {
+                continue;
+            }
+            for (BracketToken token : line.tokens) {
+                if (token == null || token.range == null
+                        || token.range.start == null || token.range.end == null) {
+                    continue;
+                }
+                int start = Math.max(0, Math.min(token.range.start.index, textLength));
+                int end = Math.max(start, Math.min(token.range.end.index, textLength));
+                if (end <= start) {
+                    continue;
+                }
+                text.setSpan(new ForegroundColorSpan(bracketColor(token)),
+                        start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+    }
+
+    private int bracketColor(@NonNull BracketToken token) {
+        if (token.matchState == BracketToken.UNMATCHED) {
+            return 0xFFFF6B6B;
+        }
+        int color = BRACKET_PALETTE[Math.floorMod(token.depth, BRACKET_PALETTE.length)];
+        if (token.matchState == BracketToken.UNKNOWN) {
+            return ColorUtils.setAlphaComponent(color, 174);
+        }
+        return color;
     }
 
     @Override

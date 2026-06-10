@@ -33,6 +33,7 @@ Or in `.csproj`:
 - `TextAnalyzer`: full-text/single-line analysis
 - `DocumentAnalyzer`: full and incremental document analysis
 - `Document`: managed document handle used for incremental updates
+- `BracketPairResult`: bracket tokens grouped by line for rainbow bracket rendering and partner lookup
 - `SyntaxCompileError`: thrown when syntax compile fails
 
 ## Basic Usage
@@ -59,6 +60,9 @@ if (analyzer != null)
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
     IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
         new LineRange(startLine: 0, lineCount: 120));
+    BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
+    BracketPairResult visibleBrackets = analyzer.AnalyzeBracketPairsInLineRange(
+        new LineRange(startLine: 0, lineCount: 120));
 }
 ```
 
@@ -68,6 +72,7 @@ if (analyzer != null)
 `AnalyzeIncrementalInLineRange(...)` applies a patch and returns the requested slice immediately.
 `GetHighlightSlice(...)` reads a visible slice from the latest cached result after `Analyze()` or `AnalyzeIncremental(...)`.
 `AnalyzeIndentGuides(...)` and `AnalyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
+`AnalyzeBracketPairs(...)` and `AnalyzeBracketPairsInLineRange(...)` analyze raw text for bracket tokens and do not require a highlight pass.
 
 ```csharp
 var changeRange = new TextRange(

@@ -38,6 +38,7 @@ class TextAnalyzer {
   analyzeText(text: string): DocumentHighlight;
   analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
   analyzeIndentGuides(text: string): IndentGuideResult;
+  analyzeBracketPairs(text: string): BracketPairResult;
 }
 
 class DocumentAnalyzer {
@@ -49,6 +50,8 @@ class DocumentAnalyzer {
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
   analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
+  analyzeBracketPairs(): BracketPairResult;
+  analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult;
 }
 ```
 
@@ -63,6 +66,7 @@ engine.compileSyntaxFromJson(syntaxJson);
 const analyzer = engine.createAnalyzerByFileName("Main.java");
 if (analyzer) {
   const highlight = analyzer.analyzeText(sourceCode);
+  const brackets = analyzer.analyzeBracketPairs(sourceCode);
 }
 
 const document = new sweetline.Document("file:///Main.java", sourceCode);
@@ -71,6 +75,7 @@ if (documentAnalyzer) {
   documentAnalyzer.analyze();
   const analyzed = documentAnalyzer.analyzeLineRange(new sweetline.LineRange(0, 80));
   const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
+  const visibleBrackets = documentAnalyzer.analyzeBracketPairsInLineRange(new sweetline.LineRange(0, 80));
 }
 ```
 
@@ -81,4 +86,5 @@ if (documentAnalyzer) {
 - Use `analyzeLineRange(...)` when SweetLine should analyze enough lines for a visible range based on the current document state.
 - Use `getHighlightSlice(...)` after `analyze()` / `analyzeIncremental(...)` when only the visible line window is needed.
 - For indent guides, use `TextAnalyzer.analyzeIndentGuides`, `DocumentAnalyzer.analyzeIndentGuides`, or `DocumentAnalyzer.analyzeIndentGuidesInLineRange`; these APIs do not require a highlight pass.
+- For bracket pairs, use `TextAnalyzer.analyzeBracketPairs`, `DocumentAnalyzer.analyzeBracketPairs`, or `DocumentAnalyzer.analyzeBracketPairsInLineRange`; these APIs do not require a highlight pass.
 - For build commands, see [Build Guide](api_build.md).

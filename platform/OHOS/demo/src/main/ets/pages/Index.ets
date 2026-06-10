@@ -12,6 +12,12 @@ interface SpanItem {
   color: number;
 }
 
+interface BracketRenderToken {
+  start: number;
+  end: number;
+  color: number;
+}
+
 const EXCLUDED_COMMON_SYNTAX_FILES: string[] = [
   "yaml(non zero width).json",
 ];
@@ -32,6 +38,14 @@ struct Index {
   private commonEngine: sweetline.HighlightEngine =
     new sweetline.HighlightEngine(new sweetline.HighlightConfig(true, false));
   private documentAnalyzer: sweetline.DocumentAnalyzer | null = null;
+  private readonly bracketPalette: number[] = [
+    0xFF7DD3FC,
+    0xFFF9A8D4,
+    0xFFFDE047,
+    0xFF86EFAC,
+    0xFFC4B5FD,
+    0xFFFDBA74,
+  ];
   private themes: HighlightTheme[] = HighlightTheme.builtinThemes();
   private hasPreparedSyntaxes: boolean = false;
   private isPreparingSyntaxes: boolean = false;
@@ -334,6 +348,7 @@ struct Index {
 
       let analyzeStart = Date.now();
       const highlight = this.documentAnalyzer.analyze();
+      const brackets = this.documentAnalyzer.analyzeBracketPairs();
       let analyzeElapsed = Date.now() - analyzeStart;
       console.info(TAG, `====analyze: ${analyzeElapsed}ms`);
       this.analyzeTime = this.syntaxWarmupSummary.length > 0
@@ -341,7 +356,7 @@ struct Index {
         : `Load: ${loadTime}ms | Analyze: ${analyzeElapsed}ms`;
 
       if (highlight) {
-        this.buildSpanItems(testCode, highlight);
+        this.buildSpanItems(testCode, highlight, brackets);
       }
     } catch (e) {
       console.error(TAG, `Highlight analysis error: ${e}`);
@@ -351,7 +366,9 @@ struct Index {
   /**
    * Build highlight results into SpanItem array for rendering
    */
-  private buildSpanItems(fullText: string, highlight: sweetline.DocumentHighlight): void {
+  private buildSpanItems(fullText: string,
+                         highlight: sweetline.DocumentHighlight,
+                         brackets: sweetline.BracketPairResult | null): void {
     let items: SpanItem[] = [];
     const lines = fullText.split('\n');
 
@@ -365,8 +382,16 @@ struct Index {
       }
     }
 
+    let lineBracketMap = new Map<number, sweetline.LineBracketPairs>();
+    if (brackets !== null) {
+      for (let i = 0; i < brackets.lines.length; i++) {
+        lineBracketMap.set(brackets.startLine + i, brackets.lines[i]);
+      }
+    }
+
     for (let lineNum = 0; lineNum < lines.length; lineNum++) {
       const lineText = lines[lineNum];
+      const lineBrackets = lineBracketMap.get(lineNum);
 
       if (lineNum > 0) {
         items.push({ text: '\n', color: this.currentTheme.textColor });
@@ -376,7 +401,8 @@ struct Index {
       if (!lineHighlight) {
         // No highlight token for this line, use default color
         if (lineText.length > 0) {
-          items.push({ text: lineText, color: this.currentTheme.textColor });
+          this.pushTextWithBracketColors(items, lineText, 0, lineText.length,
+            this.currentTheme.textColor, lineBrackets);
         }
         continue;
       }
@@ -391,29 +417,98 @@ struct Index {
           : lineText.length;
 
         if (startCol > lastCol) {
-          items.push({
-            text: lineText.substring(lastCol, startCol),
-            color: this.currentTheme.textColor
-          });
+          this.pushTextWithBracketColors(items, lineText, lastCol, startCol,
+            this.currentTheme.textColor, lineBrackets);
         }
 
-        items.push({
-          text: lineText.substring(startCol, endCol),
-          color: this.currentTheme.getColor(span.styleId)
-        });
+        this.pushTextWithBracketColors(items, lineText, startCol, endCol,
+          this.currentTheme.getColor(span.styleId), lineBrackets);
         lastCol = endCol;
       }
 
       if (lastCol < lineText.length) {
-        items.push({
-          text: lineText.substring(lastCol),
-          color: this.currentTheme.textColor
-        });
+        this.pushTextWithBracketColors(items, lineText, lastCol, lineText.length,
+          this.currentTheme.textColor, lineBrackets);
       }
     }
 
     this.renderVersion++;
     this.highlightSpans = items;
+  }
+
+  private pushTextWithBracketColors(items: SpanItem[],
+                                    lineText: string,
+                                    startCol: number,
+                                    endCol: number,
+                                    baseColor: number,
+                                    lineBrackets?: sweetline.LineBracketPairs): void {
+    const start = this.clampColumn(startCol, lineText.length);
+    const end = this.clampColumn(endCol, lineText.length);
+    if (end <= start) {
+      return;
+    }
+    const tokens = this.collectBracketTokens(lineText, start, end, lineBrackets);
+    if (tokens.length === 0) {
+      items.push({ text: lineText.substring(start, end), color: baseColor });
+      return;
+    }
+
+    let cursor = start;
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (token.start > cursor) {
+        items.push({ text: lineText.substring(cursor, token.start), color: baseColor });
+      }
+      items.push({ text: lineText.substring(token.start, token.end), color: token.color });
+      cursor = Math.max(cursor, token.end);
+    }
+    if (cursor < end) {
+      items.push({ text: lineText.substring(cursor, end), color: baseColor });
+    }
+  }
+
+  private collectBracketTokens(lineText: string,
+                               startCol: number,
+                               endCol: number,
+                               lineBrackets?: sweetline.LineBracketPairs): BracketRenderToken[] {
+    let tokens: BracketRenderToken[] = [];
+    if (lineBrackets === undefined || lineBrackets.tokens.length === 0) {
+      return tokens;
+    }
+    for (let i = 0; i < lineBrackets.tokens.length; i++) {
+      const token = lineBrackets.tokens[i];
+      const tokenStart = this.clampColumn(token.range.start.column, lineText.length);
+      const tokenEnd = this.clampColumn(token.range.end.column, lineText.length);
+      if (tokenEnd <= startCol || tokenStart >= endCol) {
+        continue;
+      }
+      const clippedStart = Math.max(startCol, tokenStart);
+      const clippedEnd = Math.min(endCol, tokenEnd);
+      if (clippedEnd <= clippedStart) {
+        continue;
+      }
+      tokens.push({
+        start: clippedStart,
+        end: clippedEnd,
+        color: this.bracketColor(token)
+      });
+    }
+    return tokens;
+  }
+
+  private bracketColor(token: sweetline.BracketToken): number {
+    if (token.matchState === sweetline.BracketMatchState.UNMATCHED) {
+      return 0xFFFF6B6B;
+    }
+    const color = this.bracketPalette[Math.abs(token.depth) % this.bracketPalette.length];
+    if (token.matchState === sweetline.BracketMatchState.UNKNOWN) {
+      return (color & 0x00FFFFFF) | 0xAA000000;
+    }
+    return color;
+  }
+
+  private clampColumn(value: number, maxValue: number): number {
+    return Math.max(0, Math.min(value, maxValue));
   }
   /**
    * Convert ARGB integer color value to ArkTS Color

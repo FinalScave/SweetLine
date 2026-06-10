@@ -64,6 +64,7 @@ cd platform/Java22
 - `TokenSpan`、`LineHighlight`、`DocumentHighlight`
 - `LineRange`、`DocumentHighlightSlice`
 - `IndentGuideLine`、`IndentGuideResult`、`LineScopeState`
+- `BracketToken`、`BracketPairResult`、`LineBracketPairs`
 - `SyntaxCompileError`
 
 说明：
@@ -103,6 +104,7 @@ public class TextAnalyzer implements AutoCloseable {
     public DocumentHighlight analyzeText(String text);
     public LineAnalyzeResult analyzeLine(String text, TextLineInfo info);
     public IndentGuideResult analyzeIndentGuides(String text);
+    public BracketPairResult analyzeBracketPairs(String text);
     public void close();
 }
 ```
@@ -121,6 +123,8 @@ public class DocumentAnalyzer implements AutoCloseable {
     public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
     public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
+    public BracketPairResult analyzeBracketPairs();
+    public BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange);
     public void close();
 }
 ```
@@ -129,6 +133,7 @@ public class DocumentAnalyzer implements AutoCloseable {
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于在 `analyze()` 或 `analyzeIncremental(...)` 之后，从最近缓存结果中读取可见切片。
 `analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
+`analyzeBracketPairs(...)` 和 `analyzeBracketPairsInLineRange(...)` 会直接基于文本分析括号 token，不需要先执行高亮分析。
 
 ---
 
@@ -196,6 +201,9 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
 
                 IndentGuideResult guides = analyzer.analyzeIndentGuides();
                 IndentGuideResult visibleGuides = analyzer.analyzeIndentGuidesInLineRange(
+                        new LineRange(0, 80));
+                BracketPairResult brackets = analyzer.analyzeBracketPairs();
+                BracketPairResult visibleBrackets = analyzer.analyzeBracketPairsInLineRange(
                         new LineRange(0, 80));
             }
         }

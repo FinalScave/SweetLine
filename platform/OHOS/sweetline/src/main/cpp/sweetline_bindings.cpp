@@ -60,7 +60,7 @@ static napi_value ConvertDocumentHighlightAsIntArray(napi_env env, const Highlig
       nullptr,
       &array_buffer
   );
-  
+
   if (status != napi_ok) {
     delete[] raw_buffer;
     napi_throw_error(env, nullptr, "Failed to create external ArrayBuffer");
@@ -436,6 +436,55 @@ static napi_value ConvertIndentGuideResultAsIntArray(napi_env env, const SharedP
   return typed_array;
 }
 
+/// Convert BracketPairResult to Int32Array for ArkTS layer
+static napi_value ConvertBracketPairResultAsIntArray(napi_env env,
+                                                     const SharedPtr<BracketPairResult>& result,
+                                                     const HighlightConfig& config,
+                                                     bool slice) {
+  if (!result) {
+    napi_value empty_array;
+    napi_create_array_with_length(env, 0, &empty_array);
+    return empty_array;
+  }
+  const size_t total_count = computeBracketPairResultBufferSize(result, config, slice);
+  const size_t total_size = total_count * sizeof(int32_t);
+  int32_t* raw_buffer = new(std::nothrow) int32_t[total_count];
+  if (!raw_buffer) {
+    napi_throw_error(env, nullptr, "Failed to allocate buffer memory for BracketPairResult");
+    return nullptr;
+  }
+  if (slice) {
+    writeBracketPairResultSlice(result, raw_buffer, config);
+  } else {
+    writeBracketPairResult(result, raw_buffer, config);
+  }
+
+  napi_value array_buffer;
+  napi_status status = napi_create_external_arraybuffer(
+      env,
+      raw_buffer,
+      total_size,
+      [](napi_env, void* data, void*) {
+        delete[] static_cast<int32_t*>(data);
+      },
+      nullptr,
+      &array_buffer
+  );
+  if (status != napi_ok) {
+    delete[] raw_buffer;
+    napi_throw_error(env, nullptr, "Failed to create external ArrayBuffer for BracketPairResult");
+    return nullptr;
+  }
+
+  napi_value typed_array;
+  status = napi_create_typedarray(env, napi_int32_array, total_count, array_buffer, 0, &typed_array);
+  if (status != napi_ok) {
+    napi_throw_error(env, nullptr, "Failed to create TypedArray for BracketPairResult");
+    return nullptr;
+  }
+  return typed_array;
+}
+
 // ================================================ TextAnalyzer ====================================================
 
 /// Destroy the plain text highlight analyzer
@@ -511,6 +560,25 @@ static napi_value TextAnalyzer_AnalyzeIndentGuides(napi_env env, napi_callback_i
   return ConvertIndentGuideResultAsIntArray(env, result);
 }
 
+/// Perform bracket pair analysis on plain text
+/// args: [handle, text]
+static napi_value TextAnalyzer_AnalyzeBracketPairs(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<TextAnalyzer> analyzer = getNapiCPtrHolderValue<TextAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  U8String text;
+  if (!getStdStringFromNapiValue(env, args[1], text)) {
+    return getNapiUndefined(env);
+  }
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs(text);
+  return ConvertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), false);
+}
+
 // ================================================ DocumentAnalyzer ====================================================
 
 /// Destroy the document highlight analyzer
@@ -528,7 +596,7 @@ static napi_value DocumentAnalyzer_Analyze(napi_env env, napi_callback_info info
   size_t argc = 1;
   napi_value args[1] = {nullptr};
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-  
+
   SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
   if (analyzer == nullptr) {
     return getNapiUndefined(env);
@@ -688,6 +756,39 @@ static napi_value DocumentAnalyzer_AnalyzeIndentGuidesInLineRange(napi_env env, 
   LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuidesInLineRange(visible_range);
   return ConvertIndentGuideResultAsIntArray(env, result);
+}
+
+/// Perform bracket pair analysis on the managed document
+static napi_value DocumentAnalyzer_AnalyzeBracketPairs(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs();
+  return ConvertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), false);
+}
+
+/// Perform bracket pair analysis for the requested visible line range
+/// args: [handle, visibleStartLine, visibleLineCount]
+static napi_value DocumentAnalyzer_AnalyzeBracketPairsInLineRange(napi_env env, napi_callback_info info) {
+  size_t argc = 3;
+  napi_value args[3] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  SharedPtr<DocumentAnalyzer> analyzer = getNapiCPtrHolderValue<DocumentAnalyzer>(env, args[0]);
+  if (analyzer == nullptr) {
+    return getNapiUndefined(env);
+  }
+  int32_t visible_start_line = 0, visible_line_count = 0;
+  napi_get_value_int32(env, args[1], &visible_start_line);
+  napi_get_value_int32(env, args[2], &visible_line_count);
+  LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairsInLineRange(visible_range);
+  return ConvertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), true);
 }
 
 /// Get the managed document
@@ -948,6 +1049,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"TextAnalyzer_AnalyzeText", nullptr, TextAnalyzer_AnalyzeText, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"TextAnalyzer_AnalyzeLine", nullptr, TextAnalyzer_AnalyzeLine, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"TextAnalyzer_AnalyzeIndentGuides", nullptr, TextAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"TextAnalyzer_AnalyzeBracketPairs", nullptr, TextAnalyzer_AnalyzeBracketPairs, nullptr, nullptr, nullptr, napi_default, nullptr},
     // DocumentAnalyzer
     {"DocumentAnalyzer_Delete", nullptr, DocumentAnalyzer_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_Analyze", nullptr, DocumentAnalyzer_Analyze, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -958,6 +1060,8 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"DocumentAnalyzer_GetHighlightSlice", nullptr, DocumentAnalyzer_GetHighlightSlice, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeIndentGuides", nullptr, DocumentAnalyzer_AnalyzeIndentGuides, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_AnalyzeIndentGuidesInLineRange", nullptr, DocumentAnalyzer_AnalyzeIndentGuidesInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeBracketPairs", nullptr, DocumentAnalyzer_AnalyzeBracketPairs, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"DocumentAnalyzer_AnalyzeBracketPairsInLineRange", nullptr, DocumentAnalyzer_AnalyzeBracketPairsInLineRange, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"DocumentAnalyzer_GetDocument", nullptr, DocumentAnalyzer_GetDocument, nullptr, nullptr, nullptr, napi_default, nullptr},
     // HighlightEngine
     {"HighlightEngine_Create", nullptr, HighlightEngine_Create, nullptr, nullptr, nullptr, napi_default, nullptr},

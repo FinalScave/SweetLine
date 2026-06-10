@@ -410,5 +410,12 @@
       { "kind": "word", "start": "case", "end": "endcase" },
       { "kind": "word", "start": "generate", "end": "endgenerate" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

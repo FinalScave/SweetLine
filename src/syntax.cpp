@@ -26,7 +26,7 @@ namespace NS_SWEETLINE {
       throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.rules[].kind");
     }
 
-    ScopeSkipKind parseScopeSkipKind(const U8String& kind) {
+    ScopeSkipKind parseScopeSkipKind(const U8String& kind, const U8String& property_name) {
       if (kind == "lineComment") {
         return ScopeSkipKind::LINE_COMMENT;
       }
@@ -36,7 +36,60 @@ namespace NS_SWEETLINE {
       if (kind == "string") {
         return ScopeSkipKind::STRING;
       }
-      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].kind");
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, property_name);
+    }
+
+    ScopeSkipRule parseSkipRuleJson(const nlohmann::json& skip_json, const U8String& path, int32_t rule_id) {
+      if (!skip_json.is_object()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path);
+      }
+      if (!skip_json.contains("kind")) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, path + ".kind");
+      }
+      if (!skip_json["kind"].is_string()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".kind");
+      }
+      if (!skip_json.contains("start")) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, path + ".start");
+      }
+      if (!skip_json["start"].is_string()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".start");
+      }
+
+      ScopeSkipRule skip_rule;
+      skip_rule.kind = parseScopeSkipKind(skip_json["kind"], path + ".kind");
+      skip_rule.start = skip_json["start"];
+      if (skip_rule.start.empty()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".start");
+      }
+      if (skip_json.contains("end")) {
+        if (!skip_json["end"].is_string()) {
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".end");
+        }
+        skip_rule.end = skip_json["end"];
+      } else if (skip_rule.kind == ScopeSkipKind::STRING) {
+        skip_rule.end = skip_rule.start;
+      }
+      if (skip_rule.kind != ScopeSkipKind::LINE_COMMENT && skip_rule.end.empty()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, path + ".end");
+      }
+      if (skip_json.contains("escape")) {
+        if (!skip_json["escape"].is_string()) {
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".escape");
+        }
+        skip_rule.escape = skip_json["escape"];
+      }
+      if (skip_json.contains("multiLine")) {
+        if (!skip_json["multiLine"].is_boolean()) {
+          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, path + ".multiLine");
+        }
+        skip_rule.multi_line = skip_json["multiLine"];
+      }
+      if (skip_rule.kind == ScopeSkipKind::BLOCK_COMMENT) {
+        skip_rule.multi_line = true;
+      }
+      skip_rule.rule_id = rule_id;
+      return skip_rule;
     }
 
     OnigRegex compileRegexOrThrow(const U8String& pattern_text, const U8String& error_context) {
@@ -317,8 +370,9 @@ namespace NS_SWEETLINE {
     for (std::pair<const int32_t, StateRule>& pair : syntax_rule->state_rules_map) {
       compileStatePattern(pair.second);
     }
-    // Parse scope rules for indent guides
+    // Parse structure rules after state compilation.
     parseScopeRules(syntax_rule, root);
+    parseBracketRules(syntax_rule, root);
 #ifdef SWEETLINE_DEBUG
     //syntax_rule->dump();
 #endif
@@ -791,56 +845,7 @@ namespace NS_SWEETLINE {
       }
       int32_t skip_id_counter = 0;
       for (const nlohmann::json& skip_json : scope_rules_json["skips"]) {
-        if (!skip_json.is_object()) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[]");
-        }
-        if (!skip_json.contains("kind")) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "scopeRules.skips[].kind");
-        }
-        if (!skip_json["kind"].is_string()) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].kind");
-        }
-        if (!skip_json.contains("start")) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "scopeRules.skips[].start");
-        }
-        if (!skip_json["start"].is_string()) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].start");
-        }
-
-        ScopeSkipRule skip_rule;
-        skip_rule.kind = parseScopeSkipKind(skip_json["kind"]);
-        skip_rule.start = skip_json["start"];
-        if (skip_rule.start.empty()) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].start");
-        }
-        if (skip_json.contains("end")) {
-          if (!skip_json["end"].is_string()) {
-            throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].end");
-          }
-          skip_rule.end = skip_json["end"];
-        } else if (skip_rule.kind == ScopeSkipKind::STRING) {
-          skip_rule.end = skip_rule.start;
-        }
-        if (skip_rule.kind != ScopeSkipKind::LINE_COMMENT && skip_rule.end.empty()) {
-          throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "scopeRules.skips[].end");
-        }
-        if (skip_json.contains("escape")) {
-          if (!skip_json["escape"].is_string()) {
-            throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].escape");
-          }
-          skip_rule.escape = skip_json["escape"];
-        }
-        if (skip_json.contains("multiLine")) {
-          if (!skip_json["multiLine"].is_boolean()) {
-            throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "scopeRules.skips[].multiLine");
-          }
-          skip_rule.multi_line = skip_json["multiLine"];
-        }
-        if (skip_rule.kind == ScopeSkipKind::BLOCK_COMMENT) {
-          skip_rule.multi_line = true;
-        }
-        skip_rule.rule_id = skip_id_counter++;
-        rule->scope_skip_rules.push_back(std::move(skip_rule));
+        rule->scope_skip_rules.push_back(parseSkipRuleJson(skip_json, "scopeRules.skips[]", skip_id_counter++));
       }
     }
 
@@ -901,6 +906,79 @@ namespace NS_SWEETLINE {
       scope_rule.rule_id = rule_id_counter;
       rule->scope_rules.push_back(std::move(scope_rule));
       rule_id_counter++;
+    }
+  }
+
+  void SyntaxRuleCompiler::parseBracketRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root) {
+    if (!root.contains("bracketRules")) {
+      return;
+    }
+    const nlohmann::json& bracket_rules_json = root["bracketRules"];
+    if (!bracket_rules_json.is_object()) {
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules");
+    }
+
+    bool inherit_scope_skips = true;
+    if (bracket_rules_json.contains("inheritScopeSkips")) {
+      if (!bracket_rules_json["inheritScopeSkips"].is_boolean()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.inheritScopeSkips");
+      }
+      inherit_scope_skips = bracket_rules_json["inheritScopeSkips"];
+    }
+
+    int32_t skip_id_counter = 0;
+    if (inherit_scope_skips) {
+      for (const ScopeSkipRule& skip_rule : rule->scope_skip_rules) {
+        ScopeSkipRule inherited_rule = skip_rule;
+        inherited_rule.rule_id = skip_id_counter++;
+        rule->bracket_skip_rules.push_back(std::move(inherited_rule));
+      }
+    }
+    if (bracket_rules_json.contains("skips")) {
+      if (!bracket_rules_json["skips"].is_array()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.skips");
+      }
+      for (const nlohmann::json& skip_json : bracket_rules_json["skips"]) {
+        rule->bracket_skip_rules.push_back(parseSkipRuleJson(skip_json, "bracketRules.skips[]", skip_id_counter++));
+      }
+    }
+
+    if (!bracket_rules_json.contains("pairs")) {
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "bracketRules.pairs");
+    }
+    if (!bracket_rules_json["pairs"].is_array() || bracket_rules_json["pairs"].empty()) {
+      throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs");
+    }
+
+    int32_t rule_id_counter = 0;
+    for (const nlohmann::json& pair_json : bracket_rules_json["pairs"]) {
+      if (!pair_json.is_object()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs[]");
+      }
+      if (!pair_json.contains("start")) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "bracketRules.pairs[].start");
+      }
+      if (!pair_json["start"].is_string()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs[].start");
+      }
+      if (!pair_json.contains("end")) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_MISSED, "bracketRules.pairs[].end");
+      }
+      if (!pair_json["end"].is_string()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs[].end");
+      }
+
+      BracketRule bracket_rule;
+      bracket_rule.start = pair_json["start"];
+      bracket_rule.end = pair_json["end"];
+      if (bracket_rule.start.empty()) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs[].start");
+      }
+      if (bracket_rule.end.empty() || bracket_rule.start == bracket_rule.end) {
+        throw SyntaxCompileError(SyntaxCompileError::ERR_JSON_PROPERTY_INVALID, "bracketRules.pairs[].end");
+      }
+      bracket_rule.rule_id = rule_id_counter++;
+      rule->bracket_rules.push_back(std::move(bracket_rule));
     }
   }
 

@@ -180,6 +180,65 @@ final class _BufferParser {
     return result;
   }
 
+  static BracketPairResult readBracketPairResult(
+    ffi.Pointer<ffi.Int32> bufferPtr,
+  ) {
+    if (bufferPtr == ffi.nullptr) {
+      return BracketPairResult();
+    }
+
+    final flags = _readInt(bufferPtr, 0);
+    final stride = _clampNonNegative(_readInt(bufferPtr, 1));
+    final lineCount = _clampNonNegative(_readInt(bufferPtr, 2));
+    final hasStartIndex = _flagsHasStartIndex(flags);
+    if (!_isValidBracketTokenStride(stride, hasStartIndex)) {
+      return BracketPairResult();
+    }
+
+    final parsed = _readBracketLines(
+      bufferPtr,
+      index: 3,
+      startLine: 0,
+      lineCount: lineCount,
+      hasStartIndex: hasStartIndex,
+    );
+    return BracketPairResult(totalLineCount: lineCount, lines: parsed.lines);
+  }
+
+  static BracketPairResult readBracketPairResultSlice(
+    ffi.Pointer<ffi.Int32> bufferPtr,
+  ) {
+    if (bufferPtr == ffi.nullptr) {
+      return BracketPairResult();
+    }
+
+    final flags = _readInt(bufferPtr, 0);
+    final stride = _clampNonNegative(_readInt(bufferPtr, 1));
+    final startLine = _readInt(bufferPtr, 2);
+    final totalLineCount = _readInt(bufferPtr, 3);
+    final lineCount = _clampNonNegative(_readInt(bufferPtr, 4));
+    final hasStartIndex = _flagsHasStartIndex(flags);
+    if (!_isValidBracketTokenStride(stride, hasStartIndex)) {
+      return BracketPairResult(
+        startLine: startLine,
+        totalLineCount: totalLineCount,
+      );
+    }
+
+    final parsed = _readBracketLines(
+      bufferPtr,
+      index: 5,
+      startLine: startLine,
+      lineCount: lineCount,
+      hasStartIndex: hasStartIndex,
+    );
+    return BracketPairResult(
+      startLine: startLine,
+      totalLineCount: totalLineCount,
+      lines: parsed.lines,
+    );
+  }
+
   static ({TokenSpan span, int nextIndex}) _readTokenSpan(
     ffi.Pointer<ffi.Int32> bufferPtr, {
     required int index,
@@ -210,5 +269,70 @@ final class _BufferParser {
       span: TokenSpan.styleId(range, _readInt(bufferPtr, index++)),
       nextIndex: index,
     );
+  }
+
+  static ({List<LineBracketPairs> lines, int nextIndex}) _readBracketLines(
+    ffi.Pointer<ffi.Int32> bufferPtr, {
+    required int index,
+    required int startLine,
+    required int lineCount,
+    required bool hasStartIndex,
+  }) {
+    final lines = <LineBracketPairs>[];
+    for (var i = 0; i < lineCount; i++) {
+      final line = startLine + i;
+      final tokenCount = _clampNonNegative(_readInt(bufferPtr, index++));
+      final lineResult = LineBracketPairs();
+      lines.add(lineResult);
+      for (var token = 0; token < tokenCount; token++) {
+        final column = _readInt(bufferPtr, index++);
+        final length = _readInt(bufferPtr, index++);
+        final tokenStartIndex = hasStartIndex
+            ? _readInt(bufferPtr, index++)
+            : 0;
+        final depth = _readInt(bufferPtr, index++);
+        final kind = _readInt(bufferPtr, index++);
+        final matchState = _readInt(bufferPtr, index++);
+        final partnerLine = _readInt(bufferPtr, index++);
+        final partnerColumn = _readInt(bufferPtr, index++);
+        final partnerLength = _readInt(bufferPtr, index++);
+        final partnerStartIndex = hasStartIndex
+            ? _readInt(bufferPtr, index++)
+            : 0;
+        final range = TextRange(
+          TextPosition(line, column, tokenStartIndex),
+          TextPosition(
+            line,
+            column + length,
+            hasStartIndex ? tokenStartIndex + length : 0,
+          ),
+        );
+        TextRange? partnerRange;
+        if (partnerLine >= 0 && partnerColumn >= 0 && partnerLength >= 0) {
+          partnerRange = TextRange(
+            TextPosition(partnerLine, partnerColumn, partnerStartIndex),
+            TextPosition(
+              partnerLine,
+              partnerColumn + partnerLength,
+              hasStartIndex ? partnerStartIndex + partnerLength : 0,
+            ),
+          );
+        }
+        lineResult.tokens.add(
+          BracketToken(
+            range: range,
+            depth: depth,
+            kind: kind == 1 ? BracketTokenKind.close : BracketTokenKind.open,
+            matchState: switch (matchState) {
+              0 => BracketMatchState.matched,
+              1 => BracketMatchState.unmatched,
+              _ => BracketMatchState.unknown,
+            },
+            partnerRange: partnerRange,
+          ),
+        );
+      }
+    }
+    return (lines: lines, nextIndex: index);
   }
 }

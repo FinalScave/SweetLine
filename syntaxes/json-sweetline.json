@@ -68,5 +68,16 @@
         "style": "comment"
       }
     ]
+  },
+  "bracketRules": {
+    "skips": [
+      { "kind": "lineComment", "start": "//" },
+      { "kind": "blockComment", "start": "/*", "end": "*/" },
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "pairs": [
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

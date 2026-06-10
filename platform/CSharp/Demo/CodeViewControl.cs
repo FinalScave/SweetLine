@@ -14,7 +14,17 @@ internal sealed class CodeViewControl : Control
     private string? _sourceCode;
     private DocumentHighlight? _highlight;
     private IndentGuideResult? _indentGuides;
+    private BracketPairResult? _bracketPairs;
     private HighlightTheme? _theme;
+    private static readonly Color[] BracketPalette =
+    [
+        Color.FromArgb(unchecked((int)0xFF7DD3FC)),
+        Color.FromArgb(unchecked((int)0xFFF9A8D4)),
+        Color.FromArgb(unchecked((int)0xFFFDE047)),
+        Color.FromArgb(unchecked((int)0xFF86EFAC)),
+        Color.FromArgb(unchecked((int)0xFFC4B5FD)),
+        Color.FromArgb(unchecked((int)0xFFFDBA74))
+    ];
 
     public CodeViewControl()
     {
@@ -35,11 +45,12 @@ internal sealed class CodeViewControl : Control
         Invalidate();
     }
 
-    public void SetHighlightData(string sourceCode, DocumentHighlight highlight, IndentGuideResult indentGuides)
+    public void SetHighlightData(string sourceCode, DocumentHighlight highlight, IndentGuideResult indentGuides, BracketPairResult bracketPairs)
     {
         _sourceCode = sourceCode;
         _highlight = highlight;
         _indentGuides = indentGuides;
+        _bracketPairs = bracketPairs;
         UpdateCanvasSize();
         Invalidate();
     }
@@ -112,10 +123,12 @@ internal sealed class CodeViewControl : Control
             if (!lineMap.TryGetValue(lineNum, out LineHighlight? lineHighlight))
             {
                 DrawText(g, lineText, _codeFont, textColor, codeX, y);
+                DrawBracketTokens(g, lineText, lineNum, currentTheme, codeX, y);
                 continue;
             }
 
             DrawHighlightedLine(g, lineText, lineHighlight, currentTheme, textColor, codeX, y, lineHeight);
+            DrawBracketTokens(g, lineText, lineNum, currentTheme, codeX, y);
         }
     }
 
@@ -278,6 +291,56 @@ internal sealed class CodeViewControl : Control
         {
             DrawText(g, lineText[lastCol..], _codeFont, defaultColor, x, lineTop);
         }
+    }
+
+    private void DrawBracketTokens(Graphics g, string lineText, int lineNum, HighlightTheme theme, int codeX, int lineTop)
+    {
+        LineBracketPairs? linePairs = GetBracketLine(lineNum);
+        if (linePairs is null || linePairs.Tokens.Count == 0)
+        {
+            return;
+        }
+
+        foreach (BracketToken token in linePairs.Tokens)
+        {
+            int start = Math.Clamp(token.Range.Start.Column, 0, lineText.Length);
+            int end = Math.Clamp(token.Range.End.Column, start, lineText.Length);
+            if (end <= start)
+            {
+                continue;
+            }
+
+            string tokenText = lineText[start..end];
+            int x = codeX + MeasureTextWidth(g, lineText[..start], _codeFont);
+            DrawText(g, tokenText, _codeFont, BracketColor(token, theme), x, lineTop);
+        }
+    }
+
+    private LineBracketPairs? GetBracketLine(int lineNum)
+    {
+        if (_bracketPairs is null)
+        {
+            return null;
+        }
+
+        int lineIndex = lineNum - _bracketPairs.StartLine;
+        return lineIndex >= 0 && lineIndex < _bracketPairs.Lines.Count
+            ? _bracketPairs.Lines[lineIndex]
+            : null;
+    }
+
+    private static Color BracketColor(BracketToken token, HighlightTheme theme)
+    {
+        if (token.MatchState == BracketMatchState.Unmatched)
+        {
+            return Color.FromArgb(unchecked((int)0xFFFF6B6B));
+        }
+
+        int colorIndex = ((token.Depth % BracketPalette.Length) + BracketPalette.Length) % BracketPalette.Length;
+        Color color = BracketPalette[colorIndex];
+        return token.MatchState == BracketMatchState.Unknown
+            ? BlendColor(color, ArgbToColor(theme.BackgroundColor), 0.68f)
+            : color;
     }
 
     private static void DrawIndentGuides(

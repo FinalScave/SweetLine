@@ -27,6 +27,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 - Incremental update algorithm that only reanalyzes changed portions, ideal for real-time editor highlighting
 - Multi-line state preservation to avoid full document reanalysis
 - Scope-based indent guides can be analyzed for the full document or a visible line range without running highlighting first
+- Bracket pairs can be analyzed independently for rainbow bracket rendering and partner lookup
 
 ### High Accuracy
 - Finite State Machine (FSM) based model supporting complex syntax rule nesting
@@ -140,6 +141,9 @@ auto updated_slice = analyzer->analyzeIncrementalInLineRange(change_range, new_t
 
 // Indent guides are independent from highlighting and can be sliced to the viewport
 auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible_range);
+
+// Bracket pairs are also independent from highlighting and can be sliced to the viewport
+auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible_range);
 ```
 
 Use `analyzeLineRange()` when the renderer needs a visible slice and wants SweetLine to analyze enough lines from the current document state first.

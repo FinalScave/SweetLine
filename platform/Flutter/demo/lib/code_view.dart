@@ -12,6 +12,7 @@ class CodeView extends StatefulWidget {
     required this.sourceCode,
     required this.highlight,
     required this.indentGuides,
+    required this.bracketPairs,
     this.placeholder = 'Select a file to highlight',
   });
 
@@ -19,6 +20,7 @@ class CodeView extends StatefulWidget {
   final String sourceCode;
   final DocumentHighlight? highlight;
   final IndentGuideResult? indentGuides;
+  final BracketPairResult? bracketPairs;
   final String placeholder;
 
   @override
@@ -72,6 +74,7 @@ class _CodeViewState extends State<CodeView> {
           sourceCode: widget.sourceCode,
           highlight: widget.highlight!,
           indentGuides: widget.indentGuides,
+          bracketPairs: widget.bracketPairs,
           metrics: metrics,
         );
 
@@ -185,6 +188,7 @@ class _CodeViewPainter extends CustomPainter {
     required this.sourceCode,
     required this.highlight,
     required this.indentGuides,
+    required this.bracketPairs,
     required this.metrics,
   });
 
@@ -192,7 +196,16 @@ class _CodeViewPainter extends CustomPainter {
   final String sourceCode;
   final DocumentHighlight highlight;
   final IndentGuideResult? indentGuides;
+  final BracketPairResult? bracketPairs;
   final _CodeViewMetrics metrics;
+  static const List<Color> _bracketPalette = <Color>[
+    Color(0xFF7DD3FC),
+    Color(0xFFF9A8D4),
+    Color(0xFFFDE047),
+    Color(0xFF86EFAC),
+    Color(0xFFC4B5FD),
+    Color(0xFFFDBA74),
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -218,6 +231,7 @@ class _CodeViewPainter extends CustomPainter {
     _drawIndentGuides(canvas, codeOriginX);
     _drawLineNumbers(canvas);
     _drawCode(canvas, codeOriginX);
+    _drawBracketPairs(canvas, codeOriginX);
   }
 
   void _drawLineNumbers(Canvas canvas) {
@@ -328,6 +342,55 @@ class _CodeViewPainter extends CustomPainter {
     }
   }
 
+  void _drawBracketPairs(Canvas canvas, double codeOriginX) {
+    final lines = bracketPairs?.lines;
+    if (lines == null || lines.isEmpty) {
+      return;
+    }
+
+    for (var lineIndex = 0; lineIndex < metrics.lines.length; lineIndex++) {
+      final linePairs = lineIndex < lines.length ? lines[lineIndex] : null;
+      final tokens = linePairs?.tokens;
+      if (tokens == null || tokens.isEmpty) {
+        continue;
+      }
+
+      final lineText = metrics.lines[lineIndex];
+      final y = metrics.verticalPadding + (lineIndex * metrics.lineHeight);
+      for (final token in tokens) {
+        final start = token.range.start.column
+            .clamp(0, lineText.length)
+            .toInt();
+        final end = token.range.end.column
+            .clamp(start, lineText.length)
+            .toInt();
+        if (end <= start) {
+          continue;
+        }
+        final tokenText = lineText.substring(start, end);
+        final x = codeOriginX + (start * metrics.charWidth);
+        _paintTextSegment(
+          canvas,
+          tokenText,
+          x,
+          y,
+          metrics.textStyle.copyWith(color: _bracketColor(token)),
+        );
+      }
+    }
+  }
+
+  Color _bracketColor(BracketToken token) {
+    if (token.matchState == BracketMatchState.unmatched) {
+      return const Color(0xFFFF6B6B);
+    }
+    final color = _bracketPalette[token.depth.abs() % _bracketPalette.length];
+    if (token.matchState == BracketMatchState.unknown) {
+      return color.withAlpha(170);
+    }
+    return color;
+  }
+
   TextStyle _segmentTextStyle(TokenSpan span) {
     if (span.inlineStyle != null) {
       final inlineStyle = span.inlineStyle!;
@@ -407,6 +470,7 @@ class _CodeViewPainter extends CustomPainter {
     return oldDelegate.theme != theme ||
         oldDelegate.sourceCode != sourceCode ||
         oldDelegate.highlight != highlight ||
-        oldDelegate.indentGuides != indentGuides;
+        oldDelegate.indentGuides != indentGuides ||
+        oldDelegate.bracketPairs != bracketPairs;
   }
 }

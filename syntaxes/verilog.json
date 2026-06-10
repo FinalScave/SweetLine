@@ -629,5 +629,12 @@
       { "kind": "word", "start": "table", "end": "endtable" },
       { "kind": "word", "start": "fork", "end": "join" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

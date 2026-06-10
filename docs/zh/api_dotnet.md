@@ -33,6 +33,7 @@ dotnet add package SweetLine --version 1.2.4
 - `TextAnalyzer`：纯文本全量/单行分析
 - `DocumentAnalyzer`：文档全量与增量分析
 - `Document`：用于增量场景的托管文档句柄
+- `BracketPairResult`：按行分组的括号 token，可用于彩虹括号渲染和匹配对象查找
 - `SyntaxCompileError`：语法编译失败异常
 
 ## 基础用法
@@ -59,6 +60,9 @@ if (analyzer != null)
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
     IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
         new LineRange(startLine: 0, lineCount: 120));
+    BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
+    BracketPairResult visibleBrackets = analyzer.AnalyzeBracketPairsInLineRange(
+        new LineRange(startLine: 0, lineCount: 120));
 }
 ```
 
@@ -68,6 +72,7 @@ if (analyzer != null)
 `AnalyzeIncrementalInLineRange(...)` 会应用补丁并立即返回请求的切片。
 `GetHighlightSlice(...)` 则在 `Analyze()` 或 `AnalyzeIncremental(...)` 之后，从最新缓存结果中读取可见切片。
 `AnalyzeIndentGuides(...)` 和 `AnalyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
+`AnalyzeBracketPairs(...)` 和 `AnalyzeBracketPairsInLineRange(...)` 会直接基于文本分析括号 token，不需要先执行高亮分析。
 
 ```csharp
 var changeRange = new TextRange(

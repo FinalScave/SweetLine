@@ -26,6 +26,11 @@ bool _isValidSpanStride(int stride, bool hasStartIndex, bool inlineStyle) {
   return stride == expected;
 }
 
+bool _isValidBracketTokenStride(int stride, bool hasStartIndex) {
+  final expected = 8 + (hasStartIndex ? 2 : 0);
+  return stride == expected;
+}
+
 int _mapErrorCode(bindings.sl_error code) {
   return code.value;
 }

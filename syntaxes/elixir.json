@@ -402,5 +402,12 @@
       { "kind": "word", "start": "do", "end": "end", "branches": ["else","catch","rescue","after"] },
       { "kind": "word", "start": "fn", "end": "end" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

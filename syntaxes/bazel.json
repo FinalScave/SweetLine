@@ -229,5 +229,12 @@
     "rules": [
       { "kind": "indentStart", "start": ":" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

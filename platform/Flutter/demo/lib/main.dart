@@ -52,6 +52,7 @@ class _DemoPageState extends State<DemoPage> {
   String _sourceCode = '';
   DocumentHighlight? _highlight;
   IndentGuideResult? _indentGuides;
+  BracketPairResult? _bracketPairs;
 
   @override
   void initState() {
@@ -108,6 +109,7 @@ class _DemoPageState extends State<DemoPage> {
         final analyzeWatch = Stopwatch()..start();
         final highlight = analyzer.analyze();
         final indentGuides = analyzer.analyzeIndentGuides();
+        final bracketPairs = analyzer.analyzeBracketPairs();
         analyzeWatch.stop();
 
         if (!mounted) {
@@ -118,6 +120,7 @@ class _DemoPageState extends State<DemoPage> {
           _sourceCode = sourceCode;
           _highlight = highlight;
           _indentGuides = indentGuides;
+          _bracketPairs = bracketPairs;
           _isLoading = false;
           _statusText = <String>[
             ...?_warmupSummary == null ? null : <String>[_warmupSummary!],
@@ -283,6 +286,7 @@ class _DemoPageState extends State<DemoPage> {
                           sourceCode: _sourceCode,
                           highlight: _highlight,
                           indentGuides: _indentGuides,
+                          bracketPairs: _bracketPairs,
                           placeholder: _isLoading
                               ? 'Analyzing...'
                               : (_error ?? 'Select a file'),

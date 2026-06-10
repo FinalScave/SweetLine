@@ -9,13 +9,14 @@ It wraps the SweetLine native C API and provides a Dart-friendly API for:
 - managed document incremental analysis
 - visible-range highlight slice retrieval
 - indent guide analysis
+- bracket pair analysis
 
 ## Features
 
 - `HighlightEngine` for syntax compilation and analyzer creation
 - `TextAnalyzer` for full text and single-line analysis
 - `Document` + `DocumentAnalyzer` for incremental updates
-- `DocumentHighlight` / `DocumentHighlightSlice` / `IndentGuideResult` models
+- `DocumentHighlight` / `DocumentHighlightSlice` / `IndentGuideResult` / `BracketPairResult` models
 - optional `showIndex` support
 - optional inline-style output
 
@@ -177,6 +178,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `analyzeText(String text)`
 - `analyzeLine(String text, TextLineInfo info)`
 - `analyzeIndentGuides(String text)`
+- `analyzeBracketPairs(String text)`
 
 ### `DocumentAnalyzer`
 
@@ -187,6 +189,8 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `getHighlightSlice(LineRange visibleRange)`
 - `analyzeIndentGuides()`
 - `analyzeIndentGuidesInLineRange(LineRange visibleRange)`
+- `analyzeBracketPairs()`
+- `analyzeBracketPairsInLineRange(LineRange visibleRange)`
 
 ## Result models
 
@@ -227,6 +231,22 @@ LineScopeState.nestingLevel
 LineScopeState.scopeState
 LineScopeState.scopeColumn
 LineScopeState.indentLevel
+```
+
+### `BracketPairResult`
+
+Bracket pair analysis result:
+
+```dart
+BracketPairResult.startLine
+BracketPairResult.totalLineCount
+BracketPairResult.lines
+LineBracketPairs.tokens
+BracketToken.range
+BracketToken.depth
+BracketToken.kind
+BracketToken.matchState
+BracketToken.partnerRange
 ```
 
 ### `TokenSpan`

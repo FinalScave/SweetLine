@@ -212,6 +212,89 @@ export namespace sweetline {
   }
 
   /**
+   * Bracket token kind.
+   */
+  export class BracketTokenKind {
+    public static readonly OPEN: number = 0;
+    public static readonly CLOSE: number = 1;
+  }
+
+  /**
+   * Bracket match state.
+   */
+  export class BracketMatchState {
+    public static readonly MATCHED: number = 0;
+    public static readonly UNMATCHED: number = 1;
+    public static readonly UNKNOWN: number = 2;
+  }
+
+  /**
+   * Single bracket token.
+   */
+  export class BracketToken {
+    /**
+     * Bracket token range
+     */
+    public range: TextRange = new TextRange();
+    /**
+     * Nesting depth after opening or before closing
+     */
+    public depth: number = 0;
+    /**
+     * Token kind, see BracketTokenKind
+     */
+    public kind: number = BracketTokenKind.OPEN;
+    /**
+     * Match state, see BracketMatchState
+     */
+    public matchState: number = BracketMatchState.UNKNOWN;
+    /**
+     * Matched partner range, null when unavailable
+     */
+    public partnerRange: TextRange | null = null;
+
+    public constructor(range: TextRange = new TextRange(),
+                       depth: number = 0,
+                       kind: number = BracketTokenKind.OPEN,
+                       matchState: number = BracketMatchState.UNKNOWN,
+                       partnerRange: TextRange | null = null) {
+      this.range = range;
+      this.depth = depth;
+      this.kind = kind;
+      this.matchState = matchState;
+      this.partnerRange = partnerRange;
+    }
+  }
+
+  /**
+   * Bracket token sequence for each line.
+   */
+  export class LineBracketPairs {
+    /**
+     * Bracket token sequence
+     */
+    public tokens: Array<BracketToken> = [];
+  }
+
+  /**
+   * Bracket pair analysis result.
+   */
+  export class BracketPairResult {
+    /**
+     * Actual start line of the returned slice
+     */
+    public startLine: number = 0;
+    /**
+     * Total document line count
+     */
+    public totalLineCount: number = 0;
+    /**
+     * Bracket tokens grouped by line
+     */
+    public lines: Array<LineBracketPairs> = [];
+  }
+
+  /**
    * Line scope state for indent guide analysis
    */
   export class LineScopeState {
@@ -561,6 +644,19 @@ export namespace sweetline {
       return NativeBufferPack.readIndentGuideResult(buffer);
     }
 
+    /**
+     * Perform bracket pair analysis on a text.
+     * @param text Full text content
+     * @returns Bracket pair analysis result
+     */
+    public analyzeBracketPairs(text: string): BracketPairResult {
+      if (this.nativeHandle == 0) {
+        return new BracketPairResult();
+      }
+      let buffer: Int32Array = lib.TextAnalyzer_AnalyzeBracketPairs(this.nativeHandle, text);
+      return NativeBufferPack.readBracketPairResult(buffer);
+    }
+
     public static __createNative(nativeHandle: number): TextAnalyzer {
       return new TextAnalyzer(nativeHandle);
     }
@@ -702,6 +798,34 @@ export namespace sweetline {
         visibleRange.startLine, visibleRange.lineCount
       );
       return NativeBufferPack.readIndentGuideResult(buffer);
+    }
+
+    /**
+     * Perform bracket pair analysis on the managed document
+     * @returns Bracket pair analysis result
+     */
+    public analyzeBracketPairs(): BracketPairResult {
+      if (this.nativeHandle == 0) {
+        return new BracketPairResult();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeBracketPairs(this.nativeHandle);
+      return NativeBufferPack.readBracketPairResult(buffer);
+    }
+
+    /**
+     * Perform bracket pair analysis for the specified visible line range
+     * @param visibleRange Visible line range
+     * @returns Bracket pair analysis result for the specified line range
+     */
+    public analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult {
+      if (this.nativeHandle == 0) {
+        return new BracketPairResult();
+      }
+      let buffer: Int32Array = lib.DocumentAnalyzer_AnalyzeBracketPairsInLineRange(
+        this.nativeHandle,
+        visibleRange.startLine, visibleRange.lineCount
+      );
+      return NativeBufferPack.readBracketPairResultSlice(buffer);
     }
 
     /**
@@ -1037,6 +1161,41 @@ export namespace sweetline {
       return result;
     }
 
+    static readBracketPairResult(buffer: Int32Array): BracketPairResult {
+      const result = new BracketPairResult();
+      if (!buffer || buffer.length < 3) {
+        return result;
+      }
+      const flags = buffer[0];
+      const stride = Math.max(buffer[1], 0);
+      const lineCount = Math.max(buffer[2], 0);
+      const hasStartIndex = NativeBufferPack.flagsHasStartIndex(flags);
+      if (!NativeBufferPack.isValidBracketTokenStride(stride, hasStartIndex)) {
+        return result;
+      }
+      result.totalLineCount = lineCount;
+      NativeBufferPack.readBracketLines(buffer, 3, 0, lineCount, hasStartIndex, result);
+      return result;
+    }
+
+    static readBracketPairResultSlice(buffer: Int32Array): BracketPairResult {
+      const result = new BracketPairResult();
+      if (!buffer || buffer.length < 5) {
+        return result;
+      }
+      const flags = buffer[0];
+      const stride = Math.max(buffer[1], 0);
+      result.startLine = buffer[2];
+      result.totalLineCount = buffer[3];
+      const lineCount = Math.max(buffer[4], 0);
+      const hasStartIndex = NativeBufferPack.flagsHasStartIndex(flags);
+      if (!NativeBufferPack.isValidBracketTokenStride(stride, hasStartIndex)) {
+        return result;
+      }
+      NativeBufferPack.readBracketLines(buffer, 5, result.startLine, lineCount, hasStartIndex, result);
+      return result;
+    }
+
     static readIndentGuideResult(buffer: Int32Array): IndentGuideResult {
       const result = new IndentGuideResult();
       if (!buffer || buffer.length < 3) {
@@ -1075,8 +1234,64 @@ export namespace sweetline {
       return result;
     }
 
+    private static readBracketLines(buffer: Int32Array,
+                                    startIndex: number,
+                                    startLine: number,
+                                    lineCount: number,
+                                    hasStartIndex: boolean,
+                                    result: BracketPairResult): void {
+      const tokenFieldCount = 8 + (hasStartIndex ? 2 : 0);
+      let idx = startIndex;
+      for (let i = 0; i < lineCount; i++) {
+        let lineResult = new LineBracketPairs();
+        result.lines.push(lineResult);
+        if (idx >= buffer.length) {
+          return;
+        }
+        const tokenCount = Math.max(buffer[idx++], 0);
+        const line = startLine + i;
+        for (let t = 0; t < tokenCount; t++) {
+          if (idx + tokenFieldCount > buffer.length) {
+            return;
+          }
+          let column = buffer[idx++];
+          let length = buffer[idx++];
+          let tokenStartIndex = hasStartIndex ? buffer[idx++] : 0;
+          let depth = buffer[idx++];
+          let kind = buffer[idx++];
+          let matchState = buffer[idx++];
+          let partnerLine = buffer[idx++];
+          let partnerColumn = buffer[idx++];
+          let partnerLength = buffer[idx++];
+          let partnerStartIndex = hasStartIndex ? buffer[idx++] : 0;
+
+          let range = new TextRange(
+            new TextPosition(line, column, tokenStartIndex),
+            new TextPosition(line, column + length, hasStartIndex ? tokenStartIndex + length : 0)
+          );
+          let partnerRange: TextRange | null = null;
+          if (partnerLine >= 0 && partnerColumn >= 0 && partnerLength >= 0) {
+            partnerRange = new TextRange(
+              new TextPosition(partnerLine, partnerColumn, partnerStartIndex),
+              new TextPosition(
+                partnerLine,
+                partnerColumn + partnerLength,
+                hasStartIndex ? partnerStartIndex + partnerLength : 0
+              )
+            );
+          }
+          lineResult.tokens.push(new BracketToken(range, depth, kind, matchState, partnerRange));
+        }
+      }
+    }
+
     private static isValidSpanStride(stride: number, hasStartIndex: boolean, inlineStyleMode: boolean): boolean {
       const expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyleMode ? 3 : 1);
+      return stride == expected;
+    }
+
+    private static isValidBracketTokenStride(stride: number, hasStartIndex: boolean): boolean {
+      const expected = 8 + (hasStartIndex ? 2 : 0);
       return stride == expected;
     }
 

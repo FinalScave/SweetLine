@@ -397,5 +397,12 @@
     "rules": [
       { "kind": "delimiter", "start": "{", "end": "}", "branches": ["else","elseif","catch","finally"] }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

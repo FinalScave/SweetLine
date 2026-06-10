@@ -16,6 +16,7 @@ SweetLine uses JSON to define syntax highlighting rules. Each JSON file describe
 - [SubStates](#substates)
 - [onLineEndState - Line End State](#onlineendstate---line-end-state)
 - [scopeRules - Scope Rules](#scoperules---scope-rules)
+- [bracketRules - Bracket Pair Rules](#bracketrules---bracket-pair-rules)
 - [Inline Style Mode](#inline-style-mode)
 - [Complete Example](#complete-example)
 - [Best Practices](#best-practices)
@@ -42,6 +43,9 @@ A complete syntax rule JSON file has the following structure:
   "scopeRules": {
     "skips": [ ... ],
     "rules": [ ... ]
+  },
+  "bracketRules": {
+    "pairs": [ ... ]
   }
 }
 ```
@@ -64,6 +68,7 @@ A complete syntax rule JSON file has the following structure:
 | `styles` | array | No | Inline style definitions (only for `inline_style` mode) |
 | `states` | object | Yes | State machine definitions containing all states and their matching rules |
 | `scopeRules` | object | No | Scope analysis rules used by indent guides |
+| `bracketRules` | object | No | Bracket pair rules used by rainbow bracket and bracket matching analysis |
 
 ---
 
@@ -517,6 +522,40 @@ This is a common Python pattern: after `:`, the following indented block is trea
 
 ---
 
+## bracketRules - Bracket Pair Rules
+
+`bracketRules` defines literal bracket pairs for rainbow bracket rendering and partner lookup. It scans raw text directly and does not depend on highlight spans or style IDs.
+
+```json
+{
+  "bracketRules": {
+    "inheritScopeSkips": true,
+    "skips": [
+      { "kind": "string", "start": "\"", "end": "\"", "escape": "\\" }
+    ],
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
+  }
+}
+```
+
+### Bracket Rule Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pairs` | object[] | Yes | Literal bracket pairs. The array must not be empty. |
+| `inheritScopeSkips` | boolean | No | Whether to reuse `scopeRules.skips`; defaults to `true`. |
+| `skips` | object[] | No | Additional skip rules using the same schema as `scopeRules.skips`. |
+
+Each pair requires non-empty `start` and `end` strings. `start` and `end` must be different. Longer bracket or skip markers are matched first, so multi-character markers can coexist with shorter ones.
+
+If a syntax has no `scopeRules`, define `bracketRules.skips` directly so brackets inside strings and comments are ignored. If a syntax already has complete `scopeRules.skips`, the common case is to omit `skips` and rely on the default `inheritScopeSkips: true`.
+
+---
+
 ## Inline Style Mode
 
 In `inline_style` mode, style definitions are written directly in the JSON. Highlighting results include colors and font attributes directly, without the need for external style registration.
@@ -700,6 +739,13 @@ Here is a complete simplified Java syntax rule example:
   "scopeRules": {
     "rules": [
       { "kind": "delimiter", "start": "{", "end": "}" }
+    ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
     ]
   }
 }

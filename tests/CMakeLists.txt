@@ -10,6 +10,7 @@ add_executable(${TEST_PRODUCT_NAME}
         patch_text.cpp
         highlight_test.cpp
         indent_test.cpp
+        bracket_pair_test.cpp
         syntax_test.cpp
         ${TEST_LANGUAGE_SOURCES}
 )

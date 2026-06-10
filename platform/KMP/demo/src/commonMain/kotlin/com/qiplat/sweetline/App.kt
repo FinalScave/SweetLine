@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.qiplat.sweetline.Document
+import com.qiplat.sweetline.BracketPairResult
 import com.qiplat.sweetline.DocumentHighlight
 import com.qiplat.sweetline.HighlightConfig
 import com.qiplat.sweetline.HighlightEngine
@@ -125,6 +126,7 @@ fun App() {
                         sourceCode = state.sourceCode,
                         highlight = state.highlight,
                         indentGuides = state.indentGuides,
+                        bracketPairs = state.bracketPairs,
                         placeholder = if (state.isLoading) "Analyzing..." else state.errorText ?: "Select a file",
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -348,6 +350,7 @@ private suspend fun highlightFile(
         val analyzeStart = TimeSource.Monotonic.markNow()
         val highlight = analyzer.analyze()
         val indentGuides = analyzer.analyzeIndentGuides()
+        val bracketPairs = analyzer.analyzeBracketPairs()
         val analyzeUs = analyzeStart.elapsedNow().inWholeMicroseconds
         val lineCount = sourceCode.replace("\r\n", "\n").split('\n').size
         val statusParts = listOfNotNull(
@@ -366,6 +369,7 @@ private suspend fun highlightFile(
             sourceCode = sourceCode,
             highlight = highlight,
             indentGuides = indentGuides,
+            bracketPairs = bracketPairs,
         )
     } finally {
         analyzer?.close()
@@ -407,6 +411,7 @@ private data class DemoUiState(
     val sourceCode: String,
     val highlight: DocumentHighlight?,
     val indentGuides: IndentGuideResult?,
+    val bracketPairs: BracketPairResult?,
 ) {
     companion object {
         fun initial(): DemoUiState {
@@ -419,6 +424,7 @@ private data class DemoUiState(
                 sourceCode = "",
                 highlight = null,
                 indentGuides = null,
+                bracketPairs = null,
             )
         }
     }

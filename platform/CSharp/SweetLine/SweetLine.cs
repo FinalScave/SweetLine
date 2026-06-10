@@ -346,6 +346,27 @@ public sealed class TextAnalyzer : IDisposable {
 	}
 
 	/// <summary>
+	/// Performs bracket pair analysis on text.
+	/// </summary>
+	/// <param name="text">Full text content.</param>
+	/// <returns>Bracket pair analysis result.</returns>
+	public BracketPairResult AnalyzeBracketPairs(string text) {
+		ArgumentNullException.ThrowIfNull(text);
+		EnsureOpen();
+
+		IntPtr resultPtr = SweetLineNative.TextAnalyzeBracketPairs(_handle, text);
+		if (resultPtr == IntPtr.Zero) {
+			return new BracketPairResult();
+		}
+
+		try {
+			return BufferParser.ReadBracketPairResult(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
 	/// Marks this analyzer as closed.
 	/// </summary>
 	public void Close() {
@@ -557,6 +578,46 @@ public sealed class DocumentAnalyzer : IDisposable {
 
 		try {
 			return BufferParser.ReadIndentGuideResult(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
+	/// Performs bracket pair analysis on the managed document.
+	/// </summary>
+	/// <returns>Bracket pair analysis result.</returns>
+	public BracketPairResult AnalyzeBracketPairs() {
+		EnsureOpen();
+
+		IntPtr resultPtr = SweetLineNative.DocumentAnalyzeBracketPairs(_handle);
+		if (resultPtr == IntPtr.Zero) {
+			return new BracketPairResult();
+		}
+
+		try {
+			return BufferParser.ReadBracketPairResult(resultPtr);
+		} finally {
+			SweetLineNative.FreeBuffer(resultPtr);
+		}
+	}
+
+	/// <summary>
+	/// Performs bracket pair analysis for the specified visible line range.
+	/// </summary>
+	/// <param name="visibleRange">Visible line range (<c>startLine + lineCount</c>).</param>
+	/// <returns>Bracket pair analysis result for the specified line range.</returns>
+	public BracketPairResult AnalyzeBracketPairsInLineRange(LineRange visibleRange) {
+		EnsureOpen();
+
+		int[] packedVisibleRange = [visibleRange.StartLine, visibleRange.LineCount];
+		IntPtr resultPtr = SweetLineNative.DocumentAnalyzeBracketPairsInLineRange(_handle, packedVisibleRange);
+		if (resultPtr == IntPtr.Zero) {
+			return new BracketPairResult();
+		}
+
+		try {
+			return BufferParser.ReadBracketPairResultSlice(resultPtr);
 		} finally {
 			SweetLineNative.FreeBuffer(resultPtr);
 		}
@@ -835,12 +896,99 @@ internal static class BufferParser {
 		return result;
 	}
 
+	internal static BracketPairResult ReadBracketPairResult(IntPtr bufferPtr) {
+		if (bufferPtr == IntPtr.Zero) {
+			return new BracketPairResult();
+		}
+
+		int flags = ReadInt(bufferPtr, 0);
+		int stride = Math.Max(ReadInt(bufferPtr, 1), 0);
+		int lineCount = Math.Max(ReadInt(bufferPtr, 2), 0);
+		bool hasStartIndex = FlagsHasStartIndex(flags);
+		if (!IsValidBracketTokenStride(stride, hasStartIndex)) {
+			return new BracketPairResult();
+		}
+
+		List<LineBracketPairs> lines = ReadBracketLines(bufferPtr, 3, 0, lineCount, hasStartIndex);
+		return new BracketPairResult(0, lineCount, lines);
+	}
+
+	internal static BracketPairResult ReadBracketPairResultSlice(IntPtr bufferPtr) {
+		if (bufferPtr == IntPtr.Zero) {
+			return new BracketPairResult();
+		}
+
+		int flags = ReadInt(bufferPtr, 0);
+		int stride = Math.Max(ReadInt(bufferPtr, 1), 0);
+		int startLine = ReadInt(bufferPtr, 2);
+		int totalLineCount = ReadInt(bufferPtr, 3);
+		int lineCount = Math.Max(ReadInt(bufferPtr, 4), 0);
+		bool hasStartIndex = FlagsHasStartIndex(flags);
+		if (!IsValidBracketTokenStride(stride, hasStartIndex)) {
+			return new BracketPairResult(startLine, totalLineCount);
+		}
+
+		List<LineBracketPairs> lines = ReadBracketLines(bufferPtr, 5, startLine, lineCount, hasStartIndex);
+		return new BracketPairResult(startLine, totalLineCount, lines);
+	}
+
 	private static int ReadInt(IntPtr bufferPtr, int index) {
 		return Marshal.ReadInt32(bufferPtr, index * sizeof(int));
 	}
 
+	private static List<LineBracketPairs> ReadBracketLines(
+		IntPtr bufferPtr,
+		int startIndex,
+		int startLine,
+		int lineCount,
+		bool hasStartIndex) {
+		List<LineBracketPairs> lines = new(lineCount);
+		for (int i = 0; i < lineCount; i++) {
+			lines.Add(new LineBracketPairs());
+		}
+
+		int index = startIndex;
+		for (int i = 0; i < lineCount; i++) {
+			int line = startLine + i;
+			int tokenCount = Math.Max(ReadInt(bufferPtr, index++), 0);
+			for (int t = 0; t < tokenCount; t++) {
+				int column = ReadInt(bufferPtr, index++);
+				int length = ReadInt(bufferPtr, index++);
+				int tokenStartIndex = hasStartIndex ? ReadInt(bufferPtr, index++) : 0;
+				int depth = ReadInt(bufferPtr, index++);
+				int kind = ReadInt(bufferPtr, index++);
+				int matchState = ReadInt(bufferPtr, index++);
+				int partnerLine = ReadInt(bufferPtr, index++);
+				int partnerColumn = ReadInt(bufferPtr, index++);
+				int partnerLength = ReadInt(bufferPtr, index++);
+				int partnerStartIndex = hasStartIndex ? ReadInt(bufferPtr, index++) : 0;
+
+				TextRange range = new(
+					new TextPosition(line, column, tokenStartIndex),
+					new TextPosition(line, column + length, hasStartIndex ? tokenStartIndex + length : 0));
+				TextRange? partnerRange = partnerLine >= 0 && partnerColumn >= 0 && partnerLength >= 0
+					? new TextRange(
+						new TextPosition(partnerLine, partnerColumn, partnerStartIndex),
+						new TextPosition(partnerLine, partnerColumn + partnerLength, hasStartIndex ? partnerStartIndex + partnerLength : 0))
+					: null;
+				lines[i].Tokens.Add(new BracketToken(
+					range,
+					depth,
+					(BracketTokenKind)kind,
+					(BracketMatchState)matchState,
+					partnerRange));
+			}
+		}
+		return lines;
+	}
+
 	private static bool IsValidSpanStride(int stride, bool hasStartIndex, bool inlineStyle) {
 		int expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyle ? 3 : 1);
+		return stride == expected;
+	}
+
+	private static bool IsValidBracketTokenStride(int stride, bool hasStartIndex) {
+		int expected = 8 + (hasStartIndex ? 2 : 0);
 		return stride == expected;
 	}
 

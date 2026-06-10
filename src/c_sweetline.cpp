@@ -158,6 +158,19 @@ int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_handle, con
   return buffer;
 }
 
+int32_t* sl_text_analyze_bracket_pairs(sl_analyzer_handle_t analyzer_handle, const char* text) {
+  SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, TextAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    return nullptr;
+  }
+  const HighlightConfig& config = analyzer->getHighlightConfig();
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs(text);
+  size_t total_size = computeBracketPairResultBufferSize(result, config, false);
+  int32_t* buffer = new int32_t[total_size];
+  writeBracketPairResult(result, buffer, config);
+  return buffer;
+}
+
 sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, sl_document_handle_t document_handle) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<sl_engine_handle_t, HighlightEngine>(engine_handle);
   if (engine == nullptr) {
@@ -266,6 +279,33 @@ int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t an
   size_t total_size = computeIndentGuideResultBufferSize(result);
   int32_t* buffer = new int32_t[total_size];
   writeIndentGuideResult(result, buffer);
+  return buffer;
+}
+
+int32_t* sl_document_analyze_bracket_pairs(sl_analyzer_handle_t analyzer_handle) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr) {
+    return nullptr;
+  }
+  const HighlightConfig& config = analyzer->getHighlightConfig();
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs();
+  size_t total_size = computeBracketPairResultBufferSize(result, config, false);
+  int32_t* buffer = new int32_t[total_size];
+  writeBracketPairResult(result, buffer, config);
+  return buffer;
+}
+
+int32_t* sl_document_analyze_bracket_pairs_in_line_range(sl_analyzer_handle_t analyzer_handle, int32_t* visible_range) {
+  SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  if (analyzer == nullptr || visible_range == nullptr) {
+    return nullptr;
+  }
+  LineRange range = {static_cast<size_t>(visible_range[0]), static_cast<size_t>(visible_range[1])};
+  const HighlightConfig& config = analyzer->getHighlightConfig();
+  SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairsInLineRange(range);
+  size_t total_size = computeBracketPairResultBufferSize(result, config, true);
+  int32_t* buffer = new int32_t[total_size];
+  writeBracketPairResultSlice(result, buffer, config);
   return buffer;
 }
 

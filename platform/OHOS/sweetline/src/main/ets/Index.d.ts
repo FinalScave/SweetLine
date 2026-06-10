@@ -161,6 +161,80 @@ export declare namespace sweetline {
   }
 
   /**
+   * Bracket token kind.
+   */
+  export class BracketTokenKind {
+    public static readonly OPEN: number;
+    public static readonly CLOSE: number;
+  }
+
+  /**
+   * Bracket match state.
+   */
+  export class BracketMatchState {
+    public static readonly MATCHED: number;
+    public static readonly UNMATCHED: number;
+    public static readonly UNKNOWN: number;
+  }
+
+  /**
+   * Single bracket token.
+   */
+  export class BracketToken {
+    /**
+     * Bracket token range
+     */
+    public range: TextRange;
+    /**
+     * Nesting depth after opening or before closing
+     */
+    public depth: number;
+    /**
+     * Token kind, see BracketTokenKind
+     */
+    public kind: number;
+    /**
+     * Match state, see BracketMatchState
+     */
+    public matchState: number;
+    /**
+     * Matched partner range, null when unavailable
+     */
+    public partnerRange: TextRange | null;
+
+    public constructor();
+    public constructor(range: TextRange, depth: number, kind: number, matchState: number, partnerRange: TextRange | null);
+  }
+
+  /**
+   * Bracket token sequence for each line.
+   */
+  export class LineBracketPairs {
+    /**
+     * Bracket token sequence
+     */
+    public tokens: Array<BracketToken>;
+  }
+
+  /**
+   * Bracket pair analysis result.
+   */
+  export class BracketPairResult {
+    /**
+     * Actual start line of the returned slice
+     */
+    public startLine: number;
+    /**
+     * Total document line count
+     */
+    public totalLineCount: number;
+    /**
+     * Bracket tokens grouped by line
+     */
+    public lines: Array<LineBracketPairs>;
+  }
+
+  /**
    * Line scope state for indent guide analysis
    */
   export class LineScopeState {
@@ -388,6 +462,12 @@ export declare namespace sweetline {
      * @returns Indent guide analysis result
      */
     public analyzeIndentGuides(text: string): IndentGuideResult;
+    /**
+     * Perform bracket pair analysis on a text.
+     * @param text Full text content
+     * @returns Bracket pair analysis result
+     */
+    public analyzeBracketPairs(text: string): BracketPairResult;
   }
 
   /**
@@ -447,6 +527,19 @@ export declare namespace sweetline {
      * @returns Indent guide analysis result for the specified line range
      */
     public analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
+
+    /**
+     * Perform bracket pair analysis on the managed document
+     * @returns Bracket pair analysis result
+     */
+    public analyzeBracketPairs(): BracketPairResult;
+
+    /**
+     * Perform bracket pair analysis for the specified visible line range
+     * @param visibleRange Visible line range
+     * @returns Bracket pair analysis result for the specified line range
+     */
+    public analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult;
 
     /**
      * Get the managed document

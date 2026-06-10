@@ -16,6 +16,7 @@ void main() {
             sourceCode: '',
             highlight: null,
             indentGuides: null,
+            bracketPairs: null,
           ),
         ),
       ),

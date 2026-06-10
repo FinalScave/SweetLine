@@ -164,6 +164,73 @@ public sealed class DocumentHighlightSlice {
 }
 
 /// <summary>
+/// Bracket token kind.
+/// </summary>
+public enum BracketTokenKind {
+	Open = 0,
+	Close = 1
+}
+
+/// <summary>
+/// Bracket match state.
+/// </summary>
+public enum BracketMatchState {
+	Matched = 0,
+	Unmatched = 1,
+	Unknown = 2
+}
+
+/// <summary>
+/// Single bracket token.
+/// </summary>
+public sealed class BracketToken {
+	public TextRange Range { get; }
+	public int Depth { get; }
+	public BracketTokenKind Kind { get; }
+	public BracketMatchState MatchState { get; }
+	public TextRange? PartnerRange { get; }
+
+	public BracketToken(
+		TextRange range,
+		int depth,
+		BracketTokenKind kind,
+		BracketMatchState matchState,
+		TextRange? partnerRange = null) {
+		Range = range;
+		Depth = depth;
+		Kind = kind;
+		MatchState = matchState;
+		PartnerRange = partnerRange;
+	}
+}
+
+/// <summary>
+/// Bracket token sequence for a line.
+/// </summary>
+public sealed class LineBracketPairs {
+	public List<BracketToken> Tokens { get; } = [];
+}
+
+/// <summary>
+/// Bracket pair analysis result.
+/// </summary>
+public sealed class BracketPairResult {
+	public int StartLine { get; }
+	public int TotalLineCount { get; }
+	public List<LineBracketPairs> Lines { get; }
+
+	public BracketPairResult()
+		: this(0, 0, []) {
+	}
+
+	public BracketPairResult(int startLine, int totalLineCount, List<LineBracketPairs>? lines = null) {
+		StartLine = startLine;
+		TotalLineCount = totalLineCount;
+		Lines = lines ?? [];
+	}
+}
+
+/// <summary>
 /// Single-line syntax highlight analysis result.
 /// </summary>
 public sealed class LineAnalyzeResult {

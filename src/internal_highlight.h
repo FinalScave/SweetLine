@@ -75,6 +75,7 @@ namespace NS_SWEETLINE {
   };
 
   class ScopeGuideAnalyzer;
+  class BracketPairAnalyzer;
 
   class InternalDocumentAnalyzer {
   public:
@@ -98,6 +99,10 @@ namespace NS_SWEETLINE {
 
     SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range);
 
+    SharedPtr<BracketPairResult> analyzeBracketPairs();
+
+    SharedPtr<BracketPairResult> analyzeBracketPairsInLineRange(const LineRange& visible_range);
+
     SharedPtr<Document> getDocument() const;
 
     const HighlightConfig& getHighlightConfig() const;
@@ -107,6 +112,8 @@ namespace NS_SWEETLINE {
     void invalidateAnalysisFrom(size_t line);
 
     void invalidateIndentGuidesFrom(size_t line);
+
+    void invalidateBracketPairsFrom(size_t line);
 
     void syncCachedLinesAfterPatch(size_t change_start_line, size_t old_end_line, int32_t line_delta, int32_t char_delta);
 
@@ -125,6 +132,7 @@ namespace NS_SWEETLINE {
     SharedPtr<SyntaxRule> m_rule_;
     UniquePtr<LineHighlightAnalyzer> m_line_highlight_analyzer_;
     UniquePtr<ScopeGuideAnalyzer> m_scope_guide_analyzer_;
+    UniquePtr<BracketPairAnalyzer> m_bracket_pair_analyzer_;
     HighlightConfig m_config_;
     List<int32_t> m_line_syntax_states_;
     size_t m_valid_line_count_ {0};
@@ -203,6 +211,68 @@ namespace NS_SWEETLINE {
     size_t m_lookahead_lines_ {128};
   };
 
+  /// Bracket pair analyzer independent of highlight analysis
+  class BracketPairAnalyzer {
+  public:
+    explicit BracketPairAnalyzer(const SharedPtr<SyntaxRule>& rule,
+      const SharedPtr<Document>& document,
+      const HighlightConfig& config = HighlightConfig::kDefault);
+
+    SharedPtr<BracketPairResult> analyzeLineRange(const LineRange& visible_range);
+
+    void invalidateFrom(size_t line);
+
+    void reset();
+
+  private:
+    struct ActiveSkip {
+      bool active {false};
+      const ScopeSkipRule* rule {nullptr};
+    };
+
+    struct ActiveBracket {
+      const BracketRule* rule {nullptr};
+      int32_t depth {0};
+      BracketToken token;
+      int32_t result_line_index {-1};
+      int32_t result_token_index {-1};
+    };
+
+    struct ScanState {
+      ActiveSkip skip;
+      List<ActiveBracket> brackets;
+    };
+
+    struct Checkpoint {
+      size_t line {0};
+      ScanState state;
+    };
+
+    struct ScanContext {
+      SharedPtr<BracketPairResult> result;
+      size_t visible_start {0};
+      size_t visible_end {0};
+    };
+
+    ScanState getStateForLine(size_t line);
+
+    void saveCheckpoint(size_t line, const ScanState& state);
+
+    void scanLine(size_t line, ScanState& state, ScanContext* context);
+
+    void addVisibleToken(const BracketToken& token, ScanContext* context, BracketToken*& result_token) const;
+
+    SharedPtr<SyntaxRule> m_rule_;
+    SharedPtr<Document> m_document_;
+    HighlightConfig m_config_;
+    List<const ScopeSkipRule*> m_ordered_skip_rules_;
+    List<const BracketRule*> m_ordered_open_bracket_rules_;
+    List<const BracketRule*> m_ordered_close_bracket_rules_;
+    List<Checkpoint> m_checkpoints_;
+    size_t m_checkpoint_interval_ {256};
+    size_t m_lookahead_lines_ {128};
+  };
+
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextPosition, line, column, index);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextRange, start, end);
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InlineStyle, foreground, background, is_bold, is_italic, is_strikethrough);
@@ -212,6 +282,9 @@ namespace NS_SWEETLINE {
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine::BranchPoint, line, column)
   NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(IndentGuideLine, column, start_line, end_line, nesting_level, scope_rule_id,
     continues_before, continues_after, branches)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BracketToken, range, depth, kind, match_state, partner_range)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LineBracketPairs, tokens)
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BracketPairResult, start_line, total_line_count, lines)
 }
 
 #endif //SWEETLINE_INTERNAL_HIGHLIGHT_H

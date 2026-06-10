@@ -260,8 +260,99 @@ final class BufferParser {
         return result;
     }
 
+    static BracketPairResult readBracketPairResult(MemorySegment bufferPtr) {
+        if (bufferPtr.equals(MemorySegment.NULL)) {
+            return new BracketPairResult();
+        }
+
+        MemorySegment header = bufferPtr.reinterpret(3L * JAVA_INT.byteSize());
+        int flags = header.getAtIndex(JAVA_INT, 0);
+        int stride = Math.max(header.getAtIndex(JAVA_INT, 1), 0);
+        int lineCount = Math.max(header.getAtIndex(JAVA_INT, 2), 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        if (!isValidBracketTokenStride(stride, hasStartIndex)) {
+            return new BracketPairResult();
+        }
+        List<LineBracketPairs> lines = readBracketLines(bufferPtr, 3, 0, lineCount, hasStartIndex);
+        return new BracketPairResult(0, lineCount, lines);
+    }
+
+    static BracketPairResult readBracketPairResultSlice(MemorySegment bufferPtr) {
+        if (bufferPtr.equals(MemorySegment.NULL)) {
+            return new BracketPairResult();
+        }
+
+        MemorySegment header = bufferPtr.reinterpret(5L * JAVA_INT.byteSize());
+        int flags = header.getAtIndex(JAVA_INT, 0);
+        int stride = Math.max(header.getAtIndex(JAVA_INT, 1), 0);
+        int startLine = header.getAtIndex(JAVA_INT, 2);
+        int totalLineCount = header.getAtIndex(JAVA_INT, 3);
+        int lineCount = Math.max(header.getAtIndex(JAVA_INT, 4), 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        if (!isValidBracketTokenStride(stride, hasStartIndex)) {
+            return new BracketPairResult(startLine, totalLineCount, new ArrayList<>());
+        }
+        List<LineBracketPairs> lines = readBracketLines(bufferPtr, 5, startLine, lineCount, hasStartIndex);
+        return new BracketPairResult(startLine, totalLineCount, lines);
+    }
+
+    private static List<LineBracketPairs> readBracketLines(
+            MemorySegment bufferPtr,
+            int startIndex,
+            int startLine,
+            int lineCount,
+            boolean hasStartIndex) {
+        MemorySegment buffer = bufferPtr.reinterpret(Long.MAX_VALUE);
+        List<LineBracketPairs> lines = new ArrayList<>(lineCount);
+        int idx = startIndex;
+        for (int i = 0; i < lineCount; i++) {
+            int tokenCount = Math.max(buffer.getAtIndex(JAVA_INT, idx++), 0);
+            int line = startLine + i;
+            LineBracketPairs lineResult = new LineBracketPairs();
+            for (int token = 0; token < tokenCount; token++) {
+                int column = buffer.getAtIndex(JAVA_INT, idx++);
+                int length = buffer.getAtIndex(JAVA_INT, idx++);
+                int tokenStartIndex = hasStartIndex ? buffer.getAtIndex(JAVA_INT, idx++) : 0;
+                int depth = buffer.getAtIndex(JAVA_INT, idx++);
+                int kind = buffer.getAtIndex(JAVA_INT, idx++);
+                int matchState = buffer.getAtIndex(JAVA_INT, idx++);
+                int partnerLine = buffer.getAtIndex(JAVA_INT, idx++);
+                int partnerColumn = buffer.getAtIndex(JAVA_INT, idx++);
+                int partnerLength = buffer.getAtIndex(JAVA_INT, idx++);
+                int partnerStartIndex = hasStartIndex ? buffer.getAtIndex(JAVA_INT, idx++) : 0;
+
+                TextRange range = new TextRange(
+                        new TextPosition(line, column, tokenStartIndex),
+                        new TextPosition(line, column + length, hasStartIndex ? tokenStartIndex + length : 0)
+                );
+                TextRange partnerRange = null;
+                if (partnerLine >= 0 && partnerColumn >= 0 && partnerLength >= 0) {
+                    partnerRange = new TextRange(
+                            new TextPosition(partnerLine, partnerColumn, partnerStartIndex),
+                            new TextPosition(partnerLine, partnerColumn + partnerLength,
+                                    hasStartIndex ? partnerStartIndex + partnerLength : 0)
+                    );
+                }
+                lineResult.tokens().add(new BracketToken(
+                        range,
+                        depth,
+                        BracketTokenKind.fromValue(kind),
+                        BracketMatchState.fromValue(matchState),
+                        partnerRange
+                ));
+            }
+            lines.add(lineResult);
+        }
+        return lines;
+    }
+
     private static boolean isValidSpanStride(int stride, boolean hasStartIndex, boolean inlineStyle) {
         int expected = 2 + (hasStartIndex ? 1 : 0) + (inlineStyle ? 3 : 1);
+        return stride == expected;
+    }
+
+    private static boolean isValidBracketTokenStride(int stride, boolean hasStartIndex) {
+        int expected = 8 + (hasStartIndex ? 2 : 0);
         return stride == expected;
     }
 

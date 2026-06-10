@@ -62,6 +62,22 @@ class TextAnalyzer {
     });
   }
 
+  BracketPairResult analyzeBracketPairs(String text) {
+    _ensureOpen();
+    return using((arena) {
+      final textPtr = _toNativeChar(text, arena);
+      final resultPtr = bindings.sl_text_analyze_bracket_pairs(
+        _handle,
+        textPtr,
+      );
+      return _parseOwnedBuffer(
+        resultPtr,
+        BracketPairResult(),
+        _BufferParser.readBracketPairResult,
+      );
+    });
+  }
+
   void close() {
     _closed = true;
   }
@@ -210,14 +226,40 @@ class DocumentAnalyzer {
       visibleValues[0] = visibleRange.startLine;
       visibleValues[1] = visibleRange.lineCount;
 
-      final resultPtr = bindings.sl_document_analyze_indent_guides_in_line_range(
-        _handle,
-        visiblePtr,
-      );
+      final resultPtr = bindings
+          .sl_document_analyze_indent_guides_in_line_range(_handle, visiblePtr);
       return _parseOwnedBuffer(
         resultPtr,
         IndentGuideResult(),
         _BufferParser.readIndentGuideResult,
+      );
+    });
+  }
+
+  BracketPairResult analyzeBracketPairs() {
+    _ensureOpen();
+    final resultPtr = bindings.sl_document_analyze_bracket_pairs(_handle);
+    return _parseOwnedBuffer(
+      resultPtr,
+      BracketPairResult(),
+      _BufferParser.readBracketPairResult,
+    );
+  }
+
+  BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange) {
+    _ensureOpen();
+    return using((arena) {
+      final visiblePtr = arena.allocate<ffi.Int32>(2 * ffi.sizeOf<ffi.Int32>());
+      final visibleValues = visiblePtr.asTypedList(2);
+      visibleValues[0] = visibleRange.startLine;
+      visibleValues[1] = visibleRange.lineCount;
+
+      final resultPtr = bindings
+          .sl_document_analyze_bracket_pairs_in_line_range(_handle, visiblePtr);
+      return _parseOwnedBuffer(
+        resultPtr,
+        BracketPairResult(),
+        _BufferParser.readBracketPairResultSlice,
       );
     });
   }

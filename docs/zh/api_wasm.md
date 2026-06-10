@@ -69,6 +69,7 @@ class TextAnalyzer {
     analyzeText(text: string): DocumentHighlight;
     analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
     analyzeIndentGuides(text: string): IndentGuideResult;
+    analyzeBracketPairs(text: string): BracketPairResult;
 }
 
 class DocumentAnalyzer {
@@ -80,6 +81,8 @@ class DocumentAnalyzer {
     getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
     analyzeIndentGuides(): IndentGuideResult;
     analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
+    analyzeBracketPairs(): BracketPairResult;
+    analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult;
 }
 
 class LineRange {
@@ -125,6 +128,24 @@ class IndentGuideResult {
     lineStates: LineScopeStateList;
 }
 
+class BracketToken {
+    range: TextRange;
+    depth: number;
+    kind: number;
+    matchState: number;
+    partnerRange: TextRange;
+}
+
+class LineBracketPairs {
+    tokens: BracketTokenList;
+}
+
+class BracketPairResult {
+    startLine: number;
+    totalLineCount: number;
+    lines: LineBracketPairsList;
+}
+
 class LineHighlight {
     spans: TokenSpanList;
     toJson(): string;
@@ -153,6 +174,7 @@ class LineAnalyzeResult {
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于从最近缓存的文档高亮结果中读取可见切片。
 `analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
+`analyzeBracketPairs(...)` 和 `analyzeBracketPairsInLineRange(...)` 会直接基于文本分析括号 token，不需要先执行高亮分析。
 
 ### 完整 WASM 示例
 

@@ -291,6 +291,14 @@ internal static class SweetLineNative {
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 
 	/// <summary>
+	/// <c>sl_text_analyze_bracket_pairs(sl_analyzer_handle_t, const char*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_text_analyze_bracket_pairs", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr TextAnalyzeBracketPairs(
+		IntPtr analyzerHandle,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string text);
+
+	/// <summary>
 	/// <c>sl_engine_load_document(sl_engine_handle_t, sl_document_handle_t)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_engine_load_document", CallingConvention = CallingConvention.Cdecl)]
@@ -348,6 +356,20 @@ internal static class SweetLineNative {
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_indent_guides_in_line_range", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr DocumentAnalyzeIndentGuidesInLineRange(
+		IntPtr analyzerHandle,
+		[In] int[] visibleRange);
+
+	/// <summary>
+	/// <c>sl_document_analyze_bracket_pairs(sl_analyzer_handle_t)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_bracket_pairs", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr DocumentAnalyzeBracketPairs(IntPtr analyzerHandle);
+
+	/// <summary>
+	/// <c>sl_document_analyze_bracket_pairs_in_line_range(sl_analyzer_handle_t, int32_t*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_document_analyze_bracket_pairs_in_line_range", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern IntPtr DocumentAnalyzeBracketPairsInLineRange(
 		IntPtr analyzerHandle,
 		[In] int[] visibleRange);
 

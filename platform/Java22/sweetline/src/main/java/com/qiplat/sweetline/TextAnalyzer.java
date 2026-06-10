@@ -101,6 +101,31 @@ public class TextAnalyzer implements AutoCloseable {
         }
     }
 
+    /**
+     * Perform bracket pair analysis on a text.
+     *
+     * @param text Full text content
+     * @return Bracket pair analysis result
+     */
+    public BracketPairResult analyzeBracketPairs(String text) {
+        ensureOpen();
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment textSeg = arena.allocateFrom(text);
+            MemorySegment resultPtr = (MemorySegment) SweetLineNative.sl_text_analyze_bracket_pairs
+                    .invoke(handle, textSeg);
+            if (resultPtr.equals(MemorySegment.NULL)) {
+                return new BracketPairResult();
+            }
+            try {
+                return BufferParser.readBracketPairResult(resultPtr);
+            } finally {
+                SweetLineNative.sl_free_buffer.invoke(resultPtr);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to analyze bracket pairs", e);
+        }
+    }
+
     @Override
     public void close() {
         if (!closed) {

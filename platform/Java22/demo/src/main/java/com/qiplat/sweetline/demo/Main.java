@@ -3,6 +3,7 @@ package com.qiplat.sweetline.demo;
 import com.qiplat.sweetline.Document;
 import com.qiplat.sweetline.DocumentAnalyzer;
 import com.qiplat.sweetline.DocumentHighlight;
+import com.qiplat.sweetline.BracketPairResult;
 import com.qiplat.sweetline.HighlightConfig;
 import com.qiplat.sweetline.HighlightEngine;
 import com.qiplat.sweetline.IndentGuideResult;
@@ -255,6 +256,7 @@ public class Main extends JFrame {
             long analyzeUs = (System.nanoTime() - analyzeStart) / 1000;
 
             IndentGuideResult indentGuides = analyzer.analyzeIndentGuides();
+            BracketPairResult brackets = analyzer.analyzeBracketPairs();
             int lineCount = sourceCode.split("\n", -1).length;
             statusLabel.setText(String.format(
                     "Warmup: %d files in %d ms | Analyze: %d\u00b5s | Lines: %d | File: %s",
@@ -264,7 +266,7 @@ public class Main extends JFrame {
                     lineCount,
                     fileName));
 
-            codePanel.setHighlightData(sourceCode, highlight, indentGuides);
+            codePanel.setHighlightData(sourceCode, highlight, indentGuides, brackets);
             codePanel.revalidate();
             codePanel.repaint();
         }

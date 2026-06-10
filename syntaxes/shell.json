@@ -329,5 +329,12 @@
       { "kind": "word", "start": "then", "end": "fi", "branches": ["elif","else"] },
       { "kind": "word", "start": "case", "end": "esac" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

@@ -152,6 +152,22 @@ inline int32_t packSpanPayloadFlags(const HighlightConfig& config) {
   return flags;
 }
 
+inline int32_t computeBracketTokenStride(const HighlightConfig& config) {
+  int32_t base_count = 8; // column, length, depth, kind, match state, partner line, partner column, partner length
+  if (config.show_index) {
+    base_count += 2; // start index and partner start index
+  }
+  return base_count;
+}
+
+inline int32_t packBracketPayloadFlags(const HighlightConfig& config) {
+  int32_t flags = 0;
+  if (config.show_index) {
+    flags |= 1; // bit0: has start index
+  }
+  return flags;
+}
+
 inline size_t computeDocumentHighlightBufferSize(const SharedPtr<DocumentHighlight>& highlight, const HighlightConfig& config) {
   size_t total_size = 3; // flags + span_stride + line_count
   if (highlight == nullptr) {
@@ -186,6 +202,20 @@ inline size_t computeIndentGuideResultBufferSize(const SharedPtr<IndentGuideResu
     guide_data_size += 5 + g.branches.size() * 2; // fixed guide fields + variable branches
   }
   total_size += guide_data_size + result->line_states.size() * 4;
+  return total_size;
+}
+
+inline size_t computeBracketPairResultBufferSize(const SharedPtr<BracketPairResult>& result,
+                                                 const HighlightConfig& config,
+                                                 bool slice) {
+  size_t total_size = slice ? 5 : 3;
+  if (result == nullptr) {
+    return total_size;
+  }
+  size_t stride = static_cast<size_t>(computeBracketTokenStride(config));
+  for (const LineBracketPairs& line : result->lines) {
+    total_size += 1 + line.tokens.size() * stride;
+  }
   return total_size;
 }
 
@@ -280,6 +310,62 @@ inline void writeIndentGuideResult(const SharedPtr<IndentGuideResult>& result, i
     buffer[idx++] = static_cast<int32_t>(ls.scope_state);
     buffer[idx++] = ls.scope_column;
     buffer[idx++] = ls.indent_level;
+  }
+}
+
+inline void writeBracketTokenCompact(const BracketToken& token, int32_t* buffer, size_t& index,
+                                     const HighlightConfig& config) {
+  int32_t length = static_cast<int32_t>(token.range.end.column - token.range.start.column);
+  bool matched = token.match_state == BracketMatchState::MATCHED;
+  buffer[index++] = static_cast<int32_t>(token.range.start.column);
+  buffer[index++] = length;
+  if (config.show_index) {
+    buffer[index++] = static_cast<int32_t>(token.range.start.index);
+  }
+  buffer[index++] = token.depth;
+  buffer[index++] = static_cast<int32_t>(token.kind);
+  buffer[index++] = static_cast<int32_t>(token.match_state);
+  buffer[index++] = matched ? static_cast<int32_t>(token.partner_range.start.line) : -1;
+  buffer[index++] = matched ? static_cast<int32_t>(token.partner_range.start.column) : -1;
+  buffer[index++] = matched ? static_cast<int32_t>(token.partner_range.end.column - token.partner_range.start.column) : -1;
+  if (config.show_index) {
+    buffer[index++] = matched ? static_cast<int32_t>(token.partner_range.start.index) : -1;
+  }
+}
+
+inline void writeBracketPairResult(const SharedPtr<BracketPairResult>& result, int32_t* buffer,
+                                   const HighlightConfig& config) {
+  size_t index = 0;
+  buffer[index++] = packBracketPayloadFlags(config);
+  buffer[index++] = computeBracketTokenStride(config);
+  buffer[index++] = static_cast<int32_t>(result == nullptr ? 0 : result->lines.size());
+  if (result == nullptr) {
+    return;
+  }
+  for (const LineBracketPairs& line : result->lines) {
+    buffer[index++] = static_cast<int32_t>(line.tokens.size());
+    for (const BracketToken& token : line.tokens) {
+      writeBracketTokenCompact(token, buffer, index, config);
+    }
+  }
+}
+
+inline void writeBracketPairResultSlice(const SharedPtr<BracketPairResult>& result, int32_t* buffer,
+                                        const HighlightConfig& config) {
+  size_t index = 0;
+  buffer[index++] = packBracketPayloadFlags(config);
+  buffer[index++] = computeBracketTokenStride(config);
+  buffer[index++] = static_cast<int32_t>(result == nullptr ? 0 : result->start_line);
+  buffer[index++] = static_cast<int32_t>(result == nullptr ? 0 : result->total_line_count);
+  buffer[index++] = static_cast<int32_t>(result == nullptr ? 0 : result->lines.size());
+  if (result == nullptr) {
+    return;
+  }
+  for (const LineBracketPairs& line : result->lines) {
+    buffer[index++] = static_cast<int32_t>(line.tokens.size());
+    for (const BracketToken& token : line.tokens) {
+      writeBracketTokenCompact(token, buffer, index, config);
+    }
   }
 }
 

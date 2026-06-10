@@ -138,6 +138,25 @@ if (analyzer) {
 
 缩进引导线分析直接基于文本执行，不需要先执行高亮分析。托管文档场景可使用 `analyzeIndentGuidesInLineRange(visibleRange)` 只分析当前可见行范围。
 
+### 括号匹配分析
+
+```typescript
+const analyzer = engine.createAnalyzerByFileName('example.java');
+if (analyzer) {
+  const bracketResult = analyzer.analyzeBracketPairs(sourceCode);
+  for (const line of bracketResult.lines) {
+    for (const token of line.tokens) {
+      token.range;
+      token.depth;
+      token.matchState;
+      token.partnerRange;
+    }
+  }
+}
+```
+
+括号匹配分析直接基于文本执行，不需要先执行高亮分析。托管文档场景可使用 `analyzeBracketPairsInLineRange(visibleRange)` 只分析当前可见行范围。
+
 ### 内联样式模式
 
 ```typescript
@@ -185,6 +204,7 @@ const engine = new sweetline.HighlightEngine(config);
 | `analyzeText(text)` | 对整段文本做全量高亮分析 |
 | `analyzeLine(text, lineInfo)` | 对单行文本做分析，并返回行结束状态 |
 | `analyzeIndentGuides(text)` | 对文本执行缩进引导线分析 |
+| `analyzeBracketPairs(text)` | 对文本执行括号匹配分析 |
 
 ### `DocumentAnalyzer`
 
@@ -198,6 +218,8 @@ const engine = new sweetline.HighlightEngine(config);
 | `getHighlightSlice(visibleRange)` | 从当前缓存高亮结果中直接截取指定行范围 |
 | `analyzeIndentGuides()` | 分析托管文档的缩进引导线 |
 | `analyzeIndentGuidesInLineRange(visibleRange)` | 分析指定可见行范围的缩进引导线 |
+| `analyzeBracketPairs()` | 分析托管文档的括号匹配 |
+| `analyzeBracketPairsInLineRange(visibleRange)` | 分析指定可见行范围的括号匹配 |
 | `getDocument()` | 获取当前关联的托管文档 |
 
 ### 数据类
@@ -215,6 +237,8 @@ const engine = new sweetline.HighlightEngine(config);
 | `IndentGuideResult` | 缩进引导线分析结果 |
 | `IndentGuideLine` | 单条缩进引导线 |
 | `LineScopeState` | 行作用域状态 |
+| `BracketPairResult` | 括号匹配分析结果 |
+| `BracketToken` | 单个括号 token |
 | `TextLineInfo` | 文本行元数据 |
 | `LineAnalyzeResult` | 单行分析结果 |
 

@@ -75,6 +75,20 @@ public class TextAnalyzer {
         return NativeBufferPack.readIndentGuideResult(buffer);
     }
 
+    /**
+     * Perform bracket pair analysis on a text.
+     *
+     * @param text Full text content
+     * @return Bracket pair analysis result
+     */
+    public BracketPairResult analyzeBracketPairs(String text) {
+        if (nativeHandle == 0) {
+            return null;
+        }
+        int[] buffer = nativeAnalyzeBracketPairs(nativeHandle, text);
+        return NativeBufferPack.readBracketPairResult(buffer);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -95,4 +109,7 @@ public class TextAnalyzer {
 
     @FastNative
     private static native int[] nativeAnalyzeIndentGuides(long handle, String text);
+
+    @FastNative
+    private static native int[] nativeAnalyzeBracketPairs(long handle, String text);
 }

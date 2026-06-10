@@ -30,6 +30,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.qiplat.sweetline.BracketMatchState
+import com.qiplat.sweetline.BracketPairResult
+import com.qiplat.sweetline.BracketToken
 import com.qiplat.sweetline.DocumentHighlight
 import com.qiplat.sweetline.IndentGuideResult
 import com.qiplat.sweetline.TokenSpan
@@ -44,6 +47,7 @@ fun CodeView(
     sourceCode: String,
     highlight: DocumentHighlight?,
     indentGuides: IndentGuideResult?,
+    bracketPairs: BracketPairResult?,
     placeholder: String,
     modifier: Modifier = Modifier,
 ) {
@@ -155,6 +159,15 @@ fun CodeView(
                     x = codeOriginX,
                     y = y,
                 )
+                drawBracketTokens(
+                    textMeasurer = textMeasurer,
+                    lineText = lineText,
+                    tokens = bracketPairs?.lines?.getOrNull(lineIndex)?.tokens.orEmpty(),
+                    textStyle = textStyle,
+                    charWidth = metrics.charWidth,
+                    x = codeOriginX,
+                    y = y,
+                )
             }
         }
     }
@@ -231,6 +244,53 @@ private fun spanTextStyle(span: TokenSpan, theme: HighlightTheme, baseStyle: Tex
         )
     }
     return baseStyle.copy(color = theme.getColor(span.styleId).toColor())
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBracketTokens(
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    lineText: String,
+    tokens: List<BracketToken>,
+    textStyle: TextStyle,
+    charWidth: Float,
+    x: Float,
+    y: Float,
+) {
+    tokens.forEach { token ->
+        val start = token.range.start.column.coerceIn(0, lineText.length)
+        val end = token.range.end.column.coerceIn(start, lineText.length)
+        if (end <= start) {
+            return@forEach
+        }
+        drawText(
+            textMeasurer = textMeasurer,
+            text = lineText.substring(start, end),
+            topLeft = Offset(x + start * charWidth, y),
+            style = textStyle.copy(color = bracketColor(token)),
+        )
+    }
+}
+
+private val BracketPalette = listOf(
+    0xFF7DD3FCu.toInt().toColor(),
+    0xFFF9A8D4u.toInt().toColor(),
+    0xFFFDE047u.toInt().toColor(),
+    0xFF86EFACu.toInt().toColor(),
+    0xFFC4B5FDu.toInt().toColor(),
+    0xFFFDBA74u.toInt().toColor(),
+)
+
+private fun bracketColor(token: BracketToken): Color {
+    if (token.matchState == BracketMatchState.Unmatched) {
+        return 0xFFFF6B6Bu.toInt().toColor()
+    }
+    val colorIndex = ((token.depth % BracketPalette.size) + BracketPalette.size) % BracketPalette.size
+    val color = BracketPalette[colorIndex]
+    return if (token.matchState == BracketMatchState.Unknown) {
+        color.copy(alpha = 0.68f)
+    } else {
+        color
+    }
 }
 
 @OptIn(ExperimentalTextApi::class)

@@ -40,6 +40,7 @@ expect class TextAnalyzer {
     fun analyzeText(text: String): DocumentHighlight
     fun analyzeLine(text: String, info: TextLineInfo): LineAnalyzeResult
     fun analyzeIndentGuides(text: String): IndentGuideResult
+    fun analyzeBracketPairs(text: String): BracketPairResult
     fun close()
 }
 
@@ -59,5 +60,7 @@ expect class DocumentAnalyzer {
     fun getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice
     fun analyzeIndentGuides(): IndentGuideResult
     fun analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult
+    fun analyzeBracketPairs(): BracketPairResult
+    fun analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult
     fun close()
 }

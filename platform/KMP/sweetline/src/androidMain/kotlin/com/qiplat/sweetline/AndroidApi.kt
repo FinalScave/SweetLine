@@ -133,6 +133,11 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: Long) {
             ?: IndentGuideResult()
     }
 
+    actual fun analyzeBracketPairs(text: String): BracketPairResult {
+        return nativeHandle.ifOpenOrNull { NativeBufferParser.readBracketPairResult(nativeAnalyzeBracketPairs(it, text)) }
+            ?: BracketPairResult()
+    }
+
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
@@ -146,6 +151,7 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: Long) {
         @JvmStatic private external fun nativeAnalyzeText(handle: Long, text: String): IntArray?
         @JvmStatic private external fun nativeAnalyzeLine(handle: Long, text: String, info: IntArray): IntArray?
         @JvmStatic private external fun nativeAnalyzeIndentGuides(handle: Long, text: String): IntArray?
+        @JvmStatic private external fun nativeAnalyzeBracketPairs(handle: Long, text: String): IntArray?
     }
 }
 
@@ -211,6 +217,19 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
         } ?: IndentGuideResult()
     }
 
+    actual fun analyzeBracketPairs(): BracketPairResult {
+        return nativeHandle.ifOpenOrNull { NativeBufferParser.readBracketPairResult(nativeAnalyzeBracketPairs(it)) }
+            ?: BracketPairResult()
+    }
+
+    actual fun analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult {
+        return nativeHandle.ifOpenOrNull {
+            NativeBufferParser.readBracketPairResultSlice(
+                nativeAnalyzeBracketPairsInLineRange(it, visibleRange.startLine, visibleRange.lineCount),
+            )
+        } ?: BracketPairResult()
+    }
+
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
@@ -259,6 +278,12 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
 
         @JvmStatic private external fun nativeAnalyzeIndentGuides(handle: Long): IntArray?
         @JvmStatic private external fun nativeAnalyzeIndentGuidesInLineRange(
+            handle: Long,
+            visibleStartLine: Int,
+            visibleLineCount: Int,
+        ): IntArray?
+        @JvmStatic private external fun nativeAnalyzeBracketPairs(handle: Long): IntArray?
+        @JvmStatic private external fun nativeAnalyzeBracketPairsInLineRange(
             handle: Long,
             visibleStartLine: Int,
             visibleLineCount: Int,

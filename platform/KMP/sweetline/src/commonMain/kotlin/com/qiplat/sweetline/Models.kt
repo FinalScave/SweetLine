@@ -100,6 +100,62 @@ data class DocumentHighlightSlice(
 )
 
 /**
+ * Bracket token kind.
+ */
+enum class BracketTokenKind(val value: Int) {
+    Open(0),
+    Close(1);
+
+    companion object {
+        fun fromValue(value: Int): BracketTokenKind {
+            return values().firstOrNull { it.value == value } ?: Open
+        }
+    }
+}
+
+/**
+ * Bracket match state.
+ */
+enum class BracketMatchState(val value: Int) {
+    Matched(0),
+    Unmatched(1),
+    Unknown(2);
+
+    companion object {
+        fun fromValue(value: Int): BracketMatchState {
+            return values().firstOrNull { it.value == value } ?: Unknown
+        }
+    }
+}
+
+/**
+ * Single bracket token.
+ */
+data class BracketToken(
+    val range: TextRange,
+    val depth: Int,
+    val kind: BracketTokenKind,
+    val matchState: BracketMatchState,
+    val partnerRange: TextRange? = null,
+)
+
+/**
+ * Bracket token sequence for a line.
+ */
+data class LineBracketPairs(
+    val tokens: List<BracketToken> = emptyList(),
+)
+
+/**
+ * Bracket pair analysis result.
+ */
+data class BracketPairResult(
+    val startLine: Int = 0,
+    val totalLineCount: Int = 0,
+    val lines: List<LineBracketPairs> = emptyList(),
+)
+
+/**
  * Single line syntax highlight analysis result.
  */
 data class LineAnalyzeResult(

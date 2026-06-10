@@ -38,6 +38,7 @@ class TextAnalyzer {
   analyzeText(text: string): DocumentHighlight;
   analyzeLine(text: string, info: TextLineInfo): LineAnalyzeResult;
   analyzeIndentGuides(text: string): IndentGuideResult;
+  analyzeBracketPairs(text: string): BracketPairResult;
 }
 
 class DocumentAnalyzer {
@@ -49,6 +50,8 @@ class DocumentAnalyzer {
   getHighlightSlice(visibleRange: LineRange): DocumentHighlightSlice;
   analyzeIndentGuides(): IndentGuideResult;
   analyzeIndentGuidesInLineRange(visibleRange: LineRange): IndentGuideResult;
+  analyzeBracketPairs(): BracketPairResult;
+  analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult;
 }
 ```
 
@@ -63,6 +66,7 @@ engine.compileSyntaxFromJson(syntaxJson);
 const analyzer = engine.createAnalyzerByFileName("Main.java");
 if (analyzer) {
   const highlight = analyzer.analyzeText(sourceCode);
+  const brackets = analyzer.analyzeBracketPairs(sourceCode);
 }
 
 const document = new sweetline.Document("file:///Main.java", sourceCode);
@@ -71,6 +75,7 @@ if (documentAnalyzer) {
   documentAnalyzer.analyze();
   const analyzed = documentAnalyzer.analyzeLineRange(new sweetline.LineRange(0, 80));
   const visible = documentAnalyzer.getHighlightSlice(new sweetline.LineRange(0, 80));
+  const visibleBrackets = documentAnalyzer.analyzeBracketPairsInLineRange(new sweetline.LineRange(0, 80));
 }
 ```
 
@@ -81,4 +86,5 @@ if (documentAnalyzer) {
 - 当需要某个可见区切片，并希望 SweetLine 先基于当前文档状态分析足够的行时，使用 `analyzeLineRange(...)`。
 - 只需要当前可见窗口时，可在 `analyze()` / `analyzeIncremental(...)` 之后调用 `getHighlightSlice(...)`。
 - 缩进划线可使用 `TextAnalyzer.analyzeIndentGuides`、`DocumentAnalyzer.analyzeIndentGuides` 或 `DocumentAnalyzer.analyzeIndentGuidesInLineRange`；这些 API 不需要先执行高亮分析。
+- 括号匹配可使用 `TextAnalyzer.analyzeBracketPairs`、`DocumentAnalyzer.analyzeBracketPairs` 或 `DocumentAnalyzer.analyzeBracketPairsInLineRange`；这些 API 不需要先执行高亮分析。
 - 构建命令请参见 [构建文档](api_build.md)。

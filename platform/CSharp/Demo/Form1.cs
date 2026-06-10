@@ -173,9 +173,10 @@ public partial class Form1 : Form {
 		long analyzeUs = (long)(analyzeWatch.Elapsed.TotalMilliseconds * 1000);
 
 		IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
+		BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
 		int lineCount = sourceCode.Replace("\r\n", "\n").Split('\n').Length;
 		_statusLabel.Text = $"Warmup: {_compiledSyntaxCount} files in {_precompileUs}us | Load: {loadUs}us | Analyze: {analyzeUs}us | Lines: {lineCount} | File: {fileName}";
-		_codeView.SetHighlightData(sourceCode, highlight, guides);
+		_codeView.SetHighlightData(sourceCode, highlight, guides, brackets);
 		_editorHost.AutoScrollPosition = new Point(0, 0);
 	}
 

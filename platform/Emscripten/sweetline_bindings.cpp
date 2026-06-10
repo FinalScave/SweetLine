@@ -25,6 +25,21 @@ using namespace NS_SWEETLINE;
     .function("isEmpty", &List<element_type>::empty) \
     .function("size", &List<element_type>::size);
 
+#define BIND_LIST_WITHOUT_REMOVE(element_type, name) \
+  emscripten::class_<List<element_type>>(name) \
+    .constructor<>() \
+    .function("get", emscripten::select_overload<element_type&(const size_t)>(&List<element_type>::at)) \
+    .function("set", emscripten::optional_override([](List<element_type>& self, size_t index, const element_type& element) { \
+        self[index] = element; \
+      }) \
+    ) \
+    .function("add", emscripten::optional_override([](List<element_type>& self, const element_type& element) { \
+        self.push_back(element); \
+      }) \
+    ) \
+    .function("isEmpty", &List<element_type>::empty) \
+    .function("size", &List<element_type>::size);
+
 void throwSyntaxCompileError(const SyntaxCompileError& error) {
   emscripten::val err = emscripten::val::global("Error");
   emscripten::val err_obj = err.new_(error.message());
@@ -169,6 +184,35 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .property("guideLines", &IndentGuideResult::guide_lines)
     .property("lineStates", &IndentGuideResult::line_states);
 
+  emscripten::enum_<BracketTokenKind>("BracketTokenKind")
+    .value("OPEN", BracketTokenKind::OPEN)
+    .value("CLOSE", BracketTokenKind::CLOSE);
+
+  emscripten::enum_<BracketMatchState>("BracketMatchState")
+    .value("MATCHED", BracketMatchState::MATCHED)
+    .value("UNMATCHED", BracketMatchState::UNMATCHED)
+    .value("UNKNOWN", BracketMatchState::UNKNOWN);
+
+  emscripten::class_<BracketToken>("BracketToken")
+    .constructor<>()
+    .property("range", &BracketToken::range)
+    .property("depth", &BracketToken::depth)
+    .property("kind", &BracketToken::kind)
+    .property("matchState", &BracketToken::match_state)
+    .property("partnerRange", &BracketToken::partner_range);
+  BIND_LIST_WITHOUT_REMOVE(BracketToken, "BracketTokenList")
+
+  emscripten::class_<LineBracketPairs>("LineBracketPairs")
+    .constructor<>()
+    .property("tokens", &LineBracketPairs::tokens);
+  BIND_LIST_WITHOUT_REMOVE(LineBracketPairs, "LineBracketPairsList")
+
+  emscripten::class_<BracketPairResult>("BracketPairResult")
+    .smart_ptr<SharedPtr<BracketPairResult>>("SharedPtr<BracketPairResult>")
+    .property("startLine", &BracketPairResult::start_line)
+    .property("totalLineCount", &BracketPairResult::total_line_count)
+    .property("lines", &BracketPairResult::lines);
+
   emscripten::class_<TextLineInfo>("TextLineInfo")
     .constructor<>()
     .property("line", &TextLineInfo::line)
@@ -195,6 +239,11 @@ EMSCRIPTEN_BINDINGS(highlight) {
       emscripten::optional_override([](SharedPtr<TextAnalyzer>& self, const U8String& text) {
         return self->analyzeIndentGuides(text);
       })
+    )
+    .function("analyzeBracketPairs",
+      emscripten::optional_override([](SharedPtr<TextAnalyzer>& self, const U8String& text) {
+        return self->analyzeBracketPairs(text);
+      })
     );
 
   emscripten::class_<DocumentAnalyzer>("DocumentAnalyzer")
@@ -207,7 +256,9 @@ EMSCRIPTEN_BINDINGS(highlight) {
     .function("getHighlightSlice", &DocumentAnalyzer::getHighlightSlice)
     .function("getDocument", &DocumentAnalyzer::getDocument)
     .function("analyzeIndentGuides", &DocumentAnalyzer::analyzeIndentGuides)
-    .function("analyzeIndentGuidesInLineRange", &DocumentAnalyzer::analyzeIndentGuidesInLineRange);
+    .function("analyzeIndentGuidesInLineRange", &DocumentAnalyzer::analyzeIndentGuidesInLineRange)
+    .function("analyzeBracketPairs", &DocumentAnalyzer::analyzeBracketPairs)
+    .function("analyzeBracketPairsInLineRange", &DocumentAnalyzer::analyzeBracketPairsInLineRange);
 
   emscripten::class_<HighlightConfig>("HighlightConfig")
     .constructor<>()

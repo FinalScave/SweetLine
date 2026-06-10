@@ -199,6 +199,9 @@ public:
     // 缩进划线分析，不需要先执行高亮分析
     SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
 
+    // Analyze bracket pairs without requiring highlight analysis
+    SharedPtr<BracketPairResult> analyzeBracketPairs(const U8String& text);
+
     // 获取当前高亮配置
     const HighlightConfig& getHighlightConfig() const;
 };
@@ -246,6 +249,15 @@ auto analyzer = engine->createAnalyzerBySyntaxName("python");
 auto guides = analyzer->analyzeIndentGuides(source_code);
 ```
 
+#### 括号匹配分析
+
+```cpp
+auto analyzer = engine->createAnalyzerBySyntaxName("java");
+
+// Bracket pairs do not require a prior highlight pass
+auto brackets = analyzer->analyzeBracketPairs(source_code);
+```
+
 ---
 
 ### DocumentAnalyzer
@@ -288,6 +300,12 @@ public:
 
     // 分析可见行范围的缩进划线
     SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
+
+    // Analyze bracket pairs for the full managed document
+    SharedPtr<BracketPairResult> analyzeBracketPairs() const;
+
+    // Analyze bracket pairs for a visible line range
+    SharedPtr<BracketPairResult> analyzeBracketPairsInLineRange(const LineRange& visible_range) const;
 };
 ```
 
@@ -295,6 +313,7 @@ public:
 `analyzeIncrementalInLineRange(...)` 是“应用补丁并立即返回切片”的便捷接口。
 `getHighlightSlice(...)` 则直接复用最近一次分析产生的缓存高亮结果，不会重新执行分析。
 `analyzeIndentGuidesInLineRange(...)` 会直接基于托管文档文本分析可见区缩进划线，不依赖缓存高亮结果。
+`analyzeBracketPairsInLineRange(...)` 会扫描足够的周边文本，为可见括号尽量返回已解析的匹配对象。
 
 #### 使用示例
 
@@ -318,6 +337,10 @@ auto cached_slice = analyzer->getHighlightSlice(visible);
 // 生成缩进划线
 auto guides = analyzer->analyzeIndentGuides();
 auto visible_guides = analyzer->analyzeIndentGuidesInLineRange(visible);
+
+// Build bracket pairs for rainbow bracket rendering
+auto brackets = analyzer->analyzeBracketPairs();
+auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible);
 ```
 
 ---
@@ -408,6 +431,35 @@ struct IndentGuideResult {
     size_t total_line_count {0};
     List<IndentGuideLine> guide_lines;
     List<LineScopeState> line_states;
+};
+
+enum struct BracketTokenKind {
+    OPEN = 0,
+    CLOSE
+};
+
+enum struct BracketMatchState {
+    MATCHED = 0,
+    UNMATCHED,
+    UNKNOWN
+};
+
+struct BracketToken {
+    TextRange range;
+    int32_t depth {0};
+    BracketTokenKind kind {BracketTokenKind::OPEN};
+    BracketMatchState match_state {BracketMatchState::UNKNOWN};
+    TextRange partner_range;
+};
+
+struct LineBracketPairs {
+    List<BracketToken> tokens;
+};
+
+struct BracketPairResult {
+    size_t start_line {0};
+    size_t total_line_count {0};
+    List<LineBracketPairs> lines;
 };
 
 // 内联样式

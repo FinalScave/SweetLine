@@ -443,5 +443,12 @@
       { "kind": "word", "start": "try", "end": "end", "branches": ["of","catch","after"] },
       { "kind": "word", "start": "fun", "end": "end" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

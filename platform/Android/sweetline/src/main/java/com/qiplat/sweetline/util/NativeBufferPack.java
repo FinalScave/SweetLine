@@ -7,10 +7,13 @@ import android.text.style.CharacterStyle;
 
 import com.qiplat.sweetline.DocumentHighlight;
 import com.qiplat.sweetline.DocumentHighlightSlice;
+import com.qiplat.sweetline.BracketPairResult;
+import com.qiplat.sweetline.BracketToken;
 import com.qiplat.sweetline.IndentGuideLine;
 import com.qiplat.sweetline.IndentGuideResult;
 import com.qiplat.sweetline.InlineStyle;
 import com.qiplat.sweetline.LineAnalyzeResult;
+import com.qiplat.sweetline.LineBracketPairs;
 import com.qiplat.sweetline.LineScopeState;
 import com.qiplat.sweetline.LineHighlight;
 import com.qiplat.sweetline.SpannableStyleFactory;
@@ -289,8 +292,97 @@ public final class NativeBufferPack {
         return result;
     }
 
+    public static BracketPairResult readBracketPairResult(int[] buffer) {
+        BracketPairResult result = new BracketPairResult();
+        if (buffer == null || buffer.length < 3) {
+            return result;
+        }
+        int flags = buffer[0];
+        int stride = Math.max(buffer[1], 0);
+        int lineCount = Math.max(buffer[2], 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        if (!isValidBracketTokenStride(stride, hasStartIndex)) {
+            return result;
+        }
+        result.totalLineCount = lineCount;
+        readBracketLines(buffer, 3, 0, lineCount, hasStartIndex, result);
+        return result;
+    }
+
+    public static BracketPairResult readBracketPairResultSlice(int[] buffer) {
+        BracketPairResult result = new BracketPairResult();
+        if (buffer == null || buffer.length < 5) {
+            return result;
+        }
+        int flags = buffer[0];
+        int stride = Math.max(buffer[1], 0);
+        result.startLine = buffer[2];
+        result.totalLineCount = buffer[3];
+        int lineCount = Math.max(buffer[4], 0);
+        boolean hasStartIndex = flagsHasStartIndex(flags);
+        if (!isValidBracketTokenStride(stride, hasStartIndex)) {
+            return result;
+        }
+        readBracketLines(buffer, 5, result.startLine, lineCount, hasStartIndex, result);
+        return result;
+    }
+
     private static boolean isValidSpanStride(int stride, boolean hasStartIndex, boolean isInlineStyle) {
         int expected = 2 + (hasStartIndex ? 1 : 0) + (isInlineStyle ? 3 : 1);
+        return stride == expected;
+    }
+
+    private static void readBracketLines(
+            int[] buffer,
+            int startIndex,
+            int startLine,
+            int lineCount,
+            boolean hasStartIndex,
+            BracketPairResult result) {
+        int tokenFieldCount = 8 + (hasStartIndex ? 2 : 0);
+        int index = startIndex;
+        for (int i = 0; i < lineCount; i++) {
+            LineBracketPairs lineResult = new LineBracketPairs();
+            result.lines.add(lineResult);
+            if (index >= buffer.length) {
+                return;
+            }
+            int tokenCount = Math.max(buffer[index++], 0);
+            int line = startLine + i;
+            for (int token = 0; token < tokenCount; token++) {
+                if (index + tokenFieldCount > buffer.length) {
+                    return;
+                }
+                int column = buffer[index++];
+                int length = buffer[index++];
+                int tokenStartIndex = hasStartIndex ? buffer[index++] : 0;
+                int depth = buffer[index++];
+                int kind = buffer[index++];
+                int matchState = buffer[index++];
+                int partnerLine = buffer[index++];
+                int partnerColumn = buffer[index++];
+                int partnerLength = buffer[index++];
+                int partnerStartIndex = hasStartIndex ? buffer[index++] : 0;
+
+                TextRange range = new TextRange(
+                        new TextPosition(line, column, tokenStartIndex),
+                        new TextPosition(line, column + length, hasStartIndex ? tokenStartIndex + length : 0)
+                );
+                TextRange partnerRange = null;
+                if (partnerLine >= 0 && partnerColumn >= 0 && partnerLength >= 0) {
+                    partnerRange = new TextRange(
+                            new TextPosition(partnerLine, partnerColumn, partnerStartIndex),
+                            new TextPosition(partnerLine, partnerColumn + partnerLength,
+                                    hasStartIndex ? partnerStartIndex + partnerLength : 0)
+                    );
+                }
+                lineResult.tokens.add(new BracketToken(range, depth, kind, matchState, partnerRange));
+            }
+        }
+    }
+
+    private static boolean isValidBracketTokenStride(int stride, boolean hasStartIndex) {
+        int expected = 8 + (hasStartIndex ? 2 : 0);
         return stride == expected;
     }
 

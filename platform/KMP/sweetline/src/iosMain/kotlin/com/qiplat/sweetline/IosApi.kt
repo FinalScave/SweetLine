@@ -132,6 +132,15 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: sl_anal
         }
     }
 
+    actual fun analyzeBracketPairs(text: String): BracketPairResult {
+        val result = nativeHandle?.let { sl_text_analyze_bracket_pairs(it, text) } ?: return BracketPairResult()
+        return try {
+            NativeBufferParser.readBracketPairResult { index -> result.read(index) }
+        } finally {
+            sl_free_buffer(result)
+        }
+    }
+
     actual fun close() {
         nativeHandle = null
     }
@@ -232,6 +241,29 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: sl_
         } ?: return IndentGuideResult()
         return try {
             NativeBufferParser.readIndentGuideResult { index -> result.read(index) }
+        } finally {
+            sl_free_buffer(result)
+        }
+    }
+
+    actual fun analyzeBracketPairs(): BracketPairResult {
+        val result = nativeHandle?.let { sl_document_analyze_bracket_pairs(it) } ?: return BracketPairResult()
+        return try {
+            NativeBufferParser.readBracketPairResult { index -> result.read(index) }
+        } finally {
+            sl_free_buffer(result)
+        }
+    }
+
+    actual fun analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult {
+        val result = memScoped {
+            val range = allocArray<IntVar>(2)
+            range[0] = visibleRange.startLine
+            range[1] = visibleRange.lineCount
+            nativeHandle?.let { sl_document_analyze_bracket_pairs_in_line_range(it, range) }
+        } ?: return BracketPairResult()
+        return try {
+            NativeBufferParser.readBracketPairResultSlice { index -> result.read(index) }
         } finally {
             sl_free_buffer(result)
         }

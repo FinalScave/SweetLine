@@ -64,6 +64,7 @@ cd platform/Java22
 - `TokenSpan`, `LineHighlight`, `DocumentHighlight`
 - `LineRange`, `DocumentHighlightSlice`
 - `IndentGuideLine`, `IndentGuideResult`, `LineScopeState`
+- `BracketToken`, `BracketPairResult`, `LineBracketPairs`
 - `SyntaxCompileError`
 
 Note:
@@ -103,6 +104,7 @@ public class TextAnalyzer implements AutoCloseable {
     public DocumentHighlight analyzeText(String text);
     public LineAnalyzeResult analyzeLine(String text, TextLineInfo info);
     public IndentGuideResult analyzeIndentGuides(String text);
+    public BracketPairResult analyzeBracketPairs(String text);
     public void close();
 }
 ```
@@ -121,6 +123,8 @@ public class DocumentAnalyzer implements AutoCloseable {
     public DocumentHighlightSlice getHighlightSlice(LineRange visibleRange);
     public IndentGuideResult analyzeIndentGuides();
     public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
+    public BracketPairResult analyzeBracketPairs();
+    public BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange);
     public void close();
 }
 ```
@@ -129,6 +133,7 @@ public class DocumentAnalyzer implements AutoCloseable {
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns the requested slice.
 `getHighlightSlice(...)` reads a visible slice from the latest cached result after `analyze()` or `analyzeIncremental(...)`.
 `analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
+`analyzeBracketPairs(...)` and `analyzeBracketPairsInLineRange(...)` analyze raw text for bracket tokens and do not require a highlight pass.
 
 ---
 
@@ -196,6 +201,9 @@ try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, fals
 
                 IndentGuideResult guides = analyzer.analyzeIndentGuides();
                 IndentGuideResult visibleGuides = analyzer.analyzeIndentGuidesInLineRange(
+                        new LineRange(0, 80));
+                BracketPairResult brackets = analyzer.analyzeBracketPairs();
+                BracketPairResult visibleBrackets = analyzer.analyzeBracketPairsInLineRange(
                         new LineRange(0, 80));
             }
         }

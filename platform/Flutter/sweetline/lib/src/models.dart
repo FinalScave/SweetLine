@@ -113,6 +113,45 @@ class DocumentHighlightSlice {
   final List<LineHighlight> lines;
 }
 
+enum BracketTokenKind { open, close }
+
+enum BracketMatchState { matched, unmatched, unknown }
+
+class BracketToken {
+  const BracketToken({
+    required this.range,
+    required this.depth,
+    required this.kind,
+    required this.matchState,
+    this.partnerRange,
+  });
+
+  final TextRange range;
+  final int depth;
+  final BracketTokenKind kind;
+  final BracketMatchState matchState;
+  final TextRange? partnerRange;
+}
+
+class LineBracketPairs {
+  LineBracketPairs([List<BracketToken>? tokens])
+    : tokens = tokens ?? <BracketToken>[];
+
+  final List<BracketToken> tokens;
+}
+
+class BracketPairResult {
+  BracketPairResult({
+    this.startLine = 0,
+    this.totalLineCount = 0,
+    List<LineBracketPairs>? lines,
+  }) : lines = lines ?? <LineBracketPairs>[];
+
+  final int startLine;
+  final int totalLineCount;
+  final List<LineBracketPairs> lines;
+}
+
 class LineAnalyzeResult {
   const LineAnalyzeResult(this.highlight, this.endState, this.charCount);
 

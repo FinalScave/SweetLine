@@ -141,6 +141,53 @@ namespace NS_SWEETLINE {
     List<LineScopeState> line_states;
   };
 
+  /// Bracket token kind
+  enum struct BracketTokenKind : int8_t {
+    /// Opening bracket
+    OPEN = 0,
+    /// Closing bracket
+    CLOSE
+  };
+
+  /// Bracket match state
+  enum struct BracketMatchState : int8_t {
+    /// Bracket has a known partner
+    MATCHED = 0,
+    /// Bracket has no valid partner
+    UNMATCHED,
+    /// Matching state cannot be fully resolved from the requested range
+    UNKNOWN
+  };
+
+  /// Single bracket token
+  struct BracketToken {
+    /// Range of the bracket token
+    TextRange range;
+    /// Nesting depth used by rainbow bracket rendering
+    int32_t depth {0};
+    /// Token kind
+    BracketTokenKind kind {BracketTokenKind::OPEN};
+    /// Match state
+    BracketMatchState match_state {BracketMatchState::UNKNOWN};
+    /// Range of the matched partner; valid only when match_state is MATCHED
+    TextRange partner_range;
+  };
+
+  /// Bracket token sequence for each line
+  struct LineBracketPairs {
+    List<BracketToken> tokens;
+  };
+
+  /// Bracket pair analysis result
+  struct BracketPairResult {
+    /// Actual start line of the returned slice
+    size_t start_line {0};
+    /// Total line count of the analyzed document
+    size_t total_line_count {0};
+    /// Consecutive bracket token results
+    List<LineBracketPairs> lines;
+  };
+
   /// Text line metadata
   struct TextLineInfo {
     /// Line index
@@ -194,6 +241,11 @@ namespace NS_SWEETLINE {
     /// @param text Full text content
     /// @return Indent guide analysis result
     SharedPtr<IndentGuideResult> analyzeIndentGuides(const U8String& text);
+
+    /// Perform bracket pair analysis on a text
+    /// @param text Full text content
+    /// @return Bracket pair analysis result
+    SharedPtr<BracketPairResult> analyzeBracketPairs(const U8String& text);
 
     /// Get the current highlight configuration
     const HighlightConfig& getHighlightConfig() const;
@@ -258,6 +310,15 @@ namespace NS_SWEETLINE {
     /// @param visible_range The visible line range to analyze and return
     /// @return Indent guide analysis result for the specified line range
     SharedPtr<IndentGuideResult> analyzeIndentGuidesInLineRange(const LineRange& visible_range) const;
+
+    /// Perform bracket pair analysis on the managed document
+    /// @return Bracket pair analysis result
+    SharedPtr<BracketPairResult> analyzeBracketPairs() const;
+
+    /// Perform bracket pair analysis for the requested line range
+    /// @param visible_range The visible line range to analyze and return
+    /// @return Bracket pair analysis result for the specified line range
+    SharedPtr<BracketPairResult> analyzeBracketPairsInLineRange(const LineRange& visible_range) const;
   private:
     friend class HighlightEngine;
     DocumentAnalyzer(const SharedPtr<Document>& document, const SharedPtr<SyntaxRule>& rule,

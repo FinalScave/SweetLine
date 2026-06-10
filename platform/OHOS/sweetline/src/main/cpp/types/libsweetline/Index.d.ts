@@ -20,6 +20,7 @@ export const TextAnalyzer_Delete: (handle: number) => void;
 export const TextAnalyzer_AnalyzeText: (handle: number, text: string) => Int32Array;
 export const TextAnalyzer_AnalyzeLine: (handle: number, text: string, line: number, startState: number, startCharOffset: number) => Int32Array;
 export const TextAnalyzer_AnalyzeIndentGuides: (handle: number, text: string) => Int32Array;
+export const TextAnalyzer_AnalyzeBracketPairs: (handle: number, text: string) => Int32Array;
 
 // DocumentAnalyzer
 export const DocumentAnalyzer_Delete: (handle: number) => void;
@@ -31,6 +32,8 @@ export const DocumentAnalyzer_AnalyzeChangesInLineRange: (handle: number, startL
 export const DocumentAnalyzer_GetHighlightSlice: (handle: number, visibleStartLine: number, visibleLineCount: number) => Int32Array;
 export const DocumentAnalyzer_AnalyzeIndentGuides: (handle: number) => Int32Array;
 export const DocumentAnalyzer_AnalyzeIndentGuidesInLineRange: (handle: number, visibleStartLine: number, visibleLineCount: number) => Int32Array;
+export const DocumentAnalyzer_AnalyzeBracketPairs: (handle: number) => Int32Array;
+export const DocumentAnalyzer_AnalyzeBracketPairsInLineRange: (handle: number, visibleStartLine: number, visibleLineCount: number) => Int32Array;
 export const DocumentAnalyzer_GetDocument: (handle: number) => number;
 
 // HighlightEngine

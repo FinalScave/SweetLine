@@ -177,6 +177,17 @@ actual class TextAnalyzer internal constructor(private val handle: MemorySegment
         }
     }
 
+    actual fun analyzeBracketPairs(text: String): BracketPairResult {
+        ensureOpen()
+        return confined { arena ->
+            val result = SweetLineJvmNative.slTextAnalyzeBracketPairs.invokeWithArguments(
+                handle,
+                arena.allocateFrom(text),
+            ) as MemorySegment
+            result.readAndFree(BracketPairResult(), ::readBracketPairResult)
+        }
+    }
+
     actual fun close() {
         closed = true
     }
@@ -277,6 +288,24 @@ actual class DocumentAnalyzer internal constructor(private val handle: MemorySeg
         }
     }
 
+    actual fun analyzeBracketPairs(): BracketPairResult {
+        ensureOpen()
+        val result = SweetLineJvmNative.slDocumentAnalyzeBracketPairs.invokeWithArguments(handle) as MemorySegment
+        return result.readAndFree(BracketPairResult(), ::readBracketPairResult)
+    }
+
+    actual fun analyzeBracketPairsInLineRange(visibleRange: LineRange): BracketPairResult {
+        ensureOpen()
+        return confined { arena ->
+            val visible = arena.allocate(JAVA_INT, 2)
+            visible.setAtIndex(JAVA_INT, 0, visibleRange.startLine)
+            visible.setAtIndex(JAVA_INT, 1, visibleRange.lineCount)
+            val result = SweetLineJvmNative.slDocumentAnalyzeBracketPairsInLineRange
+                .invokeWithArguments(handle, visible) as MemorySegment
+            result.readAndFree(BracketPairResult(), ::readBracketPairResultSlice)
+        }
+    }
+
     actual fun close() {
         closed = true
     }
@@ -361,6 +390,10 @@ private object SweetLineJvmNative {
         "sl_text_analyze_indent_guides",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
     )
+    val slTextAnalyzeBracketPairs: MethodHandle = downcall(
+        "sl_text_analyze_bracket_pairs",
+        FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
+    )
     val slEngineLoadDocument: MethodHandle = downcall(
         "sl_engine_load_document",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
@@ -391,6 +424,14 @@ private object SweetLineJvmNative {
     )
     val slDocumentAnalyzeIndentGuidesInLineRange: MethodHandle = downcall(
         "sl_document_analyze_indent_guides_in_line_range",
+        FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
+    )
+    val slDocumentAnalyzeBracketPairs: MethodHandle = downcall(
+        "sl_document_analyze_bracket_pairs",
+        FunctionDescriptor.of(ADDRESS, ADDRESS),
+    )
+    val slDocumentAnalyzeBracketPairsInLineRange: MethodHandle = downcall(
+        "sl_document_analyze_bracket_pairs_in_line_range",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
     )
     val slFreeBuffer: MethodHandle = downcall(
@@ -575,6 +616,14 @@ private fun readDocumentHighlightSlice(segment: MemorySegment): DocumentHighligh
 
 private fun readIndentGuideResult(segment: MemorySegment): IndentGuideResult {
     return NativeBufferParser.readIndentGuideResult { index -> segment.readInt(index) }
+}
+
+private fun readBracketPairResult(segment: MemorySegment): BracketPairResult {
+    return NativeBufferParser.readBracketPairResult { index -> segment.readInt(index) }
+}
+
+private fun readBracketPairResultSlice(segment: MemorySegment): BracketPairResult {
+    return NativeBufferParser.readBracketPairResultSlice { index -> segment.readInt(index) }
 }
 
 private fun <T> MemorySegment.readAndFree(defaultValue: T, reader: (MemorySegment) -> T): T {

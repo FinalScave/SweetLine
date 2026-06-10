@@ -242,6 +242,8 @@
       keyword: 1, string: 2, number: 3, comment: 4, class: 5, method: 6, variable: 7,
       punctuation: 8, annotation: 9, preprocessor: 10, macro: 11, lifetime: 12, selector: 13, builtin: 14, url: 16
     };
+    const BRACKET_PALETTE = [0xff7dd3fc, 0xfff9a8d4, 0xfffde047, 0xff86efac, 0xffc4b5fd, 0xfffdba74];
+    const BRACKET_MATCH_STATE = { MATCHED: 0, UNMATCHED: 1, UNKNOWN: 2 };
 
     const EXAMPLE_FILES = [
       "example.aarch64", "example.abnf", "example.astro", "example.bat", "example.bf", "example.bicep", "example.c",
@@ -443,14 +445,69 @@
       return style;
     }
 
-    function renderLine(lineText, lineHighlight) {
+    function bracketColor(token) {
+      if (Number(token.matchState) === BRACKET_MATCH_STATE.UNMATCHED) {
+        return "rgba(255, 107, 107, 1)";
+      }
+      const color = BRACKET_PALETTE[Math.abs(Number(token.depth) || 0) % BRACKET_PALETTE.length];
+      if (Number(token.matchState) === BRACKET_MATCH_STATE.UNKNOWN) {
+        return argbToCss((color & 0x00ffffff) | 0xaa000000);
+      }
+      return argbToCss(color);
+    }
+
+    function readBracketTokens(lineBracket, lineLength) {
+      if (!lineBracket || !lineBracket.tokens) { return []; }
+      const tokens = [];
+      const list = lineBracket.tokens;
+      const count = typeof list.size === "function" ? list.size() : 0;
+      for (let i = 0; i < count; i++) {
+        const token = list.get(i);
+        if (!token || !token.range) { continue; }
+        const start = clamp(token.range.start.column, 0, lineLength);
+        const end = clamp(token.range.end.column, start, lineLength);
+        if (end <= start) { continue; }
+        tokens.push({ start, end, color: bracketColor(token) });
+      }
+      return tokens;
+    }
+
+    function styledText(text, style) {
+      if (text.length === 0) { return ""; }
+      const escaped = escapeHtml(text);
+      return style ? `<span style="${style}">${escaped}</span>` : escaped;
+    }
+
+    function renderTextWithBrackets(lineText, start, end, style, bracketTokens) {
+      let html = "";
+      let cursor = start;
+      for (const token of bracketTokens) {
+        if (token.end <= cursor || token.start >= end) { continue; }
+        const tokenStart = clamp(token.start, start, end);
+        const tokenEnd = clamp(token.end, tokenStart, end);
+        if (tokenStart > cursor) {
+          html += styledText(lineText.slice(cursor, tokenStart), style);
+        }
+        html += `<span style="color:${token.color};">${escapeHtml(lineText.slice(tokenStart, tokenEnd))}</span>`;
+        cursor = tokenEnd;
+      }
+      if (cursor < end) {
+        html += styledText(lineText.slice(cursor, end), style);
+      }
+      return html;
+    }
+
+    function renderLine(lineText, lineHighlight, lineBracket) {
+      const bracketTokens = readBracketTokens(lineBracket, lineText.length);
       if (!lineHighlight || !lineHighlight.spans) {
-        return lineText.length === 0 ? "&#8203;" : escapeHtml(lineText);
+        const html = renderTextWithBrackets(lineText, 0, lineText.length, "", bracketTokens);
+        return lineText.length === 0 || html.length === 0 ? "&#8203;" : html;
       }
       const spans = lineHighlight.spans;
       const count = spans.size();
       if (count === 0) {
-        return lineText.length === 0 ? "&#8203;" : escapeHtml(lineText);
+        const html = renderTextWithBrackets(lineText, 0, lineText.length, "", bracketTokens);
+        return lineText.length === 0 || html.length === 0 ? "&#8203;" : html;
       }
       let html = "";
       let cursor = 0;
@@ -459,15 +516,15 @@
         const start = clamp(span.range.start.column, 0, lineText.length);
         const end = clamp(span.range.end.column, start, lineText.length);
         if (start > cursor) {
-          html += escapeHtml(lineText.slice(cursor, start));
+          html += renderTextWithBrackets(lineText, cursor, start, "", bracketTokens);
         }
         if (end > start) {
-          html += `<span style="${tokenStyle(span)}">${escapeHtml(lineText.slice(start, end))}</span>`;
+          html += renderTextWithBrackets(lineText, start, end, tokenStyle(span), bracketTokens);
         }
         cursor = end;
       }
       if (cursor < lineText.length) {
-        html += escapeHtml(lineText.slice(cursor));
+        html += renderTextWithBrackets(lineText, cursor, lineText.length, "", bracketTokens);
       }
       return html.length === 0 ? "&#8203;" : html;
     }
@@ -478,10 +535,11 @@
       els.lineNumbers.style.width = `${width}px`;
     }
 
-    function renderSlice(slice) {
+    function renderSlice(slice, bracketSlice = null) {
       const totalLines = Math.max(slice.totalLineCount || 0, state.lines.length, 1);
       const start = Math.max(slice.startLine || 0, 0);
       const lines = slice.lines;
+      const bracketLines = bracketSlice && bracketSlice.lines ? bracketSlice.lines : null;
       const visibleCount = lines ? lines.size() : 0;
 
       let codeHtml = "";
@@ -490,7 +548,8 @@
         const lineNo = start + i;
         const lineText = state.lines[lineNo] ?? "";
         const lineHighlight = lines.get(i);
-        codeHtml += `<div class="code-line">${renderLine(lineText, lineHighlight)}</div>`;
+        const lineBracket = bracketLines && i < bracketLines.size() ? bracketLines.get(i) : null;
+        codeHtml += `<div class="code-line">${renderLine(lineText, lineHighlight, lineBracket)}</div>`;
         numHtml += `<div class="line-number">${lineNo + 1}</div>`;
       }
 
@@ -790,7 +849,8 @@
       const range = toSlTextRange(zero, zero);
       const vis = toSlLineRange(vr.startLine, vr.lineCount);
       const slice = state.analyzer.analyzeIncrementalInLineRange(range, "", vis);
-      renderSlice(slice);
+      const bracketSlice = state.analyzer.analyzeBracketPairsInLineRange(vis);
+      renderSlice(slice, bracketSlice);
     }
 
     function scheduleVisibleRefresh() {
@@ -824,9 +884,10 @@
 
       const t0 = performance.now();
       const slice = state.analyzer.analyzeIncrementalInLineRange(range, patch.inserted, vis);
+      const bracketSlice = state.analyzer.analyzeBracketPairsInLineRange(vis);
       const ms = performance.now() - t0;
       state.lastVisibleKey = `${vr.startLine}:${vr.lineCount}:${state.text.length}`;
-      renderSlice(slice);
+      renderSlice(slice, bracketSlice);
       setStatus(`Incremental: ${ms.toFixed(2)} ms | start ${patch.startIndex} | replaced ${patch.oldEnd - patch.startIndex} | inserted ${patch.inserted.length}`, "good");
     }
 

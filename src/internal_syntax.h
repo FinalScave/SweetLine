@@ -132,6 +132,20 @@ namespace NS_SWEETLINE {
 #endif
   };
 
+  /// Bracket pair rule for bracket analysis
+  struct BracketRule {
+    /// Opening bracket text
+    U8String start;
+    /// Closing bracket text
+    U8String end;
+    /// ID, generated after parsing
+    int32_t rule_id {0};
+
+#ifdef SWEETLINE_DEBUG
+    void dump() const;
+#endif
+  };
+
   /// Syntax rule compiler
   class SyntaxRuleCompiler {
   public:
@@ -167,6 +181,7 @@ namespace NS_SWEETLINE {
     void parseStates(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     void parseState(const SharedPtr<SyntaxRule>& rule, StateRule& state_rule, const nlohmann::json& state_json);
 		void parseScopeRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
+    static void parseBracketRules(const SharedPtr<SyntaxRule>& rule, nlohmann::json& root);
     static void compileStatePattern(StateRule& state_rule);
     void processImportSyntaxRequests(const SharedPtr<SyntaxRule>& rule);
     void importSyntaxRule(const SharedPtr<SyntaxRule>& target_rule, int32_t target_state_id,

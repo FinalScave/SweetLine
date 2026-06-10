@@ -91,6 +91,9 @@ public class TextAnalyzer {
 
     // 缩进划线分析
     public IndentGuideResult analyzeIndentGuides(String text);
+
+    // Bracket pair analysis
+    public BracketPairResult analyzeBracketPairs(String text);
 }
 ```
 
@@ -128,6 +131,10 @@ public class DocumentAnalyzer {
     public IndentGuideResult analyzeIndentGuides();
     public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
 
+    // Bracket pair analysis
+    public BracketPairResult analyzeBracketPairs();
+    public BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange);
+
     // 获取托管文档
     public Document getDocument();
 }
@@ -137,6 +144,7 @@ public class DocumentAnalyzer {
 `analyzeIncrementalInLineRange(...)` 用于“应用补丁并立即返回切片”。
 `getHighlightSlice(...)` 用于在 `analyze()` 或 `analyzeIncremental(...)` 之后直接读取最近缓存的可见区结果。
 `analyzeIndentGuides(...)` 和 `analyzeIndentGuidesInLineRange(...)` 会直接基于文本分析缩进划线，不需要先执行高亮分析。
+`analyzeBracketPairs(...)` 和 `analyzeBracketPairsInLineRange(...)` 会直接基于文本分析括号 token，不需要先执行高亮分析。
 
 ### 数据结构
 

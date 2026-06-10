@@ -21,7 +21,16 @@ public class CodePanel extends JPanel {
     private String sourceCode;
     private DocumentHighlight highlight;
     private IndentGuideResult indentGuides;
+    private BracketPairResult bracketPairs;
     private HighlightTheme theme;
+    private static final Color[] BRACKET_PALETTE = {
+            new Color(0xFF7DD3FC, true),
+            new Color(0xFFF9A8D4, true),
+            new Color(0xFFFDE047, true),
+            new Color(0xFF86EFAC, true),
+            new Color(0xFFC4B5FD, true),
+            new Color(0xFFFDBA74, true)
+    };
 
     public CodePanel() {
         codeFont = new Font(Font.SANS_SERIF, Font.PLAIN, 1).deriveFont(FONT_SIZE);
@@ -32,10 +41,12 @@ public class CodePanel extends JPanel {
         this.theme = theme;
     }
 
-    public void setHighlightData(String sourceCode, DocumentHighlight highlight, IndentGuideResult indentGuides) {
+    public void setHighlightData(String sourceCode, DocumentHighlight highlight, IndentGuideResult indentGuides,
+                                 BracketPairResult bracketPairs) {
         this.sourceCode = sourceCode;
         this.highlight = highlight;
         this.indentGuides = indentGuides;
+        this.bracketPairs = bracketPairs;
     }
 
     @Override
@@ -129,8 +140,10 @@ public class CodePanel extends JPanel {
             if (lineHighlight == null) {
                 g2.setColor(textColor);
                 g2.drawString(lineText, codeX, baselineY);
+                drawBracketTokens(g2, fm, lineText, lineNum, currentTheme, codeX, baselineY);
             } else {
                 drawHighlightedLine(g2, fm, lineText, lineHighlight, currentTheme, textColor, codeX, baselineY);
+                drawBracketTokens(g2, fm, lineText, lineNum, currentTheme, codeX, baselineY);
             }
         }
     }
@@ -197,6 +210,46 @@ public class CodePanel extends JPanel {
         }
     }
 
+    private void drawBracketTokens(Graphics2D g2, FontMetrics fm, String lineText, int lineNum,
+                                   HighlightTheme theme, int codeX, int baselineY) {
+        LineBracketPairs linePairs = getBracketLine(lineNum);
+        if (linePairs == null || linePairs.tokens().isEmpty()) {
+            return;
+        }
+
+        for (BracketToken token : linePairs.tokens()) {
+            int start = clamp(token.range().start().column(), 0, lineText.length());
+            int end = clamp(token.range().end().column(), start, lineText.length());
+            if (end <= start) {
+                continue;
+            }
+
+            g2.setColor(bracketColor(token, theme));
+            int x = codeX + fm.stringWidth(lineText.substring(0, start));
+            g2.drawString(lineText.substring(start, end), x, baselineY);
+        }
+    }
+
+    private LineBracketPairs getBracketLine(int lineNum) {
+        if (bracketPairs == null) {
+            return null;
+        }
+        int lineIndex = lineNum - bracketPairs.startLine();
+        return lineIndex >= 0 && lineIndex < bracketPairs.lines().size()
+                ? bracketPairs.lines().get(lineIndex)
+                : null;
+    }
+
+    private static Color bracketColor(BracketToken token, HighlightTheme theme) {
+        if (token.matchState() == BracketMatchState.UNMATCHED) {
+            return new Color(0xFFFF6B6B, true);
+        }
+        Color color = BRACKET_PALETTE[Math.floorMod(token.depth(), BRACKET_PALETTE.length)];
+        return token.matchState() == BracketMatchState.UNKNOWN
+                ? blendColor(color, argbToColor(theme.backgroundColor), 0.68f)
+                : color;
+    }
+
     private void drawIndentGuides(Graphics2D g2, FontMetrics fm, int codeX,
                                   int lineHeight, int totalLines, HighlightTheme theme) {
         Color guideColor = blendColor(argbToColor(theme.textColor),
@@ -247,5 +300,9 @@ public class CodePanel extends JPanel {
 
     private static int clamp(int v) {
         return Math.max(0, Math.min(255, v));
+    }
+
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
     }
 }

@@ -83,6 +83,9 @@ int32_t* sl_text_analyze_line(sl_analyzer_handle_t analyzer, const char* text, i
 
 // Plain text indent guide analysis; no highlight pass is required
 int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer, const char* text);
+
+// Bracket pair analysis for plain text; no highlight pass is required
+int32_t* sl_text_analyze_bracket_pairs(sl_analyzer_handle_t analyzer, const char* text);
 ```
 
 ### 增量分析
@@ -124,6 +127,14 @@ int32_t* sl_document_analyze_indent_guides(sl_analyzer_handle_t analyzer);
 // 可见行范围缩进划线分析
 // visible_range 数组结构: [startLine, lineCount]
 int32_t* sl_document_analyze_indent_guides_in_line_range(sl_analyzer_handle_t analyzer,
+                                                          int32_t* visible_range);
+
+// Bracket pair analysis for managed document
+int32_t* sl_document_analyze_bracket_pairs(sl_analyzer_handle_t analyzer);
+
+// Bracket pair analysis for a visible line range
+// visible_range layout: [startLine, lineCount]
+int32_t* sl_document_analyze_bracket_pairs_in_line_range(sl_analyzer_handle_t analyzer,
                                                           int32_t* visible_range);
 ```
 
@@ -221,6 +232,48 @@ flags bit1: continuesAfter
 [nestingLevel, scopeState, scopeColumn, indentLevel]
 scopeState: 0=START, 1=END, 2=CONTENT
 ```
+
+括号匹配分析 `sl_text_analyze_bracket_pairs` 和
+`sl_document_analyze_bracket_pairs` 返回格式：
+
+```
+result[0] = flags
+            bit0: hasStartIndex
+result[1] = bracketStride
+result[2] = lineCount
+后续是 lineCount 个行条目：
+  lineEntry[0] = 当前行括号 token 数量
+  后续是 tokenCount * bracketStride 个字段
+```
+
+可见行范围括号匹配分析 `sl_document_analyze_bracket_pairs_in_line_range` 返回格式：
+
+```
+result[0] = flags
+            bit0: hasStartIndex
+result[1] = bracketStride
+result[2] = startLine
+result[3] = totalLineCount
+result[4] = lineCount
+后续是 lineCount 个行条目：
+  lineEntry[0] = 当前行括号 token 数量
+  后续是 tokenCount * bracketStride 个字段
+```
+
+括号 token 载荷：
+
+```
+公共字段:
+[column, length, depth, kind, matchState, partnerLine, partnerColumn, partnerLength]
+
+如果 show_index=true:
+[column, length, startIndex, depth, kind, matchState,
+ partnerLine, partnerColumn, partnerLength, partnerStartIndex]
+```
+
+`kind`: `0=OPEN`, `1=CLOSE`。
+`matchState`: `0=MATCHED`, `1=UNMATCHED`, `2=UNKNOWN`。
+没有已知匹配对象时，partner 字段为 `-1`。
 
 ### 完整 C 示例
 

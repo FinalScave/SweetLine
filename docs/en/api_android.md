@@ -91,6 +91,9 @@ public class TextAnalyzer {
 
     // Indent guide analysis
     public IndentGuideResult analyzeIndentGuides(String text);
+
+    // Bracket pair analysis
+    public BracketPairResult analyzeBracketPairs(String text);
 }
 ```
 
@@ -128,6 +131,10 @@ public class DocumentAnalyzer {
     public IndentGuideResult analyzeIndentGuides();
     public IndentGuideResult analyzeIndentGuidesInLineRange(LineRange visibleRange);
 
+    // Bracket pair analysis
+    public BracketPairResult analyzeBracketPairs();
+    public BracketPairResult analyzeBracketPairsInLineRange(LineRange visibleRange);
+
     // Get managed document
     public Document getDocument();
 }
@@ -137,6 +144,7 @@ public class DocumentAnalyzer {
 `analyzeIncrementalInLineRange(...)` applies a patch and immediately returns a slice.
 `getHighlightSlice(...)` reads a slice from the latest cached result produced by `analyze()` or `analyzeIncremental(...)`.
 `analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` analyze raw text for indent guides and do not require a highlight pass.
+`analyzeBracketPairs(...)` and `analyzeBracketPairsInLineRange(...)` analyze raw text for bracket tokens and do not require a highlight pass.
 
 ### Data Structures
 

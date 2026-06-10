@@ -65,6 +65,7 @@ final line = analyzer.analyzeLine(
   const TextLineInfo(line: 0, startState: 0, startCharOffset: 0),
 );
 final guides = analyzer.analyzeIndentGuides(source);
+final brackets = analyzer.analyzeBracketPairs(source);
 ```
 
 ### Document and DocumentAnalyzer
@@ -84,6 +85,8 @@ final slice = analyzer.analyzeIncrementalInLineRange(
 final visible = analyzer.getHighlightSlice(const LineRange(0, 100));
 final guides = analyzer.analyzeIndentGuides();
 final visibleGuides = analyzer.analyzeIndentGuidesInLineRange(const LineRange(0, 100));
+final brackets = analyzer.analyzeBracketPairs();
+final visibleBrackets = analyzer.analyzeBracketPairsInLineRange(const LineRange(0, 100));
 
 document.close();
 engine.close();
@@ -92,6 +95,7 @@ engine.close();
 `analyzeLineRange(...)` analyzes enough lines from the current document state to satisfy the requested visible range.
 `getHighlightSlice(...)` only reads the latest cached slice and does not trigger a new analysis.
 `analyzeIndentGuides(...)` and `analyzeIndentGuidesInLineRange(...)` do not require a prior highlight pass.
+`analyzeBracketPairs(...)` and `analyzeBracketPairsInLineRange(...)` do not require a prior highlight pass.
 
 ### Syntax loading
 

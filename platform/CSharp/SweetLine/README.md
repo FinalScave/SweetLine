@@ -11,6 +11,7 @@ This package provides the .NET / C# binding over the SweetLine native core via P
 - Visible-range slice update with `DocumentAnalyzer.AnalyzeIncrementalInLineRange(...)`
 - Visible-range cached slice read with `DocumentAnalyzer.GetHighlightSlice(...)`
 - Scope and indent guide analysis with `AnalyzeIndentGuides(...)`
+- Bracket pair analysis with `AnalyzeBracketPairs(...)`
 - Preprocessor macro support with `DefineMacro(...)` / `UndefineMacro(...)`
 - Style-ID mode and inline-style mode through `HighlightConfig`
 - Syntax loading from JSON string or file, plus file-name-based routing
@@ -54,6 +55,7 @@ if (textAnalyzer is not null)
 {
     DocumentHighlight result = textAnalyzer.AnalyzeText("public class Demo {}");
     IndentGuideResult guides = textAnalyzer.AnalyzeIndentGuides("public class Demo {}");
+    BracketPairResult brackets = textAnalyzer.AnalyzeBracketPairs("public class Demo {}");
 }
 ```
 
@@ -90,6 +92,9 @@ if (analyzer is not null)
     IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
     IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
         new LineRange(StartLine: 0, LineCount: 80));
+    BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
+    BracketPairResult visibleBrackets = analyzer.AnalyzeBracketPairsInLineRange(
+        new LineRange(StartLine: 0, LineCount: 80));
 }
 ```
 
@@ -119,6 +124,8 @@ LineAnalyzeResult lineResult = textAnalyzer!.AnalyzeLine("int x = 42;", lineInfo
 | `IndentGuideResult` | `StartLine`, `GuideLines`, and per-line `LineStates` |
 | `IndentGuideLine` | `Column`, `StartLine`, `EndLine`, continuation flags, and `Branches` |
 | `LineScopeState` | `NestingLevel`, `ScopeState`, `ScopeColumn`, and `IndentLevel` |
+| `BracketPairResult` | `StartLine`, `TotalLineCount`, and per-line bracket tokens |
+| `BracketToken` | `Range`, `Depth`, `Kind`, `MatchState`, and optional `PartnerRange` |
 | `LineAnalyzeResult` | Single-line highlight, `EndState`, and `CharCount` |
 
 ## Native Library

@@ -451,5 +451,12 @@
     "rules": [
       { "kind": "delimiter", "start": "{", "end": "}", "branches": ["case"] }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

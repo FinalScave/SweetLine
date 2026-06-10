@@ -182,5 +182,12 @@
       { "kind": "word", "start": "if", "end": "endif", "branches": ["elif","else"] },
       { "kind": "word", "start": "foreach", "end": "endforeach" }
     ]
+  },
+  "bracketRules": {
+    "pairs": [
+      { "start": "(", "end": ")" },
+      { "start": "[", "end": "]" },
+      { "start": "{", "end": "}" }
+    ]
   }
 }

@@ -241,6 +241,26 @@ static jintArray convertIndentGuideResultAsIntArray(JNIEnv* env, const SharedPtr
   return jresult;
 }
 
+static jintArray convertBracketPairResultAsIntArray(JNIEnv* env, const SharedPtr<BracketPairResult>& result,
+                                                    const HighlightConfig& config, bool slice) {
+  if (result == nullptr) {
+    return nullptr;
+  }
+  size_t total_size = computeBracketPairResultBufferSize(result, config, slice);
+  jintArray jresult = env->NewIntArray(static_cast<jsize>(total_size));
+  if (jresult == nullptr) {
+    return nullptr;
+  }
+  jint* buffer = env->GetIntArrayElements(jresult, nullptr);
+  if (slice) {
+    writeBracketPairResultSlice(result, buffer, config);
+  } else {
+    writeBracketPairResult(result, buffer, config);
+  }
+  env->ReleaseIntArrayElements(jresult, buffer, 0);
+  return jresult;
+}
+
 // ====================================== TextAnalyzerJni ===========================================
 class TextAnalyzerJni {
 public:
@@ -308,12 +328,24 @@ public:
     return convertIndentGuideResultAsIntArray(env, guide_result);
   }
 
+  static jintArray analyzeBracketPairs(JNIEnv* env, jclass clazz, jlong handle, jstring text) {
+    SharedPtr<TextAnalyzer> analyzer = getCPtrHolderValue<jlong, TextAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    const char* c_text = env->GetStringUTFChars(text, nullptr);
+    SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs(c_text);
+    env->ReleaseStringUTFChars(text, c_text);
+    return convertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), false);
+  }
+
   constexpr static const char *kJClassName = "com/qiplat/sweetline/TextAnalyzer";
   constexpr static const JNINativeMethod kJMethods[] = {
       {"nativeFinalize", "(J)V", (void*) finalizeAnalyzer},
       {"nativeAnalyzeText", "(JLjava/lang/String;)[I", (void*) analyzeText},
       {"nativeAnalyzeLine", "(JLjava/lang/String;[I)[I", (void*) analyzeLine},
-      {"nativeAnalyzeIndentGuides", "(JLjava/lang/String;)[I", (void*) analyzeIndentGuides}
+      {"nativeAnalyzeIndentGuides", "(JLjava/lang/String;)[I", (void*) analyzeIndentGuides},
+      {"nativeAnalyzeBracketPairs", "(JLjava/lang/String;)[I", (void*) analyzeBracketPairs}
   };
 
   static void RegisterMethods(JNIEnv *env) {
@@ -425,6 +457,26 @@ public:
     return convertIndentGuideResultAsIntArray(env, result);
   }
 
+  static jintArray analyzeBracketPairs(JNIEnv* env, jclass clazz, jlong handle) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairs();
+    return convertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), false);
+  }
+
+  static jintArray analyzeBracketPairsInLineRange(JNIEnv* env, jclass clazz, jlong handle,
+                                                  jint visible_start_line, jint visible_line_count) {
+    SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
+    if (analyzer == nullptr) {
+      return nullptr;
+    }
+    LineRange visible_range = {static_cast<size_t>(visible_start_line), static_cast<size_t>(visible_line_count)};
+    SharedPtr<BracketPairResult> result = analyzer->analyzeBracketPairsInLineRange(visible_range);
+    return convertBracketPairResultAsIntArray(env, result, analyzer->getHighlightConfig(), true);
+  }
+
   static jlong getDocument(jlong handle) {
     SharedPtr<DocumentAnalyzer> analyzer = getCPtrHolderValue<jlong, DocumentAnalyzer>(handle);
     if (analyzer == nullptr) {
@@ -444,6 +496,8 @@ public:
       {"nativeGetHighlightSlice", "(JII)[I", (void*) getHighlightSlice},
       {"nativeAnalyzeIndentGuides", "(J)[I", (void*) analyzeIndentGuides},
       {"nativeAnalyzeIndentGuidesInLineRange", "(JII)[I", (void*) analyzeIndentGuidesInLineRange},
+      {"nativeAnalyzeBracketPairs", "(J)[I", (void*) analyzeBracketPairs},
+      {"nativeAnalyzeBracketPairsInLineRange", "(JII)[I", (void*) analyzeBracketPairsInLineRange},
       {"nativeGetDocument", "(J)J", (void*) getDocument},
   };
 

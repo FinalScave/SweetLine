@@ -410,6 +410,12 @@ namespace NS_SWEETLINE {
     return analyzer.analyzeLineRange({0, temp_doc == nullptr ? 0 : temp_doc->getLineCount()});
   }
 
+  SharedPtr<BracketPairResult> TextAnalyzer::analyzeBracketPairs(const U8String& text) {
+    auto temp_doc = makeSharedPtr<Document>("", text);
+    BracketPairAnalyzer analyzer(m_rule_, temp_doc, m_config_);
+    return analyzer.analyzeLineRange({0, temp_doc == nullptr ? 0 : temp_doc->getLineCount()});
+  }
+
   // ===================================== LineHighlightAnalyzer ============================================
   LineHighlightAnalyzer::LineHighlightAnalyzer(const SharedPtr<SyntaxRule>& syntax_rule, const HighlightConfig& config)
     : m_rule_(syntax_rule), m_config_(config) {
@@ -671,6 +677,7 @@ namespace NS_SWEETLINE {
     m_highlight_ = makeSharedPtr<DocumentHighlight>();
     m_line_highlight_analyzer_ = makeUniquePtr<LineHighlightAnalyzer>(m_rule_, config);
     m_scope_guide_analyzer_ = makeUniquePtr<ScopeGuideAnalyzer>(m_rule_, m_document_, config);
+    m_bracket_pair_analyzer_ = makeUniquePtr<BracketPairAnalyzer>(m_rule_, m_document_, config);
   }
 
   void InternalDocumentAnalyzer::resetAnalysisCache() {
@@ -691,6 +698,12 @@ namespace NS_SWEETLINE {
   void InternalDocumentAnalyzer::invalidateIndentGuidesFrom(size_t line) {
     if (m_scope_guide_analyzer_ != nullptr) {
       m_scope_guide_analyzer_->invalidateFrom(line);
+    }
+  }
+
+  void InternalDocumentAnalyzer::invalidateBracketPairsFrom(size_t line) {
+    if (m_bracket_pair_analyzer_ != nullptr) {
+      m_bracket_pair_analyzer_->invalidateFrom(line);
     }
   }
 
@@ -931,6 +944,7 @@ namespace NS_SWEETLINE {
     syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
     invalidateAnalysisFrom(change_start_line);
     invalidateIndentGuidesFrom(change_start_line);
+    invalidateBracketPairsFrom(change_start_line);
     if (m_document_ != nullptr && m_document_->getLineCount() > 0) {
       ensureAnalyzedThrough(m_document_->getLineCount() - 1);
     }
@@ -954,6 +968,7 @@ namespace NS_SWEETLINE {
     syncCachedLinesAfterPatch(change_start_line, old_end_line, patch_result.line_delta, patch_result.char_delta);
     invalidateAnalysisFrom(change_start_line);
     invalidateIndentGuidesFrom(change_start_line);
+    invalidateBracketPairsFrom(change_start_line);
     if (m_document_ != nullptr
       && visible_range.line_count > 0
       && visible_range.start_line < m_document_->getLineCount()) {
@@ -987,6 +1002,20 @@ namespace NS_SWEETLINE {
       return makeSharedPtr<IndentGuideResult>();
     }
     return m_scope_guide_analyzer_->analyzeLineRange(visible_range);
+  }
+
+  SharedPtr<BracketPairResult> InternalDocumentAnalyzer::analyzeBracketPairs() {
+    if (m_bracket_pair_analyzer_ == nullptr || m_document_ == nullptr) {
+      return makeSharedPtr<BracketPairResult>();
+    }
+    return m_bracket_pair_analyzer_->analyzeLineRange({0, m_document_->getLineCount()});
+  }
+
+  SharedPtr<BracketPairResult> InternalDocumentAnalyzer::analyzeBracketPairsInLineRange(const LineRange& visible_range) {
+    if (m_bracket_pair_analyzer_ == nullptr) {
+      return makeSharedPtr<BracketPairResult>();
+    }
+    return m_bracket_pair_analyzer_->analyzeLineRange(visible_range);
   }
 
   // ===================================== DocumentAnalyzer ============================================
@@ -1033,6 +1062,14 @@ namespace NS_SWEETLINE {
 
   SharedPtr<IndentGuideResult> DocumentAnalyzer::analyzeIndentGuidesInLineRange(const LineRange& visible_range) const {
     return analyzer_impl_->analyzeIndentGuidesInLineRange(visible_range);
+  }
+
+  SharedPtr<BracketPairResult> DocumentAnalyzer::analyzeBracketPairs() const {
+    return analyzer_impl_->analyzeBracketPairs();
+  }
+
+  SharedPtr<BracketPairResult> DocumentAnalyzer::analyzeBracketPairsInLineRange(const LineRange& visible_range) const {
+    return analyzer_impl_->analyzeBracketPairsInLineRange(visible_range);
   }
 
   // ===================================== HighlightEngine ============================================
