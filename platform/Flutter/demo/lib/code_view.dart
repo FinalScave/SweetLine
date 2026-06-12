@@ -231,7 +231,6 @@ class _CodeViewPainter extends CustomPainter {
     _drawIndentGuides(canvas, codeOriginX);
     _drawLineNumbers(canvas);
     _drawCode(canvas, codeOriginX);
-    _drawBracketPairs(canvas, codeOriginX);
   }
 
   void _drawLineNumbers(Canvas canvas) {
@@ -284,6 +283,7 @@ class _CodeViewPainter extends CustomPainter {
       final spans = lineIndex < highlight.lines.length
           ? highlight.lines[lineIndex].spans
           : const <TokenSpan>[];
+      final lineBrackets = _bracketLine(lineIndex);
 
       var x = codeOriginX;
       final y = metrics.verticalPadding + (lineIndex * metrics.lineHeight);
@@ -296,29 +296,36 @@ class _CodeViewPainter extends CustomPainter {
             : lineText.length;
 
         if (startColumn > lastColumn && lastColumn < lineText.length) {
-          final gapText = lineText.substring(
+          x = _paintTextSegmentWithBrackets(
+            canvas,
+            lineText,
             lastColumn,
             math.min(startColumn, lineText.length),
-          );
-          x = _paintTextSegment(
-            canvas,
-            gapText,
             x,
             y,
             metrics.textStyle.copyWith(color: theme.text),
+            lineBrackets,
           );
         }
 
         if (startColumn < lineText.length && endColumn > startColumn) {
-          final tokenText = lineText.substring(startColumn, endColumn);
           final segmentStyle = _segmentTextStyle(span);
-          x = _paintTextSegment(canvas, tokenText, x, y, segmentStyle);
+          final beforeX = x;
+          x = _paintTextSegmentWithBrackets(
+            canvas,
+            lineText,
+            startColumn,
+            endColumn,
+            x,
+            y,
+            segmentStyle,
+            lineBrackets,
+          );
 
           if (span.inlineStyle?.isStrikethrough ?? false) {
-            final strikeWidth = _measureTextWidth(tokenText, segmentStyle);
             final strikeY = y + (metrics.lineHeight * 0.58);
             canvas.drawLine(
-              Offset(x - strikeWidth, strikeY),
+              Offset(beforeX, strikeY),
               Offset(x, strikeY),
               Paint()
                 ..color = segmentStyle.color ?? theme.text
@@ -331,53 +338,29 @@ class _CodeViewPainter extends CustomPainter {
       }
 
       if (lastColumn < lineText.length) {
-        _paintTextSegment(
+        _paintTextSegmentWithBrackets(
           canvas,
-          lineText.substring(lastColumn),
+          lineText,
+          lastColumn,
+          lineText.length,
           x,
           y,
           metrics.textStyle.copyWith(color: theme.text),
+          lineBrackets,
         );
       }
     }
   }
 
-  void _drawBracketPairs(Canvas canvas, double codeOriginX) {
+  LineBracketPairs? _bracketLine(int lineIndex) {
     final lines = bracketPairs?.lines;
     if (lines == null || lines.isEmpty) {
-      return;
+      return null;
     }
-
-    for (var lineIndex = 0; lineIndex < metrics.lines.length; lineIndex++) {
-      final linePairs = lineIndex < lines.length ? lines[lineIndex] : null;
-      final tokens = linePairs?.tokens;
-      if (tokens == null || tokens.isEmpty) {
-        continue;
-      }
-
-      final lineText = metrics.lines[lineIndex];
-      final y = metrics.verticalPadding + (lineIndex * metrics.lineHeight);
-      for (final token in tokens) {
-        final start = token.range.start.column
-            .clamp(0, lineText.length)
-            .toInt();
-        final end = token.range.end.column
-            .clamp(start, lineText.length)
-            .toInt();
-        if (end <= start) {
-          continue;
-        }
-        final tokenText = lineText.substring(start, end);
-        final x = codeOriginX + (start * metrics.charWidth);
-        _paintTextSegment(
-          canvas,
-          tokenText,
-          x,
-          y,
-          metrics.textStyle.copyWith(color: _bracketColor(token)),
-        );
-      }
-    }
+    final bracketLineIndex = lineIndex - (bracketPairs?.startLine ?? 0);
+    return bracketLineIndex >= 0 && bracketLineIndex < lines.length
+        ? lines[bracketLineIndex]
+        : null;
   }
 
   Color _bracketColor(BracketToken token) {
@@ -440,16 +423,78 @@ class _CodeViewPainter extends CustomPainter {
     return x + painter.width;
   }
 
-  double _measureTextWidth(String text, TextStyle style) {
-    if (text.isEmpty) {
-      return 0;
+  double _paintTextSegmentWithBrackets(
+    Canvas canvas,
+    String lineText,
+    int startColumn,
+    int endColumn,
+    double x,
+    double y,
+    TextStyle style,
+    LineBracketPairs? lineBrackets,
+  ) {
+    final start = startColumn.clamp(0, lineText.length).toInt();
+    final end = endColumn.clamp(start, lineText.length).toInt();
+    if (end <= start) {
+      return x;
     }
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
-      maxLines: 1,
-    )..layout();
-    return painter.width;
+
+    final tokens = lineBrackets?.tokens;
+    if (tokens == null || tokens.isEmpty) {
+      return _paintTextSegment(
+        canvas,
+        lineText.substring(start, end),
+        x,
+        y,
+        style,
+      );
+    }
+
+    var cursor = start;
+    for (final token in tokens) {
+      final tokenStart = token.range.start.column
+          .clamp(0, lineText.length)
+          .toInt();
+      final tokenEnd = token.range.end.column
+          .clamp(tokenStart, lineText.length)
+          .toInt();
+      if (tokenEnd <= cursor || tokenStart >= end) {
+        continue;
+      }
+
+      final clippedStart = math.max(cursor, math.max(start, tokenStart));
+      final clippedEnd = math.min(end, tokenEnd);
+      if (clippedStart > cursor) {
+        x = _paintTextSegment(
+          canvas,
+          lineText.substring(cursor, clippedStart),
+          x,
+          y,
+          style,
+        );
+      }
+      if (clippedEnd > clippedStart) {
+        x = _paintTextSegment(
+          canvas,
+          lineText.substring(clippedStart, clippedEnd),
+          x,
+          y,
+          style.copyWith(color: _bracketColor(token)),
+        );
+      }
+      cursor = math.max(cursor, clippedEnd);
+    }
+
+    if (cursor < end) {
+      x = _paintTextSegment(
+        canvas,
+        lineText.substring(cursor, end),
+        x,
+        y,
+        style,
+      );
+    }
+    return x;
   }
 
   void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint) {

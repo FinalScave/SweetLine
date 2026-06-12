@@ -137,20 +137,21 @@ public class CodePanel extends JPanel {
 
             String lineText = lines[lineNum];
             LineHighlight lineHighlight = lineHighlightMap.get(lineNum);
+            LineBracketPairs linePairs = getBracketLine(lineNum);
             if (lineHighlight == null) {
-                g2.setColor(textColor);
-                g2.drawString(lineText, codeX, baselineY);
-                drawBracketTokens(g2, fm, lineText, lineNum, currentTheme, codeX, baselineY);
+                drawTextWithBracketColors(g2, lineText, 0, lineText.length(),
+                        textColor, codeFont, codeX, baselineY, currentTheme, linePairs);
             } else {
-                drawHighlightedLine(g2, fm, lineText, lineHighlight, currentTheme, textColor, codeX, baselineY);
-                drawBracketTokens(g2, fm, lineText, lineNum, currentTheme, codeX, baselineY);
+                drawHighlightedLine(g2, fm, lineText, lineHighlight, currentTheme,
+                        textColor, codeX, baselineY, linePairs);
             }
         }
     }
 
     private void drawHighlightedLine(Graphics2D g2, FontMetrics fm, String lineText,
                                      LineHighlight lineHighlight, HighlightTheme theme,
-                                     Color defaultColor, int x, int baselineY) {
+                                     Color defaultColor, int x, int baselineY,
+                                     LineBracketPairs linePairs) {
         int lastCol = 0;
         for (TokenSpan span : lineHighlight.spans()) {
             int startCol = span.range().start().column();
@@ -159,10 +160,8 @@ public class CodePanel extends JPanel {
                     : lineText.length();
 
             if (startCol > lastCol && lastCol < lineText.length()) {
-                String gap = lineText.substring(lastCol, Math.min(startCol, lineText.length()));
-                g2.setColor(defaultColor);
-                g2.drawString(gap, x, baselineY);
-                x += fm.stringWidth(gap);
+                x = drawTextWithBracketColors(g2, lineText, lastCol, Math.min(startCol, lineText.length()),
+                        defaultColor, codeFont, x, baselineY, theme, linePairs);
             }
 
             int argbColor;
@@ -181,53 +180,79 @@ public class CodePanel extends JPanel {
             }
 
             if (startCol < lineText.length() && endCol > startCol) {
-                String tokenText = lineText.substring(startCol, Math.min(endCol, lineText.length()));
-                g2.setColor(argbToColor(argbColor));
-
                 Font origFont = g2.getFont();
+                Font drawFont = origFont;
                 if (bold || italic) {
                     int style = (bold ? Font.BOLD : 0) | (italic ? Font.ITALIC : 0);
-                    g2.setFont(origFont.deriveFont(style));
+                    drawFont = origFont.deriveFont(style);
                 }
-                g2.drawString(tokenText, x, baselineY);
-                int tokenWidth = g2.getFontMetrics().stringWidth(tokenText);
+                int beforeX = x;
+                x = drawTextWithBracketColors(g2, lineText, startCol, Math.min(endCol, lineText.length()),
+                        argbToColor(argbColor), drawFont, x, baselineY, theme, linePairs);
 
                 if (strikethrough) {
                     int strikeY = baselineY - fm.getAscent() / 3;
-                    g2.drawLine(x, strikeY, x + tokenWidth, strikeY);
+                    g2.setColor(argbToColor(argbColor));
+                    g2.drawLine(beforeX, strikeY, x, strikeY);
                 }
-
-                if (bold || italic) {
-                    g2.setFont(origFont);
-                }
-                x += tokenWidth;
             }
             lastCol = endCol;
         }
         if (lastCol < lineText.length()) {
-            g2.setColor(defaultColor);
-            g2.drawString(lineText.substring(lastCol), x, baselineY);
+            drawTextWithBracketColors(g2, lineText, lastCol, lineText.length(),
+                    defaultColor, codeFont, x, baselineY, theme, linePairs);
         }
     }
 
-    private void drawBracketTokens(Graphics2D g2, FontMetrics fm, String lineText, int lineNum,
-                                   HighlightTheme theme, int codeX, int baselineY) {
-        LineBracketPairs linePairs = getBracketLine(lineNum);
+    private int drawTextWithBracketColors(Graphics2D g2, String lineText, int startCol, int endCol,
+                                          Color baseColor, Font font, int x, int baselineY,
+                                          HighlightTheme theme, LineBracketPairs linePairs) {
+        int start = clamp(startCol, 0, lineText.length());
+        int end = clamp(endCol, start, lineText.length());
+        if (end <= start) {
+            return x;
+        }
         if (linePairs == null || linePairs.tokens().isEmpty()) {
-            return;
+            return drawTextRun(g2, lineText.substring(start, end), font, baseColor, x, baselineY);
         }
 
+        int cursor = start;
         for (BracketToken token : linePairs.tokens()) {
-            int start = clamp(token.range().start().column(), 0, lineText.length());
-            int end = clamp(token.range().end().column(), start, lineText.length());
-            if (end <= start) {
+            int tokenStart = clamp(token.range().start().column(), 0, lineText.length());
+            int tokenEnd = clamp(token.range().end().column(), tokenStart, lineText.length());
+            if (tokenEnd <= cursor || tokenStart >= end) {
                 continue;
             }
 
-            g2.setColor(bracketColor(token, theme));
-            int x = codeX + fm.stringWidth(lineText.substring(0, start));
-            g2.drawString(lineText.substring(start, end), x, baselineY);
+            int clippedStart = Math.max(cursor, Math.max(start, tokenStart));
+            int clippedEnd = Math.min(end, tokenEnd);
+            if (clippedStart > cursor) {
+                x = drawTextRun(g2, lineText.substring(cursor, clippedStart), font, baseColor, x, baselineY);
+            }
+            if (clippedEnd > clippedStart) {
+                x = drawTextRun(g2, lineText.substring(clippedStart, clippedEnd),
+                        font, bracketColor(token, theme), x, baselineY);
+            }
+            cursor = Math.max(cursor, clippedEnd);
         }
+
+        if (cursor < end) {
+            x = drawTextRun(g2, lineText.substring(cursor, end), font, baseColor, x, baselineY);
+        }
+        return x;
+    }
+
+    private int drawTextRun(Graphics2D g2, String text, Font font, Color color, int x, int baselineY) {
+        if (text.isEmpty()) {
+            return x;
+        }
+        Font originalFont = g2.getFont();
+        g2.setFont(font);
+        g2.setColor(color);
+        g2.drawString(text, x, baselineY);
+        int width = g2.getFontMetrics(font).stringWidth(text);
+        g2.setFont(originalFont);
+        return x + width;
     }
 
     private LineBracketPairs getBracketLine(int lineNum) {

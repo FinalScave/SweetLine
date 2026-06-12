@@ -137,6 +137,9 @@ fun CodeView(
 
             lines.forEachIndexed { lineIndex, lineText ->
                 val y = codeOriginY + lineIndex * metrics.lineHeight
+                val bracketTokens = bracketPairs
+                    ?.let { pairs -> pairs.lines.getOrNull(lineIndex - pairs.startLine)?.tokens }
+                    .orEmpty()
                 val lineNumber = (lineIndex + 1).toString()
                 val lineNumberWidth = textMeasurer.measure(
                     text = AnnotatedString(lineNumber),
@@ -156,15 +159,7 @@ fun CodeView(
                     spans = highlight.lines.getOrNull(lineIndex)?.spans.orEmpty(),
                     theme = theme,
                     textStyle = textStyle,
-                    x = codeOriginX,
-                    y = y,
-                )
-                drawBracketTokens(
-                    textMeasurer = textMeasurer,
-                    lineText = lineText,
-                    tokens = bracketPairs?.lines?.getOrNull(lineIndex)?.tokens.orEmpty(),
-                    textStyle = textStyle,
-                    charWidth = metrics.charWidth,
+                    bracketTokens = bracketTokens,
                     x = codeOriginX,
                     y = y,
                 )
@@ -181,6 +176,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHighlightedLine
     spans: List<TokenSpan>,
     theme: HighlightTheme,
     textStyle: TextStyle,
+    bracketTokens: List<BracketToken>,
     x: Float,
     y: Float,
 ) {
@@ -195,20 +191,45 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHighlightedLine
         }
 
         if (startColumn > lastColumn && lastColumn < lineText.length) {
-            val gap = lineText.substring(lastColumn, min(startColumn, lineText.length))
-            currentX = drawTextSegment(textMeasurer, gap, currentX, y, textStyle.copy(color = theme.text))
+            currentX = drawTextSegmentWithBrackets(
+                textMeasurer = textMeasurer,
+                lineText = lineText,
+                startColumn = lastColumn,
+                endColumn = min(startColumn, lineText.length),
+                x = currentX,
+                y = y,
+                style = textStyle.copy(color = theme.text),
+                bracketTokens = bracketTokens,
+            )
         }
 
         if (span.range.start.line == lineIndex && startColumn < lineText.length && endColumn > startColumn) {
-            val tokenText = lineText.substring(startColumn, endColumn)
-            currentX = drawTextSegment(textMeasurer, tokenText, currentX, y, spanTextStyle(span, theme, textStyle))
+            currentX = drawTextSegmentWithBrackets(
+                textMeasurer = textMeasurer,
+                lineText = lineText,
+                startColumn = startColumn,
+                endColumn = endColumn,
+                x = currentX,
+                y = y,
+                style = spanTextStyle(span, theme, textStyle),
+                bracketTokens = bracketTokens,
+            )
         }
 
         lastColumn = endColumn
     }
 
     if (lastColumn < lineText.length) {
-        drawTextSegment(textMeasurer, lineText.substring(lastColumn), currentX, y, textStyle.copy(color = theme.text))
+        drawTextSegmentWithBrackets(
+            textMeasurer = textMeasurer,
+            lineText = lineText,
+            startColumn = lastColumn,
+            endColumn = lineText.length,
+            x = currentX,
+            y = y,
+            style = textStyle.copy(color = theme.text),
+            bracketTokens = bracketTokens,
+        )
     }
 }
 
@@ -247,28 +268,55 @@ private fun spanTextStyle(span: TokenSpan, theme: HighlightTheme, baseStyle: Tex
 }
 
 @OptIn(ExperimentalTextApi::class)
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBracketTokens(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTextSegmentWithBrackets(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
     lineText: String,
-    tokens: List<BracketToken>,
-    textStyle: TextStyle,
-    charWidth: Float,
+    startColumn: Int,
+    endColumn: Int,
     x: Float,
     y: Float,
-) {
-    tokens.forEach { token ->
-        val start = token.range.start.column.coerceIn(0, lineText.length)
-        val end = token.range.end.column.coerceIn(start, lineText.length)
-        if (end <= start) {
+    style: TextStyle,
+    bracketTokens: List<BracketToken>,
+): Float {
+    val start = startColumn.coerceIn(0, lineText.length)
+    val end = endColumn.coerceIn(start, lineText.length)
+    if (end <= start) {
+        return x
+    }
+    if (bracketTokens.isEmpty()) {
+        return drawTextSegment(textMeasurer, lineText.substring(start, end), x, y, style)
+    }
+
+    var currentX = x
+    var cursor = start
+    bracketTokens.forEach { token ->
+        val tokenStart = token.range.start.column.coerceIn(0, lineText.length)
+        val tokenEnd = token.range.end.column.coerceIn(tokenStart, lineText.length)
+        if (tokenEnd <= cursor || tokenStart >= end) {
             return@forEach
         }
-        drawText(
-            textMeasurer = textMeasurer,
-            text = lineText.substring(start, end),
-            topLeft = Offset(x + start * charWidth, y),
-            style = textStyle.copy(color = bracketColor(token)),
-        )
+
+        val clippedStart = max(cursor, max(start, tokenStart))
+        val clippedEnd = min(end, tokenEnd)
+        if (clippedStart > cursor) {
+            currentX = drawTextSegment(textMeasurer, lineText.substring(cursor, clippedStart), currentX, y, style)
+        }
+        if (clippedEnd > clippedStart) {
+            currentX = drawTextSegment(
+                textMeasurer = textMeasurer,
+                text = lineText.substring(clippedStart, clippedEnd),
+                x = currentX,
+                y = y,
+                style = style.copy(color = bracketColor(token)),
+            )
+        }
+        cursor = max(cursor, clippedEnd)
     }
+
+    if (cursor < end) {
+        currentX = drawTextSegment(textMeasurer, lineText.substring(cursor, end), currentX, y, style)
+    }
+    return currentX
 }
 
 private val BracketPalette = listOf(

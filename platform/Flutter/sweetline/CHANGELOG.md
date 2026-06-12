@@ -1,3 +1,7 @@
+## 1.3.0
+
+* Add bracket pair analysis metadata for rainbow bracket rendering and partner lookup.
+
 ## 1.2.6
 
 * Fix memory leak issues.

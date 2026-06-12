@@ -10,7 +10,7 @@ plugins {
 
 description = "Kotlin Multiplatform wrapper for the SweetLine native syntax highlighting engine."
 group = "com.qiplat"
-version = "1.2.6"
+version = "1.3.0"
 
 val repoRoot = rootProject.projectDir.resolve("../..").normalize()
 val generatedJvmNativeResourcesDir = layout.buildDirectory.dir("generated/resources/jvm/main")

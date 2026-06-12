@@ -21,10 +21,7 @@ external sl_document_handle_t sl_create_document(
 /// Destroy a managed document
 /// @param document_handle Managed document handle
 /// @return Error code, see @see {sl_error_t}. Returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_document_handle_t)>(
-  assetId: _sweetlineAssetId,
-  symbol: 'sl_free_document',
-)
+@ffi.Native<ffi.Int Function(sl_document_handle_t)>(assetId: _sweetlineAssetId, symbol: 'sl_free_document')
 external int _sl_free_document(sl_document_handle_t document_handle);
 
 sl_error sl_free_document(sl_document_handle_t document_handle) =>
@@ -34,9 +31,7 @@ sl_error sl_free_document(sl_document_handle_t document_handle) =>
 /// @param show_index Whether the analysis result includes character index, if not only line and column are returned
 /// @param inline_style Whether the analysis result uses inline styles instead of only returning style IDs
 /// @return Highlight engine handle
-@ffi.Native<sl_engine_handle_t Function(ffi.Bool, ffi.Bool)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<sl_engine_handle_t Function(ffi.Bool, ffi.Bool)>(assetId: _sweetlineAssetId)
 external sl_engine_handle_t sl_create_engine(
   bool show_index,
   bool inline_style,
@@ -45,10 +40,7 @@ external sl_engine_handle_t sl_create_engine(
 /// Destroy the highlight engine
 /// @param engine_handle Highlight engine handle
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t)>(
-  assetId: _sweetlineAssetId,
-  symbol: 'sl_free_engine',
-)
+@ffi.Native<ffi.Int Function(sl_engine_handle_t)>(assetId: _sweetlineAssetId, symbol: 'sl_free_engine')
 external int _sl_free_engine(sl_engine_handle_t engine_handle);
 
 sl_error sl_free_engine(sl_engine_handle_t engine_handle) =>
@@ -58,8 +50,7 @@ sl_error sl_free_engine(sl_engine_handle_t engine_handle) =>
 /// @param engine_handle Highlight engine handle
 /// @param macro_name Macro name
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(
-  assetId: _sweetlineAssetId,
+@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(assetId: _sweetlineAssetId,
   symbol: 'sl_engine_define_macro',
 )
 external int _sl_engine_define_macro(
@@ -76,8 +67,7 @@ sl_error sl_engine_define_macro(
 /// @param engine_handle Highlight engine handle
 /// @param macro_name Macro name
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(
-  assetId: _sweetlineAssetId,
+@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(assetId: _sweetlineAssetId,
   symbol: 'sl_engine_undefine_macro',
 )
 external int _sl_engine_undefine_macro(
@@ -140,9 +130,7 @@ sl_error sl_engine_register_style_name(
 /// @param engine_handle Highlight engine handle
 /// @param style_id Highlight style ID
 /// @return The registered style name for the given ID in the engine
-@ffi.Native<ffi.Pointer<ffi.Char> Function(sl_engine_handle_t, ffi.Int32)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<ffi.Pointer<ffi.Char> Function(sl_engine_handle_t, ffi.Int32)>(assetId: _sweetlineAssetId)
 external ffi.Pointer<ffi.Char> sl_engine_get_style_name(
   sl_engine_handle_t engine_handle,
   int style_id,
@@ -173,7 +161,7 @@ external sl_analyzer_handle_t sl_engine_create_text_analyzer_by_file_name(
 );
 
 /// Perform full highlight analysis on a text
-/// @param analyzer_handle Plain text analyzer handle
+/// @param analyzer_handle Plain text highlight analyzer handle
 /// @param text Full text content
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
@@ -246,6 +234,20 @@ external ffi.Pointer<ffi.Int32> sl_text_analyze_line(
 /// @param analyzer_handle Plain text analyzer handle
 /// @param text Text content
 /// @return Analysis result, format same as sl_document_analyze_indent_guides
+/// Structure:
+/// @code
+/// result[0] = slice start line
+/// result[1] = number of line states
+/// result[2] = number of indent guide lines
+/// Followed by guide line entries:
+/// [column, start_line, end_line, flags, branch_count, branch_line_0, branch_column_0, ...]
+/// flags:
+/// bit0: continuesBefore
+/// bit1: continuesAfter
+/// Followed by line state entries:
+/// [nesting_level, scope_state, scope_column, indent_level]
+/// where scope_state: 0=START, 1=END, 2=CONTENT
+/// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 @ffi.Native<
   ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t, ffi.Pointer<ffi.Char>)
@@ -258,7 +260,23 @@ external ffi.Pointer<ffi.Int32> sl_text_analyze_indent_guides(
 /// Perform bracket pair analysis on plain text
 /// @param analyzer_handle Plain text analyzer handle
 /// @param text Text content
-/// @return Analysis result, tightly packed in byte order
+/// @return Analysis result, tightly packed in byte order. Structure:
+/// @code
+/// result[0] = bracket payload flags
+/// bit0: hasStartIndex
+/// result[1] = bracket token field count (stride)
+/// result[2] = line count
+/// Followed by line_count line entries:
+/// line_entry[0] = bracket token count of current line
+/// followed by token_count * stride fields
+/// Bracket token payload:
+/// common: [column, length, depth, kind, matchState, partnerLine, partnerColumn, partnerLength]
+/// if show_index=true: [column, length, startIndex, depth, kind, matchState,
+/// partnerLine, partnerColumn, partnerLength, partnerStartIndex]
+/// where kind: 0=OPEN, 1=CLOSE
+/// where matchState: 0=MATCHED, 1=UNMATCHED, 2=UNKNOWN
+/// partner fields are -1 when no known partner exists
+/// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 @ffi.Native<
   ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t, ffi.Pointer<ffi.Char>)
@@ -281,22 +299,20 @@ external sl_analyzer_handle_t sl_engine_load_document(
 );
 
 /// Perform full highlight analysis on a managed document (typically called once after initial document load)
-/// @param analyzer_handle Document analyzer handle
+/// @param analyzer_handle Document highlight analyzer handle
 /// @return Analysis result, tightly packed in byte order. Structure:
 /// @code
 /// Same format as sl_text_analyze:
 /// [flags, spanStride, lineCount, lineEntry...]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
 external ffi.Pointer<ffi.Int32> sl_document_analyze(
   sl_analyzer_handle_t analyzer_handle,
 );
 
 /// Analyze enough lines to cover the specified line range on a managed document
-/// @param analyzer_handle Document analyzer handle
+/// @param analyzer_handle Document highlight analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
 /// @return Highlight slice for the specified line range, tightly packed in byte order. Structure:
 /// @code
@@ -396,16 +412,14 @@ external ffi.Pointer<ffi.Int32> sl_document_get_highlight_slice(
 /// Followed by guide line entries:
 /// [column, start_line, end_line, flags, branch_count, branch_line_0, branch_column_0, ...]
 /// flags:
-///   bit0: continuesBefore
-///   bit1: continuesAfter
+/// bit0: continuesBefore
+/// bit1: continuesAfter
 /// Followed by line state entries:
 /// [nesting_level, scope_state, scope_column, indent_level]
 /// where scope_state: 0=START, 1=END, 2=CONTENT
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
 external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides(
   sl_analyzer_handle_t analyzer_handle,
 );
@@ -425,11 +439,13 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides_in_line_range(
 
 /// Perform bracket pair analysis on a managed document
 /// @param analyzer_handle Document analyzer handle
-/// @return Analysis result, tightly packed in byte order
+/// @return Analysis result, tightly packed in byte order. Structure:
+/// @code
+/// Same format as sl_text_analyze_bracket_pairs:
+/// [flags, bracketTokenStride, lineCount, lineEntry...]
+/// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
 external ffi.Pointer<ffi.Int32> sl_document_analyze_bracket_pairs(
   sl_analyzer_handle_t analyzer_handle,
 );
@@ -437,7 +453,19 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_bracket_pairs(
 /// Perform bracket pair analysis for the requested visible line range on a managed document
 /// @param analyzer_handle Document analyzer handle
 /// @param visible_range Visible line range, array structure: [startLine],[lineCount]
-/// @return Analysis result, tightly packed in byte order
+/// @return Analysis result, tightly packed in byte order. Structure:
+/// @code
+/// result[0] = bracket payload flags
+/// bit0: hasStartIndex
+/// result[1] = bracket token field count (stride)
+/// result[2] = slice start line
+/// result[3] = total line count
+/// result[4] = slice line count
+/// Followed by line_count line entries:
+/// line_entry[0] = bracket token count of current line
+/// followed by token_count * stride fields
+/// Bracket token payload is the same as sl_text_analyze_bracket_pairs.
+/// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
 @ffi.Native<
   ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t, ffi.Pointer<ffi.Int32>)
@@ -451,9 +479,7 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_bracket_pairs_in_line_range(
 /// (such as sl_text_analyze, sl_document_analyze, sl_document_analyze_incremental,
 /// sl_document_analyze_incremental_in_line_range, sl_document_get_highlight_slice) must be freed via this function
 /// @param result Highlight analysis result
-@ffi.Native<ffi.Void Function(ffi.Pointer<ffi.Int32>)>(
-  assetId: _sweetlineAssetId,
-)
+@ffi.Native<ffi.Void Function(ffi.Pointer<ffi.Int32>)>(assetId: _sweetlineAssetId)
 external void sl_free_buffer(ffi.Pointer<ffi.Int32> result);
 
 /// Error codes

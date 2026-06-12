@@ -11,7 +11,7 @@ This package provides the .NET / C# binding over the SweetLine native core via P
 - Visible-range slice update with `DocumentAnalyzer.AnalyzeIncrementalInLineRange(...)`
 - Visible-range cached slice read with `DocumentAnalyzer.GetHighlightSlice(...)`
 - Scope and indent guide analysis with `AnalyzeIndentGuides(...)`
-- Bracket pair analysis with `AnalyzeBracketPairs(...)`
+- Bracket pair analysis for rainbow bracket rendering and partner lookup with `AnalyzeBracketPairs(...)`
 - Preprocessor macro support with `DefineMacro(...)` / `UndefineMacro(...)`
 - Style-ID mode and inline-style mode through `HighlightConfig`
 - Syntax loading from JSON string or file, plus file-name-based routing
@@ -101,6 +101,7 @@ if (analyzer is not null)
 Use `AnalyzeLineRange(...)` when the editor needs a visible slice and SweetLine should analyze enough lines from the current document state first.
 Use `GetHighlightSlice(...)` after `Analyze()` or `AnalyzeIncremental(...)` when the editor only needs the current viewport.
 Use `AnalyzeIncrementalInLineRange(...)` when you want to apply the edit and fetch the visible slice in one step.
+Use `AnalyzeBracketPairs(...)` or `AnalyzeBracketPairsInLineRange(...)` when the editor needs bracket depth for rainbow colors or `PartnerRange` for matching bracket navigation.
 
 ## Single-Line Analysis
 
@@ -124,7 +125,7 @@ LineAnalyzeResult lineResult = textAnalyzer!.AnalyzeLine("int x = 42;", lineInfo
 | `IndentGuideResult` | `StartLine`, `GuideLines`, and per-line `LineStates` |
 | `IndentGuideLine` | `Column`, `StartLine`, `EndLine`, continuation flags, and `Branches` |
 | `LineScopeState` | `NestingLevel`, `ScopeState`, `ScopeColumn`, and `IndentLevel` |
-| `BracketPairResult` | `StartLine`, `TotalLineCount`, and per-line bracket tokens |
+| `BracketPairResult` | `StartLine`, `TotalLineCount`, and per-line bracket tokens for rainbow bracket rendering |
 | `BracketToken` | `Range`, `Depth`, `Kind`, `MatchState`, and optional `PartnerRange` |
 | `LineAnalyzeResult` | Single-line highlight, `EndState`, and `CharCount` |
 
@@ -170,9 +171,9 @@ When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCoreIOS.xcframework
 `dotnet pack` extracts it into the NuGet package automatically.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.2.7
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.3.0
 
-dotnet nuget push artifacts/nuget/SweetLine.1.2.7.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.3.0.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate

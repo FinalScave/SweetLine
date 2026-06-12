@@ -120,15 +120,16 @@ internal sealed class CodeViewControl : Control
             DrawText(g, lineNumText, _codeFont, lineNumColor, lineNumX, y);
 
             string lineText = lines[lineNum];
+            LineBracketPairs? linePairs = GetBracketLine(lineNum);
             if (!lineMap.TryGetValue(lineNum, out LineHighlight? lineHighlight))
             {
-                DrawText(g, lineText, _codeFont, textColor, codeX, y);
-                DrawBracketTokens(g, lineText, lineNum, currentTheme, codeX, y);
+                DrawTextWithBracketColors(g, lineText, 0, lineText.Length,
+                    _codeFont, textColor, codeX, y, currentTheme, linePairs);
                 continue;
             }
 
-            DrawHighlightedLine(g, lineText, lineHighlight, currentTheme, textColor, codeX, y, lineHeight);
-            DrawBracketTokens(g, lineText, lineNum, currentTheme, codeX, y);
+            DrawHighlightedLine(g, lineText, lineHighlight, currentTheme, textColor,
+                codeX, y, lineHeight, linePairs);
         }
     }
 
@@ -197,7 +198,8 @@ internal sealed class CodeViewControl : Control
         Color defaultColor,
         int x,
         int lineTop,
-        int lineHeight)
+        int lineHeight,
+        LineBracketPairs? linePairs)
     {
         int lastCol = 0;
         foreach (TokenSpan span in lineHighlight.Spans)
@@ -209,15 +211,12 @@ internal sealed class CodeViewControl : Control
 
             if (startCol > lastCol && lastCol < lineText.Length)
             {
-                string gap = lineText.Substring(lastCol, Math.Min(startCol, lineText.Length) - lastCol);
-                DrawText(g, gap, _codeFont, defaultColor, x, lineTop);
-                x += MeasureTextWidth(g, gap, _codeFont);
+                x = DrawTextWithBracketColors(g, lineText, lastCol, Math.Min(startCol, lineText.Length),
+                    _codeFont, defaultColor, x, lineTop, theme, linePairs);
             }
 
             if (startCol < lineText.Length && endCol > startCol)
             {
-                string tokenText = lineText.Substring(startCol, Math.Min(endCol, lineText.Length) - startCol);
-
                 int argbColor;
                 bool bold = false;
                 bool italic = false;
@@ -260,11 +259,11 @@ internal sealed class CodeViewControl : Control
                     }
                 }
 
-                int tokenWidth;
+                int beforeX = x;
                 try
                 {
-                    DrawText(g, tokenText, drawFont, ArgbToColor(argbColor), x, lineTop);
-                    tokenWidth = MeasureTextWidth(g, tokenText, drawFont);
+                    x = DrawTextWithBracketColors(g, lineText, startCol, Math.Min(endCol, lineText.Length),
+                        drawFont, ArgbToColor(argbColor), x, lineTop, theme, linePairs);
                 }
                 finally
                 {
@@ -278,10 +277,8 @@ internal sealed class CodeViewControl : Control
                 {
                     int strikeY = lineTop + lineHeight / 2;
                     using Pen strikePen = new(ArgbToColor(argbColor));
-                    g.DrawLine(strikePen, x, strikeY, x + tokenWidth, strikeY);
+                    g.DrawLine(strikePen, beforeX, strikeY, x, strikeY);
                 }
-
-                x += tokenWidth;
             }
 
             lastCol = endCol;
@@ -289,31 +286,69 @@ internal sealed class CodeViewControl : Control
 
         if (lastCol < lineText.Length)
         {
-            DrawText(g, lineText[lastCol..], _codeFont, defaultColor, x, lineTop);
+            DrawTextWithBracketColors(g, lineText, lastCol, lineText.Length,
+                _codeFont, defaultColor, x, lineTop, theme, linePairs);
         }
     }
 
-    private void DrawBracketTokens(Graphics g, string lineText, int lineNum, HighlightTheme theme, int codeX, int lineTop)
+    private int DrawTextWithBracketColors(
+        Graphics g,
+        string lineText,
+        int startCol,
+        int endCol,
+        Font font,
+        Color baseColor,
+        int x,
+        int lineTop,
+        HighlightTheme theme,
+        LineBracketPairs? linePairs)
     {
-        LineBracketPairs? linePairs = GetBracketLine(lineNum);
-        if (linePairs is null || linePairs.Tokens.Count == 0)
+        int start = Math.Clamp(startCol, 0, lineText.Length);
+        int end = Math.Clamp(endCol, start, lineText.Length);
+        if (end <= start)
         {
-            return;
+            return x;
         }
 
+        if (linePairs is null || linePairs.Tokens.Count == 0)
+        {
+            return DrawTextRun(g, lineText[start..end], font, baseColor, x, lineTop);
+        }
+
+        int cursor = start;
         foreach (BracketToken token in linePairs.Tokens)
         {
-            int start = Math.Clamp(token.Range.Start.Column, 0, lineText.Length);
-            int end = Math.Clamp(token.Range.End.Column, start, lineText.Length);
-            if (end <= start)
+            int tokenStart = Math.Clamp(token.Range.Start.Column, 0, lineText.Length);
+            int tokenEnd = Math.Clamp(token.Range.End.Column, tokenStart, lineText.Length);
+            if (tokenEnd <= cursor || tokenStart >= end)
             {
                 continue;
             }
 
-            string tokenText = lineText[start..end];
-            int x = codeX + MeasureTextWidth(g, lineText[..start], _codeFont);
-            DrawText(g, tokenText, _codeFont, BracketColor(token, theme), x, lineTop);
+            int clippedStart = Math.Max(cursor, Math.Max(start, tokenStart));
+            int clippedEnd = Math.Min(end, tokenEnd);
+            if (clippedStart > cursor)
+            {
+                x = DrawTextRun(g, lineText[cursor..clippedStart], font, baseColor, x, lineTop);
+            }
+            if (clippedEnd > clippedStart)
+            {
+                x = DrawTextRun(g, lineText[clippedStart..clippedEnd], font, BracketColor(token, theme), x, lineTop);
+            }
+            cursor = Math.Max(cursor, clippedEnd);
         }
+
+        if (cursor < end)
+        {
+            x = DrawTextRun(g, lineText[cursor..end], font, baseColor, x, lineTop);
+        }
+        return x;
+    }
+
+    private static int DrawTextRun(Graphics g, string text, Font font, Color color, int x, int y)
+    {
+        DrawText(g, text, font, color, x, y);
+        return x + MeasureTextWidth(g, text, font);
     }
 
     private LineBracketPairs? GetBracketLine(int lineNum)

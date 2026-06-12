@@ -9,7 +9,7 @@ It wraps the SweetLine native C API and provides a Dart-friendly API for:
 - managed document incremental analysis
 - visible-range highlight slice retrieval
 - indent guide analysis
-- bracket pair analysis
+- bracket pair analysis for rainbow bracket rendering and partner lookup
 
 ## Features
 
@@ -17,6 +17,7 @@ It wraps the SweetLine native C API and provides a Dart-friendly API for:
 - `TextAnalyzer` for full text and single-line analysis
 - `Document` + `DocumentAnalyzer` for incremental updates
 - `DocumentHighlight` / `DocumentHighlightSlice` / `IndentGuideResult` / `BracketPairResult` models
+- bracket token depth and partner range metadata for rainbow bracket rendering
 - optional `showIndex` support
 - optional inline-style output
 
@@ -40,7 +41,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.2.6
+  sweetline: ^1.3.0
 ```
 
 ## Load syntax rules
@@ -235,7 +236,7 @@ LineScopeState.indentLevel
 
 ### `BracketPairResult`
 
-Bracket pair analysis result:
+Bracket pair analysis result for rainbow bracket rendering and partner lookup:
 
 ```dart
 BracketPairResult.startLine
