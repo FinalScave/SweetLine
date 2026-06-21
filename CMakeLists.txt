@@ -16,13 +16,33 @@ option(SWEETLINE_BUILD_TESTS "Build SweetLine tests" ${SWEETLINE_DEFAULT_BUILD_T
 option(SWEETLINE_BUILD_SHARED "Build SweetLine dynamic library" ON)
 option(SWEETLINE_BUILD_STATIC "Build SweetLine static library" ON)
 option(SWEETLINE_BUILD_WASM_EMBIND "Build SweetLine WebAssembly embind module" ON)
+option(SWEETLINE_BUILD_APPLE_FRAMEWORK "Build SweetLine Apple framework" OFF)
+option(SWEETLINE_APPLE_STATIC_FRAMEWORK "Build Apple framework target with a static Mach-O binary" OFF)
+
+set(SWEETLINE_APPLE_FRAMEWORK_NAME "SweetLineCore")
+set(SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER "com.finalscave.sweetline.core")
 
 if (EMSCRIPTEN)
     if (NOT SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_TESTS AND NOT SWEETLINE_BUILD_WASM_EMBIND)
         message(FATAL_ERROR "At least one of SWEETLINE_BUILD_STATIC, SWEETLINE_BUILD_TESTS, or SWEETLINE_BUILD_WASM_EMBIND must be enabled for Emscripten")
     endif ()
-elseif (NOT SWEETLINE_BUILD_SHARED AND NOT SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_TESTS)
+elseif (NOT SWEETLINE_BUILD_SHARED AND NOT SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_TESTS AND NOT SWEETLINE_BUILD_APPLE_FRAMEWORK)
     message(FATAL_ERROR "At least one of SWEETLINE_BUILD_SHARED, SWEETLINE_BUILD_STATIC, or SWEETLINE_BUILD_TESTS must be enabled")
+endif ()
+
+if (SWEETLINE_BUILD_APPLE_FRAMEWORK)
+    if (NOT APPLE)
+        message(FATAL_ERROR "SWEETLINE_BUILD_APPLE_FRAMEWORK is only supported on Apple platforms")
+    endif ()
+    if (NOT SWEETLINE_BUILD_SHARED)
+        message(FATAL_ERROR "SWEETLINE_BUILD_APPLE_FRAMEWORK requires SWEETLINE_BUILD_SHARED=ON")
+    endif ()
+    if (SWEETLINE_BUILD_STATIC)
+        message(FATAL_ERROR "SWEETLINE_BUILD_APPLE_FRAMEWORK requires SWEETLINE_BUILD_STATIC=OFF; build the static archive separately")
+    endif ()
+    if (SWEETLINE_APPLE_STATIC_FRAMEWORK AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        message(FATAL_ERROR "SWEETLINE_APPLE_STATIC_FRAMEWORK is only supported for iOS framework builds")
+    endif ()
 endif ()
 
 set(SWEETLINE_LINK_LIB)
@@ -63,6 +83,19 @@ set(SWEETLINE_C_API_SOURCE_FILES ${SWEETLINE_SRC_DIR}/c_sweetline.cpp)
 list(REMOVE_ITEM SWEETLINE_CORE_SOURCE_FILES ${SWEETLINE_C_API_SOURCE_FILES})
 
 set(SWEETLINE_C_API_OBJECTS)
+
+function(sweetline_link_public_target target_name)
+    target_include_directories(${target_name}
+            PUBLIC
+            $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:include>
+    )
+    target_link_libraries(${target_name} PRIVATE
+            SweetLine3p::NlohmannJson
+            SweetLine3p::UtfCpp
+            ${SWEETLINE_LINK_LIB}
+    )
+endfunction()
 
 function(sweetline_configure_compile_target target_name)
     target_compile_features(${target_name} PRIVATE cxx_std_17)
@@ -136,7 +169,7 @@ if (NOT EMSCRIPTEN AND (SWEETLINE_BUILD_STATIC OR SWEETLINE_BUILD_TESTS OR (SWEE
     list(APPEND SWEETLINE_C_API_OBJECTS $<TARGET_OBJECTS:${SWEETLINE_C_API_OBJECT_TARGET}>)
 endif ()
 
-if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN)
+if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN AND NOT SWEETLINE_BUILD_APPLE_FRAMEWORK)
     message(STATUS "add target: ${SWEETLINE_SHARED_LIB_NAME} as dynamic lib")
     if (APPLE)
         add_library(${SWEETLINE_SHARED_LIB_NAME} SHARED
@@ -151,42 +184,64 @@ if (SWEETLINE_BUILD_SHARED AND NOT EMSCRIPTEN)
                 ${SWEETLINE_C_API_OBJECTS}
         )
     endif ()
-    target_include_directories(${SWEETLINE_SHARED_LIB_NAME}
-            PUBLIC
-            $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:include>
-    )
-    target_link_libraries(${SWEETLINE_SHARED_LIB_NAME} PRIVATE
-            SweetLine3p::NlohmannJson
-            SweetLine3p::UtfCpp
-            ${SWEETLINE_LINK_LIB}
-    )
+    sweetline_link_public_target(${SWEETLINE_SHARED_LIB_NAME})
     add_library(SweetLine::sweetline ALIAS ${SWEETLINE_SHARED_LIB_NAME})
 elseif (SWEETLINE_BUILD_SHARED AND EMSCRIPTEN)
     message(STATUS "skip target: ${SWEETLINE_SHARED_LIB_NAME} dynamic lib is not used for Emscripten")
 endif ()
 
-if (SWEETLINE_BUILD_STATIC)
+if (SWEETLINE_BUILD_STATIC AND NOT SWEETLINE_BUILD_APPLE_FRAMEWORK)
     message(STATUS "add target: ${SWEETLINE_STATIC_LIB_NAME} as static lib")
     add_library(${SWEETLINE_STATIC_LIB_NAME} STATIC
             $<TARGET_OBJECTS:${SWEETLINE_CORE_OBJECT_TARGET}>
             ${SWEETLINE_C_API_OBJECTS}
     )
-    target_include_directories(${SWEETLINE_STATIC_LIB_NAME}
-            PUBLIC
-            $<BUILD_INTERFACE:${SWEETLINE_PUBLIC_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:include>
-    )
+    sweetline_link_public_target(${SWEETLINE_STATIC_LIB_NAME})
     target_compile_definitions(${SWEETLINE_STATIC_LIB_NAME} PUBLIC SWEETLINE_STATIC=1)
-    target_link_libraries(${SWEETLINE_STATIC_LIB_NAME} PRIVATE
-            SweetLine3p::NlohmannJson
-            SweetLine3p::UtfCpp
-            ${SWEETLINE_LINK_LIB}
-    )
     add_library(SweetLine::sweetline_static ALIAS ${SWEETLINE_STATIC_LIB_NAME})
 
     include(cmake/MergeStaticLib.cmake)
     merge_static_libs(${SWEETLINE_STATIC_LIB_NAME} SweetLine3p::Oniguruma)
+endif ()
+
+if (APPLE AND SWEETLINE_BUILD_APPLE_FRAMEWORK)
+    set(SWEETLINE_APPLE_FRAMEWORK_HEADER "${PROJECT_SOURCE_DIR}/cmake/apple/SweetLineCore.h")
+    set(SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS
+            "${SWEETLINE_APPLE_FRAMEWORK_HEADER}"
+            "${SWEETLINE_PUBLIC_INCLUDE_DIR}/sweetline/c_sweetline.h"
+    )
+    set_source_files_properties(${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers")
+    message(STATUS "add target: ${SWEETLINE_APPLE_FRAMEWORK_NAME} as Apple framework")
+    add_library(${SWEETLINE_APPLE_FRAMEWORK_NAME} SHARED
+            ${SWEETLINE_CORE_SOURCE_FILES}
+            ${SWEETLINE_C_API_SOURCE_FILES}
+            ${SWEETLINE_PLATFORM_FILES}
+            ${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS}
+    )
+
+    sweetline_configure_compile_target(${SWEETLINE_APPLE_FRAMEWORK_NAME})
+    sweetline_link_public_target(${SWEETLINE_APPLE_FRAMEWORK_NAME})
+    set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+            FRAMEWORK TRUE
+            FRAMEWORK_VERSION A
+            MACOSX_FRAMEWORK_IDENTIFIER "${SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER}"
+            OUTPUT_NAME "${SWEETLINE_APPLE_FRAMEWORK_NAME}"
+            PUBLIC_HEADER "${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS}"
+            XCODE_ATTRIBUTE_DEFINES_MODULE YES
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER}"
+        )
+
+    if (SWEETLINE_APPLE_STATIC_FRAMEWORK)
+        set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+                XCODE_ATTRIBUTE_MACH_O_TYPE staticlib
+        )
+    else ()
+        set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+                XCODE_ATTRIBUTE_MACH_O_TYPE mh_dylib
+                BUILD_WITH_INSTALL_NAME_DIR TRUE
+                INSTALL_NAME_DIR "@rpath"
+        )
+    endif ()
 endif ()
 
 if (EMSCRIPTEN AND SWEETLINE_BUILD_WASM_EMBIND)
