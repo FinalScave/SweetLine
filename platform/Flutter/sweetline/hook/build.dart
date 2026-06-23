@@ -64,8 +64,9 @@ void main(List<String> args) async {
 
     final targetOS = input.config.code.targetOS;
     final targetArchitecture = input.config.code.targetArchitecture;
-    final targetIOSSdk =
-      targetOS == OS.iOS ? input.config.code.iOS.targetSdk : null;
+    final targetIOSSdk = targetOS == OS.iOS
+        ? input.config.code.iOS.targetSdk
+        : null;
     final nativeBinary =
         _nativeBinaries[_NativeTarget(
           targetOS,
@@ -99,6 +100,7 @@ void main(List<String> args) async {
 
     final outFile = input.outputDirectory.resolve(nativeBinary.fileName);
     await sourceFile.copy(outFile.toFilePath());
+    output.dependencies.add(sourceUri);
 
     output.assets.code.add(
       CodeAsset(
