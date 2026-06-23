@@ -10,8 +10,8 @@ Cross-platform release assets for SweetLine.
 ## Included Platforms In The Prebuilt Package
 
 - Android: `arm64-v8a`, `x86_64`
-- iOS: `arm64`, `simulator-arm64`, `SweetLineCoreIOS.xcframework.zip`
-- macOS: `arm64`, `x86_64`, `SweetLineCoreOSX.xcframework.zip`
+- iOS: platform XCFramework `SweetLineCoreIOS.xcframework.zip`; per-arch frameworks under `arm64/SweetLineCore.framework.zip` and `simulator-arm64/SweetLineCore.framework.zip`
+- macOS: platform XCFramework `SweetLineCoreOSX.xcframework.zip`; per-arch frameworks under `arm64/SweetLineCore.framework.zip` and `x86_64/SweetLineCore.framework.zip`
 - Linux: `x86_64`, `aarch64`
 - Windows: `x64`
 - OHOS: `arm64-v8a`, `x86_64`
