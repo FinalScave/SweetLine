@@ -650,7 +650,8 @@ function build_android() {
     -DANDROID_PLATFORM=android-21 \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
     -DSWEETLINE_BUILD_STATIC=OFF \
-    -DSWEETLINE_BUILD_TESTS=OFF
+    -DSWEETLINE_BUILD_TESTS=OFF \
+    -DSWEETLINE_BUILD_ANDROID_JNI=OFF
   cmake --build $ANDROID_BUILD_DIR --target $TARGET_NAME -j 24
 
   local strip_tool
