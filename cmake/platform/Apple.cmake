@@ -6,12 +6,6 @@ function(sweetline_resolve_apple_iconv_library out_var)
     endif ()
 endfunction()
 
-if (NOT DEFINED SWEETLINE_APPLE_FRAMEWORK_NAME)
-    set(SWEETLINE_APPLE_FRAMEWORK_NAME "SweetLineCore")
-endif ()
-if (NOT DEFINED SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER)
-    set(SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER "com.finalscave.sweetline.core")
-endif ()
 
 function(sweetline_platform_configure)
     sweetline_resolve_apple_iconv_library(_sweetline_iconv_lib)
@@ -77,47 +71,50 @@ function(sweetline_platform_add_extra_targets)
         return()
     endif ()
 
+    set(_sweetline_framework_name "SweetLineCore")
+    set(_sweetline_framework_identifier "com.qiplat.sweetline.core")
+
     set(SWEETLINE_APPLE_FRAMEWORK_HEADER_DIR
-            "${PROJECT_BINARY_DIR}/cmake/platform/apple/${SWEETLINE_APPLE_FRAMEWORK_NAME}"
+            "${PROJECT_BINARY_DIR}/cmake/platform/apple/${_sweetline_framework_name}"
     )
     set(SWEETLINE_APPLE_FRAMEWORK_HEADER
-            "${SWEETLINE_APPLE_FRAMEWORK_HEADER_DIR}/${SWEETLINE_APPLE_FRAMEWORK_NAME}.h"
+            "${SWEETLINE_APPLE_FRAMEWORK_HEADER_DIR}/${_sweetline_framework_name}.h"
     )
     file(MAKE_DIRECTORY "${SWEETLINE_APPLE_FRAMEWORK_HEADER_DIR}")
     file(WRITE "${SWEETLINE_APPLE_FRAMEWORK_HEADER}"
-            "#pragma once\n\n#include <${SWEETLINE_APPLE_FRAMEWORK_NAME}/c_sweetline.h>\n"
+            "#pragma once\n\n#include <${_sweetline_framework_name}/c_sweetline.h>\n"
     )
     set(SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS
             "${SWEETLINE_APPLE_FRAMEWORK_HEADER}"
             "${SWEETLINE_PUBLIC_INCLUDE_DIR}/sweetline/c_sweetline.h"
     )
     set_source_files_properties(${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers")
-    message(STATUS "add target: ${SWEETLINE_APPLE_FRAMEWORK_NAME} as Apple framework")
-    add_library(${SWEETLINE_APPLE_FRAMEWORK_NAME} SHARED
+    message(STATUS "add target: ${_sweetline_framework_name} as Apple framework")
+    add_library(${_sweetline_framework_name} SHARED
             ${SWEETLINE_CORE_SOURCE_FILES}
             ${SWEETLINE_C_API_SOURCE_FILES}
             ${SWEETLINE_PLATFORM_FILES}
             ${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS}
     )
 
-    sweetline_configure_compile_target(${SWEETLINE_APPLE_FRAMEWORK_NAME})
-    sweetline_link_public_target(${SWEETLINE_APPLE_FRAMEWORK_NAME})
-    set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+    sweetline_configure_compile_target(${_sweetline_framework_name})
+    sweetline_link_public_target(${_sweetline_framework_name})
+    set_target_properties(${_sweetline_framework_name} PROPERTIES
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
-            MACOSX_FRAMEWORK_IDENTIFIER "${SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER}"
-            OUTPUT_NAME "${SWEETLINE_APPLE_FRAMEWORK_NAME}"
+            MACOSX_FRAMEWORK_IDENTIFIER "${_sweetline_framework_identifier}"
+            OUTPUT_NAME "${_sweetline_framework_name}"
             PUBLIC_HEADER "${SWEETLINE_APPLE_FRAMEWORK_PUBLIC_HEADERS}"
             XCODE_ATTRIBUTE_DEFINES_MODULE YES
-            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${SWEETLINE_APPLE_FRAMEWORK_IDENTIFIER}"
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${_sweetline_framework_identifier}"
     )
 
     if (SWEETLINE_APPLE_STATIC_FRAMEWORK)
-        set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+        set_target_properties(${_sweetline_framework_name} PROPERTIES
                 XCODE_ATTRIBUTE_MACH_O_TYPE staticlib
         )
     else ()
-        set_target_properties(${SWEETLINE_APPLE_FRAMEWORK_NAME} PROPERTIES
+        set_target_properties(${_sweetline_framework_name} PROPERTIES
                 XCODE_ATTRIBUTE_MACH_O_TYPE mh_dylib
                 BUILD_WITH_INSTALL_NAME_DIR TRUE
                 INSTALL_NAME_DIR "@rpath"

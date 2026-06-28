@@ -211,10 +211,7 @@ archive_framework_bundle() {
   mkdir -p "$output_dir"
   rm -f "$framework_zip"
 
-  (
-    cd "$(dirname "$framework_dir")"
-    ditto -c -k --norsrc --keepParent "$framework_name.framework" "$framework_zip"
-  )
+  ditto -c -k --norsrc --keepParent "$framework_dir" "$framework_zip"
 
   verify_file_exists "$framework_zip" "$framework_name framework archive"
 }
@@ -266,7 +263,7 @@ copy_xcframework() {
   local source_xcframework_name="$3"
   local output_xcframework_name="${4:-$source_xcframework_name}"
   local xcframework_dir="${apple_binaries_dir}/${source_xcframework_name}"
-  local xcframework_zip="${output_dir}/${output_xcframework_name}.zip"
+  local xcframework_zip="$output_dir/${output_xcframework_name}.zip"
 
   if [ ! -d "$xcframework_dir" ]; then
     echo "XCFramework not found at $xcframework_dir" >&2
@@ -277,20 +274,14 @@ copy_xcframework() {
   rm -f "$xcframework_zip"
 
   if [ "$source_xcframework_name" = "$output_xcframework_name" ]; then
-    (
-      cd "$apple_binaries_dir"
-      ditto -c -k --norsrc --keepParent "$source_xcframework_name" "$xcframework_zip"
-    )
+    ditto -c -k --norsrc --keepParent "$xcframework_dir" "$xcframework_zip"
     return 0
   fi
 
   local temp_dir
   temp_dir="$(mktemp -d)"
   ditto "$xcframework_dir" "$temp_dir/$output_xcframework_name"
-  (
-    cd "$temp_dir"
-    ditto -c -k --norsrc --keepParent "$output_xcframework_name" "$xcframework_zip"
-  )
+  ditto -c -k --norsrc --keepParent "$temp_dir/$output_xcframework_name" "$xcframework_zip"
   rm -rf "$temp_dir"
 }
 
