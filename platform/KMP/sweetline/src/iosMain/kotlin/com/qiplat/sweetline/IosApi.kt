@@ -13,6 +13,8 @@ import sweetline.sl_create_engine
 import sweetline.sl_document_analyze
 import sweetline.sl_document_analyze_incremental
 import sweetline.sl_document_analyze_incremental_in_line_range
+import sweetline.sl_document_analyze_bracket_pairs
+import sweetline.sl_document_analyze_bracket_pairs_in_line_range
 import sweetline.sl_document_analyze_indent_guides
 import sweetline.sl_document_analyze_indent_guides_in_line_range
 import sweetline.sl_document_analyze_line_range
@@ -26,13 +28,17 @@ import sweetline.sl_engine_define_macro
 import sweetline.sl_engine_get_style_name
 import sweetline.sl_engine_handle_t
 import sweetline.sl_engine_load_document
+import sweetline.sl_engine_remove_document
 import sweetline.sl_engine_register_style_name
 import sweetline.sl_engine_undefine_macro
 import sweetline.sl_free_buffer
 import sweetline.sl_free_document
+import sweetline.sl_free_document_analyzer
 import sweetline.sl_free_engine
+import sweetline.sl_free_text_analyzer
 import sweetline.sl_syntax_error_t
 import sweetline.sl_text_analyze
+import sweetline.sl_text_analyze_bracket_pairs
 import sweetline.sl_text_analyze_indent_guides
 import sweetline.sl_text_analyze_line
 
@@ -80,6 +86,10 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
     actual fun loadDocument(document: Document): DocumentAnalyzer? {
         val handle = nativeHandle?.let { sl_engine_load_document(it, document.nativeHandle) }
         return handle?.let { DocumentAnalyzer(it) }
+    }
+
+    actual fun removeDocument(uri: String) {
+        nativeHandle?.let { sl_engine_remove_document(it, uri) }
     }
 
     actual fun close() {
@@ -142,6 +152,7 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: sl_anal
     }
 
     actual fun close() {
+        nativeHandle?.let { sl_free_text_analyzer(it) }
         nativeHandle = null
     }
 }
@@ -270,6 +281,7 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: sl_
     }
 
     actual fun close() {
+        nativeHandle?.let { sl_free_document_analyzer(it) }
         nativeHandle = null
     }
 }

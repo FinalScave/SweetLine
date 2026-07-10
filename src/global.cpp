@@ -14,5 +14,5 @@ namespace NS_SWEETLINE {
     }
   };
 
-  static StaticInitializer static_initializer();
+  static StaticInitializer static_initializer {};
 }

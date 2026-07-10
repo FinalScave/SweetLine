@@ -53,6 +53,10 @@ static void throwSyntaxCompileError(JNIEnv* env, const SyntaxCompileError& error
 // ====================================== DocumentJni ===========================================
 class DocumentJni {
 public:
+  static void finalizeDocument(jlong handle) {
+    deleteCPtrHolder<jlong, Document>(handle);
+  }
+
   static jlong makeDocument(JNIEnv* env, jclass clazz, jstring uri, jstring content) {
     const char* uri_str = env->GetStringUTFChars(uri, nullptr);
     const char* content_str = env->GetStringUTFChars(content, nullptr);
@@ -130,6 +134,7 @@ public:
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/Document";
   constexpr static const JNINativeMethod kJMethods[] = {
+      {"nativeFinalizeDocument", "(J)V", (void*) finalizeDocument},
       {"nativeMakeDocument", "(Ljava/lang/String;Ljava/lang/String;)J", (void*) makeDocument},
       {"nativeGetUri", "(J)Ljava/lang/String;", (void*) getUri},
       {"nativeTotalChars", "(J)I", (void*) totalChars},
@@ -155,6 +160,10 @@ public:
 // ====================================== SyntaxRuleJni ===========================================
 class SyntaxRuleJni {
 public:
+  static void finalizeRule(jlong handle) {
+    deleteCPtrHolder<jlong, SyntaxRule>(handle);
+  }
+
   static jstring getName(JNIEnv* env, jclass clazz, jlong handle) {
     SharedPtr<SyntaxRule> rule = getCPtrHolderValue<jlong, SyntaxRule>(handle);
     if (rule == nullptr) {
@@ -181,6 +190,7 @@ public:
 
   constexpr static const char *kJClassName = "com/qiplat/sweetline/SyntaxRule";
   constexpr static const JNINativeMethod kJMethods[] = {
+      {"nativeFinalizeRule", "(J)V", (void*) finalizeRule},
       {"nativeGetName", "(J)Ljava/lang/String;", (void*) getName},
       {"nativeGetFileNames", "(J)[Ljava/lang/String;", (void*) getFileNames},
       {"nativeGetFileSuffixes", "(J)[Ljava/lang/String;", (void*) getFileSuffixes},

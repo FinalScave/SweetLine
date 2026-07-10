@@ -286,6 +286,19 @@ external ffi.Pointer<ffi.Int32> sl_text_analyze_bracket_pairs(
   ffi.Pointer<ffi.Char> text,
 );
 
+/// Destroy a plain text analyzer handle
+/// @param analyzer_handle Analyzer handle returned by sl_engine_create_text_analyzer or
+/// sl_engine_create_text_analyzer_by_file_name
+/// @return Error code, returns @see {SL_OK} on success
+@ffi.Native<ffi.Int Function(sl_analyzer_handle_t)>(
+  assetId: _sweetlineAssetId,
+  symbol: 'sl_free_text_analyzer',
+)
+external int _sl_free_text_analyzer(sl_analyzer_handle_t analyzer_handle);
+
+sl_error sl_free_text_analyzer(sl_analyzer_handle_t analyzer_handle) =>
+    sl_error.fromValue(_sl_free_text_analyzer(analyzer_handle));
+
 /// Load a managed document and get a document highlight analyzer handle (supports incremental analysis)
 /// @param engine_handle Highlight engine handle
 /// @param document_handle Managed document handle
@@ -297,6 +310,24 @@ external sl_analyzer_handle_t sl_engine_load_document(
   sl_engine_handle_t engine_handle,
   sl_document_handle_t document_handle,
 );
+
+/// Remove a previously loaded managed document from the engine
+/// @param engine_handle Highlight engine handle
+/// @param uri URI of the managed document
+/// @return Error code, returns @see {SL_OK} on success
+@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(
+  assetId: _sweetlineAssetId,
+  symbol: 'sl_engine_remove_document',
+)
+external int _sl_engine_remove_document(
+  sl_engine_handle_t engine_handle,
+  ffi.Pointer<ffi.Char> uri,
+);
+
+sl_error sl_engine_remove_document(
+  sl_engine_handle_t engine_handle,
+  ffi.Pointer<ffi.Char> uri,
+) => sl_error.fromValue(_sl_engine_remove_document(engine_handle, uri));
 
 /// Perform full highlight analysis on a managed document (typically called once after initial document load)
 /// @param analyzer_handle Document highlight analyzer handle
@@ -474,6 +505,18 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_bracket_pairs_in_line_range(
   sl_analyzer_handle_t analyzer_handle,
   ffi.Pointer<ffi.Int32> visible_range,
 );
+
+/// Destroy a document analyzer handle
+/// @param analyzer_handle Analyzer handle returned by sl_engine_load_document
+/// @return Error code, returns @see {SL_OK} on success
+@ffi.Native<ffi.Int Function(sl_analyzer_handle_t)>(
+  assetId: _sweetlineAssetId,
+  symbol: 'sl_free_document_analyzer',
+)
+external int _sl_free_document_analyzer(sl_analyzer_handle_t analyzer_handle);
+
+sl_error sl_free_document_analyzer(sl_analyzer_handle_t analyzer_handle) =>
+    sl_error.fromValue(_sl_free_document_analyzer(analyzer_handle));
 
 /// Free the memory of analysis results. All analysis functions returning int32_t*
 /// (such as sl_text_analyze, sl_document_analyze, sl_document_analyze_incremental,

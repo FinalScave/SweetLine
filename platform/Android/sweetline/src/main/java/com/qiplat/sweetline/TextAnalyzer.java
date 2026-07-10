@@ -10,8 +10,8 @@ import dalvik.annotation.optimization.FastNative;
 /**
  * Plain text highlight analyzer, no incremental update support, suitable for full analysis scenarios
  */
-public class TextAnalyzer {
-    protected long nativeHandle;
+public class TextAnalyzer implements AutoCloseable {
+    protected volatile long nativeHandle;
 
     protected TextAnalyzer(long nativeHandle) {
         this.nativeHandle = nativeHandle;
@@ -90,12 +90,21 @@ public class TextAnalyzer {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (nativeHandle != 0) {
-            nativeFinalize(nativeHandle);
+    public synchronized void close() {
+        long handle = nativeHandle;
+        if (handle != 0) {
+            nativeHandle = 0;
+            nativeFinalize(handle);
         }
-        nativeHandle = 0;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
     }
 
     @CriticalNative

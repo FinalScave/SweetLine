@@ -11,6 +11,7 @@ add_executable(${TEST_PRODUCT_NAME}
         highlight_test.cpp
         indent_test.cpp
         bracket_pair_test.cpp
+        c_api_test.cpp
         syntax_test.cpp
         ${TEST_LANGUAGE_SOURCES}
 )

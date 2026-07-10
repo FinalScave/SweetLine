@@ -171,6 +171,11 @@ int32_t* sl_text_analyze_bracket_pairs(sl_analyzer_handle_t analyzer_handle, con
   return buffer;
 }
 
+sl_error_t sl_free_text_analyzer(sl_analyzer_handle_t analyzer_handle) {
+  deleteCPtrHolder<sl_analyzer_handle_t, TextAnalyzer>(analyzer_handle);
+  return SL_OK;
+}
+
 sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, sl_document_handle_t document_handle) {
   SharedPtr<HighlightEngine> engine = getCPtrHolderValue<sl_engine_handle_t, HighlightEngine>(engine_handle);
   if (engine == nullptr) {
@@ -182,6 +187,15 @@ sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, s
   }
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
   return asCHandle<sl_analyzer_handle_t>(analyzer);
+}
+
+sl_error_t sl_engine_remove_document(sl_engine_handle_t engine_handle, const char* uri) {
+  SharedPtr<HighlightEngine> engine = getCPtrHolderValue<sl_engine_handle_t, HighlightEngine>(engine_handle);
+  if (engine == nullptr) {
+    return SL_HANDLE_INVALID;
+  }
+  engine->removeDocument(uri);
+  return SL_OK;
 }
 
 int32_t* sl_document_analyze(sl_analyzer_handle_t analyzer_handle) {
@@ -307,6 +321,11 @@ int32_t* sl_document_analyze_bracket_pairs_in_line_range(sl_analyzer_handle_t an
   int32_t* buffer = new int32_t[total_size];
   writeBracketPairResultSlice(result, buffer, config);
   return buffer;
+}
+
+sl_error_t sl_free_document_analyzer(sl_analyzer_handle_t analyzer_handle) {
+  deleteCPtrHolder<sl_analyzer_handle_t, DocumentAnalyzer>(analyzer_handle);
+  return SL_OK;
 }
 
 void sl_free_buffer(int32_t* result) {

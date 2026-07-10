@@ -42,6 +42,9 @@ HandleT makeCPtrHolderToHandle(Args&&... args) {
 
 template<typename HandleT, typename ClassT>
 HandleT asCHandle(const SharedPtr<ClassT>& ptr_v) {
+  if (ptr_v == nullptr) {
+    return HandleT{};
+  }
   CPtrHolder<ClassT>* holder = new CPtrHolder<ClassT>(ptr_v);
   return reinterpret_cast<HandleT>(holder);
 }

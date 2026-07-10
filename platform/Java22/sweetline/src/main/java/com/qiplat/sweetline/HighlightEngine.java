@@ -215,6 +215,24 @@ public class HighlightEngine implements AutoCloseable {
         }
     }
 
+    /**
+     * Remove a managed document and its cached analyzer from this engine.
+     *
+     * @param uri Document URI used when the document was created
+     */
+    public void removeDocument(String uri) {
+        ensureOpen();
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment uriSeg = arena.allocateFrom(uri);
+            int errorCode = (int) SweetLineNative.sl_engine_remove_document.invoke(handle, uriSeg);
+            if (errorCode != 0) {
+                throw new IllegalStateException("Native error code: " + errorCode);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to remove document", e);
+        }
+    }
+
     @Override
     public void close() {
         if (!closed) {

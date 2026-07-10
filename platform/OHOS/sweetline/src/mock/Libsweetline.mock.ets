@@ -9,6 +9,7 @@ const NativeMock: Record<string, Object> = {
   'Document_GetLineCount': (handle: number): number => { return 0; },
   'Document_GetLine': (handle: number, line: number): string => { return ''; },
   'Document_GetText': (handle: number): string => { return ''; },
+  'SyntaxRule_Delete': (handle: number): void => {},
   'SyntaxRule_GetName': (handle: number): string => { return ''; },
   'SyntaxRule_GetFileNames': (handle: number): string[] => { return []; },
   'SyntaxRule_GetFileSuffixes': (handle: number): string[] => { return []; },

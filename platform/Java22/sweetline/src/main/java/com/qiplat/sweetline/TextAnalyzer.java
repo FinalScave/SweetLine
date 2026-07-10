@@ -130,9 +130,14 @@ public class TextAnalyzer implements AutoCloseable {
     public void close() {
         if (!closed) {
             closed = true;
-            // TextAnalyzer handle is managed by the engine internally;
-            // the C API does not expose a separate free function for text analyzer.
-            // The handle is freed when the engine is destroyed.
+            try {
+                int errorCode = (int) SweetLineNative.sl_free_text_analyzer.invoke(handle);
+                if (errorCode != 0) {
+                    throw new IllegalStateException("Native error code: " + errorCode);
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed to free text analyzer", e);
+            }
         }
     }
 

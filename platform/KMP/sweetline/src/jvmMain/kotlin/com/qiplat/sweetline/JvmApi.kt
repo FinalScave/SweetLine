@@ -108,6 +108,17 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
         return analyzerHandle.takeUnless { it == MemorySegment.NULL }?.let { DocumentAnalyzer(it) }
     }
 
+    actual fun removeDocument(uri: String) {
+        ensureOpen()
+        confined { arena ->
+            val errorCode = SweetLineJvmNative.slEngineRemoveDocument.invokeWithArguments(
+                handle,
+                arena.allocateFrom(uri),
+            ) as Int
+            checkNativeError(errorCode, "remove document")
+        }
+    }
+
     actual fun close() {
         if (!closed) {
             closed = true
@@ -189,7 +200,11 @@ actual class TextAnalyzer internal constructor(private val handle: MemorySegment
     }
 
     actual fun close() {
-        closed = true
+        if (!closed) {
+            closed = true
+            val errorCode = SweetLineJvmNative.slFreeTextAnalyzer.invokeWithArguments(handle) as Int
+            checkNativeError(errorCode, "free text analyzer")
+        }
     }
 
     private fun ensureOpen() {
@@ -307,7 +322,11 @@ actual class DocumentAnalyzer internal constructor(private val handle: MemorySeg
     }
 
     actual fun close() {
-        closed = true
+        if (!closed) {
+            closed = true
+            val errorCode = SweetLineJvmNative.slFreeDocumentAnalyzer.invokeWithArguments(handle) as Int
+            checkNativeError(errorCode, "free document analyzer")
+        }
     }
 
     private fun ensureOpen() {
@@ -394,9 +413,17 @@ private object SweetLineJvmNative {
         "sl_text_analyze_bracket_pairs",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
     )
+    val slFreeTextAnalyzer: MethodHandle = downcall(
+        "sl_free_text_analyzer",
+        FunctionDescriptor.of(JAVA_INT, ADDRESS),
+    )
     val slEngineLoadDocument: MethodHandle = downcall(
         "sl_engine_load_document",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
+    )
+    val slEngineRemoveDocument: MethodHandle = downcall(
+        "sl_engine_remove_document",
+        FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS),
     )
     val slDocumentAnalyze: MethodHandle = downcall(
         "sl_document_analyze",
@@ -433,6 +460,10 @@ private object SweetLineJvmNative {
     val slDocumentAnalyzeBracketPairsInLineRange: MethodHandle = downcall(
         "sl_document_analyze_bracket_pairs_in_line_range",
         FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS),
+    )
+    val slFreeDocumentAnalyzer: MethodHandle = downcall(
+        "sl_free_document_analyzer",
+        FunctionDescriptor.of(JAVA_INT, ADDRESS),
     )
     val slFreeBuffer: MethodHandle = downcall(
         "sl_free_buffer",
@@ -595,6 +626,10 @@ private object SweetLineJvmNative {
             return "$osName-$archName"
         }
     }
+}
+
+private fun checkNativeError(errorCode: Int, action: String) {
+    check(errorCode == 0) { "Failed to $action. Native error code: $errorCode" }
 }
 
 private inline fun <T> confined(block: (Arena) -> T): T {

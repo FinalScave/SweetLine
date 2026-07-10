@@ -10,8 +10,8 @@ import dalvik.annotation.optimization.FastNative;
 /**
  * Highlight analyzer
  */
-public class DocumentAnalyzer {
-    protected long nativeHandle;
+public class DocumentAnalyzer implements AutoCloseable {
+    protected volatile long nativeHandle;
 
     protected DocumentAnalyzer(long nativeHandle) {
         this.nativeHandle = nativeHandle;
@@ -213,12 +213,21 @@ public class DocumentAnalyzer {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (nativeHandle != 0) {
-            nativeFinalizeAnalyzer(nativeHandle);
+    public synchronized void close() {
+        long handle = nativeHandle;
+        if (handle != 0) {
+            nativeHandle = 0;
+            nativeFinalizeAnalyzer(handle);
         }
-        nativeHandle = 0;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
     }
 
     @CriticalNative

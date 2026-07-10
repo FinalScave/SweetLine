@@ -419,6 +419,10 @@ export declare namespace sweetline {
      * Get the full text content
      */
     public getText(): string;
+    /**
+     * Release the native document handle
+     */
+    public close(): void;
   }
 
   /**
@@ -437,6 +441,10 @@ export declare namespace sweetline {
      * Get the file suffixes supported by the syntax rule
      */
     public getFileSuffixes(): string[];
+    /**
+     * Release the native syntax rule handle
+     */
+    public close(): void;
   }
 
   /**
@@ -468,6 +476,10 @@ export declare namespace sweetline {
      * @returns Bracket pair analysis result
      */
     public analyzeBracketPairs(text: string): BracketPairResult;
+    /**
+     * Release the native text analyzer handle
+     */
+    public close(): void;
   }
 
   /**
@@ -545,6 +557,10 @@ export declare namespace sweetline {
      * Get the managed document
      */
     public getDocument(): Document;
+    /**
+     * Release the native document analyzer handle
+     */
+    public close(): void;
   }
 
   /**
@@ -608,5 +624,9 @@ export declare namespace sweetline {
      * @param uri Managed document URI
      */
     public removeDocument(uri: string): boolean;
+    /**
+     * Release the native highlight engine handle
+     */
+    public close(): void;
   }
 }

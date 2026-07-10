@@ -21,6 +21,7 @@ expect class HighlightEngine {
     fun createAnalyzerBySyntaxName(syntaxName: String): TextAnalyzer?
     fun createAnalyzerByFileName(fileName: String): TextAnalyzer?
     fun loadDocument(document: Document): DocumentAnalyzer?
+    fun removeDocument(uri: String)
     fun close()
 }
 

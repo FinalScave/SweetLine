@@ -83,10 +83,13 @@ public class SweetLineHighlightPlugin extends AbstractMarkwonPlugin {
                 if (syntaxName == null) {
                     syntaxName = info;
                 }
-                TextAnalyzer textAnalyzer = SweetLineGlobal.getEngineInstance().createAnalyzerBySyntaxName(syntaxName);
-                if (textAnalyzer != null) {
-                    Spannable highlightedCode = textAnalyzer.analyzeTextAsSpannable(literal, styleFactory);
-                    visitor.builder().append(highlightedCode);
+                try (TextAnalyzer textAnalyzer = SweetLineGlobal.getEngineInstance().createAnalyzerBySyntaxName(syntaxName)) {
+                    if (textAnalyzer != null) {
+                        Spannable highlightedCode = textAnalyzer.analyzeTextAsSpannable(literal, styleFactory);
+                        visitor.builder().append(highlightedCode);
+                    } else {
+                        visitor.builder().append(literal);
+                    }
                 }
             } else {
                 visitor.builder().append(literal);

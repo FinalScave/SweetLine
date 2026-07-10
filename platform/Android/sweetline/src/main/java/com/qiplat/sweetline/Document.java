@@ -8,8 +8,8 @@ import dalvik.annotation.optimization.FastNative;
 /**
  * Managed document with incremental update support
  */
-public class Document {
-    protected long nativeHandle;
+public class Document implements AutoCloseable {
+    protected volatile long nativeHandle;
 
     protected Document(long nativeHandle) {
         this.nativeHandle = nativeHandle;
@@ -83,6 +83,26 @@ public class Document {
         return nativeGetText(nativeHandle);
     }
 
+    @Override
+    public synchronized void close() {
+        long handle = nativeHandle;
+        if (handle != 0) {
+            nativeHandle = 0;
+            nativeFinalizeDocument(handle);
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
+    }
+
+    @CriticalNative
+    private static native void nativeFinalizeDocument(long handle);
     @FastNative
     private static native long nativeMakeDocument(String uri, String content);
     @FastNative

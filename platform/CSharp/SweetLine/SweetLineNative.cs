@@ -299,10 +299,24 @@ internal static class SweetLineNative {
 		[MarshalAs(UnmanagedType.LPUTF8Str)] string text);
 
 	/// <summary>
+	/// <c>sl_free_text_analyzer(sl_analyzer_handle_t)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_free_text_analyzer", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern int FreeTextAnalyzer(IntPtr analyzerHandle);
+
+	/// <summary>
 	/// <c>sl_engine_load_document(sl_engine_handle_t, sl_document_handle_t)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_engine_load_document", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr EngineLoadDocument(IntPtr engineHandle, IntPtr documentHandle);
+
+	/// <summary>
+	/// <c>sl_engine_remove_document(sl_engine_handle_t, const char*)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_engine_remove_document", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern int EngineRemoveDocument(
+		IntPtr engineHandle,
+		[MarshalAs(UnmanagedType.LPUTF8Str)] string uri);
 
 	/// <summary>
 	/// <c>sl_document_analyze(sl_analyzer_handle_t)</c>
@@ -372,6 +386,12 @@ internal static class SweetLineNative {
 	internal static extern IntPtr DocumentAnalyzeBracketPairsInLineRange(
 		IntPtr analyzerHandle,
 		[In] int[] visibleRange);
+
+	/// <summary>
+	/// <c>sl_free_document_analyzer(sl_analyzer_handle_t)</c>
+	/// </summary>
+	[DllImport(NativeLibraryName, EntryPoint = "sl_free_document_analyzer", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern int FreeDocumentAnalyzer(IntPtr analyzerHandle);
 
 	/// <summary>
 	/// <c>sl_free_buffer(int32_t*)</c>

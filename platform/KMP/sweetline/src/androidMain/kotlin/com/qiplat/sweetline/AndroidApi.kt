@@ -1,5 +1,7 @@
 package com.qiplat.sweetline
 
+import dalvik.annotation.optimization.CriticalNative
+
 private object AndroidSweetLineLibrary {
     init {
         System.loadLibrary("sweetline")
@@ -36,12 +38,16 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
 
     @Throws(SyntaxCompileError::class)
     actual fun compileSyntaxFromJson(syntaxJson: String) {
-        nativeHandle.ifOpen { nativeCompileSyntaxFromJson(it, syntaxJson) }
+        nativeHandle.ifOpen {
+            SyntaxRule.releaseNativeHandle(nativeCompileSyntaxFromJson(it, syntaxJson))
+        }
     }
 
     @Throws(SyntaxCompileError::class)
     actual fun compileSyntaxFromFile(path: String) {
-        nativeHandle.ifOpen { nativeCompileSyntaxFromFile(it, path) }
+        nativeHandle.ifOpen {
+            SyntaxRule.releaseNativeHandle(nativeCompileSyntaxFromFile(it, path))
+        }
     }
 
     actual fun createAnalyzerBySyntaxName(syntaxName: String): TextAnalyzer? {
@@ -62,18 +68,18 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
-            nativeFinalizeEngine(handle)
             nativeHandle = 0
+            nativeFinalizeEngine(handle)
         }
     }
 
-    fun removeDocument(uri: String) {
+    actual fun removeDocument(uri: String) {
         nativeHandle.ifOpen { nativeRemoveDocument(it, uri) }
     }
 
     companion object {
-        @JvmStatic private external fun nativeMakeEngine(configBits: Int): Long
-        @JvmStatic private external fun nativeFinalizeEngine(handle: Long)
+        @JvmStatic @CriticalNative private external fun nativeMakeEngine(configBits: Int): Long
+        @JvmStatic @CriticalNative private external fun nativeFinalizeEngine(handle: Long)
         @JvmStatic private external fun nativeRegisterStyle(handle: Long, styleName: String, styleId: Int)
         @JvmStatic private external fun nativeGetStyleName(handle: Long, styleId: Int): String?
         @JvmStatic private external fun nativeDefineMacro(handle: Long, macroName: String)
@@ -82,7 +88,7 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
         @JvmStatic private external fun nativeCompileSyntaxFromFile(handle: Long, path: String): Long
         @JvmStatic private external fun nativeCreateAnalyzerBySyntaxName(handle: Long, syntaxName: String): Long
         @JvmStatic private external fun nativeCreateAnalyzerByFileName(handle: Long, fileName: String): Long
-        @JvmStatic private external fun nativeLoadDocument(handle: Long, documentHandle: Long): Long
+        @JvmStatic @CriticalNative private external fun nativeLoadDocument(handle: Long, documentHandle: Long): Long
         @JvmStatic private external fun nativeRemoveDocument(handle: Long, uri: String)
     }
 }
@@ -97,17 +103,22 @@ actual class Document actual constructor(uri: String, content: String) {
     }
 
     actual fun close() {
-        nativeHandle = 0
+        val handle = nativeHandle
+        if (handle != 0L) {
+            nativeHandle = 0
+            nativeFinalizeDocument(handle)
+        }
     }
 
     companion object {
+        @JvmStatic @CriticalNative private external fun nativeFinalizeDocument(handle: Long)
         @JvmStatic private external fun nativeMakeDocument(uri: String, content: String): Long
         @JvmStatic private external fun nativeGetUri(handle: Long): String?
-        @JvmStatic private external fun nativeTotalChars(handle: Long): Int
-        @JvmStatic private external fun nativeGetLineCharCount(handle: Long, line: Int): Int
-        @JvmStatic private external fun nativeCharIndexOfLine(handle: Long, line: Int): Int
-        @JvmStatic private external fun nativeCharIndexToPosition(handle: Long, index: Int): Long
-        @JvmStatic private external fun nativeGetLineCount(handle: Long): Int
+        @JvmStatic @CriticalNative private external fun nativeTotalChars(handle: Long): Int
+        @JvmStatic @CriticalNative private external fun nativeGetLineCharCount(handle: Long, line: Int): Int
+        @JvmStatic @CriticalNative private external fun nativeCharIndexOfLine(handle: Long, line: Int): Int
+        @JvmStatic @CriticalNative private external fun nativeCharIndexToPosition(handle: Long, index: Int): Long
+        @JvmStatic @CriticalNative private external fun nativeGetLineCount(handle: Long): Int
         @JvmStatic private external fun nativeGetLine(handle: Long, line: Int): String?
         @JvmStatic private external fun nativeGetText(handle: Long): String?
     }
@@ -141,13 +152,13 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: Long) {
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
-            nativeFinalize(handle)
             nativeHandle = 0
+            nativeFinalize(handle)
         }
     }
 
     companion object {
-        @JvmStatic private external fun nativeFinalize(handle: Long)
+        @JvmStatic @CriticalNative private external fun nativeFinalize(handle: Long)
         @JvmStatic private external fun nativeAnalyzeText(handle: Long, text: String): IntArray?
         @JvmStatic private external fun nativeAnalyzeLine(handle: Long, text: String, info: IntArray): IntArray?
         @JvmStatic private external fun nativeAnalyzeIndentGuides(handle: Long, text: String): IntArray?
@@ -233,13 +244,13 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
     actual fun close() {
         val handle = nativeHandle
         if (handle != 0L) {
-            nativeFinalizeAnalyzer(handle)
             nativeHandle = 0
+            nativeFinalizeAnalyzer(handle)
         }
     }
 
     companion object {
-        @JvmStatic private external fun nativeFinalizeAnalyzer(handle: Long)
+        @JvmStatic @CriticalNative private external fun nativeFinalizeAnalyzer(handle: Long)
         @JvmStatic private external fun nativeAnalyze(handle: Long): IntArray?
         @JvmStatic private external fun nativeAnalyzeLineRange(
             handle: Long,
@@ -288,7 +299,7 @@ actual class DocumentAnalyzer internal constructor(private var nativeHandle: Lon
             visibleStartLine: Int,
             visibleLineCount: Int,
         ): IntArray?
-        @JvmStatic private external fun nativeGetDocument(handle: Long): Long
+        @JvmStatic @CriticalNative private external fun nativeGetDocument(handle: Long): Long
     }
 }
 
@@ -303,6 +314,13 @@ class SyntaxRule internal constructor(private val nativeHandle: Long) {
         get() = nativeGetFileSuffixes(nativeHandle) ?: emptyArray()
 
     companion object {
+        internal fun releaseNativeHandle(handle: Long) {
+            if (handle != 0L) {
+                nativeFinalizeRule(handle)
+            }
+        }
+
+        @JvmStatic @CriticalNative private external fun nativeFinalizeRule(handle: Long)
         @JvmStatic private external fun nativeGetName(handle: Long): String?
         @JvmStatic private external fun nativeGetFileNames(handle: Long): Array<String>?
         @JvmStatic private external fun nativeGetFileSuffixes(handle: Long): Array<String>?

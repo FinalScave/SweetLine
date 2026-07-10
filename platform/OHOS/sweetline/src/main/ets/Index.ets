@@ -542,6 +542,15 @@ export namespace sweetline {
       return lib.Document_GetText(this.nativeHandle);
     }
 
+    public close(): void {
+      const handle = this.nativeHandle;
+      if (handle == 0) {
+        return;
+      }
+      this.nativeHandle = 0;
+      lib.Document_Delete(handle);
+    }
+
     public __getNativeHandle(): number {
       return this.nativeHandle;
     }
@@ -582,6 +591,15 @@ export namespace sweetline {
      */
     public getFileSuffixes(): string[] {
       return lib.SyntaxRule_GetFileSuffixes(this.nativeHandle);
+    }
+
+    public close(): void {
+      const handle = this.nativeHandle;
+      if (handle == 0) {
+        return;
+      }
+      this.nativeHandle = 0;
+      lib.SyntaxRule_Delete(handle);
     }
 
     public __getNativeHandle(): number {
@@ -655,6 +673,15 @@ export namespace sweetline {
       }
       let buffer: Int32Array = lib.TextAnalyzer_AnalyzeBracketPairs(this.nativeHandle, text);
       return NativeBufferPack.readBracketPairResult(buffer);
+    }
+
+    public close(): void {
+      const handle = this.nativeHandle;
+      if (handle == 0) {
+        return;
+      }
+      this.nativeHandle = 0;
+      lib.TextAnalyzer_Delete(handle);
     }
 
     public static __createNative(nativeHandle: number): TextAnalyzer {
@@ -839,6 +866,15 @@ export namespace sweetline {
       return Document.__createNative(documentHandle);
     }
 
+    public close(): void {
+      const handle = this.nativeHandle;
+      if (handle == 0) {
+        return;
+      }
+      this.nativeHandle = 0;
+      lib.DocumentAnalyzer_Delete(handle);
+    }
+
     public static __createNative(nativeHandle: number): DocumentAnalyzer {
       return new DocumentAnalyzer(nativeHandle);
     }
@@ -991,6 +1027,15 @@ export namespace sweetline {
         return false;
       }
       return lib.HighlightEngine_RemoveDocument(this.nativeHandle, uri);
+    }
+
+    public close(): void {
+      const handle = this.nativeHandle;
+      if (handle == 0) {
+        return;
+      }
+      this.nativeHandle = 0;
+      lib.HighlightEngine_Delete(handle);
     }
   }
 

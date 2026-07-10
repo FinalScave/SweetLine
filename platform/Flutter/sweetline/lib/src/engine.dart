@@ -115,6 +115,17 @@ class HighlightEngine {
     return DocumentAnalyzer._(this, document, handle);
   }
 
+  void removeDocument(String uri) {
+    _ensureOpen();
+    using((arena) {
+      final uriPtr = _toNativeChar(uri, arena);
+      _throwIfNativeError(
+        bindings.sl_engine_remove_document(_handle, uriPtr),
+        'remove document',
+      );
+    });
+  }
+
   void close() {
     if (_closed) {
       return;

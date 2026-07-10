@@ -6,8 +6,8 @@ import dalvik.annotation.optimization.FastNative;
 /**
  * Highlight engine
  */
-public class HighlightEngine {
-    protected long nativeHandle;
+public class HighlightEngine implements AutoCloseable {
+    protected volatile long nativeHandle;
 
     public HighlightEngine(HighlightConfig config) {
         nativeHandle = nativeMakeEngine(config.toNativeBits());
@@ -102,7 +102,7 @@ public class HighlightEngine {
             return null;
         }
         long analyzerHandle = nativeCreateAnalyzerBySyntaxName(nativeHandle, syntaxName);
-        return new TextAnalyzer(analyzerHandle);
+        return analyzerHandle == 0 ? null : new TextAnalyzer(analyzerHandle);
     }
 
     /**
@@ -114,7 +114,7 @@ public class HighlightEngine {
             return null;
         }
         long analyzerHandle = nativeCreateAnalyzerByFileName(nativeHandle, fileName);
-        return new TextAnalyzer(analyzerHandle);
+        return analyzerHandle == 0 ? null : new TextAnalyzer(analyzerHandle);
     }
 
     /**
@@ -127,7 +127,7 @@ public class HighlightEngine {
             return null;
         }
         long analyzerHandle = nativeLoadDocument(nativeHandle, document.nativeHandle);
-        return new DocumentAnalyzer(analyzerHandle);
+        return analyzerHandle == 0 ? null : new DocumentAnalyzer(analyzerHandle);
     }
 
     /**
@@ -142,12 +142,21 @@ public class HighlightEngine {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if (nativeHandle != 0) {
-            nativeFinalizeEngine(nativeHandle);
+    public synchronized void close() {
+        long handle = nativeHandle;
+        if (handle != 0) {
+            nativeHandle = 0;
+            nativeFinalizeEngine(handle);
         }
-        nativeHandle = 0;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
     }
 
     @CriticalNative

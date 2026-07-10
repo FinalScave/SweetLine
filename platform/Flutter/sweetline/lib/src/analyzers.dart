@@ -79,7 +79,14 @@ class TextAnalyzer {
   }
 
   void close() {
+    if (_closed) {
+      return;
+    }
     _closed = true;
+    _throwIfNativeError(
+      bindings.sl_free_text_analyzer(_handle),
+      'free text analyzer',
+    );
   }
 
   void dispose() => close();
@@ -265,7 +272,14 @@ class DocumentAnalyzer {
   }
 
   void close() {
+    if (_closed) {
+      return;
+    }
     _closed = true;
+    _throwIfNativeError(
+      bindings.sl_free_document_analyzer(_handle),
+      'free document analyzer',
+    );
   }
 
   void dispose() => close();

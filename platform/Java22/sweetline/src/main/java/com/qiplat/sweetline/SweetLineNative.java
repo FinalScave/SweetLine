@@ -170,9 +170,17 @@ final class SweetLineNative {
     static final MethodHandle sl_text_analyze_bracket_pairs = downcall("sl_text_analyze_bracket_pairs",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
 
+    // sl_free_text_analyzer(pointer) -> int
+    static final MethodHandle sl_free_text_analyzer = downcall("sl_free_text_analyzer",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS));
+
     // sl_engine_load_document(pointer, pointer) -> pointer
     static final MethodHandle sl_engine_load_document = downcall("sl_engine_load_document",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
+    // sl_engine_remove_document(pointer, const char*) -> int
+    static final MethodHandle sl_engine_remove_document = downcall("sl_engine_remove_document",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
 
     // sl_document_analyze(pointer) -> int32_t*
     static final MethodHandle sl_document_analyze = downcall("sl_document_analyze",
@@ -212,6 +220,10 @@ final class SweetLineNative {
     static final MethodHandle sl_document_analyze_bracket_pairs_in_line_range = downcall(
             "sl_document_analyze_bracket_pairs_in_line_range",
             FunctionDescriptor.of(ADDRESS, ADDRESS, ADDRESS));
+
+    // sl_free_document_analyzer(pointer) -> int
+    static final MethodHandle sl_free_document_analyzer = downcall("sl_free_document_analyzer",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS));
 
     // sl_free_buffer(int32_t*) -> void
     static final MethodHandle sl_free_buffer = downcall("sl_free_buffer",

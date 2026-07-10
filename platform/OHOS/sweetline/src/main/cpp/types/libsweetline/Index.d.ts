@@ -11,6 +11,7 @@ export const Document_GetLine: (handle: number, line: number) => string;
 export const Document_GetText: (handle: number) => string;
 
 // SyntaxRule
+export const SyntaxRule_Delete: (handle: number) => void;
 export const SyntaxRule_GetName: (handle: number) => string;
 export const SyntaxRule_GetFileNames: (handle: number) => string[];
 export const SyntaxRule_GetFileSuffixes: (handle: number) => string[];

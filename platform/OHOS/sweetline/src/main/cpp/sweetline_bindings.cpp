@@ -335,6 +335,16 @@ static napi_value Document_GetText(napi_env env, napi_callback_info info) {
 
 // ================================================ SyntaxRule ====================================================
 
+/// Destroy the syntax rule handle
+static napi_value SyntaxRule_Delete(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1] = {nullptr};
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  deleteNapiCPtrHolder<SyntaxRule>(env, args[0]);
+  return getNapiUndefined(env);
+}
+
 /// Get the name of the syntax rule
 static napi_value SyntaxRule_GetName(napi_env env, napi_callback_info info) {
   size_t argc = 1;
@@ -1041,6 +1051,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     {"Document_GetLine", nullptr, Document_GetLine, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"Document_GetText", nullptr, Document_GetText, nullptr, nullptr, nullptr, napi_default, nullptr},
     // SyntaxRule
+    {"SyntaxRule_Delete", nullptr, SyntaxRule_Delete, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"SyntaxRule_GetName", nullptr, SyntaxRule_GetName, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"SyntaxRule_GetFileNames", nullptr, SyntaxRule_GetFileNames, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"SyntaxRule_GetFileSuffixes", nullptr, SyntaxRule_GetFileSuffixes, nullptr, nullptr, nullptr, napi_default, nullptr},

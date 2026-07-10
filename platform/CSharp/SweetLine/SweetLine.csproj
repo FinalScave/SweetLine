@@ -15,7 +15,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AssemblyName>$(MSBuildProjectName).Net</AssemblyName>
-		<Version>1.3.0</Version>
+		<Version>1.3.1</Version>
 		<RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
 		<SweetLineNativeWinX64>$(RepoRoot)prebuilt\windows\x64\sweetline.dll</SweetLineNativeWinX64>
 		<SweetLineNativeLinuxX64>$(RepoRoot)prebuilt\linux\x86_64\libsweetline.so</SweetLineNativeLinuxX64>

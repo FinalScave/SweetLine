@@ -223,11 +223,23 @@ SL_API int32_t* sl_text_analyze_indent_guides(sl_analyzer_handle_t analyzer_hand
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_text_analyze_bracket_pairs(sl_analyzer_handle_t analyzer_handle, const char* text);
 
+/// Destroy a plain text analyzer handle
+/// @param analyzer_handle Analyzer handle returned by sl_engine_create_text_analyzer or
+/// sl_engine_create_text_analyzer_by_file_name
+/// @return Error code, returns @see {SL_OK} on success
+SL_API sl_error_t sl_free_text_analyzer(sl_analyzer_handle_t analyzer_handle);
+
 /// Load a managed document and get a document highlight analyzer handle (supports incremental analysis)
 /// @param engine_handle Highlight engine handle
 /// @param document_handle Managed document handle
 /// @return Document highlight analyzer handle
 SL_API sl_analyzer_handle_t sl_engine_load_document(sl_engine_handle_t engine_handle, sl_document_handle_t document_handle);
+
+/// Remove a previously loaded managed document from the engine
+/// @param engine_handle Highlight engine handle
+/// @param uri URI of the managed document
+/// @return Error code, returns @see {SL_OK} on success
+SL_API sl_error_t sl_engine_remove_document(sl_engine_handle_t engine_handle, const char* uri);
 
 /// Perform full highlight analysis on a managed document (typically called once after initial document load)
 /// @param analyzer_handle Document highlight analyzer handle
@@ -351,6 +363,11 @@ SL_API int32_t* sl_document_analyze_bracket_pairs(sl_analyzer_handle_t analyzer_
 /// Note: the return value must be freed by calling sl_free_buffer after use
 SL_API int32_t* sl_document_analyze_bracket_pairs_in_line_range(
   sl_analyzer_handle_t analyzer_handle, int32_t* visible_range);
+
+/// Destroy a document analyzer handle
+/// @param analyzer_handle Analyzer handle returned by sl_engine_load_document
+/// @return Error code, returns @see {SL_OK} on success
+SL_API sl_error_t sl_free_document_analyzer(sl_analyzer_handle_t analyzer_handle);
 
 /// Free the memory of analysis results. All analysis functions returning int32_t*
 /// (such as sl_text_analyze, sl_document_analyze, sl_document_analyze_incremental,

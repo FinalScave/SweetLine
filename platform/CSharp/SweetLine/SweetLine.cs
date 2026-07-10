@@ -224,6 +224,18 @@ public sealed class HighlightEngine : IDisposable {
 	}
 
 	/// <summary>
+	/// Removes a managed document and its cached analyzer from this engine.
+	/// </summary>
+	/// <param name="uri">Document URI used when the document was created.</param>
+	public void RemoveDocument(string uri) {
+		ArgumentNullException.ThrowIfNull(uri);
+		EnsureOpen();
+
+		int error = SweetLineNative.EngineRemoveDocument(_handle, uri);
+		SweetLineNative.ThrowIfError(error, "remove document");
+	}
+
+	/// <summary>
 	/// Closes and releases the native engine handle.
 	/// </summary>
 	public void Close() {
@@ -278,6 +290,10 @@ public sealed class TextAnalyzer : IDisposable {
 	internal TextAnalyzer(HighlightEngine owner, IntPtr handle) {
 		_owner = owner;
 		_handle = handle;
+	}
+
+	~TextAnalyzer() {
+		Dispose(false);
 	}
 
 	/// <summary>
@@ -367,21 +383,38 @@ public sealed class TextAnalyzer : IDisposable {
 	}
 
 	/// <summary>
-	/// Marks this analyzer as closed.
+	/// Closes and releases the native analyzer handle.
 	/// </summary>
 	public void Close() {
 		Dispose();
 	}
 
 	/// <summary>
-	/// Marks this analyzer as disposed.
+	/// Releases native resources associated with this analyzer.
 	/// </summary>
-	/// <remarks>
-	/// Text analyzer handle is managed by the engine in native side.
-	/// </remarks>
 	public void Dispose() {
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing) {
+		if (_disposed) {
+			return;
+		}
+
 		_disposed = true;
-		_handle = IntPtr.Zero;
+		if (_handle != IntPtr.Zero) {
+			IntPtr handle = _handle;
+			_handle = IntPtr.Zero;
+			try {
+				int error = SweetLineNative.FreeTextAnalyzer(handle);
+				if (disposing) {
+					SweetLineNative.ThrowIfError(error, "free text analyzer");
+				}
+			} catch when (!disposing) {
+				// Do not allow finalizer path to throw.
+			}
+		}
 	}
 
 	private void EnsureOpen() {
@@ -410,6 +443,10 @@ public sealed class DocumentAnalyzer : IDisposable {
 	internal DocumentAnalyzer(HighlightEngine owner, IntPtr handle) {
 		_owner = owner;
 		_handle = handle;
+	}
+
+	~DocumentAnalyzer() {
+		Dispose(false);
 	}
 
 	/// <summary>
@@ -624,21 +661,38 @@ public sealed class DocumentAnalyzer : IDisposable {
 	}
 
 	/// <summary>
-	/// Marks this analyzer as closed.
+	/// Closes and releases the native analyzer handle.
 	/// </summary>
 	public void Close() {
 		Dispose();
 	}
 
 	/// <summary>
-	/// Marks this analyzer as disposed.
+	/// Releases native resources associated with this analyzer.
 	/// </summary>
-	/// <remarks>
-	/// Document analyzer handle is managed by the engine in native side.
-	/// </remarks>
 	public void Dispose() {
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing) {
+		if (_disposed) {
+			return;
+		}
+
 		_disposed = true;
-		_handle = IntPtr.Zero;
+		if (_handle != IntPtr.Zero) {
+			IntPtr handle = _handle;
+			_handle = IntPtr.Zero;
+			try {
+				int error = SweetLineNative.FreeDocumentAnalyzer(handle);
+				if (disposing) {
+					SweetLineNative.ThrowIfError(error, "free document analyzer");
+				}
+			} catch when (!disposing) {
+				// Do not allow finalizer path to throw.
+			}
+		}
 	}
 
 	private void EnsureOpen() {

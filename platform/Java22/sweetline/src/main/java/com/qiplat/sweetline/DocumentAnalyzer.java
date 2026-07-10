@@ -278,8 +278,14 @@ public class DocumentAnalyzer implements AutoCloseable {
     public void close() {
         if (!closed) {
             closed = true;
-            // DocumentAnalyzer handle is managed by the engine internally;
-            // it is freed when the engine is destroyed or the document is removed.
+            try {
+                int errorCode = (int) SweetLineNative.sl_free_document_analyzer.invoke(handle);
+                if (errorCode != 0) {
+                    throw new IllegalStateException("Native error code: " + errorCode);
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed to free document analyzer", e);
+            }
         }
     }
 
