@@ -10,7 +10,7 @@
 | C / FFI | [C API](api_c.md) | C 语言接口与返回缓冲区格式 |
 | macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API 与 Native 产物说明 |
 | iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API 与 Native 产物说明 |
-| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI 绑定的 Java API 与 Markwon 插件 |
+| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI 绑定的 Java API |
 | Kotlin Multiplatform | [KMP README](../../platform/KMP/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
 | Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |
 | Java 22 (FFM) | [Java 22 README](../../platform/Java22/README.md) | FFM 封装 API 与 Native 加载说明 |

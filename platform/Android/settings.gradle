@@ -18,4 +18,3 @@ dependencyResolutionManagement {
 rootProject.name = "app"
 include ':app'
 include ':sweetline'
-include ':markwon-plugin'

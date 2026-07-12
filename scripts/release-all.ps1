@@ -3,7 +3,7 @@ param(
     [ValidateSet("menu", "status", "package", "publish", "resume")]
     [string]$Action = "menu",
 
-    [ValidateSet("native", "android", "markwon", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")]
+    [ValidateSet("native", "android", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")]
     [string[]]$Targets = @(),
 
     [string[]]$VersionOverride = @(),
@@ -17,7 +17,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir ".."))
 $ReleaseDir = Join-Path $ProjectDir "build\release"
 $StatePath = Join-Path $ReleaseDir "release-state.json"
-$TargetOrder = @("native", "android", "markwon", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")
+$TargetOrder = @("native", "android", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")
 $VersionOverrides = @{}
 
 foreach ($item in $VersionOverride) {
@@ -136,7 +136,6 @@ function Get-TargetDefinitions {
     return @(
         [pscustomobject]@{ Key = "native"; Label = "Native / GitHub Release"; Registry = "GitHub"; PackageId = "FinalScave/SweetLine"; Version = $null; Path = $ProjectDir; Repository = "FinalScave/SweetLine" },
         [pscustomobject]@{ Key = "android"; Label = "Android"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\Android\sweetline\build.gradle"); Path = Join-Path $ProjectDir "platform\Android"; Repository = $null },
-        [pscustomobject]@{ Key = "markwon"; Label = "Markwon plugin"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline-markwon"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\Android\markwon-plugin\build.gradle"); Path = Join-Path $ProjectDir "platform\Android"; Repository = $null },
         [pscustomobject]@{ Key = "java22"; Label = "Java 22 FFM"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline-ffm"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\Java22\sweetline\build.gradle"); Path = Join-Path $ProjectDir "platform\Java22"; Repository = $null },
         [pscustomobject]@{ Key = "kmp"; Label = "Kotlin Multiplatform"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline-kmp"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\KMP\sweetline\build.gradle.kts"); Path = Join-Path $ProjectDir "platform\KMP"; Repository = $null },
         [pscustomobject]@{ Key = "nuget"; Label = "C# / NuGet"; Registry = "NuGet.org"; PackageId = "SweetLine"; Version = Get-NuGetVersion (Join-Path $ProjectDir "platform\CSharp\SweetLine\SweetLine.csproj"); Path = Join-Path $ProjectDir "platform\CSharp\SweetLine"; Repository = $null },
@@ -165,12 +164,6 @@ function Get-VersionEditSpecs {
             return @(
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\sweetline\build.gradle"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline:)([^"'']+)(["'']\s*)$' }
-            )
-        }
-        "markwon" {
-            return @(
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\markwon-plugin\build.gradle"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline-markwon:)([^"'']+)(["'']\s*)$' }
             )
         }
         "java22" {
@@ -622,9 +615,6 @@ function Invoke-PackageTarget {
         "android" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:assembleRelease", ":sweetline:generateBundle", "--console=plain") -WorkingDirectory $Target.Path
         }
-        "markwon" {
-            Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":markwon-plugin:assembleRelease", ":markwon-plugin:generateBundle", "--console=plain") -WorkingDirectory $Target.Path
-        }
         "java22" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:generateBundle", "--console=plain") -WorkingDirectory $Target.Path
         }
@@ -696,7 +686,7 @@ function Assert-PublishRequirements {
                     throw "NUGET_API_KEY is required to publish NuGet packages."
                 }
             }
-            { $_ -in @("android", "markwon", "java22", "kmp") } { Assert-Command "gpg" }
+            { $_ -in @("android", "java22", "kmp") } { Assert-Command "gpg" }
         }
     }
 }
@@ -741,9 +731,6 @@ function Invoke-PublishTarget {
         }
         "android" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:publishToCentralPortal", "--console=plain") -WorkingDirectory $Target.Path
-        }
-        "markwon" {
-            Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":markwon-plugin:publishToCentralPortal", "--console=plain") -WorkingDirectory $Target.Path
         }
         "java22" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:publishToCentralPortal", "--console=plain") -WorkingDirectory $Target.Path
@@ -853,24 +840,6 @@ function Confirm-Publish {
     }
 }
 
-function Add-MarkwonDependency {
-    param([Parameter(Mandatory = $true)][object[]]$Items)
-
-    if (-not ($Items.Target.Key -contains "markwon") -or ($Items.Target.Key -contains "android")) {
-        return $Items
-    }
-    $android = Get-TargetDefinition "android"
-    $status = Get-RegistryStatus -Target $android -Version $android.Version
-    if ($status -eq "待发布") {
-        Write-Host "Android package is required by Markwon and was added to the release plan." -ForegroundColor Yellow
-        return @([pscustomobject]@{ Target = $android; Version = $android.Version }) + $Items
-    }
-    if ($status -ne "已发布") {
-        throw "Unable to verify the Android dependency required by Markwon."
-    }
-    return $Items
-}
-
 function Invoke-PackageItems {
     param([Parameter(Mandatory = $true)][object[]]$Items)
 
@@ -900,7 +869,6 @@ function Invoke-PublishItems {
         [string]$Mode = "publish"
     )
 
-    $Items = Add-MarkwonDependency $Items
     $Items = @($Items | Sort-Object { [array]::IndexOf($TargetOrder, $_.Target.Key) })
     $pending = New-Object System.Collections.Generic.List[object]
     $statuses = @{}
@@ -1063,7 +1031,7 @@ function Show-MainMenu {
                     }
                 }
                 "2" {
-                    $editableTargets = @("android", "markwon", "java22", "kmp", "nuget", "flutter", "ohos")
+                    $editableTargets = @("android", "java22", "kmp", "nuget", "flutter", "ohos")
                     $selected = Read-SingleTargetSelection -AllowedTargets $editableTargets -Prompt "请选择要修改版本的平台"
                     if ($selected) {
                         $target = Get-TargetDefinition $selected

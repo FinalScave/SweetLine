@@ -8,9 +8,4 @@
         android:title="Switch Theme"
         app:showAsAction="always" />
 
-    <item
-        android:id="@+id/action_markdown"
-        android:title="Markdown"
-        app:showAsAction="never" />
-
 </menu>

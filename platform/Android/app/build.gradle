@@ -63,11 +63,8 @@ preBuild.dependsOn(tasks.named("syncDemoAssets"))
 dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
-    implementation 'io.noties.markwon:core:4.6.2'
     debugImplementation project(":sweetline")
-    debugImplementation project(":markwon-plugin")
     releaseImplementation 'com.qiplat:sweetline:0.0.2'
-    releaseImplementation 'com.qiplat:sweetline-markwon:0.0.2'
     implementation libs.appcompat
     implementation libs.material
     testImplementation libs.junit

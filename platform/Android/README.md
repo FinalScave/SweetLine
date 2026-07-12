@@ -1,17 +1,14 @@
 # SweetLine for Android
 
-SweetLine for Android exposes the native highlighting engine through a Java/JNI API. The project contains the core `sweetline` library and an optional Markwon integration module.
+SweetLine for Android exposes the native highlighting engine through a Java/JNI API.
 
 ## Installation
 
 ```groovy
 dependencies {
     implementation "com.qiplat:sweetline:1.3.1"
-    implementation "com.qiplat:sweetline-markwon:1.3.1"
 }
 ```
-
-The Markwon dependency is optional. Source consumers can include the `:sweetline` or `:markwon-plugin` module directly.
 
 ## Features
 

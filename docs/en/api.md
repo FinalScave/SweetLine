@@ -10,7 +10,7 @@ To reduce maintenance cost and improve readability, the API documentation is spl
 | C / FFI | [C API](api_c.md) | Pure C interfaces and return buffer format |
 | macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API and native artifact guide |
 | iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API and native artifact guide |
-| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI-based Java API and Markwon plugin |
+| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI-based Java API |
 | Kotlin Multiplatform | [KMP README](../../platform/KMP/README.md) | Kotlin API for Android, iOS, and JVM desktop |
 | Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI wrapper API |
 | Java 22 (FFM) | [Java 22 README](../../platform/Java22/README.md) | FFM wrapper API and native loading guide |

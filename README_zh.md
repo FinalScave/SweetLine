@@ -155,7 +155,7 @@ auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible_range);
 
 | 平台 | 指南 |
 |------|------|
-| Android / Markwon | [Android README](platform/Android/README.md) |
+| Android | [Android README](platform/Android/README.md) |
 | Java 22 FFM | [Java 22 README](platform/Java22/README.md) |
 | Kotlin Multiplatform | [KMP README](platform/KMP/README.md) |
 | .NET / C# | [.NET README](platform/CSharp/SweetLine/README.md) |
@@ -212,7 +212,7 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [C API](docs/zh/api_c.md) | 面向 FFI 的 C 接口 |
 | [macOS Swift API](https://github.com/Xiue233/SweetLine-macOS) | macOS 平台 Swift Package API |
 | [iOS Swift API](https://github.com/Xiue233/SweetLine-iOS) | iOS 平台 Swift Package API |
-| [Android API](platform/Android/README.md) | Android 平台 Java/Kotlin API 与 Markwon 插件 |
+| [Android API](platform/Android/README.md) | Android 平台 Java/Kotlin API |
 | [Kotlin Multiplatform API](platform/KMP/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
 | [Flutter API](platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |
 | [Java 22 API](platform/Java22/README.md) | Java 22 FFM API |
