@@ -6,8 +6,7 @@ param(
     [ValidateSet("native", "android", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")]
     [string[]]$Targets = @(),
 
-    [string[]]$VersionOverride = @(),
-    [switch]$Yes
+    [string[]]$VersionOverride = @()
 )
 
 Set-StrictMode -Version Latest
@@ -830,16 +829,6 @@ function Show-ReleasePlan {
     } | Format-Table -AutoSize
 }
 
-function Confirm-Publish {
-    if ($Yes) {
-        return
-    }
-    $confirmation = (Read-Host "输入 publish 确认正式发布").Trim()
-    if ($confirmation -cne "publish") {
-        throw "Publish cancelled."
-    }
-}
-
 function Invoke-PackageItems {
     param([Parameter(Mandatory = $true)][object[]]$Items)
 
@@ -890,7 +879,6 @@ function Invoke-PublishItems {
         return
     }
 
-    Confirm-Publish
     Assert-PublishWorkspace
     Assert-PublishRequirements -Items $pending
     $state = New-ReleaseState -Mode $Mode -Items $Items
