@@ -106,27 +106,24 @@ function Test-CMakeGeneratorSupport {
 
 function Resolve-WindowsBuildEnvironment {
     $vswhere = Resolve-VsWherePath
-    $json = & $vswhere -products "*" -requires "Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -format json -utf8
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to query installed Visual Studio instances."
-    }
+    $versions = @(
+        [pscustomobject]@{ Range = "[18.0,19.0)"; Year = "2026"; Generator = "Visual Studio 18 2026" },
+        [pscustomobject]@{ Range = "[17.0,18.0)"; Year = "2022"; Generator = "Visual Studio 17 2022" },
+        [pscustomobject]@{ Range = "[16.0,17.0)"; Year = "2019"; Generator = "Visual Studio 16 2019" }
+    )
 
-    $instances = @($json | ConvertFrom-Json)
-    $versions = @{
-        18 = [pscustomobject]@{ Year = "2026"; Generator = "Visual Studio 18 2026" }
-        17 = [pscustomobject]@{ Year = "2022"; Generator = "Visual Studio 17 2022" }
-        16 = [pscustomobject]@{ Year = "2019"; Generator = "Visual Studio 16 2019" }
-    }
-
-    foreach ($instance in @($instances | Sort-Object { [version]$_.installationVersion } -Descending)) {
-        $major = ([version]$instance.installationVersion).Major
-        if (-not $versions.ContainsKey($major)) {
+    foreach ($version in $versions) {
+        $pathLines = & $vswhere -latest -products "*" -requires "Microsoft.VisualStudio.Component.VC.Tools.x86.x64" -version $version.Range -property installationPath
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to query installed Visual Studio instances."
+        }
+        $installationPath = (($pathLines | ForEach-Object { $_ -replace "`0", "" }) -join "").Trim()
+        if (-not $installationPath) {
             continue
         }
 
-        $version = $versions[$major]
         $cmakeCandidates = @(
-            (Join-Path $instance.installationPath "Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe")
+            (Join-Path $installationPath "Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe")
         )
         $pathCMake = Get-Command "cmake" -ErrorAction SilentlyContinue
         if ($pathCMake) {
@@ -139,7 +136,7 @@ function Resolve-WindowsBuildEnvironment {
                 return [pscustomobject]@{
                     CMakePath = $cmakePath
                     Generator = $version.Generator
-                    InstancePath = $instance.installationPath
+                    InstancePath = $installationPath
                     Year = $version.Year
                 }
             }
