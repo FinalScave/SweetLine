@@ -20,6 +20,8 @@ It wraps the SweetLine native C API and provides a Dart-friendly API for:
 - bracket token depth and partner range metadata for rainbow bracket rendering
 - optional `showIndex` support
 - optional inline-style output
+- managed-document removal with `HighlightEngine.removeDocument(...)`
+- explicit native resource release with `close()` or `dispose()`
 
 ## Supported platforms
 
@@ -41,7 +43,7 @@ Web is not supported.
 
 ```yaml
 dependencies:
-  sweetline: ^1.3.0
+  sweetline: ^1.3.1
 ```
 
 ## Load syntax rules
@@ -104,16 +106,20 @@ Future<void> main() async {
       throw StateError('no syntax matched main.dart');
     }
 
-    final result = analyzer.analyzeText('class Foo<T> {\n  final int value;\n}');
-    for (var line = 0; line < result.lines.length; line++) {
-      for (final span in result.lines[line].spans) {
-        print(
-          'line=$line '
-          'column=${span.range.start.column} '
-          'length=${span.range.end.column - span.range.start.column} '
-          'styleId=${span.styleId}',
-        );
+    try {
+      final result = analyzer.analyzeText('class Foo<T> {\n  final int value;\n}');
+      for (var line = 0; line < result.lines.length; line++) {
+        for (final span in result.lines[line].spans) {
+          print(
+            'line=$line '
+            'column=${span.range.start.column} '
+            'length=${span.range.end.column - span.range.start.column} '
+            'styleId=${span.styleId}',
+          );
+        }
       }
+    } finally {
+      analyzer.close();
     }
   } finally {
     engine.close();
@@ -130,10 +136,12 @@ re-analysis.
 import 'package:sweetline/sweetline.dart';
 
 void analyzeDocument(HighlightEngine engine, String source) {
-  final document = Document('main.dart', source);
+  const uri = 'main.dart';
+  final document = Document(uri, source);
+  DocumentAnalyzer? analyzer;
 
   try {
-    final analyzer = engine.loadDocument(document);
+    analyzer = engine.loadDocument(document);
     if (analyzer == null) {
       throw StateError('failed to load document');
     }
@@ -155,6 +163,8 @@ void analyzeDocument(HighlightEngine engine, String source) {
     print(slice.startLine);
     print(slice.totalLineCount);
   } finally {
+    analyzer?.close();
+    engine.removeDocument(uri);
     document.close();
   }
 }
@@ -173,6 +183,7 @@ void analyzeDocument(HighlightEngine engine, String source) {
 - `createAnalyzerByFileName(String fileName)`
 - `createAnalyzerBySyntaxName(String syntaxName)`
 - `loadDocument(Document document)`
+- `removeDocument(String uri)`
 
 ### `TextAnalyzer`
 
@@ -276,9 +287,9 @@ Inline style contains:
 
 ## Lifecycle
 
-- call `engine.close()` when the engine is no longer needed
-- call `document.close()` when the managed document is no longer needed
-- `TextAnalyzer` and `DocumentAnalyzer` are lightweight wrappers; closing the owning engine/document is the important part
+`HighlightEngine`, `Document`, `TextAnalyzer`, and `DocumentAnalyzer` own native resources. Call `close()` when each object is no longer needed; `dispose()` is an alias.
+
+For managed documents, close the analyzer, call `engine.removeDocument(uri)`, close the document, and finally close the engine.
 
 ## Notes
 

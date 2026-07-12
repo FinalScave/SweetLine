@@ -149,74 +149,21 @@ auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible_range);
 当渲染层需要某个可见区切片，并希望 SweetLine 先根据当前文档状态分析足够的行时，使用 `analyzeLineRange()`。
 当渲染层只需要当前可见窗口时，优先在 `analyze()` 或 `analyzeIncremental()` 之后调用 `getHighlightSlice()`。
 
-### Java 22（FFM）使用
+### 平台指南
 
-```java
-import com.qiplat.sweetline.*;
+各平台 README 是安装方式、API 用法、`HighlightEngine.removeDocument(...)` 和原生资源生命周期说明的唯一维护入口。
 
-try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
-    engine.compileSyntaxFromFile("syntaxes/java.json");
-
-    try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Example.java")) {
-        DocumentHighlight result = analyzer.analyzeText(sourceCode);
-    }
-}
-```
-
-Java 22 FFM 封装位于 `platform/Java22`。
-运行时需要开启 native access（例如 `--enable-native-access=ALL-UNNAMED`），并确保 SweetLine 原生库路径可被加载。
-
-### Android 使用
-
-```groovy
-// build.gradle
-implementation 'com.qiplat:sweetline:1.2.4'
-```
-
-```java
-// Create engine
-HighlightEngine engine = new HighlightEngine(new HighlightConfig());
-
-// Compile syntax rules
-engine.compileSyntaxFromJson(jsonString);
-
-// Full analysis
-TextAnalyzer analyzer = engine.createAnalyzerByFileName("MainActivity.java");
-DocumentHighlight result = analyzer.analyzeText(sourceCode);
-
-// Iterate results
-for (LineHighlight line : result.lines) {
-    for (TokenSpan span : line.spans) {
-        // span.range, span.styleId
-    }
-}
-```
-
-### WebAssembly 使用
-
-```javascript
-import createSweetLine from './sweetline.js';
-
-const sl = await createSweetLine();
-const config = new sl.HighlightConfig();
-const engine = new sl.HighlightEngine(config);
-
-// Compile syntax rules
-engine.compileSyntaxFromJson(jsonString);
-
-// Analyze text
-const analyzer = engine.createAnalyzerByFileName("main.js");
-const highlight = analyzer.analyzeText(sourceCode);
-
-// Iterate results
-for (let i = 0; i < highlight.lines.size(); i++) {
-    const line = highlight.lines.get(i);
-    for (let j = 0; j < line.spans.size(); j++) {
-        const span = line.spans.get(j);
-        // span.range, span.styleId
-    }
-}
-```
+| 平台 | 指南 |
+|------|------|
+| Android / Markwon | [Android README](platform/Android/README.md) |
+| Java 22 FFM | [Java 22 README](platform/Java22/README.md) |
+| Kotlin Multiplatform | [KMP README](platform/KMP/README.md) |
+| .NET / C# | [.NET README](platform/CSharp/SweetLine/README.md) |
+| Flutter / Dart | [Flutter README](platform/Flutter/sweetline/README.md) |
+| HarmonyOS / ArkTS | [HarmonyOS README](platform/OHOS/sweetline/README.md) |
+| WebAssembly | [Emscripten README](platform/Emscripten/README.md) |
+| iOS / SwiftPM | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) |
+| macOS / SwiftPM | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) |
 
 ### 自定义语法规则
 
@@ -263,14 +210,15 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [API 文档（索引）](docs/zh/api.md) | API 总入口与阅读顺序 |
 | [核心 API](docs/zh/api_core.md) | 核心概念与 C++ API |
 | [C API](docs/zh/api_c.md) | 面向 FFI 的 C 接口 |
-| [macOS Swift API](docs/zh/api_macos.md) | macOS 平台 Swift Package API |
-| [iOS Swift API](docs/zh/api_ios.md) | iOS 平台 Swift Package API |
-| [Android API](docs/zh/api_android.md) | Android 平台 Java/Kotlin API |
-| [Flutter API](docs/zh/api_flutter.md) | Dart FFI 封装 API |
-| [Java 22 API](docs/zh/api_java22.md) | Java 22 FFM API |
-| [.NET / WinForms API](docs/zh/api_dotnet.md) | C# API（P/Invoke 封装） |
-| [WebAssembly API](docs/zh/api_wasm.md) | JavaScript/TypeScript API |
-| [HarmonyOS API](docs/zh/api_ohos.md) | ArkTS/NAPI API 使用说明 |
+| [macOS Swift API](https://github.com/Xiue233/SweetLine-macOS) | macOS 平台 Swift Package API |
+| [iOS Swift API](https://github.com/Xiue233/SweetLine-iOS) | iOS 平台 Swift Package API |
+| [Android API](platform/Android/README.md) | Android 平台 Java/Kotlin API 与 Markwon 插件 |
+| [Kotlin Multiplatform API](platform/KMP/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
+| [Flutter API](platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |
+| [Java 22 API](platform/Java22/README.md) | Java 22 FFM API |
+| [.NET API](platform/CSharp/SweetLine/README.md) | C# API（P/Invoke 封装） |
+| [WebAssembly API](platform/Emscripten/README.md) | JavaScript/TypeScript API |
+| [HarmonyOS API](platform/OHOS/sweetline/README.md) | ArkTS/NAPI API 使用说明 |
 | [构建文档](docs/zh/api_build.md) | 多平台构建命令与参数 |
 | [项目协作说明](docs/zh/join.md) | 参与项目共建指南，包含使用仓库 skills 快速编写语法规则的说明 |
 

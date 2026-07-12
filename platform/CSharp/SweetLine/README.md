@@ -15,6 +15,8 @@ This package provides the .NET / C# binding over the SweetLine native core via P
 - Preprocessor macro support with `DefineMacro(...)` / `UndefineMacro(...)`
 - Style-ID mode and inline-style mode through `HighlightConfig`
 - Syntax loading from JSON string or file, plus file-name-based routing
+- Managed-document removal with `HighlightEngine.RemoveDocument(...)`
+- Deterministic native resource release through `IDisposable`
 
 ## Install
 
@@ -50,7 +52,7 @@ engine.RegisterStyleName("comment", 3);
 engine.CompileSyntaxFromFile("syntaxes/csharp.json");
 // or: engine.CompileSyntaxFromJson(jsonString);
 
-TextAnalyzer? textAnalyzer = engine.CreateAnalyzerByFileName("Program.cs");
+using TextAnalyzer? textAnalyzer = engine.CreateAnalyzerByFileName("Program.cs");
 if (textAnalyzer is not null)
 {
     DocumentHighlight result = textAnalyzer.AnalyzeText("public class Demo {}");
@@ -62,46 +64,56 @@ if (textAnalyzer is not null)
 ## Managed Document and Incremental Updates
 
 ```csharp
-using var document = new Document("Program.cs", sourceText);
-DocumentAnalyzer? analyzer = engine.LoadDocument(document);
-
-if (analyzer is not null)
+const string documentUri = "Program.cs";
+using var document = new Document(documentUri, sourceText);
+using (DocumentAnalyzer? analyzer = engine.LoadDocument(document))
 {
-    DocumentHighlight initial = analyzer.Analyze();
+    if (analyzer is not null)
+    {
+        DocumentHighlight initial = analyzer.Analyze();
 
-    var editRange = new TextRange(
-        new TextPosition(Line: 2, Column: 4),
-        new TextPosition(Line: 2, Column: 8));
+        var editRange = new TextRange(
+            new TextPosition(Line: 2, Column: 4),
+            new TextPosition(Line: 2, Column: 8));
 
-    DocumentHighlight updated = analyzer.AnalyzeIncremental(editRange, "newText");
+        DocumentHighlight updated = analyzer.AnalyzeIncremental(editRange, "newText");
 
-    // Analyze enough lines from the current document state to cover the viewport
-    DocumentHighlightSlice analyzedVisible = analyzer.AnalyzeLineRange(
-        new LineRange(StartLine: 0, LineCount: 80));
+        // Analyze enough lines from the current document state to cover the viewport
+        DocumentHighlightSlice analyzedVisible = analyzer.AnalyzeLineRange(
+            new LineRange(StartLine: 0, LineCount: 80));
 
-    // Read the current visible window from the latest cached highlight result
-    DocumentHighlightSlice visible = analyzer.GetHighlightSlice(
-        new LineRange(StartLine: 0, LineCount: 80));
+        // Read the current visible window from the latest cached highlight result
+        DocumentHighlightSlice visible = analyzer.GetHighlightSlice(
+            new LineRange(StartLine: 0, LineCount: 80));
 
-    // Or apply a patch and return only the requested slice in one call
-    DocumentHighlightSlice updatedVisible = analyzer.AnalyzeIncrementalInLineRange(
-        editRange,
-        "newText",
-        new LineRange(StartLine: 0, LineCount: 80));
+        // Or apply a patch and return only the requested slice in one call
+        DocumentHighlightSlice updatedVisible = analyzer.AnalyzeIncrementalInLineRange(
+            editRange,
+            "newText",
+            new LineRange(StartLine: 0, LineCount: 80));
 
-    IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
-    IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
-        new LineRange(StartLine: 0, LineCount: 80));
-    BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
-    BracketPairResult visibleBrackets = analyzer.AnalyzeBracketPairsInLineRange(
-        new LineRange(StartLine: 0, LineCount: 80));
+        IndentGuideResult guides = analyzer.AnalyzeIndentGuides();
+        IndentGuideResult visibleGuides = analyzer.AnalyzeIndentGuidesInLineRange(
+            new LineRange(StartLine: 0, LineCount: 80));
+        BracketPairResult brackets = analyzer.AnalyzeBracketPairs();
+        BracketPairResult visibleBrackets = analyzer.AnalyzeBracketPairsInLineRange(
+            new LineRange(StartLine: 0, LineCount: 80));
+    }
 }
+
+engine.RemoveDocument(documentUri);
 ```
 
 Use `AnalyzeLineRange(...)` when the editor needs a visible slice and SweetLine should analyze enough lines from the current document state first.
 Use `GetHighlightSlice(...)` after `Analyze()` or `AnalyzeIncremental(...)` when the editor only needs the current viewport.
 Use `AnalyzeIncrementalInLineRange(...)` when you want to apply the edit and fetch the visible slice in one step.
 Use `AnalyzeBracketPairs(...)` or `AnalyzeBracketPairsInLineRange(...)` when the editor needs bracket depth for rainbow colors or `PartnerRange` for matching bracket navigation.
+
+## Resource Management
+
+`HighlightEngine`, `Document`, `TextAnalyzer`, and `DocumentAnalyzer` own native resources and implement `IDisposable`. Prefer `using` declarations or blocks so they are released deterministically. `Close()` is available as an alias for `Dispose()`. Each class also has a finalizer fallback for objects that were not disposed explicitly, but its execution timing is not guaranteed.
+
+For managed documents, dispose the analyzer, call `HighlightEngine.RemoveDocument(uri)`, dispose the document, and finally dispose the engine.
 
 ## Single-Line Analysis
 
@@ -171,9 +183,9 @@ When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCoreIOS.xcframework
 `dotnet pack` extracts it into the NuGet package automatically.
 
 ```bash
-dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.3.1
+dotnet pack platform/CSharp/SweetLine/SweetLine.csproj -c Release -o artifacts/nuget /p:PackageVersion=1.3.2
 
-dotnet nuget push artifacts/nuget/SweetLine.1.3.1.nupkg \
+dotnet nuget push artifacts/nuget/SweetLine.1.3.2.nupkg \
   --api-key $NUGET_API_KEY \
   --source https://api.nuget.org/v3/index.json \
   --skip-duplicate
@@ -182,5 +194,5 @@ dotnet nuget push artifacts/nuget/SweetLine.1.3.1.nupkg \
 ## Links
 
 - Repository: [FinalScave/SweetLine](https://github.com/FinalScave/SweetLine)
-- .NET API docs: [docs/en/api_dotnet.md](https://github.com/FinalScave/SweetLine/blob/master/docs/en/api_dotnet.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
 - General docs: [docs](https://github.com/FinalScave/SweetLine/tree/master/docs)

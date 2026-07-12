@@ -1,3 +1,8 @@
+## 1.3.1
+
+* Add `HighlightEngine.removeDocument(...)` for releasing managed documents from the engine.
+* Add explicit `close()` and `dispose()` resource management for native-backed objects.
+
 ## 1.3.0
 
 * Add bracket pair analysis metadata for rainbow bracket rendering and partner lookup.

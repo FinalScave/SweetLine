@@ -141,6 +141,15 @@ public class TextAnalyzer implements AutoCloseable {
         }
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
+    }
+
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("TextAnalyzer is already closed");

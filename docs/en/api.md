@@ -8,14 +8,15 @@ To reduce maintenance cost and improve readability, the API documentation is spl
 |------|------|------|
 | Core Concepts + C++ | [Core API](api_core.md) | Workflow, core data structures, and C++ APIs |
 | C / FFI | [C API](api_c.md) | Pure C interfaces and return buffer format |
-| macOS (Swift) | [macOS Swift API](api_macos.md) | Swift Package API and native artifact guide |
-| iOS (Swift) | [iOS Swift API](api_ios.md) | Swift Package API and native artifact guide |
-| Android (Java/Kotlin) | [Android API](api_android.md) | JNI-based Java API |
-| Flutter / Dart | [Flutter API](api_flutter.md) | Dart FFI wrapper API |
-| Java 22 (FFM) | [Java 22 API](api_java22.md) | FFM wrapper API and native loading guide |
-| .NET / WinForms (C#) | [.NET / WinForms API](api_dotnet.md) | P/Invoke wrapper API |
-| WebAssembly (JS/TS) | [WebAssembly API](api_wasm.md) | Emscripten JS/TS API |
-| HarmonyOS (ArkTS/NAPI) | [HarmonyOS API](api_ohos.md) | ArkTS bindings and usage entry |
+| macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API and native artifact guide |
+| iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API and native artifact guide |
+| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI-based Java API and Markwon plugin |
+| Kotlin Multiplatform | [KMP README](../../platform/KMP/README.md) | Kotlin API for Android, iOS, and JVM desktop |
+| Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI wrapper API |
+| Java 22 (FFM) | [Java 22 README](../../platform/Java22/README.md) | FFM wrapper API and native loading guide |
+| .NET (C#) | [.NET README](../../platform/CSharp/SweetLine/README.md) | P/Invoke wrapper API |
+| WebAssembly (JS/TS) | [Emscripten README](../../platform/Emscripten/README.md) | Emscripten JS/TS API |
+| HarmonyOS (ArkTS/NAPI) | [HarmonyOS README](../../platform/OHOS/sweetline/README.md) | ArkTS bindings and usage entry |
 | Build & CMake Options | [Build Guide](api_build.md) | Platform build commands and options |
 
 ## Recommended Reading Order

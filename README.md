@@ -149,74 +149,21 @@ auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible_range);
 Use `analyzeLineRange()` when the renderer needs a visible slice and wants SweetLine to analyze enough lines from the current document state first.
 Use `getHighlightSlice()` after `analyze()` or `analyzeIncremental()` when the renderer only needs a visible window of lines.
 
-### Java 22 (FFM) Usage
+### Platform Guides
 
-```java
-import com.qiplat.sweetline.*;
+Each platform README is the source of truth for installation, API usage, `HighlightEngine.removeDocument(...)`, and native resource lifecycle guidance.
 
-try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
-    engine.compileSyntaxFromFile("syntaxes/java.json");
-
-    try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Example.java")) {
-        DocumentHighlight result = analyzer.analyzeText(sourceCode);
-    }
-}
-```
-
-Java 22 FFM wrapper is located at `platform/Java22`.
-Running code requires native access enabled (for example `--enable-native-access=ALL-UNNAMED`) and a resolvable SweetLine native library path.
-
-### Android Usage
-
-```groovy
-// build.gradle
-implementation 'com.qiplat:sweetline:1.2.4'
-```
-
-```java
-// Create engine
-HighlightEngine engine = new HighlightEngine(new HighlightConfig());
-
-// Compile syntax rules
-engine.compileSyntaxFromJson(jsonString);
-
-// Full analysis
-TextAnalyzer analyzer = engine.createAnalyzerByFileName("MainActivity.java");
-DocumentHighlight result = analyzer.analyzeText(sourceCode);
-
-// Iterate results
-for (LineHighlight line : result.lines) {
-    for (TokenSpan span : line.spans) {
-        // span.range, span.styleId
-    }
-}
-```
-
-### WebAssembly Usage
-
-```javascript
-import createSweetLine from './sweetline.js';
-
-const sl = await createSweetLine();
-const config = new sl.HighlightConfig();
-const engine = new sl.HighlightEngine(config);
-
-// Compile syntax rules
-engine.compileSyntaxFromJson(jsonString);
-
-// Analyze text
-const analyzer = engine.createAnalyzerByFileName("main.js");
-const highlight = analyzer.analyzeText(sourceCode);
-
-// Iterate results
-for (let i = 0; i < highlight.lines.size(); i++) {
-    const line = highlight.lines.get(i);
-    for (let j = 0; j < line.spans.size(); j++) {
-        const span = line.spans.get(j);
-        // span.range, span.styleId
-    }
-}
-```
+| Platform | Guide |
+|----------|-------|
+| Android / Markwon | [Android README](platform/Android/README.md) |
+| Java 22 FFM | [Java 22 README](platform/Java22/README.md) |
+| Kotlin Multiplatform | [KMP README](platform/KMP/README.md) |
+| .NET / C# | [.NET README](platform/CSharp/SweetLine/README.md) |
+| Flutter / Dart | [Flutter README](platform/Flutter/sweetline/README.md) |
+| HarmonyOS / ArkTS | [HarmonyOS README](platform/OHOS/sweetline/README.md) |
+| WebAssembly | [Emscripten README](platform/Emscripten/README.md) |
+| iOS / SwiftPM | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) |
+| macOS / SwiftPM | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) |
 
 ### Custom Syntax Rules
 
@@ -263,14 +210,15 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | [API Reference (Index)](docs/en/api.md) | API entry page and reading order |
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
-| [macOS Swift API](docs/en/api_macos.md) | Swift Package API on macOS |
-| [iOS Swift API](docs/en/api_ios.md) | Swift Package API on iOS |
-| [Android API](docs/en/api_android.md) | Java/Kotlin API on Android |
-| [Flutter API](docs/en/api_flutter.md) | Dart FFI wrapper API |
-| [Java 22 API](docs/en/api_java22.md) | Java 22 FFM API |
-| [.NET / WinForms API](docs/en/api_dotnet.md) | C# API (P/Invoke wrapper) |
-| [WebAssembly API](docs/en/api_wasm.md) | JavaScript/TypeScript API |
-| [HarmonyOS API](docs/en/api_ohos.md) | ArkTS/NAPI API usage |
+| [macOS Swift API](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API on macOS |
+| [iOS Swift API](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API on iOS |
+| [Android API](platform/Android/README.md) | Java/Kotlin API on Android and the Markwon plugin |
+| [Kotlin Multiplatform API](platform/KMP/README.md) | Kotlin API for Android, iOS, and JVM desktop |
+| [Flutter API](platform/Flutter/sweetline/README.md) | Dart FFI wrapper API |
+| [Java 22 API](platform/Java22/README.md) | Java 22 FFM API |
+| [.NET API](platform/CSharp/SweetLine/README.md) | C# API (P/Invoke wrapper) |
+| [WebAssembly API](platform/Emscripten/README.md) | JavaScript/TypeScript API |
+| [HarmonyOS API](platform/OHOS/sweetline/README.md) | ArkTS/NAPI API usage |
 | [Build Guide](docs/en/api_build.md) | Multi-platform build commands and options |
 | [Contributing Guide](docs/en/join.md) | How to participate in the project, including using repository skills for faster syntax authoring |
 

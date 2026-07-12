@@ -245,6 +245,15 @@ public class HighlightEngine implements AutoCloseable {
         }
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
+    }
+
     private void ensureOpen() {
         if (closed) {
             throw new IllegalStateException("HighlightEngine is already closed");

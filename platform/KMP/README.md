@@ -10,12 +10,38 @@ SweetLine KMP is the Kotlin Multiplatform binding for the SweetLine native synta
 - Scope and indent guide analysis
 - Bracket pair analysis for rainbow bracket rendering and partner lookup
 - Kotlin APIs for Android, iOS, and JVM desktop targets
+- Managed-document removal with `HighlightEngine.removeDocument(...)`
+- Explicit native resource release with `close()`
 
 ## Dependency
 
 ```kotlin
-implementation("com.qiplat:sweetline-kmp:1.3.0")
+implementation("com.qiplat:sweetline-kmp:1.0.0")
 ```
+
+## Managed Documents
+
+```kotlin
+val uri = "Main.kt"
+val engine = HighlightEngine(HighlightConfig())
+val document = Document(uri, sourceText)
+val analyzer = engine.loadDocument(document)
+
+try {
+    val highlight = analyzer?.analyze()
+} finally {
+    analyzer?.close()
+    engine.removeDocument(uri)
+    document.close()
+    engine.close()
+}
+```
+
+## Resource Management
+
+`HighlightEngine`, `Document`, `TextAnalyzer`, and `DocumentAnalyzer` own native resources. Call `close()` when each object is no longer needed.
+
+For managed documents, close the analyzer, call `HighlightEngine.removeDocument(uri)`, close the document, and finally close the engine.
 
 ## Bracket Pair Analysis
 
