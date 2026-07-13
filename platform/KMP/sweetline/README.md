@@ -53,31 +53,35 @@ For editors that only need the viewport, use `DocumentAnalyzer.analyzeBracketPai
 
 ## Development Project
 
-This directory also contains a Kotlin Multiplatform demo project targeting Android, iOS, and Desktop JVM.
+The platform project also contains a Kotlin Multiplatform demo targeting Android, iOS, and Desktop JVM.
 
 ### Build and Run Android Application
 
 To build and run the development Android app, use the run configuration from the IDE toolbar or build it directly from the terminal:
 
 ```shell
+cd platform/KMP
 ./gradlew :demo:assembleDebug
 ```
 
 On Windows:
 
 ```shell
+cd platform/KMP
 .\gradlew.bat :demo:assembleDebug
 ```
 
 ### Build and Run Desktop JVM Application
 
 ```shell
+cd platform/KMP
 ./gradlew :demo:jvmRun
 ```
 
 On Windows:
 
 ```shell
+cd platform/KMP
 .\gradlew.bat :demo:jvmRun
 ```
 

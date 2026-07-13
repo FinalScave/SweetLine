@@ -162,20 +162,20 @@ function Get-VersionEditSpecs {
         "android" {
             return @(
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\sweetline\build.gradle"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline:)([^"'']+)(["'']\s*)$' }
+                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Android\sweetline\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline:)([^"'']+)(["'']\s*)$' }
             )
         }
         "java22" {
             return @(
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\build.gradle"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\README.md"; Pattern = '(?m)^(\s*<version>)([^<]+)(</version>\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline-ffm:)([^"'']+)(["'']\s*)$' }
+                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\README.md"; Pattern = '(?m)^(\s*<version>)([^<]+)(</version>\s*)$' },
+                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline-ffm:)([^"'']+)(["'']\s*)$' }
             )
         }
         "kmp" {
             return @(
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\KMP\sweetline\build.gradle.kts"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\KMP\README.md"; Pattern = '(?m)^(\s*implementation\(["'']com\.qiplat:sweetline-kmp:)([^"'']+)(["'']\)\s*)$' }
+                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\KMP\sweetline\README.md"; Pattern = '(?m)^(\s*implementation\(["'']com\.qiplat:sweetline-kmp:)([^"'']+)(["'']\)\s*)$' }
             )
         }
         "nuget" {

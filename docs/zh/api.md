@@ -10,10 +10,10 @@
 | C / FFI | [C API](api_c.md) | C 语言接口与返回缓冲区格式 |
 | macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API 与 Native 产物说明 |
 | iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API 与 Native 产物说明 |
-| Android (Java/Kotlin) | [Android README](../../platform/Android/README.md) | JNI 绑定的 Java API |
-| Kotlin Multiplatform | [KMP README](../../platform/KMP/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
+| Android (Java/Kotlin) | [Android README](../../platform/Android/sweetline/README.md) | JNI 绑定的 Java API |
+| Kotlin Multiplatform | [KMP README](../../platform/KMP/sweetline/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
 | Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |
-| Java 22 (FFM) | [Java 22 README](../../platform/Java22/README.md) | FFM 封装 API 与 Native 加载说明 |
+| Java 22 (FFM) | [Java 22 README](../../platform/Java22/sweetline/README.md) | FFM 封装 API 与 Native 加载说明 |
 | .NET (C#) | [.NET README](../../platform/CSharp/SweetLine/README.md) | P/Invoke 封装 API |
 | WebAssembly (JS/TS) | [Emscripten README](../../platform/Emscripten/README.md) | Emscripten 导出的 JS/TS API |
 | HarmonyOS (ArkTS/NAPI) | [HarmonyOS README](../../platform/OHOS/sweetline/README.md) | ArkTS 绑定与入口说明 |
