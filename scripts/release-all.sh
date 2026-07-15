@@ -150,28 +150,28 @@ registry_status() {
 
   if [ -z "$version" ]; then
     if [ "$target" = "ios" ] || [ "$target" = "macos" ]; then
-      echo "子仓库未初始化"
+      echo "Submodule not initialized"
     else
-      echo "需要版本"
+      echo "Version required"
     fi
     return 0
   fi
   if [ "$target" = "kmp" ]; then
     response_file="$(mktemp "${TMPDIR:-/tmp}/sweetline-maven-status.XXXXXX")" || {
-      echo "查询失败"
+      echo "Query failed"
       return 0
     }
     code="$(curl -sS -o "$response_file" -w '%{http_code}' "https://repo.maven.apache.org/maven2/com/qiplat/sweetline-kmp/maven-metadata.xml" 2>/dev/null)"
     case "$code" in
       200)
         if grep -Fq "<version>$version</version>" "$response_file"; then
-          echo "已发布"
+          echo "Published"
         else
-          echo "待发布"
+          echo "Pending"
         fi
         ;;
-      404) echo "待发布" ;;
-      *) echo "查询失败" ;;
+      404) echo "Pending" ;;
+      *) echo "Query failed" ;;
     esac
     rm -f "$response_file"
     return 0
@@ -179,9 +179,9 @@ registry_status() {
 
   code="$(curl -sS -o /dev/null -w '%{http_code}' "https://api.github.com/repos/$(target_repository "$target")/releases/tags/v$version" 2>/dev/null)"
   case "$code" in
-    200) echo "已发布" ;;
-    404) echo "待发布" ;;
-    *) echo "查询失败" ;;
+    200) echo "Published" ;;
+    404) echo "Pending" ;;
+    *) echo "Query failed" ;;
   esac
 }
 
@@ -464,8 +464,8 @@ publish_selected() {
     status="$(registry_status "$target" "$version")"
     printf '%-8s %-12s %-16s %s\n' "$target" "$version" "$(target_registry "$target")" "$status"
     case "$status" in
-      已发布) ;;
-      待发布)
+      Published) ;;
+      Pending)
         pending_targets+=("$target")
         pending_versions+=("$version")
         ;;
@@ -519,10 +519,10 @@ print_target_menu() {
   echo
   for target in "${TARGET_ORDER[@]}"; do
     version="$(target_version "$target")"
-    printf '%2d. %-28s %s\n' "$index" "$(target_label "$target")" "${version:-需要初始化子仓库}"
+    printf '%2d. %-28s %s\n' "$index" "$(target_label "$target")" "${version:-Submodule not initialized}"
     index=$((index + 1))
   done
-  echo " 0. 取消"
+  echo " 0. Cancel"
 }
 
 read_single_target() {
@@ -530,8 +530,8 @@ read_single_target() {
   local selection
   if [ "$only_editable" -eq 1 ]; then
     printf '\n 1. %-28s %s\n' "$(target_label kmp)" "$(target_version kmp)" >&2
-    echo " 0. 取消" >&2
-    read -r -p "请选择要修改版本的平台: " selection
+    echo " 0. Cancel" >&2
+    read -r -p "Select a platform to update: " selection
     case "$selection" in
       1) echo "kmp" ;;
       0|"") return 1 ;;
@@ -541,7 +541,7 @@ read_single_target() {
   fi
 
   print_target_menu >&2
-  read -r -p "请选择平台: " selection
+  read -r -p "Select a platform: " selection
   case "$selection" in
     1) echo "kmp" ;;
     2) echo "ios" ;;
@@ -558,7 +558,7 @@ read_target_selection() {
   local parts=()
   SELECTED_TARGETS=()
   print_target_menu
-  read -r -p "请选择平台，可用逗号分隔，输入 all 选择全部: " selection
+  read -r -p "Select platforms, separated by commas, or enter all: " selection
   if [ "$selection" = "0" ] || [ -z "$selection" ]; then
     return 1
   fi
@@ -586,13 +586,13 @@ show_main_menu() {
   local selected
   local new_version
   while true; do
-    printf '\nSweetLine macOS 发布工具\n\n'
-    echo "1. 查看单个平台状态"
-    echo "2. 修改 KMP 版本"
-    echo "3. 校验并打包"
-    echo "4. 发布选定平台"
-    echo "0. 退出"
-    read -r -p "请选择操作: " choice
+    printf '\nSweetLine macOS release tool\n\n'
+    echo "1. View platform status"
+    echo "2. Change KMP version"
+    echo "3. Validate and package"
+    echo "4. Publish selected platforms"
+    echo "0. Exit"
+    read -r -p "Select an action: " choice
     case "$choice" in
       1)
         selected="$(read_single_target)" || continue
@@ -600,7 +600,7 @@ show_main_menu() {
         ;;
       2)
         selected="$(read_single_target 1)" || continue
-        read -r -p "当前版本 $(target_version "$selected")，请输入新版本: " new_version
+        read -r -p "Current version: $(target_version "$selected"). Enter the new version: " new_version
         if [ -n "$new_version" ]; then
           set_kmp_version "$new_version" || true
         fi
@@ -614,7 +614,7 @@ show_main_menu() {
         publish_selected || true
         ;;
       0) return 0 ;;
-      *) echo "无效选项。" >&2 ;;
+      *) echo "Invalid selection." >&2 ;;
     esac
   done
 }

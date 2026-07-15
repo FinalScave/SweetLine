@@ -270,7 +270,7 @@ function Resolve-ReleaseItems {
         $definition = Get-TargetDefinition $key
         $version = if ($VersionOverrides.ContainsKey($key)) { $VersionOverrides[$key] } else { $definition.Version }
         if (-not $version -and $AllowPrompt) {
-            $version = (Read-Host "请输入 $($definition.Label) 的版本").Trim()
+            $version = (Read-Host "Enter the version for $($definition.Label)").Trim()
             if ($version) {
                 $VersionOverrides[$key] = $version
             }
@@ -377,7 +377,7 @@ function Get-RegistryStatus {
     )
 
     if (-not $Version) {
-        return "需要版本"
+        return "Version required"
     }
 
     try {
@@ -391,9 +391,9 @@ function Get-RegistryStatus {
             }
             default { throw "Unsupported registry: $($Target.Registry)" }
         }
-        return $(if ($published) { "已发布" } else { "待发布" })
+        return $(if ($published) { "Published" } else { "Pending" })
     } catch {
-        return "查询失败"
+        return "Query failed"
     }
 }
 
@@ -741,14 +741,14 @@ function Invoke-PackageItems {
     foreach ($item in $Items) {
         try {
             Invoke-PackageTarget -Target $item.Target -Version $item.Version
-            $results.Add([pscustomobject]@{ Target = $item.Target.Key; Version = $item.Version; Status = "成功"; Message = "" })
+            $results.Add([pscustomobject]@{ Target = $item.Target.Key; Version = $item.Version; Status = "Succeeded"; Message = "" })
         } catch {
-            $results.Add([pscustomobject]@{ Target = $item.Target.Key; Version = $item.Version; Status = "失败"; Message = $_.Exception.Message })
+            $results.Add([pscustomobject]@{ Target = $item.Target.Key; Version = $item.Version; Status = "Failed"; Message = $_.Exception.Message })
         }
     }
     Write-Host "`nPackage summary" -ForegroundColor Cyan
     $results | Format-Table -AutoSize -Wrap
-    if ($results.Status -contains "失败") {
+    if ($results.Status -contains "Failed") {
         throw "One or more packages failed validation."
     }
 }
@@ -765,10 +765,10 @@ function Invoke-PublishItems {
     foreach ($item in $Items) {
         $status = Get-RegistryStatus -Target $item.Target -Version $item.Version
         $statuses[$item.Target.Key] = $status
-        if ($status -eq "已发布") {
+        if ($status -eq "Published") {
             continue
         }
-        if ($status -ne "待发布") {
+        if ($status -ne "Pending") {
             throw "Unable to safely publish $($item.Target.Key): $status"
         }
         $pending.Add($item)
@@ -785,7 +785,7 @@ function Invoke-PublishItems {
     $state = New-ReleaseState -Mode $Mode -Items $Items
     Save-ReleaseState $state
     foreach ($item in $Items) {
-        if ($statuses[$item.Target.Key] -eq "已发布") {
+        if ($statuses[$item.Target.Key] -eq "Published") {
             Set-ReleaseStateEntry -State $state -Target $item.Target.Key -Status "Skipped" -Message "Version already exists."
         }
     }
@@ -845,7 +845,7 @@ function Invoke-ResumeRelease {
 function Read-SingleTargetSelection {
     param(
         [string[]]$AllowedTargets = $TargetOrder,
-        [string]$Prompt = "请选择平台"
+        [string]$Prompt = "Select a platform"
     )
 
     $definitions = @(Get-TargetDefinitions | Where-Object { $_.Key -in $AllowedTargets })
@@ -853,9 +853,9 @@ function Read-SingleTargetSelection {
     for ($index = 0; $index -lt $definitions.Count; $index++) {
         $target = $definitions[$index]
         $version = if ($VersionOverrides.ContainsKey($target.Key)) { $VersionOverrides[$target.Key] } else { $target.Version }
-        Write-Host ("{0,2}. {1,-28} {2}" -f ($index + 1), $target.Label, $(if ($version) { $version } else { "发布时输入版本" }))
+        Write-Host ("{0,2}. {1,-28} {2}" -f ($index + 1), $target.Label, $(if ($version) { $version } else { "Enter version when publishing" }))
     }
-    Write-Host " 0. 取消"
+    Write-Host " 0. Cancel"
     $selection = (Read-Host $Prompt).Trim()
     if ($selection -eq "0" -or -not $selection) {
         return $null
@@ -874,10 +874,10 @@ function Read-TargetSelection {
     for ($index = 0; $index -lt $definitions.Count; $index++) {
         $target = $definitions[$index]
         $version = if ($VersionOverrides.ContainsKey($target.Key)) { $VersionOverrides[$target.Key] } else { $target.Version }
-        Write-Host ("{0,2}. {1,-28} {2}" -f ($index + 1), $target.Label, $(if ($version) { $version } else { "发布时输入版本" }))
+        Write-Host ("{0,2}. {1,-28} {2}" -f ($index + 1), $target.Label, $(if ($version) { $version } else { "Enter version when publishing" }))
     }
-    Write-Host " 0. 取消"
-    $selection = (Read-Host "请选择平台，可用逗号分隔，输入 all 选择全部").Trim()
+    Write-Host " 0. Cancel"
+    $selection = (Read-Host "Select platforms, separated by commas, or enter all").Trim()
     if ($selection -eq "0" -or -not $selection) {
         return @()
     }
@@ -901,30 +901,30 @@ function Read-TargetSelection {
 
 function Show-MainMenu {
     while ($true) {
-        Write-Host "`nSweetLine 发布工具" -ForegroundColor Cyan
+        Write-Host "`nSweetLine release tool" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "1. 查看单个平台状态"
-        Write-Host "2. 修改平台版本"
-        Write-Host "3. 校验并打包"
-        Write-Host "4. 发布选定平台"
-        Write-Host "5. 继续上次发布"
-        Write-Host "0. 退出"
-        $choice = (Read-Host "请选择操作").Trim()
+        Write-Host "1. View platform status"
+        Write-Host "2. Change platform version"
+        Write-Host "3. Validate and package"
+        Write-Host "4. Publish selected platforms"
+        Write-Host "5. Resume previous release"
+        Write-Host "0. Exit"
+        $choice = (Read-Host "Select an action").Trim()
 
         try {
             switch ($choice) {
                 "1" {
-                    $selected = Read-SingleTargetSelection -Prompt "请选择要查看的平台"
+                    $selected = Read-SingleTargetSelection -Prompt "Select a platform to inspect"
                     if ($selected) {
                         Show-ReleaseStatus -TargetKey $selected | Out-Null
                     }
                 }
                 "2" {
                     $editableTargets = @("android", "java22", "nuget", "flutter", "ohos")
-                    $selected = Read-SingleTargetSelection -AllowedTargets $editableTargets -Prompt "请选择要修改版本的平台"
+                    $selected = Read-SingleTargetSelection -AllowedTargets $editableTargets -Prompt "Select a platform to update"
                     if ($selected) {
                         $target = Get-TargetDefinition $selected
-                        $newVersion = (Read-Host "当前版本 $($target.Version)，请输入新版本").Trim()
+                        $newVersion = (Read-Host "Current version: $($target.Version). Enter the new version").Trim()
                         if ($newVersion) {
                             Set-PlatformVersion -TargetKey $selected -NewVersion $newVersion
                         }
@@ -946,7 +946,7 @@ function Show-MainMenu {
                 }
                 "5" { Invoke-ResumeRelease }
                 "0" { return }
-                default { Write-Warning "无效选项。" }
+                default { Write-Warning "Invalid selection." }
             }
         } catch {
             Write-Host "`n$($_.Exception.Message)" -ForegroundColor Red
