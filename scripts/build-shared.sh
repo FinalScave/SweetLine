@@ -3,7 +3,7 @@
 # -b, --build           Build directory
 # -o, --output          Output directory
 # -s, --src             SweetLine project source directory
-# -p, --platform        Target platform (all/android/windows/osx/ios/ohos/wasm; all excludes Apple)
+# -p, --platform        Target platform (all/android/linux/osx/ios/ohos/wasm)
 # --android-ndk         Android NDK path
 # --ohos-toolchain      OHOS toolchain CMake file path
 
@@ -378,21 +378,6 @@ function copy_built_libraries() {
   find "$build_dir" -type f \( -name "*.dll" -o -name "*.so" -o -name "*.dylib" -o -name "*.wasm" -o -name "*.js" \) -exec cp -f {} "$dest_dir/" \;
 }
 
-function build_windows_msvc() {
-  echo "============================= Windows X64 ============================="
-  WINDOWS_BUILD_DIR="$BUILD_DIR/windows"
-  WINDOWS_PREBUILT_DIR="$OUTPUT_DIR/windows/x64"
-  cmake $PROJECT_DIR \
-    -B $WINDOWS_BUILD_DIR \
-    -G "Visual Studio 17 2022" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_STANDARD=17 \
-    -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-    -DCMAKE_CXX_FLAGS="/std:c++17 /EHsc /utf-8"
-  cmake --build $WINDOWS_BUILD_DIR --target $TARGET_NAME -j 24 --config Release
-  copy_built_libraries "$WINDOWS_BUILD_DIR/bin" "$WINDOWS_PREBUILT_DIR"
-}
-
 function build_apple() {
   local apple_build_dir="$1"
   local apple_prebuilt_dir="$2"
@@ -608,14 +593,14 @@ function build_emscripten() {
   echo "============================= WebAssembly ============================="
   WASM_BUILD_DIR="$BUILD_DIR/emscripten"
   WASM_PREBUILT_DIR="$OUTPUT_DIR/wasm"
-  emcmake.bat cmake $PROJECT_DIR\
-    -B $WASM_BUILD_DIR \
+  emcmake cmake "$PROJECT_DIR" \
+    -B "$WASM_BUILD_DIR" \
     -G "Ninja" \
     -DCMAKE_CXX_FLAGS="-std=c++17" \
     -DCMAKE_BUILD_TYPE=Release \
     -DSWEETLINE_BUILD_STATIC=OFF \
     -DSWEETLINE_BUILD_TESTS=OFF
-  cmake --build $WASM_BUILD_DIR --target $WASM_TARGET_NAME -j 24
+  cmake --build "$WASM_BUILD_DIR" --target "$WASM_TARGET_NAME" -j 24
   copy_built_libraries "$WASM_BUILD_DIR/bin" "$WASM_PREBUILT_DIR"
 }
 
@@ -687,17 +672,26 @@ run_build_shared() {
   echo "============================= Start building: $PLATFORM ============================="
 
   if [ "$PLATFORM" = "all" ]; then
-    build_windows_msvc
-    build_linux x86_64
-    build_linux aarch64
-    build_android arm64-v8a
-    build_android x86_64
-    build_ohos arm64-v8a
-    build_ohos x86_64
+    if [ "$(uname -s)" = "Darwin" ]; then
+      apple_prerequisite_status >/dev/null || {
+        apple_prerequisite_status >&2
+        exit 1
+      }
+      build_osx arm64
+      build_osx x86_64
+      build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
+      build_ios arm64
+      build_ios simulator-arm64
+      build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
+    elif [ "$(uname -s)" = "Linux" ]; then
+      build_linux x86_64
+      build_linux aarch64
+    else
+      echo "build-shared.sh supports all only on macOS or Linux. Use build-shared.ps1 on Windows." >&2
+      exit 1
+    fi
   elif [ "$PLATFORM" = "wasm" ]; then
     build_emscripten
-  elif [ "$PLATFORM" = "windows" ]; then
-    build_windows_msvc
   elif [ "$PLATFORM" = "osx" ]; then
     apple_prerequisite_status >/dev/null || {
       apple_prerequisite_status >&2
@@ -715,6 +709,10 @@ run_build_shared() {
     build_ios simulator-arm64
     build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
   elif [ "$PLATFORM" = "linux" ]; then
+    if [ "$(uname -s)" != "Linux" ]; then
+      echo "Linux builds require a Linux host. Use build-shared.ps1 -UseWsl on Windows." >&2
+      exit 1
+    fi
     build_linux x86_64
     build_linux aarch64
   elif [ "$PLATFORM" = "android" ]; then

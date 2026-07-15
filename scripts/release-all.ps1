@@ -3,7 +3,7 @@ param(
     [ValidateSet("menu", "status", "package", "publish", "resume")]
     [string]$Action = "menu",
 
-    [ValidateSet("native", "android", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")]
+    [ValidateSet("native", "android", "java22", "nuget", "flutter", "ohos")]
     [string[]]$Targets = @(),
 
     [string[]]$VersionOverride = @()
@@ -16,7 +16,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir ".."))
 $ReleaseDir = Join-Path $ProjectDir "build\release"
 $StatePath = Join-Path $ReleaseDir "release-state.json"
-$TargetOrder = @("native", "android", "java22", "kmp", "nuget", "flutter", "ohos", "ios", "macos")
+$TargetOrder = @("native", "android", "java22", "nuget", "flutter", "ohos")
 $VersionOverrides = @{}
 
 foreach ($item in $VersionOverride) {
@@ -108,15 +108,6 @@ function Get-Json5Version {
     return Get-RegexValue -Path $Path -Pattern '"version"\s*:\s*"([^"]+)"' -Description "OHPM version"
 }
 
-function Get-AppleVersion {
-    param([Parameter(Mandatory = $true)][string]$Path)
-
-    if (-not (Test-Path -LiteralPath $Path)) {
-        return $null
-    }
-    return Get-RegexValue -Path $Path -Pattern 'releases/download/v([^/]+)/' -Description "Swift package version"
-}
-
 function Assert-Version {
     param(
         [Parameter(Mandatory = $true)][string]$Target,
@@ -129,19 +120,13 @@ function Assert-Version {
 }
 
 function Get-TargetDefinitions {
-    $iosPath = Join-Path $ProjectDir "platform\iOS"
-    $macosPath = Join-Path $ProjectDir "platform\macOS"
-
     return @(
         [pscustomobject]@{ Key = "native"; Label = "Native / GitHub Release"; Registry = "GitHub"; PackageId = "FinalScave/SweetLine"; Version = $null; Path = $ProjectDir; Repository = "FinalScave/SweetLine" },
         [pscustomobject]@{ Key = "android"; Label = "Android"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\Android\sweetline\build.gradle"); Path = Join-Path $ProjectDir "platform\Android"; Repository = $null },
         [pscustomobject]@{ Key = "java22"; Label = "Java 22 FFM"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline-ffm"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\Java22\sweetline\build.gradle"); Path = Join-Path $ProjectDir "platform\Java22"; Repository = $null },
-        [pscustomobject]@{ Key = "kmp"; Label = "Kotlin Multiplatform"; Registry = "Maven Central"; PackageId = "com.qiplat:sweetline-kmp"; Version = Get-GradleVersion (Join-Path $ProjectDir "platform\KMP\sweetline\build.gradle.kts"); Path = Join-Path $ProjectDir "platform\KMP"; Repository = $null },
         [pscustomobject]@{ Key = "nuget"; Label = "C# / NuGet"; Registry = "NuGet.org"; PackageId = "SweetLine"; Version = Get-NuGetVersion (Join-Path $ProjectDir "platform\CSharp\SweetLine\SweetLine.csproj"); Path = Join-Path $ProjectDir "platform\CSharp\SweetLine"; Repository = $null },
         [pscustomobject]@{ Key = "flutter"; Label = "Flutter / Dart"; Registry = "pub.dev"; PackageId = "sweetline"; Version = Get-PubVersion (Join-Path $ProjectDir "platform\Flutter\sweetline\pubspec.yaml"); Path = Join-Path $ProjectDir "platform\Flutter\sweetline"; Repository = $null },
-        [pscustomobject]@{ Key = "ohos"; Label = "OHOS"; Registry = "OHPM"; PackageId = "@qiplat/sweetline"; Version = Get-Json5Version (Join-Path $ProjectDir "platform\OHOS\sweetline\oh-package.json5"); Path = Join-Path $ProjectDir "platform\OHOS"; Repository = $null },
-        [pscustomobject]@{ Key = "ios"; Label = "iOS / SwiftPM"; Registry = "GitHub"; PackageId = "SweetLine"; Version = Get-AppleVersion (Join-Path $iosPath "Package.swift"); Path = $iosPath; Repository = "Xiue233/SweetLine-iOS" },
-        [pscustomobject]@{ Key = "macos"; Label = "macOS / SwiftPM"; Registry = "GitHub"; PackageId = "SweetLine"; Version = Get-AppleVersion (Join-Path $macosPath "Package.swift"); Path = $macosPath; Repository = "Xiue233/SweetLine-macOS" }
+        [pscustomobject]@{ Key = "ohos"; Label = "OHOS"; Registry = "OHPM"; PackageId = "@qiplat/sweetline"; Version = Get-Json5Version (Join-Path $ProjectDir "platform\OHOS\sweetline\oh-package.json5"); Path = Join-Path $ProjectDir "platform\OHOS"; Repository = $null }
     )
 }
 
@@ -170,12 +155,6 @@ function Get-VersionEditSpecs {
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\build.gradle"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\README.md"; Pattern = '(?m)^(\s*<version>)([^<]+)(</version>\s*)$' },
                 [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\Java22\sweetline\README.md"; Pattern = '(?m)^(\s*implementation\s+["'']com\.qiplat:sweetline-ffm:)([^"'']+)(["'']\s*)$' }
-            )
-        }
-        "kmp" {
-            return @(
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\KMP\sweetline\build.gradle.kts"; Pattern = '(?m)^(\s*version\s*=\s*["''])([^"'']+)(["'']\s*)$' },
-                [pscustomobject]@{ Path = Join-Path $ProjectDir "platform\KMP\sweetline\README.md"; Pattern = '(?m)^(\s*implementation\(["'']com\.qiplat:sweetline-kmp:)([^"'']+)(["'']\)\s*)$' }
             )
         }
         "nuget" {
@@ -289,9 +268,6 @@ function Resolve-ReleaseItems {
     $items = New-Object System.Collections.Generic.List[object]
     foreach ($key in $SelectedTargets) {
         $definition = Get-TargetDefinition $key
-        if ($key -in @("ios", "macos") -and -not (Test-Path -LiteralPath (Join-Path $definition.Path "Package.swift"))) {
-            throw "$($definition.Label) submodule is not initialized."
-        }
         $version = if ($VersionOverrides.ContainsKey($key)) { $VersionOverrides[$key] } else { $definition.Version }
         if (-not $version -and $AllowPrompt) {
             $version = (Read-Host "请输入 $($definition.Label) 的版本").Trim()
@@ -400,9 +376,6 @@ function Get-RegistryStatus {
         [AllowNull()][string]$Version
     )
 
-    if ($Target.Key -in @("ios", "macos") -and -not (Test-Path -LiteralPath (Join-Path $Target.Path "Package.swift"))) {
-        return "子仓库未初始化"
-    }
     if (-not $Version) {
         return "需要版本"
     }
@@ -414,8 +387,7 @@ function Get-RegistryStatus {
             "pub.dev" { Test-PubPackage -PackageId $Target.PackageId -Version $Version }
             "OHPM" { Test-OhpmPackage -PackageId $Target.PackageId -Version $Version }
             "GitHub" {
-                $tag = if ($Target.Key -eq "native") { "native-v$Version" } else { "v$Version" }
-                Test-GitHubRelease -Repository $Target.Repository -Tag $tag
+                Test-GitHubRelease -Repository $Target.Repository -Tag "native-v$Version"
             }
             default { throw "Unsupported registry: $($Target.Registry)" }
         }
@@ -489,10 +461,7 @@ function Test-NativeAbi {
         foreach ($targetKey in $TargetKeys) {
             switch ($targetKey) {
                 "java22" { @("linux", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
-                "kmp" { @("ios", "linux", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
                 { $_ -in @("nuget", "flutter") } { @("android", "ios", "linux", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
-                "ios" { $platforms.Add("ios") | Out-Null }
-                "macos" { $platforms.Add("osx") | Out-Null }
             }
         }
     }
@@ -522,40 +491,6 @@ function Test-NativeAbi {
         throw "Native ABI validation failed:`n$($failures -join "`n")"
     }
     Write-Host "Native ABI validation passed." -ForegroundColor Green
-}
-
-function Test-AppleArtifact {
-    param(
-        [Parameter(Mandatory = $true)]$Target,
-        [Parameter(Mandatory = $true)][string]$Version
-    )
-
-    $packagePath = Join-Path $Target.Path "Package.swift"
-    if (-not (Test-Path -LiteralPath $packagePath)) {
-        throw "$($Target.Label) submodule is not initialized."
-    }
-    $archivePath = if ($Target.Key -eq "ios") {
-        Join-Path $ProjectDir "prebuilt\ios\SweetLineCoreIOS.xcframework.zip"
-    } else {
-        Join-Path $ProjectDir "prebuilt\osx\SweetLineCoreOSX.xcframework.zip"
-    }
-    if (-not (Test-Path -LiteralPath $archivePath)) {
-        throw "Missing Apple artifact: $archivePath"
-    }
-
-    $packageContent = [System.IO.File]::ReadAllText($packagePath)
-    $checksumMatch = [regex]::Match($packageContent, 'checksum:\s*"([0-9a-fA-F]{64})"')
-    if (-not $checksumMatch.Success) {
-        throw "Unable to read binary target checksum from $packagePath"
-    }
-    $actualChecksum = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualChecksum -ne $checksumMatch.Groups[1].Value.ToLowerInvariant()) {
-        throw "$($Target.Label) binary target checksum does not match the prebuilt archive."
-    }
-    $packageVersion = Get-AppleVersion $packagePath
-    if ($packageVersion -ne $Version) {
-        throw "$($Target.Label) Package.swift references v$packageVersion instead of v$Version."
-    }
 }
 
 function Test-NuGetPackageContents {
@@ -617,9 +552,6 @@ function Invoke-PackageTarget {
         "java22" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:generateBundle", "--console=plain") -WorkingDirectory $Target.Path
         }
-        "kmp" {
-            Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:publishToMavenLocal", "--no-configuration-cache", "--console=plain") -WorkingDirectory $Target.Path
-        }
         "nuget" {
             $outputDir = Join-Path $ReleaseDir "nuget"
             Ensure-Directory $outputDir
@@ -649,10 +581,6 @@ function Invoke-PackageTarget {
             Copy-Item -LiteralPath $sourceHar -Destination $releaseHar -Force
             Invoke-External -FilePath "ohpm" -Arguments @("prepublish", $releaseHar) -WorkingDirectory $Target.Path
         }
-        { $_ -in @("ios", "macos") } {
-            Test-AppleArtifact -Target $Target -Version $Version
-            Invoke-External -FilePath "bash" -Arguments @("Scripts/verify-package.sh") -WorkingDirectory $Target.Path
-        }
         default { throw "Unsupported package target: $($Target.Key)" }
     }
 }
@@ -679,30 +607,15 @@ function Assert-PublishRequirements {
 
     foreach ($item in $Items) {
         switch ($item.Target.Key) {
-            { $_ -in @("native", "ios", "macos") } { Assert-GitHubAuthentication }
+            "native" { Assert-GitHubAuthentication }
             "nuget" {
                 if (-not $env:NUGET_API_KEY) {
                     throw "NUGET_API_KEY is required to publish NuGet packages."
                 }
             }
-            { $_ -in @("android", "java22", "kmp") } { Assert-Command "gpg" }
+            { $_ -in @("android", "java22") } { Assert-Command "gpg" }
         }
     }
-}
-
-function Assert-SubmodulePublishState {
-    param([Parameter(Mandatory = $true)]$Target)
-
-    $changes = @(git -C $Target.Path status --porcelain)
-    if ($changes.Count -gt 0) {
-        throw "$($Target.Label) submodule has uncommitted changes."
-    }
-    $head = (git -C $Target.Path rev-parse HEAD).Trim()
-    $upstream = (git -C $Target.Path rev-parse '@{u}').Trim()
-    if ($head -ne $upstream) {
-        throw "$($Target.Label) submodule HEAD is not pushed."
-    }
-    return $head
 }
 
 function Invoke-PublishTarget {
@@ -734,9 +647,6 @@ function Invoke-PublishTarget {
         "java22" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:publishToCentralPortal", "--console=plain") -WorkingDirectory $Target.Path
         }
-        "kmp" {
-            Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:publishAndReleaseToMavenCentral", "--no-configuration-cache", "--console=plain") -WorkingDirectory $Target.Path
-        }
         "nuget" {
             $packagePath = Join-Path $ReleaseDir "nuget\SweetLine.$Version.nupkg"
             if (-not (Test-Path -LiteralPath $packagePath)) {
@@ -753,15 +663,6 @@ function Invoke-PublishTarget {
                 throw "OHOS package was not found: $packagePath"
             }
             Invoke-External -FilePath "ohpm" -Arguments @("publish", $packagePath) -WorkingDirectory $Target.Path
-        }
-        { $_ -in @("ios", "macos") } {
-            $head = Assert-SubmodulePublishState $Target
-            $archivePath = if ($Target.Key -eq "ios") {
-                Join-Path $ProjectDir "prebuilt\ios\SweetLineCoreIOS.xcframework.zip"
-            } else {
-                Join-Path $ProjectDir "prebuilt\osx\SweetLineCoreOSX.xcframework.zip"
-            }
-            Invoke-External -FilePath "gh" -Arguments @("release", "create", "v$Version", $archivePath, "--repo", $Target.Repository, "--title", "$($Target.Label) v$Version", "--generate-notes", "--target", $head) -WorkingDirectory $Target.Path
         }
         default { throw "Unsupported publish target: $($Target.Key)" }
     }
@@ -832,7 +733,7 @@ function Show-ReleasePlan {
 function Invoke-PackageItems {
     param([Parameter(Mandatory = $true)][object[]]$Items)
 
-    if ($Items.Target.Key | Where-Object { $_ -in @("native", "java22", "kmp", "nuget", "flutter", "ios", "macos") }) {
+    if ($Items.Target.Key | Where-Object { $_ -in @("native", "java22", "nuget", "flutter") }) {
         Test-NativeAbi -TargetKeys @($Items.Target.Key)
     }
 
@@ -888,7 +789,7 @@ function Invoke-PublishItems {
             Set-ReleaseStateEntry -State $state -Target $item.Target.Key -Status "Skipped" -Message "Version already exists."
         }
     }
-    if ($pending.Target.Key | Where-Object { $_ -in @("native", "java22", "kmp", "nuget", "flutter", "ios", "macos") }) {
+    if ($pending.Target.Key | Where-Object { $_ -in @("native", "java22", "nuget", "flutter") }) {
         Test-NativeAbi -TargetKeys @($pending.Target.Key)
     }
 
@@ -1019,7 +920,7 @@ function Show-MainMenu {
                     }
                 }
                 "2" {
-                    $editableTargets = @("android", "java22", "kmp", "nuget", "flutter", "ohos")
+                    $editableTargets = @("android", "java22", "nuget", "flutter", "ohos")
                     $selected = Read-SingleTargetSelection -AllowedTargets $editableTargets -Prompt "请选择要修改版本的平台"
                     if ($selected) {
                         $target = Get-TargetDefinition $selected
