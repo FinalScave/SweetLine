@@ -30,7 +30,7 @@ implementation "com.qiplat:sweetline-ffm:1.3.1"
 ```java
 import com.qiplat.sweetline.*;
 
-try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
+try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false, 4))) {
     engine.compileSyntaxFromFile("syntaxes/java.json");
 
     try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Demo.java")) {

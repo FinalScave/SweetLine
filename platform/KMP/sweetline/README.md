@@ -23,7 +23,7 @@ implementation("com.qiplat:sweetline-kmp:1.0.0")
 
 ```kotlin
 val uri = "Main.kt"
-val engine = HighlightEngine(HighlightConfig())
+val engine = HighlightEngine(HighlightConfig(tabSize = 4))
 val document = Document(uri, sourceText)
 val analyzer = engine.loadDocument(document)
 

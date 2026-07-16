@@ -92,7 +92,7 @@ public sealed class HighlightEngine : IDisposable {
 	/// <param name="config">Highlight configuration.</param>
 	public HighlightEngine(HighlightConfig config) {
 		SweetLineNative.Initialize();
-		_handle = SweetLineNative.CreateEngine(config.ShowIndex, config.InlineStyle);
+		_handle = SweetLineNative.CreateEngine(config.ShowIndex, config.InlineStyle, config.TabSize);
 		if (_handle == IntPtr.Zero) {
 			throw new InvalidOperationException("Failed to create SweetLine engine.");
 		}

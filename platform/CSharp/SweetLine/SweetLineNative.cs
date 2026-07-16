@@ -189,12 +189,13 @@ internal static class SweetLineNative {
 	internal static extern int FreeDocument(IntPtr documentHandle);
 
 	/// <summary>
-	/// <c>sl_create_engine(bool show_index, bool inline_style)</c>
+	/// <c>sl_create_engine(bool show_index, bool inline_style, int32_t tab_size)</c>
 	/// </summary>
 	[DllImport(NativeLibraryName, EntryPoint = "sl_create_engine", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr CreateEngine(
 		[MarshalAs(UnmanagedType.I1)] bool showIndex,
-		[MarshalAs(UnmanagedType.I1)] bool inlineStyle);
+		[MarshalAs(UnmanagedType.I1)] bool inlineStyle,
+		int tabSize);
 
 	/// <summary>
 	/// <c>sl_free_engine(sl_engine_handle_t)</c>

@@ -1,10 +1,15 @@
 part of '../sweetline.dart';
 
 class HighlightConfig {
-  const HighlightConfig({this.showIndex = false, this.inlineStyle = false});
+  const HighlightConfig({
+    this.showIndex = false,
+    this.inlineStyle = false,
+    this.tabSize = 4,
+  });
 
   final bool showIndex;
   final bool inlineStyle;
+  final int tabSize;
 }
 
 class TextPosition {

@@ -22,8 +22,8 @@ sl_error_t sl_free_document(sl_document_handle_t document_handle) {
   return SL_OK;
 }
 
-sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style) {
-  HighlightConfig config = {show_index, inline_style};
+sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style, int32_t tab_size) {
+  HighlightConfig config = {show_index, inline_style, tab_size};
   return makeCPtrHolderToHandle<sl_engine_handle_t, HighlightEngine>(config);
 }
 

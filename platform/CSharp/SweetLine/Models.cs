@@ -5,7 +5,8 @@ namespace SweetLine;
 /// </summary>
 /// <param name="ShowIndex">Whether analysis result includes character index.</param>
 /// <param name="InlineStyle">Whether to return inline style instead of style ID.</param>
-public readonly record struct HighlightConfig(bool ShowIndex = false, bool InlineStyle = false);
+/// <param name="TabSize">Tab width used for indent guide level calculation.</param>
+public readonly record struct HighlightConfig(bool ShowIndex = false, bool InlineStyle = false, int TabSize = 4);
 
 /// <summary>
 /// Text position descriptor.

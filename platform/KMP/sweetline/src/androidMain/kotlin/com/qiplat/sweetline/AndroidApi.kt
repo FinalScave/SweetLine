@@ -335,6 +335,7 @@ private fun HighlightConfig.toNativeBits(): Int {
     if (inlineStyle) {
         bits = bits or (1 shl 1)
     }
+    bits = bits or ((tabSize and 0xFF) shl 8)
     return bits
 }
 

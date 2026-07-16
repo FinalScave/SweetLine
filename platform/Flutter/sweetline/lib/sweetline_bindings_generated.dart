@@ -21,7 +21,10 @@ external sl_document_handle_t sl_create_document(
 /// Destroy a managed document
 /// @param document_handle Managed document handle
 /// @return Error code, see @see {sl_error_t}. Returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_document_handle_t)>(assetId: _sweetlineAssetId, symbol: 'sl_free_document')
+@ffi.Native<ffi.Int Function(sl_document_handle_t)>(
+  assetId: _sweetlineAssetId,
+  symbol: 'sl_free_document',
+)
 external int _sl_free_document(sl_document_handle_t document_handle);
 
 sl_error sl_free_document(sl_document_handle_t document_handle) =>
@@ -30,17 +33,24 @@ sl_error sl_free_document(sl_document_handle_t document_handle) =>
 /// Create a SweetLine highlight engine
 /// @param show_index Whether the analysis result includes character index, if not only line and column are returned
 /// @param inline_style Whether the analysis result uses inline styles instead of only returning style IDs
+/// @param tab_size Tab width used for indent guide level calculation
 /// @return Highlight engine handle
-@ffi.Native<sl_engine_handle_t Function(ffi.Bool, ffi.Bool)>(assetId: _sweetlineAssetId)
+@ffi.Native<sl_engine_handle_t Function(ffi.Bool, ffi.Bool, ffi.Int32)>(
+  assetId: _sweetlineAssetId,
+)
 external sl_engine_handle_t sl_create_engine(
   bool show_index,
   bool inline_style,
+  int tab_size,
 );
 
 /// Destroy the highlight engine
 /// @param engine_handle Highlight engine handle
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t)>(assetId: _sweetlineAssetId, symbol: 'sl_free_engine')
+@ffi.Native<ffi.Int Function(sl_engine_handle_t)>(
+  assetId: _sweetlineAssetId,
+  symbol: 'sl_free_engine',
+)
 external int _sl_free_engine(sl_engine_handle_t engine_handle);
 
 sl_error sl_free_engine(sl_engine_handle_t engine_handle) =>
@@ -50,7 +60,8 @@ sl_error sl_free_engine(sl_engine_handle_t engine_handle) =>
 /// @param engine_handle Highlight engine handle
 /// @param macro_name Macro name
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(assetId: _sweetlineAssetId,
+@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(
+  assetId: _sweetlineAssetId,
   symbol: 'sl_engine_define_macro',
 )
 external int _sl_engine_define_macro(
@@ -67,7 +78,8 @@ sl_error sl_engine_define_macro(
 /// @param engine_handle Highlight engine handle
 /// @param macro_name Macro name
 /// @return Error code, returns @see {SL_OK} on success
-@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(assetId: _sweetlineAssetId,
+@ffi.Native<ffi.Int Function(sl_engine_handle_t, ffi.Pointer<ffi.Char>)>(
+  assetId: _sweetlineAssetId,
   symbol: 'sl_engine_undefine_macro',
 )
 external int _sl_engine_undefine_macro(
@@ -130,7 +142,9 @@ sl_error sl_engine_register_style_name(
 /// @param engine_handle Highlight engine handle
 /// @param style_id Highlight style ID
 /// @return The registered style name for the given ID in the engine
-@ffi.Native<ffi.Pointer<ffi.Char> Function(sl_engine_handle_t, ffi.Int32)>(assetId: _sweetlineAssetId)
+@ffi.Native<ffi.Pointer<ffi.Char> Function(sl_engine_handle_t, ffi.Int32)>(
+  assetId: _sweetlineAssetId,
+)
 external ffi.Pointer<ffi.Char> sl_engine_get_style_name(
   sl_engine_handle_t engine_handle,
   int style_id,
@@ -337,7 +351,9 @@ sl_error sl_engine_remove_document(
 /// [flags, spanStride, lineCount, lineEntry...]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
+  assetId: _sweetlineAssetId,
+)
 external ffi.Pointer<ffi.Int32> sl_document_analyze(
   sl_analyzer_handle_t analyzer_handle,
 );
@@ -450,7 +466,9 @@ external ffi.Pointer<ffi.Int32> sl_document_get_highlight_slice(
 /// where scope_state: 0=START, 1=END, 2=CONTENT
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
+  assetId: _sweetlineAssetId,
+)
 external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides(
   sl_analyzer_handle_t analyzer_handle,
 );
@@ -476,7 +494,9 @@ external ffi.Pointer<ffi.Int32> sl_document_analyze_indent_guides_in_line_range(
 /// [flags, bracketTokenStride, lineCount, lineEntry...]
 /// @endcode
 /// Note: the return value must be freed by calling sl_free_buffer after use
-@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(assetId: _sweetlineAssetId)
+@ffi.Native<ffi.Pointer<ffi.Int32> Function(sl_analyzer_handle_t)>(
+  assetId: _sweetlineAssetId,
+)
 external ffi.Pointer<ffi.Int32> sl_document_analyze_bracket_pairs(
   sl_analyzer_handle_t analyzer_handle,
 );
@@ -522,7 +542,9 @@ sl_error sl_free_document_analyzer(sl_analyzer_handle_t analyzer_handle) =>
 /// (such as sl_text_analyze, sl_document_analyze, sl_document_analyze_incremental,
 /// sl_document_analyze_incremental_in_line_range, sl_document_get_highlight_slice) must be freed via this function
 /// @param result Highlight analysis result
-@ffi.Native<ffi.Void Function(ffi.Pointer<ffi.Int32>)>(assetId: _sweetlineAssetId)
+@ffi.Native<ffi.Void Function(ffi.Pointer<ffi.Int32>)>(
+  assetId: _sweetlineAssetId,
+)
 external void sl_free_buffer(ffi.Pointer<ffi.Int32> result);
 
 /// Error codes

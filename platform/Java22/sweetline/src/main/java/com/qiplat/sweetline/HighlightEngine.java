@@ -12,7 +12,7 @@ import java.lang.foreign.MemorySegment;
  * <p>
  * Usage example:
  * <pre>{@code
- * try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false))) {
+ * try (HighlightEngine engine = new HighlightEngine(new HighlightConfig(true, false, 4))) {
  *     engine.compileSyntaxFromFile("/path/to/java.json");
  *     try (TextAnalyzer analyzer = engine.createAnalyzerByFileName("Example.java")) {
  *         DocumentHighlight result = analyzer.analyzeText("public class Foo {}");
@@ -33,7 +33,7 @@ public class HighlightEngine implements AutoCloseable {
     public HighlightEngine(HighlightConfig config) {
         try {
             this.handle = (MemorySegment) SweetLineNative.sl_create_engine
-                    .invoke(config.showIndex(), config.inlineStyle());
+                    .invoke(config.showIndex(), config.inlineStyle(), config.tabSize());
         } catch (Throwable e) {
             throw new RuntimeException("Failed to create SweetLine engine", e);
         }

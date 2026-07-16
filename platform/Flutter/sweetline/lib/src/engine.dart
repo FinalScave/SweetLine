@@ -5,6 +5,7 @@ class HighlightEngine {
     : _handle = bindings.sl_create_engine(
         config.showIndex,
         config.inlineStyle,
+        config.tabSize,
       ) {
     if (_handle == ffi.nullptr) {
       throw SweetLineException('Failed to create SweetLine engine');

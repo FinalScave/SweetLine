@@ -40,7 +40,7 @@ If the syntax is already known, `CreateAnalyzerBySyntaxName(...)` can be used to
 ```csharp
 using SweetLine;
 
-var config = new HighlightConfig(ShowIndex: true, InlineStyle: false);
+var config = new HighlightConfig(ShowIndex: true, InlineStyle: false, TabSize: 4);
 using var engine = new HighlightEngine(config);
 
 engine.RegisterStyleName("keyword", 1);

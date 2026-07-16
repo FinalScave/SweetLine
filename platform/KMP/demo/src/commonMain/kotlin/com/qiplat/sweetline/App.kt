@@ -53,7 +53,9 @@ fun App() {
     val themes = remember { HighlightTheme.builtinThemes() }
     var currentTheme by remember { mutableStateOf(themes.first()) }
     var state by remember { mutableStateOf(DemoUiState.initial()) }
-    val engine = remember { HighlightEngine(HighlightConfig(showIndex = true, inlineStyle = false)) }
+    val engine = remember {
+        HighlightEngine(HighlightConfig(showIndex = true, inlineStyle = false, tabSize = 4))
+    }
 
     DisposableEffect(engine) {
         onDispose {

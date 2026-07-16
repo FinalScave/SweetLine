@@ -60,7 +60,7 @@ class _DemoPageState extends State<DemoPage> {
     _themes = HighlightTheme.builtinThemes();
     _currentTheme = _themes.first;
     _engine = HighlightEngine(
-      const HighlightConfig(showIndex: true, inlineStyle: false),
+      const HighlightConfig(showIndex: true, inlineStyle: false, tabSize: 4),
     );
     _registerStyleNames(_engine);
     _definePlatformMacros(_engine);

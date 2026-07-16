@@ -178,7 +178,7 @@ TEST_CASE("BracketRules reports unmatched and unknown open brackets") {
 }
 
 TEST_CASE("C API bracket pair buffer keeps documented field order") {
-  sl_engine_handle_t engine = sl_create_engine(true, false);
+  sl_engine_handle_t engine = sl_create_engine(true, false, 4);
   REQUIRE(engine != nullptr);
   sl_syntax_error_t error = sl_engine_compile_json(engine, makeBracketSyntax().c_str());
   REQUIRE(error.err_code == SL_OK);

@@ -42,7 +42,7 @@ typedef sl_analyzer_handle* sl_analyzer_handle_t;   // 分析器句柄
 
 ```c
 // 创建引擎
-sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style);
+sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style, int32_t tab_size);
 
 // 销毁引擎
 sl_error_t sl_free_engine(sl_engine_handle_t engine_handle);
@@ -283,7 +283,7 @@ result[4] = lineCount
 
 int main() {
     // 创建引擎
-    sl_engine_handle_t engine = sl_create_engine(false, false);
+    sl_engine_handle_t engine = sl_create_engine(false, false, 4);
 
     // 注册样式
     sl_engine_register_style_name(engine, "keyword", 1);

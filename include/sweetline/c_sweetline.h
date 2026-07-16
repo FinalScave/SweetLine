@@ -68,8 +68,9 @@ SL_API sl_error_t sl_free_document(sl_document_handle_t document_handle);
 /// Create a SweetLine highlight engine
 /// @param show_index Whether the analysis result includes character index, if not only line and column are returned
 /// @param inline_style Whether the analysis result uses inline styles instead of only returning style IDs
+/// @param tab_size Tab width used for indent guide level calculation
 /// @return Highlight engine handle
-SL_API sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style);
+SL_API sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style, int32_t tab_size);
 
 /// Destroy the highlight engine
 /// @param engine_handle Highlight engine handle

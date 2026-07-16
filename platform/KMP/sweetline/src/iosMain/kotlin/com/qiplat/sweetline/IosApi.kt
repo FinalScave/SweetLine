@@ -43,7 +43,7 @@ import sweetline.sl_text_analyze_indent_guides
 import sweetline.sl_text_analyze_line
 
 actual class HighlightEngine actual constructor(config: HighlightConfig) {
-    private var nativeHandle: sl_engine_handle_t = sl_create_engine(config.showIndex, config.inlineStyle)
+    private var nativeHandle: sl_engine_handle_t = sl_create_engine(config.showIndex, config.inlineStyle, config.tabSize)
 
     actual constructor() : this(HighlightConfig())
 

@@ -6,6 +6,7 @@ package com.qiplat.sweetline
 data class HighlightConfig(
     val showIndex: Boolean = false,
     val inlineStyle: Boolean = false,
+    val tabSize: Int = 4,
 )
 
 /**

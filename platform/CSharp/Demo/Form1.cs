@@ -28,7 +28,7 @@ public partial class Form1 : Form {
 		_examplesDir = examplesDir;
 		_themes = HighlightTheme.BuiltinThemes();
 		_currentTheme = _themes[0];
-		_engine = new HighlightEngine(new HighlightConfig(ShowIndex: true, InlineStyle: false));
+		_engine = new HighlightEngine(new HighlightConfig(ShowIndex: true, InlineStyle: false, TabSize: 4));
 		RegisterStyleNames(_engine);
 		_engine.DefineMacro("WINDOWS");
 		(_compiledSyntaxCount, _precompileUs) = PrecompileCommonSyntaxes(_syntaxesDir, _engine);

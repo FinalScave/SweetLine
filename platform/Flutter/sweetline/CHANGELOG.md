@@ -1,3 +1,7 @@
+## Unreleased
+
+* Add `tabSize` to `HighlightConfig` and pass it to the native engine.
+
 ## 1.3.1
 
 * Add `HighlightEngine.removeDocument(...)` for releasing managed documents from the engine.

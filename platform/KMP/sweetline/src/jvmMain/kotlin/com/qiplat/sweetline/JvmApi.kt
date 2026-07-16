@@ -19,7 +19,11 @@ import java.nio.file.StandardCopyOption
 
 actual class HighlightEngine actual constructor(config: HighlightConfig) {
     private val handle: MemorySegment = try {
-        SweetLineJvmNative.slCreateEngine.invokeWithArguments(config.showIndex, config.inlineStyle) as MemorySegment
+        SweetLineJvmNative.slCreateEngine.invokeWithArguments(
+            config.showIndex,
+            config.inlineStyle,
+            config.tabSize,
+        ) as MemorySegment
     } catch (error: Throwable) {
         throw RuntimeException("Failed to create SweetLine engine", error)
     }
@@ -359,7 +363,7 @@ private object SweetLineJvmNative {
     )
     val slCreateEngine: MethodHandle = downcall(
         "sl_create_engine",
-        FunctionDescriptor.of(ADDRESS, JAVA_BOOLEAN, JAVA_BOOLEAN),
+        FunctionDescriptor.of(ADDRESS, JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_INT),
     )
     val slFreeEngine: MethodHandle = downcall(
         "sl_free_engine",

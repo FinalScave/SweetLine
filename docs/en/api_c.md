@@ -42,7 +42,7 @@ typedef sl_analyzer_handle* sl_analyzer_handle_t;   // Analyzer handle
 
 ```c
 // Create engine
-sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style);
+sl_engine_handle_t sl_create_engine(bool show_index, bool inline_style, int32_t tab_size);
 
 // Destroy engine
 sl_error_t sl_free_engine(sl_engine_handle_t engine_handle);
@@ -285,7 +285,7 @@ Partner fields are `-1` when no known partner exists.
 
 int main() {
     // Create engine
-    sl_engine_handle_t engine = sl_create_engine(false, false);
+    sl_engine_handle_t engine = sl_create_engine(false, false, 4);
 
     // Register styles
     sl_engine_register_style_name(engine, "keyword", 1);

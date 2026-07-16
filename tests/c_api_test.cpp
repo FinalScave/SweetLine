@@ -14,7 +14,7 @@ namespace {
 }
 
 TEST_CASE("C API returns null handles when analyzer creation fails") {
-  sl_engine_handle_t engine = sl_create_engine(false, false);
+  sl_engine_handle_t engine = sl_create_engine(false, false, 4);
   REQUIRE(engine != nullptr);
 
   CHECK(sl_engine_create_text_analyzer(engine, "missing") == nullptr);
@@ -29,7 +29,7 @@ TEST_CASE("C API returns null handles when analyzer creation fails") {
 }
 
 TEST_CASE("C API frees text and document analyzer handles") {
-  sl_engine_handle_t engine = sl_create_engine(false, false);
+  sl_engine_handle_t engine = sl_create_engine(false, false, 4);
   REQUIRE(engine != nullptr);
   REQUIRE(sl_engine_compile_json(engine, kDocumentSyntax).err_code == SL_OK);
 
@@ -50,7 +50,7 @@ TEST_CASE("C API frees text and document analyzer handles") {
 }
 
 TEST_CASE("C API removes loaded documents by URI") {
-  sl_engine_handle_t engine = sl_create_engine(false, false);
+  sl_engine_handle_t engine = sl_create_engine(false, false, 4);
   REQUIRE(engine != nullptr);
   REQUIRE(sl_engine_compile_json(engine, kDocumentSyntax).err_code == SL_OK);
 
@@ -85,5 +85,28 @@ TEST_CASE("C API removes loaded documents by URI") {
   CHECK(sl_free_document_analyzer(replacement_analyzer) == SL_OK);
   CHECK(sl_free_document(first_document) == SL_OK);
   CHECK(sl_free_document(second_document) == SL_OK);
+  CHECK(sl_free_engine(engine) == SL_OK);
+}
+
+TEST_CASE("C API passes tab size to indent guide analysis") {
+  sl_engine_handle_t engine = sl_create_engine(false, false, 8);
+  REQUIRE(engine != nullptr);
+  REQUIRE(sl_engine_compile_json(engine, kDocumentSyntax).err_code == SL_OK);
+
+  sl_analyzer_handle_t analyzer = sl_engine_create_text_analyzer(engine, "cApiDocument");
+  REQUIRE(analyzer != nullptr);
+
+  int32_t* result = sl_text_analyze_indent_guides(analyzer, "\t    first");
+  REQUIRE(result != nullptr);
+  REQUIRE(result[1] == 1);
+  size_t line_state_offset = 3;
+  for (int32_t guide = 0; guide < result[2]; ++guide) {
+    int32_t branch_count = result[line_state_offset + 4];
+    line_state_offset += 5 + static_cast<size_t>(branch_count) * 2;
+  }
+  CHECK(result[line_state_offset + 3] == 1);
+
+  sl_free_buffer(result);
+  CHECK(sl_free_text_analyzer(analyzer) == SL_OK);
   CHECK(sl_free_engine(engine) == SL_OK);
 }

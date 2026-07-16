@@ -113,9 +113,9 @@ final class SweetLineNative {
     static final MethodHandle sl_free_document = downcall("sl_free_document",
             FunctionDescriptor.of(JAVA_INT, ADDRESS));
 
-    // sl_create_engine(bool show_index, bool inline_style) -> pointer
+    // sl_create_engine(bool show_index, bool inline_style, int32_t tab_size) -> pointer
     static final MethodHandle sl_create_engine = downcall("sl_create_engine",
-            FunctionDescriptor.of(ADDRESS, JAVA_BOOLEAN, JAVA_BOOLEAN));
+            FunctionDescriptor.of(ADDRESS, JAVA_BOOLEAN, JAVA_BOOLEAN, JAVA_INT));
 
     // sl_free_engine(pointer) -> int
     static final MethodHandle sl_free_engine = downcall("sl_free_engine",

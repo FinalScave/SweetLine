@@ -81,7 +81,7 @@ public class Main extends JFrame {
         this.themes = HighlightTheme.builtinThemes();
         this.currentTheme = themes.getFirst();
 
-        this.engine = new HighlightEngine(new HighlightConfig(true, false));
+        this.engine = new HighlightEngine(new HighlightConfig(true, false, 4));
         registerStyleNames(engine);
         engine.defineMacro(WINDOWS_MACRO);
 

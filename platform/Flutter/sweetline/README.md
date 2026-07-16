@@ -74,7 +74,7 @@ import 'package:sweetline/sweetline.dart';
 
 Future<HighlightEngine> createEngine() async {
   final engine = HighlightEngine(
-    const HighlightConfig(showIndex: true, inlineStyle: false),
+    const HighlightConfig(showIndex: true, inlineStyle: false, tabSize: 4),
   );
 
   final dartSyntax = await rootBundle.loadString('assets/syntaxes/dart.json');
@@ -94,7 +94,7 @@ import 'package:sweetline/sweetline.dart';
 
 Future<void> main() async {
   final engine = HighlightEngine(
-    const HighlightConfig(showIndex: true, inlineStyle: false),
+    const HighlightConfig(showIndex: true, inlineStyle: false, tabSize: 4),
   );
 
   try {
