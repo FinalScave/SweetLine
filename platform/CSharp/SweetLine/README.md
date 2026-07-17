@@ -152,12 +152,12 @@ This package bundles:
 - `runtimes/osx-arm64/native/libsweetline.dylib`
 - `runtimes/android-arm64/native/libsweetline.so`
 - `runtimes/android-x64/native/libsweetline.so`
-- `native/ios/SweetLineCoreIOS.xcframework`
+- `native/ios/SweetLineCore.xcframework`
 
 Android native assets are consumed from the NuGet runtime folders by .NET for Android and are placed in the APK/AAB automatically.
 iOS native assets are added to consuming application projects through a NuGet `buildTransitive` target:
 
-- `net8.0-ios` consumers receive a `NativeReference` to `SweetLineCoreIOS.xcframework`
+- `net8.0-ios` consumers receive a `NativeReference` to `SweetLineCore.xcframework`
 
 Set `SweetLineDisableIosNativeReference=true` in the application project to opt out of the iOS `NativeReference` and provide the native reference yourself.
 
@@ -179,7 +179,7 @@ $env:SWEETLINE_LIB_PATH = "C:\path\to\native"
 Build or sync the native libraries under `prebuilt/windows/x64`, `prebuilt/linux/x86_64`,
 `prebuilt/linux/aarch64`, `prebuilt/osx/x86_64`, `prebuilt/osx/arm64`,
 `prebuilt/android/arm64-v8a`, `prebuilt/android/x86_64`, and `prebuilt/ios` first.
-When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCoreIOS.xcframework.zip`;
+When the iOS prebuilt changes, update `prebuilt/ios/SweetLineCore-iOS.xcframework.zip`;
 `dotnet pack` extracts it into the NuGet package automatically.
 
 ```bash

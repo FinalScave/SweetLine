@@ -509,8 +509,8 @@ function Test-NuGetPackageContents {
             "runtimes/osx-arm64/native/libsweetline.dylib",
             "runtimes/android-arm64/native/libsweetline.so",
             "runtimes/android-x64/native/libsweetline.so",
-            "native/ios/SweetLineCoreIOS.xcframework/ios-arm64/SweetLineCore.framework/SweetLineCore",
-            "native/ios/SweetLineCoreIOS.xcframework/ios-arm64-simulator/SweetLineCore.framework/SweetLineCore",
+            "native/ios/SweetLineCore.xcframework/ios-arm64/SweetLineCore.framework/SweetLineCore",
+            "native/ios/SweetLineCore.xcframework/ios-arm64-simulator/SweetLineCore.framework/SweetLineCore",
             "buildTransitive/SweetLine.targets"
         )
         $missing = @($requiredEntries | Where-Object { $_ -notin $entries })

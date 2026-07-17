@@ -294,8 +294,8 @@ test_kmp_native_abi() {
 
 apple_archive_path() {
   case "$1" in
-    ios) echo "$PROJECT_DIR/prebuilt/ios/SweetLineCoreIOS.xcframework.zip" ;;
-    macos) echo "$PROJECT_DIR/prebuilt/osx/SweetLineCoreOSX.xcframework.zip" ;;
+    ios) echo "$PROJECT_DIR/prebuilt/ios/SweetLineCore-iOS.xcframework.zip" ;;
+    macos) echo "$PROJECT_DIR/prebuilt/osx/SweetLineCore-macOS.xcframework.zip" ;;
     *) return 1 ;;
   esac
 }

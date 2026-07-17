@@ -57,10 +57,11 @@ parse_build_shared_args() {
 }
 
 # Shared Apple helpers
-APPLE_XCFRAMEWORK_IOS_NAME="SweetLineCoreIOS.xcframework"
-APPLE_XCFRAMEWORK_OSX_NAME="SweetLineCoreOSX.xcframework"
 APPLE_CORE_MODULE_NAME="SweetLineCore"
 APPLE_FRAMEWORK_BUNDLE_NAME="${APPLE_CORE_MODULE_NAME}.framework"
+APPLE_XCFRAMEWORK_BUNDLE_NAME="${APPLE_CORE_MODULE_NAME}.xcframework"
+APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME="${APPLE_CORE_MODULE_NAME}-iOS.xcframework.zip"
+APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME="${APPLE_CORE_MODULE_NAME}-macOS.xcframework.zip"
 
 apple_runtime_prebuilt_dir() {
   local output_root="$1"
@@ -261,9 +262,9 @@ copy_xcframework() {
   local apple_binaries_dir="$1"
   local output_dir="$2"
   local source_xcframework_name="$3"
-  local output_xcframework_name="${4:-$source_xcframework_name}"
+  local archive_name="${4:-${source_xcframework_name}.zip}"
   local xcframework_dir="${apple_binaries_dir}/${source_xcframework_name}"
-  local xcframework_zip="$output_dir/${output_xcframework_name}.zip"
+  local xcframework_zip="$output_dir/${archive_name}"
 
   if [ ! -d "$xcframework_dir" ]; then
     echo "XCFramework not found at $xcframework_dir" >&2
@@ -272,17 +273,7 @@ copy_xcframework() {
 
   mkdir -p "$output_dir"
   rm -f "$xcframework_zip"
-
-  if [ "$source_xcframework_name" = "$output_xcframework_name" ]; then
-    ditto -c -k --norsrc --keepParent "$xcframework_dir" "$xcframework_zip"
-    return 0
-  fi
-
-  local temp_dir
-  temp_dir="$(mktemp -d)"
-  ditto "$xcframework_dir" "$temp_dir/$output_xcframework_name"
-  ditto -c -k --norsrc --keepParent "$temp_dir/$output_xcframework_name" "$xcframework_zip"
-  rm -rf "$temp_dir"
+  ditto -c -k --norsrc --keepParent "$xcframework_dir" "$xcframework_zip"
 }
 
 create_apple_xcframework() {
@@ -503,11 +494,11 @@ function build_ios() {
 function build_apple_xcframework() {
   local apple_scope="$1"
   local output_dir="$2"
-  local xcframework_name="$3"
+  local archive_name="$3"
   local label="$4"
   local apple_binaries_dir="$BUILD_DIR/apple-xcframework/binaries"
-  local xcframework_dir="$apple_binaries_dir/$xcframework_name"
-  local xcframework_zip="$output_dir/${xcframework_name}.zip"
+  local xcframework_dir="$apple_binaries_dir/$APPLE_XCFRAMEWORK_BUNDLE_NAME"
+  local xcframework_zip="$output_dir/$archive_name"
 
   echo "============================= $label XCFramework ============================="
   mkdir -p "$output_dir"
@@ -545,7 +536,7 @@ function build_apple_xcframework() {
     return 1
   fi
 
-  copy_xcframework "$apple_binaries_dir" "$output_dir" "$xcframework_name"
+  copy_xcframework "$apple_binaries_dir" "$output_dir" "$APPLE_XCFRAMEWORK_BUNDLE_NAME" "$archive_name"
   verify_file_exists "$xcframework_dir" "$label XCFramework directory"
   verify_file_exists "$xcframework_zip" "$label XCFramework archive"
 }
@@ -679,10 +670,10 @@ run_build_shared() {
       }
       build_osx arm64
       build_osx x86_64
-      build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
+      build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME" "macOS"
       build_ios arm64
       build_ios simulator-arm64
-      build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
+      build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME" "iOS"
     elif [ "$(uname -s)" = "Linux" ]; then
       build_linux x86_64
       build_linux aarch64
@@ -699,7 +690,7 @@ run_build_shared() {
     }
     build_osx arm64
     build_osx x86_64
-    build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_NAME" "macOS"
+    build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME" "macOS"
   elif [ "$PLATFORM" = "ios" ]; then
     apple_prerequisite_status >/dev/null || {
       apple_prerequisite_status >&2
@@ -707,7 +698,7 @@ run_build_shared() {
     }
     build_ios arm64
     build_ios simulator-arm64
-    build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_NAME" "iOS"
+    build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME" "iOS"
   elif [ "$PLATFORM" = "linux" ]; then
     if [ "$(uname -s)" != "Linux" ]; then
       echo "Linux builds require a Linux host. Use build-shared.ps1 -UseWsl on Windows." >&2

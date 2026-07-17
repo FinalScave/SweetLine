@@ -1,10 +1,14 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.qiplat.sweetline
 
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.IntVar
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.set
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import sweetline.sl_analyzer_handle_t
@@ -43,7 +47,7 @@ import sweetline.sl_text_analyze_indent_guides
 import sweetline.sl_text_analyze_line
 
 actual class HighlightEngine actual constructor(config: HighlightConfig) {
-    private var nativeHandle: sl_engine_handle_t = sl_create_engine(config.showIndex, config.inlineStyle, config.tabSize)
+    private var nativeHandle: sl_engine_handle_t? = sl_create_engine(config.showIndex, config.inlineStyle, config.tabSize)
 
     actual constructor() : this(HighlightConfig())
 
@@ -99,7 +103,7 @@ actual class HighlightEngine actual constructor(config: HighlightConfig) {
 }
 
 actual class Document actual constructor(uri: String, content: String) {
-    internal var nativeHandle: sl_document_handle_t = sl_create_document(uri, content)
+    internal var nativeHandle: sl_document_handle_t? = sl_create_document(uri, content)
         private set
 
     actual fun close() {
@@ -108,7 +112,7 @@ actual class Document actual constructor(uri: String, content: String) {
     }
 }
 
-actual class TextAnalyzer internal constructor(private var nativeHandle: sl_analyzer_handle_t) {
+actual class TextAnalyzer internal constructor(private var nativeHandle: sl_analyzer_handle_t?) {
     actual fun analyzeText(text: String): DocumentHighlight {
         val result = nativeHandle?.let { sl_text_analyze(it, text) } ?: return DocumentHighlight()
         return try {
@@ -157,7 +161,7 @@ actual class TextAnalyzer internal constructor(private var nativeHandle: sl_anal
     }
 }
 
-actual class DocumentAnalyzer internal constructor(private var nativeHandle: sl_analyzer_handle_t) {
+actual class DocumentAnalyzer internal constructor(private var nativeHandle: sl_analyzer_handle_t?) {
     actual fun analyze(): DocumentHighlight {
         val result = nativeHandle?.let { sl_document_analyze(it) } ?: return DocumentHighlight()
         return try {

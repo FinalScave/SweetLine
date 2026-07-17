@@ -24,9 +24,9 @@
 		<SweetLineNativeOsxArm64>$(RepoRoot)prebuilt\osx\arm64\libsweetline.dylib</SweetLineNativeOsxArm64>
 		<SweetLineNativeAndroidArm64>$(RepoRoot)prebuilt\android\arm64-v8a\libsweetline.so</SweetLineNativeAndroidArm64>
 		<SweetLineNativeAndroidX64>$(RepoRoot)prebuilt\android\x86_64\libsweetline.so</SweetLineNativeAndroidX64>
-		<SweetLineNativeIosXcframeworkZip>$(RepoRoot)prebuilt\ios\SweetLineCoreIOS.xcframework.zip</SweetLineNativeIosXcframeworkZip>
+		<SweetLineNativeIosXcframeworkZip>$(RepoRoot)prebuilt\ios\SweetLineCore-iOS.xcframework.zip</SweetLineNativeIosXcframeworkZip>
 		<SweetLinePackNativeRoot>$(BaseIntermediateOutputPath)$(Configuration)\pack-native\</SweetLinePackNativeRoot>
-		<SweetLinePackIosXcframework>$(SweetLinePackNativeRoot)ios\SweetLineCoreIOS.xcframework\</SweetLinePackIosXcframework>
+		<SweetLinePackIosXcframework>$(SweetLinePackNativeRoot)ios\SweetLineCore.xcframework\</SweetLinePackIosXcframework>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -88,11 +88,9 @@
 		<Error Condition="!Exists('$(SweetLinePackIosXcframework)Info.plist')"
 			   Text="Failed to extract iOS XCFramework from $(SweetLineNativeIosXcframeworkZip)." />
 		<ItemGroup>
-			<_SweetLineIosXcframeworkFile Include="$(SweetLinePackIosXcframework)**\*" />
-			<None Include="@(_SweetLineIosXcframeworkFile)"
-				  Pack="true">
-				<PackagePath>native\ios\SweetLineCoreIOS.xcframework\%(_SweetLineIosXcframeworkFile.RecursiveDir)%(_SweetLineIosXcframeworkFile.Filename)%(_SweetLineIosXcframeworkFile.Extension)</PackagePath>
-			</None>
+			<None Include="$(SweetLinePackIosXcframework)**\*"
+				  Pack="true"
+				  PackagePath="native\ios\SweetLineCore.xcframework" />
 		</ItemGroup>
 	</Target>
 </Project>
