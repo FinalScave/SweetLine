@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.3.3
 
 - Add `TabSize` to `HighlightConfig` and pass it to the native engine.
+- Improve iOS xcframework support.
 
 ## 1.3.2
 
