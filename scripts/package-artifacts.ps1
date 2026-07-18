@@ -12,7 +12,7 @@ param(
     [string]$PrebuiltNamePrefix = "sweetline-prebuilt",
     [string]$HeadersNamePrefix = "sweetline-headers",
 
-    [ValidateSet("android", "ios", "linux", "ohos", "osx", "wasm", "windows")]
+    [ValidateSet("android", "ios", "linux", "macos", "ohos", "wasm", "windows")]
     [string[]]$Platform = @(),
 
     [string]$Commit = "",

@@ -152,7 +152,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ \"YES\" != \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  cd \"$SRCROOT/..\"\n  ./gradlew :demo:embedAndSignAppleFrameworkForXcode\nfi\n\nSWEETLINE_XCFRAMEWORK_ARCHIVE=\"$SRCROOT/../../../prebuilt/ios/SweetLineCore-iOS.xcframework.zip\"\nSWEETLINE_XCFRAMEWORK_DIR=\"$DERIVED_FILE_DIR/SweetLineCore.xcframework\"\nmkdir -p \"$DERIVED_FILE_DIR\"\nrm -rf \"$SWEETLINE_XCFRAMEWORK_DIR\"\nditto -x -k \"$SWEETLINE_XCFRAMEWORK_ARCHIVE\" \"$DERIVED_FILE_DIR\"\n\nif [ \"$PLATFORM_NAME\" = \"iphoneos\" ]; then\n  SWEETLINE_FRAMEWORK_SLICE=\"ios-arm64\"\nelif [ \"$PLATFORM_NAME\" = \"iphonesimulator\" ]; then\n  SWEETLINE_FRAMEWORK_SLICE=\"ios-arm64-simulator\"\nelse\n  echo \"Unsupported Apple platform: $PLATFORM_NAME\"\n  exit 1\nfi\n\nSWEETLINE_FRAMEWORK_SOURCE=\"$SWEETLINE_XCFRAMEWORK_DIR/$SWEETLINE_FRAMEWORK_SLICE/SweetLineCore.framework\"\nSWEETLINE_LINK_FRAMEWORK=\"$BUILT_PRODUCTS_DIR/SweetLineCore.framework\"\nSWEETLINE_EMBED_FRAMEWORK=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/SweetLineCore.framework\"\nditto \"$SWEETLINE_FRAMEWORK_SOURCE\" \"$SWEETLINE_LINK_FRAMEWORK\"\nmkdir -p \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\"\nditto \"$SWEETLINE_FRAMEWORK_SOURCE\" \"$SWEETLINE_EMBED_FRAMEWORK\"\nif [ \"$CODE_SIGNING_ALLOWED\" = \"YES\" ] && [ -n \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n  codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --timestamp=none \"$SWEETLINE_EMBED_FRAMEWORK\"\nfi\n";
+			shellScript = "set -e\nif [ \"YES\" != \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  cd \"$SRCROOT/..\"\n  ./gradlew :demo:embedAndSignAppleFrameworkForXcode\nfi\n\nSWEETLINE_XCFRAMEWORK_ARCHIVE=\"$SRCROOT/../../../prebuilt/ios/SweetLineCoreIOS.xcframework.zip\"\nSWEETLINE_XCFRAMEWORK_DIR=\"$DERIVED_FILE_DIR/SweetLineCoreIOS.xcframework\"\nmkdir -p \"$DERIVED_FILE_DIR\"\nrm -rf \"$SWEETLINE_XCFRAMEWORK_DIR\"\nditto -x -k \"$SWEETLINE_XCFRAMEWORK_ARCHIVE\" \"$DERIVED_FILE_DIR\"\n\nif [ \"$PLATFORM_NAME\" = \"iphoneos\" ]; then\n  SWEETLINE_FRAMEWORK_SLICE=\"ios-arm64\"\nelif [ \"$PLATFORM_NAME\" = \"iphonesimulator\" ]; then\n  SWEETLINE_FRAMEWORK_SLICE=\"ios-arm64-simulator\"\nelse\n  echo \"Unsupported Apple platform: $PLATFORM_NAME\"\n  exit 1\nfi\n\nSWEETLINE_FRAMEWORK_SOURCE=\"$SWEETLINE_XCFRAMEWORK_DIR/$SWEETLINE_FRAMEWORK_SLICE/SweetLineCoreIOS.framework\"\nSWEETLINE_LINK_FRAMEWORK=\"$BUILT_PRODUCTS_DIR/SweetLineCoreIOS.framework\"\nSWEETLINE_EMBED_FRAMEWORK=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/SweetLineCoreIOS.framework\"\nditto \"$SWEETLINE_FRAMEWORK_SOURCE\" \"$SWEETLINE_LINK_FRAMEWORK\"\nmkdir -p \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\"\nditto \"$SWEETLINE_FRAMEWORK_SOURCE\" \"$SWEETLINE_EMBED_FRAMEWORK\"\nif [ \"$CODE_SIGNING_ALLOWED\" = \"YES\" ] && [ -n \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n  codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --timestamp=none \"$SWEETLINE_EMBED_FRAMEWORK\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -221,7 +221,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -308,7 +308,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;

@@ -29,11 +29,11 @@ final Map<_NativeTarget, _NativeBinary> _nativeBinaries =
         fileName: 'libsweetline.so',
       ),
       _NativeTarget(OS.macOS, Architecture.arm64): _NativeBinary(
-        relativePath: 'osx/arm64/libsweetline.dylib',
+        relativePath: 'macos/arm64/libsweetline.dylib',
         fileName: 'libsweetline.dylib',
       ),
       _NativeTarget(OS.macOS, Architecture.x64): _NativeBinary(
-        relativePath: 'osx/x86_64/libsweetline.dylib',
+        relativePath: 'macos/x86_64/libsweetline.dylib',
         fileName: 'libsweetline.dylib',
       ),
       _NativeTarget(

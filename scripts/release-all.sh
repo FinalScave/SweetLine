@@ -218,8 +218,8 @@ test_kmp_native_abi() {
     "$PROJECT_DIR/prebuilt/windows/x64/sweetline.dll"
     "$PROJECT_DIR/prebuilt/linux/x86_64/libsweetline.so"
     "$PROJECT_DIR/prebuilt/linux/aarch64/libsweetline.so"
-    "$PROJECT_DIR/prebuilt/osx/x86_64/libsweetline.dylib"
-    "$PROJECT_DIR/prebuilt/osx/arm64/libsweetline.dylib"
+    "$PROJECT_DIR/prebuilt/macos/x86_64/libsweetline.dylib"
+    "$PROJECT_DIR/prebuilt/macos/arm64/libsweetline.dylib"
     "$PROJECT_DIR/prebuilt/ios/arm64/libsweetline.dylib"
     "$PROJECT_DIR/prebuilt/ios/simulator-arm64/libsweetline.dylib"
   )
@@ -294,8 +294,8 @@ test_kmp_native_abi() {
 
 apple_archive_path() {
   case "$1" in
-    ios) echo "$PROJECT_DIR/prebuilt/ios/SweetLineCore-iOS.xcframework.zip" ;;
-    macos) echo "$PROJECT_DIR/prebuilt/osx/SweetLineCore-macOS.xcframework.zip" ;;
+    ios) echo "$PROJECT_DIR/prebuilt/ios/SweetLineCoreIOS.xcframework.zip" ;;
+    macos) echo "$PROJECT_DIR/prebuilt/macos/SweetLineCoreMacOS.xcframework.zip" ;;
     *) return 1 ;;
   esac
 }

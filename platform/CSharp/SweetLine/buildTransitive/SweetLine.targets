@@ -3,7 +3,7 @@
 		<_SweetLinePackageRoot>$(MSBuildThisFileDirectory)..\</_SweetLinePackageRoot>
 		<_SweetLineTargetPlatform Condition="'$(TargetFramework)' != ''">$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</_SweetLineTargetPlatform>
 		<SweetLineDisableIosNativeReference Condition="'$(SweetLineDisableIosNativeReference)' == ''">$(SweetLineDisableBundledNative)</SweetLineDisableIosNativeReference>
-		<_SweetLineIosXcframework>$(_SweetLinePackageRoot)native\ios\SweetLineCore.xcframework</_SweetLineIosXcframework>
+		<_SweetLineIosXcframework>$(_SweetLinePackageRoot)native\ios\SweetLineCoreIOS.xcframework</_SweetLineIosXcframework>
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(SweetLineDisableIosNativeReference)' != 'true' and '$(_SweetLineTargetPlatform)' == 'ios'">

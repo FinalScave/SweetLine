@@ -38,6 +38,7 @@ The published package bundles prebuilt native libraries for:
 - iOS simulator `arm64`
 
 Web is not supported.
+The Apple native binaries require iOS 14.0 or macOS 11.0 and newer.
 
 ## Installation
 

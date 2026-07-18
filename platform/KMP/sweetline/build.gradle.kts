@@ -1,4 +1,3 @@
-import java.util.Properties
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -14,56 +13,6 @@ version = "1.0.0"
 
 val repoRoot = rootProject.projectDir.resolve("../..").normalize()
 val generatedJvmNativeResourcesDir = layout.buildDirectory.dir("generated/resources/jvm/main")
-val localPublishProps = Properties()
-val localPublishPropsFile = rootProject.file(".gradle/publish.properties")
-if (localPublishPropsFile.exists()) {
-    localPublishPropsFile.inputStream().use(localPublishProps::load)
-}
-
-fun String?.toNonBlank(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
-
-fun getPublishConfig(name: String): String? =
-    providers.gradleProperty(name).orNull.toNonBlank()
-        ?: providers.environmentVariable(name).orNull.toNonBlank()
-        ?: providers.environmentVariable(name.replace('.', '_').uppercase()).orNull.toNonBlank()
-        ?: localPublishProps.getProperty(name).toNonBlank()
-
-fun setProjectPropertyIfMissing(name: String, value: String?) {
-    val publishValue = value.toNonBlank() ?: return
-    if (providers.gradleProperty(name).orNull.toNonBlank() != null) {
-        return
-    }
-    runCatching {
-        gradle.startParameter.projectProperties.putIfAbsent(name, publishValue)
-    }
-    project.extensions.extraProperties.set(name, publishValue)
-    rootProject.extensions.extraProperties.set(name, publishValue)
-    System.setProperty("org.gradle.project.$name", publishValue)
-}
-
-fun setExtraPublishProperty(name: String, value: String?) {
-    val publishValue = value.toNonBlank() ?: return
-    project.extensions.extraProperties.set(name, publishValue)
-    rootProject.extensions.extraProperties.set(name, publishValue)
-}
-
-setProjectPropertyIfMissing(
-    "mavenCentralUsername",
-    getPublishConfig("mavenCentralUsername") ?: getPublishConfig("sonatype.username"),
-)
-setProjectPropertyIfMissing(
-    "mavenCentralPassword",
-    getPublishConfig("mavenCentralPassword") ?: getPublishConfig("sonatype.password"),
-)
-
-val defaultGpgExecutable = if (System.getProperty("os.name").lowercase().contains("windows")) {
-    "gpg.exe"
-} else {
-    "gpg"
-}
-setExtraPublishProperty("signing.gnupg.executable", getPublishConfig("signing.gnupg.executable") ?: defaultGpgExecutable)
-setExtraPublishProperty("signing.gnupg.keyName", getPublishConfig("signing.gnupg.keyName"))
-setExtraPublishProperty("signing.gnupg.passphrase", getPublishConfig("signing.gnupg.passphrase"))
 
 plugins.withId("signing") {
     extensions.configure<SigningExtension>("signing") {
@@ -203,11 +152,11 @@ val syncJvmNativeResources by tasks.registering(Sync::class) {
         include("libsweetline.so")
         into("native/linux-aarch64")
     }
-    from(repoRoot.resolve("prebuilt/osx/x86_64")) {
+    from(repoRoot.resolve("prebuilt/macos/x86_64")) {
         include("libsweetline.dylib")
         into("native/macos-x86_64")
     }
-    from(repoRoot.resolve("prebuilt/osx/arm64")) {
+    from(repoRoot.resolve("prebuilt/macos/arm64")) {
         include("libsweetline.dylib")
         into("native/macos-aarch64")
     }

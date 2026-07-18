@@ -1,7 +1,12 @@
 Name: Oniguruma
 Version: 6.9.10
 Upstream: https://github.com/kkos/oniguruma
+Revision: f95747b462de672b6f8dbdeb478245ddf061ca53
 License: BSD-2-Clause
+
+Apple deployment targets:
+  iOS: 14.0
+  macOS: 11.0
 
 Files:
   include/oniguruma/*.h

@@ -29,8 +29,8 @@ Current build hook mappings:
 - `linux/x86_64/libsweetline.so`
 - `android/arm64-v8a/libsweetline.so`
 - `android/x86_64/libsweetline.so`
-- `osx/arm64/libsweetline.dylib`
-- `osx/x86_64/libsweetline.dylib`
+- `macos/arm64/libsweetline.dylib`
+- `macos/x86_64/libsweetline.dylib`
 - `ios/arm64/libsweetline.dylib`
 - `ios/simulator-arm64/libsweetline.dylib`
 

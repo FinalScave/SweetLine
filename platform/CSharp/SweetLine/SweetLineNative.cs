@@ -22,7 +22,7 @@ internal static class SweetLineNative {
 	private const string NativeLibraryName = "sweetline";
 
 	static SweetLineNative() {
-		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS()) {
+		if (OperatingSystem.IsAndroid()) {
 			return;
 		}
 
@@ -70,12 +70,16 @@ internal static class SweetLineNative {
 	/// Resolves native library path for the SweetLine binding.
 	/// </summary>
 	/// <remarks>
-	/// The resolver checks <c>SWEETLINE_LIB_PATH</c>, local application folders,
+	/// On iOS, the framework is linked into the application and resolved from the main program handle.
+	/// Other platforms check <c>SWEETLINE_LIB_PATH</c>, local application folders,
 	/// runtime native folders, and finally the system loader.
 	/// </remarks>
 	private static IntPtr ResolveLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
 		if (!string.Equals(libraryName, NativeLibraryName, StringComparison.OrdinalIgnoreCase)) {
 			return IntPtr.Zero;
+		}
+		if (OperatingSystem.IsIOS()) {
+			return NativeLibrary.GetMainProgramHandle();
 		}
 
 		foreach (string candidate in EnumerateLibraryCandidates()) {

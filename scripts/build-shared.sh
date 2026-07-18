@@ -1,9 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 # Arguments:
 # -b, --build           Build directory
 # -o, --output          Output directory
 # -s, --src             SweetLine project source directory
-# -p, --platform        Target platform (all/android/linux/osx/ios/ohos/wasm)
+# -p, --platform        Target platform (all/android/linux/macos/ios/ohos/wasm)
 # --android-ndk         Android NDK path
 # --ohos-toolchain      OHOS toolchain CMake file path
 
@@ -16,7 +17,6 @@ OHOS_TOOLCHAIN="${OHOS_TOOLCHAIN:-}"
 PLATFORM="all"
 
 parse_build_shared_args() {
-  POSITIONAL_ARGS=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -b|--build)
@@ -48,20 +48,23 @@ parse_build_shared_args() {
         exit 1
         ;;
       *)
-        POSITIONAL_ARGS+=("$1")
-        shift
+        echo "Unexpected positional argument: $1" >&2
+        print_build_shared_usage >&2
+        exit 1
         ;;
     esac
   done
-  set -- "${POSITIONAL_ARGS[@]}"
 }
 
 # Shared Apple helpers
-APPLE_CORE_MODULE_NAME="SweetLineCore"
-APPLE_FRAMEWORK_BUNDLE_NAME="${APPLE_CORE_MODULE_NAME}.framework"
-APPLE_XCFRAMEWORK_BUNDLE_NAME="${APPLE_CORE_MODULE_NAME}.xcframework"
-APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME="${APPLE_CORE_MODULE_NAME}-iOS.xcframework.zip"
-APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME="${APPLE_CORE_MODULE_NAME}-macOS.xcframework.zip"
+APPLE_IOS_FRAMEWORK_NAME="SweetLineCoreIOS"
+APPLE_MACOS_FRAMEWORK_NAME="SweetLineCoreMacOS"
+APPLE_IOS_XCFRAMEWORK_NAME="${APPLE_IOS_FRAMEWORK_NAME}.xcframework"
+APPLE_MACOS_XCFRAMEWORK_NAME="${APPLE_MACOS_FRAMEWORK_NAME}.xcframework"
+APPLE_IOS_XCFRAMEWORK_ARCHIVE_NAME="${APPLE_IOS_XCFRAMEWORK_NAME}.zip"
+APPLE_MACOS_XCFRAMEWORK_ARCHIVE_NAME="${APPLE_MACOS_XCFRAMEWORK_NAME}.zip"
+APPLE_IOS_DEPLOYMENT_TARGET="14.0"
+APPLE_MACOS_DEPLOYMENT_TARGET="11.0"
 
 apple_runtime_prebuilt_dir() {
   local output_root="$1"
@@ -69,7 +72,7 @@ apple_runtime_prebuilt_dir() {
   local arch="$3"
 
   case "$platform" in
-    ios|osx)
+    ios|macos)
       printf '%s/%s/%s\n' "$output_root" "$platform" "$arch"
       ;;
     *)
@@ -79,9 +82,55 @@ apple_runtime_prebuilt_dir() {
   esac
 }
 
+prepare_apple_prebuilt_dir() {
+  local output_root="$1"
+  local platform="$2"
+  local platform_dir="$output_root/$platform"
+
+  if [ "$platform" = "macos" ]; then
+    rm -rf "$output_root/osx"
+  fi
+
+  mkdir -p "$platform_dir"
+  find "$platform_dir" -type f \( \
+    -name '*.a' -o \
+    -name '*.framework.zip' -o \
+    -name '*.xcframework.zip' -o \
+    -name '.DS_Store' \
+  \) -delete
+}
+
+verify_apple_prebuilt_layout() {
+  local platform="$1"
+  local platform_dir="$OUTPUT_DIR/$platform"
+  local relative_path=""
+  local invalid=0
+
+  while IFS= read -r -d '' file_path; do
+    relative_path="${file_path#$platform_dir/}"
+    case "$platform:$relative_path" in
+      ios:arm64/libsweetline.dylib|\
+      ios:simulator-arm64/libsweetline.dylib|\
+      ios:SweetLineCoreIOS.xcframework.zip|\
+      macos:arm64/libsweetline.dylib|\
+      macos:x86_64/libsweetline.dylib|\
+      macos:SweetLineCoreMacOS.xcframework.zip)
+        ;;
+      *)
+        echo "Unexpected Apple prebuilt artifact: $file_path" >&2
+        invalid=1
+        ;;
+    esac
+  done < <(find "$platform_dir" -type f -print0)
+
+  if [ "$invalid" -ne 0 ]; then
+    return 1
+  fi
+}
+
 find_apple_framework_path() {
   local build_dir="$1"
-  local framework_name="${2:-$APPLE_CORE_MODULE_NAME}"
+  local framework_name="$2"
   local framework_path=""
   local candidates=(
     "$build_dir/lib/$framework_name.framework"
@@ -183,7 +232,7 @@ verify_file_exists() {
 
 resolve_framework_binary_path() {
   local framework_dir="$1"
-  local binary_name="${2:-$APPLE_CORE_MODULE_NAME}"
+  local binary_name="$2"
 
   if [ -f "$framework_dir/Versions/A/$binary_name" ]; then
     printf '%s\n' "$framework_dir/Versions/A/$binary_name"
@@ -196,25 +245,6 @@ resolve_framework_binary_path() {
   fi
 
   return 1
-}
-
-archive_framework_bundle() {
-  local framework_dir="$1"
-  local output_dir="$2"
-  local framework_name="${3:-$APPLE_CORE_MODULE_NAME}"
-  local framework_zip="$output_dir/$framework_name.framework.zip"
-
-  if [ ! -d "$framework_dir" ]; then
-    echo "Framework bundle not found at $framework_dir" >&2
-    return 1
-  fi
-
-  mkdir -p "$output_dir"
-  rm -f "$framework_zip"
-
-  ditto -c -k --norsrc --keepParent "$framework_dir" "$framework_zip"
-
-  verify_file_exists "$framework_zip" "$framework_name framework archive"
 }
 
 copy_apple_runtime_library() {
@@ -242,20 +272,6 @@ copy_built_apple_dynamic_lib() {
   }
 
   copy_apple_runtime_library "$source_path" "$dest_dir" "Apple dynamic library"
-}
-
-archive_built_apple_framework() {
-  local build_dir="$1"
-  local dest_dir="$2"
-  local framework_name="${3:-$APPLE_CORE_MODULE_NAME}"
-  local source_path=""
-
-  source_path="$(find_apple_framework_path "$build_dir" "$framework_name")" || {
-    echo "Apple framework not found under $build_dir" >&2
-    return 1
-  }
-
-  archive_framework_bundle "$source_path" "$dest_dir" "$framework_name"
 }
 
 copy_xcframework() {
@@ -287,11 +303,11 @@ create_apple_xcframework() {
   "${cmd[@]}"
 }
 
-create_osx_universal_framework() {
+create_macos_universal_framework() {
   local arm64_build_dir="$1"
   local x64_build_dir="$2"
   local output_dir="$3"
-  local framework_name="${4:-$APPLE_CORE_MODULE_NAME}"
+  local framework_name="$4"
   local arm64_framework=""
   local x64_framework=""
   local arm64_binary=""
@@ -371,13 +387,12 @@ function copy_built_libraries() {
 
 function build_apple() {
   local apple_build_dir="$1"
-  local apple_prebuilt_dir="$2"
-  local apple_sysroot="$3"
-  local apple_arch="$4"
-  local apple_target_name="$5"
-  local apple_generator="$6"
-  local apple_system_name="$7"
-  shift 7
+  local apple_sysroot="$2"
+  local apple_arch="$3"
+  local apple_target_name="$4"
+  local apple_generator="$5"
+  local apple_system_name="$6"
+  shift 6
 
   local cmake_args=(
     "$PROJECT_DIR"
@@ -404,7 +419,6 @@ function build_apple() {
 
   cmake "${cmake_args[@]}"
   cmake --build "$apple_build_dir" --target "$apple_target_name" --config Release -j 12
-  archive_built_apple_framework "$apple_build_dir" "$apple_prebuilt_dir" "$APPLE_CORE_MODULE_NAME"
 }
 
 function build_apple_runtime_libs() {
@@ -443,18 +457,18 @@ function build_apple_runtime_libs() {
   copy_built_apple_dynamic_lib "$apple_build_dir" "$apple_prebuilt_dir"
 }
 
-function build_osx() {
-  local osx_arch="$1"
-  local osx_build_dir="$BUILD_DIR/osx/$osx_arch"
-  local osx_runtime_build_dir="$BUILD_DIR/osx-runtime/$osx_arch"
-  local osx_prebuilt_dir
+function build_macos() {
+  local macos_arch="$1"
+  local macos_build_dir="$BUILD_DIR/macos/$macos_arch"
+  local macos_runtime_build_dir="$BUILD_DIR/macos-runtime/$macos_arch"
+  local macos_prebuilt_dir
 
-  osx_prebuilt_dir="$(apple_runtime_prebuilt_dir "$OUTPUT_DIR" osx "$osx_arch")"
-  echo "============================= MacOSX $osx_arch ============================="
-  build_apple_runtime_libs "$osx_runtime_build_dir" "$osx_prebuilt_dir" "macosx" "$osx_arch" "Xcode" "" \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
-  build_apple "$osx_build_dir" "$osx_prebuilt_dir" "macosx" "$osx_arch" "$APPLE_CORE_MODULE_NAME" "Xcode" "" \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+  macos_prebuilt_dir="$(apple_runtime_prebuilt_dir "$OUTPUT_DIR" macos "$macos_arch")"
+  echo "============================= macOS $macos_arch ============================="
+  build_apple_runtime_libs "$macos_runtime_build_dir" "$macos_prebuilt_dir" "macosx" "$macos_arch" "Xcode" "" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="$APPLE_MACOS_DEPLOYMENT_TARGET"
+  build_apple "$macos_build_dir" "macosx" "$macos_arch" "$APPLE_MACOS_FRAMEWORK_NAME" "Xcode" "" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="$APPLE_MACOS_DEPLOYMENT_TARGET"
 }
 
 function build_ios() {
@@ -478,13 +492,13 @@ function build_ios() {
   rm -f "$ios_prebuilt_dir/libsweetline_static.a"
 
   build_apple_runtime_libs "$ios_build_dir" "$ios_prebuilt_dir" "$ios_sdk" "$ios_arch" "Xcode" "iOS" \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="$APPLE_IOS_DEPLOYMENT_TARGET" \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY= \
     -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=
-  build_apple "$ios_framework_build_dir" "$ios_prebuilt_dir" "$ios_sdk" "$ios_arch" "$APPLE_CORE_MODULE_NAME" "Xcode" "iOS" \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+  build_apple "$ios_framework_build_dir" "$ios_sdk" "$ios_arch" "$APPLE_IOS_FRAMEWORK_NAME" "Xcode" "iOS" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET="$APPLE_IOS_DEPLOYMENT_TARGET" \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=NO \
     -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY= \
@@ -494,33 +508,51 @@ function build_ios() {
 function build_apple_xcframework() {
   local apple_scope="$1"
   local output_dir="$2"
-  local archive_name="$3"
-  local label="$4"
+  local label="$3"
   local apple_binaries_dir="$BUILD_DIR/apple-xcframework/binaries"
-  local xcframework_dir="$apple_binaries_dir/$APPLE_XCFRAMEWORK_BUNDLE_NAME"
+  local framework_name=""
+  local xcframework_name=""
+  local archive_name=""
+  local xcframework_dir=""
   local xcframework_zip="$output_dir/$archive_name"
+
+  if [ "$apple_scope" = "macos" ]; then
+    framework_name="$APPLE_MACOS_FRAMEWORK_NAME"
+    xcframework_name="$APPLE_MACOS_XCFRAMEWORK_NAME"
+    archive_name="$APPLE_MACOS_XCFRAMEWORK_ARCHIVE_NAME"
+  elif [ "$apple_scope" = "ios" ]; then
+    framework_name="$APPLE_IOS_FRAMEWORK_NAME"
+    xcframework_name="$APPLE_IOS_XCFRAMEWORK_NAME"
+    archive_name="$APPLE_IOS_XCFRAMEWORK_ARCHIVE_NAME"
+  else
+    echo "Unsupported Apple XCFramework scope: $apple_scope" >&2
+    return 1
+  fi
+
+  xcframework_dir="$apple_binaries_dir/$xcframework_name"
+  xcframework_zip="$output_dir/$archive_name"
 
   echo "============================= $label XCFramework ============================="
   mkdir -p "$output_dir"
   mkdir -p "$apple_binaries_dir"
   rm -rf "$xcframework_dir"
 
-  if [ "$apple_scope" = "osx" ]; then
-    local universal_dir="$BUILD_DIR/apple-xcframework/osx-universal"
-    local universal_framework="$universal_dir/$APPLE_FRAMEWORK_BUNDLE_NAME"
+  if [ "$apple_scope" = "macos" ]; then
+    local universal_dir="$BUILD_DIR/apple-xcframework/macos-universal"
+    local universal_framework="$universal_dir/$framework_name.framework"
 
-    create_osx_universal_framework "$BUILD_DIR/osx/arm64" "$BUILD_DIR/osx/x86_64" "$universal_dir" "$APPLE_CORE_MODULE_NAME"
+    create_macos_universal_framework "$BUILD_DIR/macos/arm64" "$BUILD_DIR/macos/x86_64" "$universal_dir" "$framework_name"
     create_apple_xcframework "$xcframework_dir" \
       -framework "$universal_framework"
   elif [ "$apple_scope" = "ios" ]; then
     local ios_device_framework=""
     local ios_simulator_framework=""
 
-    ios_device_framework="$(find_apple_framework_path "$BUILD_DIR/apple-framework/ios/arm64" "$APPLE_CORE_MODULE_NAME")" || {
+    ios_device_framework="$(find_apple_framework_path "$BUILD_DIR/apple-framework/ios/arm64" "$framework_name")" || {
       echo "iOS device framework not found under $BUILD_DIR/apple-framework/ios/arm64" >&2
       return 1
     }
-    ios_simulator_framework="$(find_apple_framework_path "$BUILD_DIR/apple-framework/ios/simulator-arm64" "$APPLE_CORE_MODULE_NAME")" || {
+    ios_simulator_framework="$(find_apple_framework_path "$BUILD_DIR/apple-framework/ios/simulator-arm64" "$framework_name")" || {
       echo "iOS simulator framework not found under $BUILD_DIR/apple-framework/ios/simulator-arm64" >&2
       return 1
     }
@@ -531,12 +563,9 @@ function build_apple_xcframework() {
     create_apple_xcframework "$xcframework_dir" \
       -framework "$ios_device_framework" \
       -framework "$ios_simulator_framework"
-  else
-    echo "Unsupported Apple XCFramework scope: $apple_scope" >&2
-    return 1
   fi
 
-  copy_xcframework "$apple_binaries_dir" "$output_dir" "$APPLE_XCFRAMEWORK_BUNDLE_NAME" "$archive_name"
+  copy_xcframework "$apple_binaries_dir" "$output_dir" "$xcframework_name" "$archive_name"
   verify_file_exists "$xcframework_dir" "$label XCFramework directory"
   verify_file_exists "$xcframework_zip" "$label XCFramework archive"
 }
@@ -668,12 +697,16 @@ run_build_shared() {
         apple_prerequisite_status >&2
         exit 1
       }
-      build_osx arm64
-      build_osx x86_64
-      build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME" "macOS"
+      prepare_apple_prebuilt_dir "$OUTPUT_DIR" macos
+      build_macos arm64
+      build_macos x86_64
+      build_apple_xcframework macos "$OUTPUT_DIR/macos" "macOS"
+      verify_apple_prebuilt_layout macos
+      prepare_apple_prebuilt_dir "$OUTPUT_DIR" ios
       build_ios arm64
       build_ios simulator-arm64
-      build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME" "iOS"
+      build_apple_xcframework ios "$OUTPUT_DIR/ios" "iOS"
+      verify_apple_prebuilt_layout ios
     elif [ "$(uname -s)" = "Linux" ]; then
       build_linux x86_64
       build_linux aarch64
@@ -683,22 +716,26 @@ run_build_shared() {
     fi
   elif [ "$PLATFORM" = "wasm" ]; then
     build_emscripten
-  elif [ "$PLATFORM" = "osx" ]; then
+  elif [ "$PLATFORM" = "macos" ]; then
     apple_prerequisite_status >/dev/null || {
       apple_prerequisite_status >&2
       exit 1
     }
-    build_osx arm64
-    build_osx x86_64
-    build_apple_xcframework osx "$OUTPUT_DIR/osx" "$APPLE_XCFRAMEWORK_OSX_ARCHIVE_NAME" "macOS"
+    prepare_apple_prebuilt_dir "$OUTPUT_DIR" macos
+    build_macos arm64
+    build_macos x86_64
+    build_apple_xcframework macos "$OUTPUT_DIR/macos" "macOS"
+    verify_apple_prebuilt_layout macos
   elif [ "$PLATFORM" = "ios" ]; then
     apple_prerequisite_status >/dev/null || {
       apple_prerequisite_status >&2
       exit 1
     }
+    prepare_apple_prebuilt_dir "$OUTPUT_DIR" ios
     build_ios arm64
     build_ios simulator-arm64
-    build_apple_xcframework ios "$OUTPUT_DIR/ios" "$APPLE_XCFRAMEWORK_IOS_ARCHIVE_NAME" "iOS"
+    build_apple_xcframework ios "$OUTPUT_DIR/ios" "iOS"
+    verify_apple_prebuilt_layout ios
   elif [ "$PLATFORM" = "linux" ]; then
     if [ "$(uname -s)" != "Linux" ]; then
       echo "Linux builds require a Linux host. Use build-shared.ps1 -UseWsl on Windows." >&2

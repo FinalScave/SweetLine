@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,57 +95,72 @@ fun App() {
                 .background(currentTheme.background),
             color = currentTheme.background,
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .safeContentPadding()
-                    .fillMaxSize()
-                    .padding(14.dp)
-                    .border(1.dp, currentTheme.separator, MaterialTheme.shapes.small),
+                    .fillMaxSize(),
             ) {
-                HeaderBar(
-                    theme = currentTheme,
-                    platformName = platform.name,
-                    selectedFile = state.selectedFile,
-                    exampleFiles = demoAssetFileNames,
-                    selectedTheme = currentTheme,
-                    themes = themes,
-                    fileSelectionEnabled = !state.isLoading,
-                    onFileSelected = { fileName ->
-                        state = state.copy(
-                            selectedFile = fileName,
-                            isLoading = true,
-                            errorText = null,
-                            statusText = "Loading $fileName...",
-                        )
-                    },
-                    onThemeSelected = { currentTheme = it },
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                ) {
-                    CodeView(
-                        theme = currentTheme,
-                        sourceCode = state.sourceCode,
-                        highlight = state.highlight,
-                        indentGuides = state.indentGuides,
-                        bracketPairs = state.bracketPairs,
-                        placeholder = if (state.isLoading) "Analyzing..." else state.errorText ?: "Select a file",
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(18.dp)
-                                .height(20.dp),
-                            strokeWidth = 2.dp,
-                            color = currentTheme.accent,
-                        )
-                    }
+                val compactLayout = maxWidth < 600.dp
+                val contentModifier = if (compactLayout) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxSize()
+                        .padding(14.dp)
+                        .border(1.dp, currentTheme.separator, MaterialTheme.shapes.small)
                 }
-                StatusBar(currentTheme, state.statusText, state.errorText)
+                Column(modifier = contentModifier) {
+                    HeaderBar(
+                        theme = currentTheme,
+                        platformName = platform.name,
+                        selectedFile = state.selectedFile,
+                        exampleFiles = demoAssetFileNames,
+                        selectedTheme = currentTheme,
+                        themes = themes,
+                        fileSelectionEnabled = !state.isLoading,
+                        compactLayout = compactLayout,
+                        onFileSelected = { fileName ->
+                            state = state.copy(
+                                selectedFile = fileName,
+                                isLoading = true,
+                                errorText = null,
+                                statusText = "Loading $fileName...",
+                            )
+                        },
+                        onThemeSelected = { currentTheme = it },
+                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                    ) {
+                        CodeView(
+                            theme = currentTheme,
+                            sourceCode = state.sourceCode,
+                            highlight = state.highlight,
+                            indentGuides = state.indentGuides,
+                            bracketPairs = state.bracketPairs,
+                            placeholder = if (state.isLoading) "Analyzing..." else state.errorText ?: "Select a file",
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(18.dp)
+                                    .height(20.dp),
+                                strokeWidth = 2.dp,
+                                color = currentTheme.accent,
+                            )
+                        }
+                    }
+                    StatusBar(
+                        theme = currentTheme,
+                        statusText = state.statusText,
+                        errorText = state.errorText,
+                        compactLayout = compactLayout,
+                    )
+                }
             }
         }
     }
@@ -175,9 +192,65 @@ private fun HeaderBar(
     selectedTheme: HighlightTheme,
     themes: List<HighlightTheme>,
     fileSelectionEnabled: Boolean,
+    compactLayout: Boolean,
     onFileSelected: (String) -> Unit,
     onThemeSelected: (HighlightTheme) -> Unit,
 ) {
+    if (compactLayout) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(theme.toolbarSurface)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp),
+                ) {
+                    Text(
+                        text = "SweetLine",
+                        color = theme.text,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        text = "KMP Demo · Runtime: $platformName",
+                        color = theme.lineNumber,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                LabeledDropdown(
+                    label = "Theme",
+                    value = selectedTheme.name,
+                    items = themes.map { it.name },
+                    enabled = true,
+                    theme = theme,
+                    onSelected = { themeName ->
+                        themes.firstOrNull { it.name == themeName }?.let(onThemeSelected)
+                    },
+                    modifier = Modifier.widthIn(min = 120.dp, max = 140.dp),
+                )
+            }
+            LabeledDropdown(
+                label = "File",
+                value = selectedFile,
+                items = exampleFiles,
+                enabled = fileSelectionEnabled,
+                theme = theme,
+                onSelected = onFileSelected,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,7 +266,7 @@ private fun HeaderBar(
                 fontSize = 20.sp,
             )
             Text(
-                text = platformName,
+                text = "Runtime: $platformName",
                 color = theme.lineNumber,
                 fontSize = 12.sp,
                 maxLines = 1,
@@ -249,6 +322,7 @@ private fun LabeledDropdown(
                     containerColor = HighlightTheme.blend(theme.background, theme.text, 0.03f),
                 ),
                 border = ButtonDefaults.outlinedButtonBorder(enabled).copy(brush = SolidColor(theme.separator)),
+                contentPadding = PaddingValues(horizontal = 12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -285,21 +359,42 @@ private fun LabeledDropdown(
 }
 
 @Composable
-private fun StatusBar(theme: HighlightTheme, statusText: String, errorText: String?) {
+private fun StatusBar(
+    theme: HighlightTheme,
+    statusText: String,
+    errorText: String?,
+    compactLayout: Boolean,
+) {
+    val displayedStatus = if (compactLayout && errorText == null) {
+        compactStatusText(statusText)
+    } else {
+        statusText
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(theme.statusSurface)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = if (compactLayout) 12.dp else 16.dp, vertical = 8.dp),
     ) {
         Text(
-            text = statusText,
+            text = displayedStatus,
             color = if (errorText == null) theme.lineNumber else 0xFFFF8A7Au.toInt().toColor(),
             fontSize = 12.sp,
-            maxLines = 2,
+            maxLines = if (compactLayout) 1 else 2,
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+private fun compactStatusText(statusText: String): String {
+    val parts = statusText.split(" | ")
+    if (parts.size == 1) {
+        return statusText
+    }
+    val summary = parts.filter { part ->
+        part.startsWith("Load:") || part.startsWith("Analyze:") || part.startsWith("Lines:")
+    }
+    return summary.ifEmpty { parts.takeLast(2) }.joinToString(" · ")
 }
 
 private suspend fun precompileCommonSyntaxes(engine: HighlightEngine): WarmupResult {

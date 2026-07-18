@@ -456,12 +456,12 @@ function Test-NativeAbi {
     $expected = Get-ExpectedNativeSymbols
     $platforms = New-Object System.Collections.Generic.HashSet[string]
     if ($TargetKeys -contains "native") {
-        @("android", "ios", "linux", "ohos", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null }
+        @("android", "ios", "linux", "macos", "ohos", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null }
     } else {
         foreach ($targetKey in $TargetKeys) {
             switch ($targetKey) {
-                "java22" { @("linux", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
-                { $_ -in @("nuget", "flutter") } { @("android", "ios", "linux", "osx", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
+                "java22" { @("linux", "macos", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
+                { $_ -in @("nuget", "flutter") } { @("android", "ios", "linux", "macos", "windows") | ForEach-Object { $platforms.Add($_) | Out-Null } }
             }
         }
     }
@@ -509,8 +509,8 @@ function Test-NuGetPackageContents {
             "runtimes/osx-arm64/native/libsweetline.dylib",
             "runtimes/android-arm64/native/libsweetline.so",
             "runtimes/android-x64/native/libsweetline.so",
-            "native/ios/SweetLineCore.xcframework/ios-arm64/SweetLineCore.framework/SweetLineCore",
-            "native/ios/SweetLineCore.xcframework/ios-arm64-simulator/SweetLineCore.framework/SweetLineCore",
+            "native/ios/SweetLineCoreIOS.xcframework/ios-arm64/SweetLineCoreIOS.framework/SweetLineCoreIOS",
+            "native/ios/SweetLineCoreIOS.xcframework/ios-arm64-simulator/SweetLineCoreIOS.framework/SweetLineCoreIOS",
             "buildTransitive/SweetLine.targets"
         )
         $missing = @($requiredEntries | Where-Object { $_ -notin $entries })

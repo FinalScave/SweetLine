@@ -71,8 +71,13 @@ function(sweetline_platform_add_extra_targets)
         return()
     endif ()
 
-    set(_sweetline_framework_name "SweetLineCore")
-    set(_sweetline_framework_identifier "com.qiplat.sweetline.core")
+    if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(_sweetline_framework_name "SweetLineCoreIOS")
+        set(_sweetline_framework_identifier "com.qiplat.sweetline.core.ios")
+    else ()
+        set(_sweetline_framework_name "SweetLineCoreMacOS")
+        set(_sweetline_framework_identifier "com.qiplat.sweetline.core.macos")
+    endif ()
 
     set(SWEETLINE_APPLE_FRAMEWORK_HEADER_DIR
             "${PROJECT_BINARY_DIR}/cmake/platform/apple/${_sweetline_framework_name}"
