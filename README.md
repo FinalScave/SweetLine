@@ -43,7 +43,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ### Cross-Platform
 - Core engine written in C++17
 - C API wrapper for easy FFI integration
-- Native support for Android (JNI), Java 22 (FFM), Flutter/Dart (FFI), WebAssembly (Emscripten), HarmonyOS (NAPI), .NET/WinForms (P/Invoke), and Apple platforms
+- Native support for Android (JNI), Java 22 (FFM), Flutter/Dart (FFI), WebAssembly (Emscripten), HarmonyOS (NAPI), .NET/WinForms (P/Invoke), and Apple(iOS/macOS)
 - Supports Windows, Linux, macOS, mobile platforms, and other desktop scenarios
 
 ## Architecture Overview
@@ -54,7 +54,7 @@ SweetLine is a cross-platform, high-performance, and extensible syntax highlight
 ├────────────────────────────────────────────────────────────────────────────────────┤
 │ Application / Platform Bindings                                                   │
 │  Android(JNI) | Java22(FFM) | Flutter(Dart FFI) | .NET/C#(P/Invoke)              │
-│  WASM(Emscripten) | HarmonyOS(NAPI) | Apple(Swift/ObjC)                           │
+│  WASM(Emscripten) | HarmonyOS(NAPI) | Apple(iOS/macOS) (Swift/ObjC)                │
 │  C API(FFI) | C++ Native API                                                      │
 ├────────────────────────────────────────────────────────────────────────────────────┤
 │                         SweetLine C++ Core (C++17)                                │
@@ -162,8 +162,7 @@ Each platform README is the source of truth for installation, API usage, `Highli
 | Flutter / Dart | [Flutter README](platform/Flutter/sweetline/README.md) |
 | HarmonyOS / ArkTS | [HarmonyOS README](platform/OHOS/sweetline/README.md) |
 | WebAssembly | [Emscripten README](platform/Emscripten/README.md) |
-| iOS / SwiftPM | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) |
-| macOS / SwiftPM | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) |
+| Apple(iOS/macOS) / SwiftPM | [SweetLine Apple(iOS/macOS)](platform/Apple) |
 
 ### Custom Syntax Rules
 
@@ -210,8 +209,7 @@ If you want to add or refine syntax rules more quickly, you can also use the ski
 | [API Reference (Index)](docs/en/api.md) | API entry page and reading order |
 | [Core API](docs/en/api_core.md) | Core concepts and C++ API |
 | [C API](docs/en/api_c.md) | C interface for FFI integration |
-| [macOS Swift API](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API on macOS |
-| [iOS Swift API](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API on iOS |
+| [Apple(iOS/macOS) Swift API](platform/Apple) | iOS and macOS Swift Package API |
 | [Android API](platform/Android/sweetline/README.md) | Java/Kotlin API on Android |
 | [Kotlin Multiplatform API](platform/KMP/sweetline/README.md) | Kotlin API for Android, iOS, and JVM desktop |
 | [Flutter API](platform/Flutter/sweetline/README.md) | Dart FFI wrapper API |

@@ -8,8 +8,7 @@ To reduce maintenance cost and improve readability, the API documentation is spl
 |------|------|------|
 | Core Concepts + C++ | [Core API](api_core.md) | Workflow, core data structures, and C++ APIs |
 | C / FFI | [C API](api_c.md) | Pure C interfaces and return buffer format |
-| macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API and native artifact guide |
-| iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API and native artifact guide |
+| Apple(iOS/macOS) (Swift) | [SweetLine Apple(iOS/macOS)](../../platform/Apple) | iOS and macOS Swift Package API and native artifact integration |
 | Android (Java/Kotlin) | [Android README](../../platform/Android/sweetline/README.md) | JNI-based Java API |
 | Kotlin Multiplatform | [KMP README](../../platform/KMP/sweetline/README.md) | Kotlin API for Android, iOS, and JVM desktop |
 | Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI wrapper API |

@@ -8,8 +8,7 @@
 |------|------|------|
 | 核心概念 + C++ | [核心 API](api_core.md) | 工作流程、核心数据结构与 C++ 接口 |
 | C / FFI | [C API](api_c.md) | C 语言接口与返回缓冲区格式 |
-| macOS (Swift) | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) | Swift Package API 与 Native 产物说明 |
-| iOS (Swift) | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) | Swift Package API 与 Native 产物说明 |
+| Apple(iOS/macOS)（Swift） | [SweetLine Apple(iOS/macOS)](../../platform/Apple) | iOS 与 macOS Swift Package API 和 Native 产物集成 |
 | Android (Java/Kotlin) | [Android README](../../platform/Android/sweetline/README.md) | JNI 绑定的 Java API |
 | Kotlin Multiplatform | [KMP README](../../platform/KMP/sweetline/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
 | Flutter / Dart | [Flutter README](../../platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |

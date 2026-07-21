@@ -162,8 +162,7 @@ auto visible_brackets = analyzer->analyzeBracketPairsInLineRange(visible_range);
 | Flutter / Dart | [Flutter README](platform/Flutter/sweetline/README.md) |
 | HarmonyOS / ArkTS | [HarmonyOS README](platform/OHOS/sweetline/README.md) |
 | WebAssembly | [Emscripten README](platform/Emscripten/README.md) |
-| iOS / SwiftPM | [SweetLine-iOS](https://github.com/Xiue233/SweetLine-iOS) |
-| macOS / SwiftPM | [SweetLine-macOS](https://github.com/Xiue233/SweetLine-macOS) |
+| Apple / SwiftPM | [SweetLine Apple](platform/Apple) |
 
 ### 自定义语法规则
 
@@ -210,8 +209,7 @@ SweetLine 使用 JSON 定义语法规则，以下是一个简单示例：
 | [API 文档（索引）](docs/zh/api.md) | API 总入口与阅读顺序 |
 | [核心 API](docs/zh/api_core.md) | 核心概念与 C++ API |
 | [C API](docs/zh/api_c.md) | 面向 FFI 的 C 接口 |
-| [macOS Swift API](https://github.com/Xiue233/SweetLine-macOS) | macOS 平台 Swift Package API |
-| [iOS Swift API](https://github.com/Xiue233/SweetLine-iOS) | iOS 平台 Swift Package API |
+| [Apple Swift API](platform/Apple) | iOS 与 macOS 平台 Swift Package API |
 | [Android API](platform/Android/sweetline/README.md) | Android 平台 Java/Kotlin API |
 | [Kotlin Multiplatform API](platform/KMP/sweetline/README.md) | Android、iOS 与 JVM 桌面的 Kotlin API |
 | [Flutter API](platform/Flutter/sweetline/README.md) | Dart FFI 封装 API |
