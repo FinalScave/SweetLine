@@ -1,6 +1,0 @@
-[submodule "platform/iOS"]
-	path = platform/iOS
-	url = git@ssh.github.com:Xiue233/SweetLine-iOS.git
-[submodule "platform/macOS"]
-	path = platform/macOS
-	url = git@ssh.github.com:Xiue233/SweetLine-macOS.git

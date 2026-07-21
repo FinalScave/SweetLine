@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+Package.resolved
+Vendor/
+DerivedData/
+xcuserdata/
+*.xcuserstate
