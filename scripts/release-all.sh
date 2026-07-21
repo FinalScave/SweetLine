@@ -5,9 +5,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 KMP_DIR="$PROJECT_DIR/platform/KMP"
-IOS_DIR="$PROJECT_DIR/platform/iOS"
-MACOS_DIR="$PROJECT_DIR/platform/macOS"
-TARGET_ORDER=("kmp" "ios" "macos")
+TARGET_ORDER=("kmp")
 SELECTED_TARGETS=()
 
 fail() {
@@ -31,8 +29,6 @@ run_external() {
 target_label() {
   case "$1" in
     kmp) echo "Kotlin Multiplatform" ;;
-    ios) echo "iOS / SwiftPM" ;;
-    macos) echo "macOS / SwiftPM" ;;
     *) return 1 ;;
   esac
 }
@@ -40,7 +36,6 @@ target_label() {
 target_registry() {
   case "$1" in
     kmp) echo "Maven Central" ;;
-    ios|macos) echo "GitHub" ;;
     *) return 1 ;;
   esac
 }
@@ -48,43 +43,23 @@ target_registry() {
 target_path() {
   case "$1" in
     kmp) echo "$KMP_DIR" ;;
-    ios) echo "$IOS_DIR" ;;
-    macos) echo "$MACOS_DIR" ;;
     *) return 1 ;;
   esac
 }
 
-target_repository() {
-  case "$1" in
-    ios) echo "Xiue233/SweetLine-iOS" ;;
-    macos) echo "Xiue233/SweetLine-macOS" ;;
-    *) return 1 ;;
-  esac
-}
 
 is_target() {
-  case "$1" in
-    kmp|ios|macos) return 0 ;;
-    *) return 1 ;;
-  esac
+  [ "$1" = "kmp" ]
 }
 
 get_kmp_version() {
   sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([^"]+)"[[:space:]]*$/\1/p' "$KMP_DIR/sweetline/build.gradle.kts" | head -n 1
 }
 
-get_apple_version() {
-  local package_path="$(target_path "$1")/Package.swift"
-  if [ ! -f "$package_path" ]; then
-    return 0
-  fi
-  sed -nE 's#.*releases/download/v([^/]+)/.*#\1#p' "$package_path" | head -n 1
-}
 
 target_version() {
   case "$1" in
     kmp) get_kmp_version ;;
-    ios|macos) get_apple_version "$1" ;;
     *) return 1 ;;
   esac
 }
@@ -149,40 +124,26 @@ registry_status() {
   local response_file
 
   if [ -z "$version" ]; then
-    if [ "$target" = "ios" ] || [ "$target" = "macos" ]; then
-      echo "Submodule not initialized"
-    else
-      echo "Version required"
-    fi
+    echo "Version required"
     return 0
   fi
-  if [ "$target" = "kmp" ]; then
-    response_file="$(mktemp "${TMPDIR:-/tmp}/sweetline-maven-status.XXXXXX")" || {
-      echo "Query failed"
-      return 0
-    }
-    code="$(curl -sS -o "$response_file" -w '%{http_code}' "https://repo.maven.apache.org/maven2/com/qiplat/sweetline-kmp/maven-metadata.xml" 2>/dev/null)"
-    case "$code" in
-      200)
-        if grep -Fq "<version>$version</version>" "$response_file"; then
-          echo "Published"
-        else
-          echo "Pending"
-        fi
-        ;;
-      404) echo "Pending" ;;
-      *) echo "Query failed" ;;
-    esac
-    rm -f "$response_file"
+  response_file="$(mktemp "${TMPDIR:-/tmp}/sweetline-maven-status.XXXXXX")" || {
+    echo "Query failed"
     return 0
-  fi
-
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "https://api.github.com/repos/$(target_repository "$target")/releases/tags/v$version" 2>/dev/null)"
+  }
+  code="$(curl -sS -o "$response_file" -w '%{http_code}' "https://repo.maven.apache.org/maven2/com/qiplat/sweetline-kmp/maven-metadata.xml" 2>/dev/null)"
   case "$code" in
-    200) echo "Published" ;;
+    200)
+      if grep -Fq "<version>$version</version>" "$response_file"; then
+        echo "Published"
+      else
+        echo "Pending"
+      fi
+      ;;
     404) echo "Pending" ;;
     *) echo "Query failed" ;;
   esac
+  rm -f "$response_file"
 }
 
 show_status() {
@@ -292,69 +253,14 @@ test_kmp_native_abi() {
   echo "Native ABI validation passed."
 }
 
-apple_archive_path() {
-  case "$1" in
-    ios) echo "$PROJECT_DIR/prebuilt/ios/SweetLineCoreIOS.xcframework.zip" ;;
-    macos) echo "$PROJECT_DIR/prebuilt/macos/SweetLineCoreMacOS.xcframework.zip" ;;
-    *) return 1 ;;
-  esac
-}
 
-test_apple_artifact() {
-  local target="$1"
-  local version="$2"
-  local target_dir
-  local package_path
-  local archive_path
-  local expected_checksum
-  local actual_checksum
-  local package_version
-
-  target_dir="$(target_path "$target")"
-  package_path="$target_dir/Package.swift"
-  archive_path="$(apple_archive_path "$target")"
-  if [ ! -f "$package_path" ]; then
-    fail "$(target_label "$target") submodule is not initialized."
-    return 1
-  fi
-  if [ ! -f "$archive_path" ]; then
-    fail "Missing Apple artifact: $archive_path"
-    return 1
-  fi
-  require_command swift || return 1
-  expected_checksum="$(sed -nE 's/.*checksum:[[:space:]]*"([0-9a-fA-F]{64})".*/\1/p' "$package_path" | head -n 1)"
-  if [ -z "$expected_checksum" ]; then
-    fail "Unable to read binary target checksum from $package_path"
-    return 1
-  fi
-  actual_checksum="$(swift package compute-checksum "$archive_path")" || return 1
-  actual_checksum="$(printf '%s' "$actual_checksum" | tr '[:upper:]' '[:lower:]')"
-  expected_checksum="$(printf '%s' "$expected_checksum" | tr '[:upper:]' '[:lower:]')"
-  if [ "$actual_checksum" != "$expected_checksum" ]; then
-    fail "$(target_label "$target") binary target checksum does not match the prebuilt archive."
-    return 1
-  fi
-  package_version="$(get_apple_version "$target")"
-  if [ "$package_version" != "$version" ]; then
-    fail "$(target_label "$target") Package.swift references v$package_version instead of v$version."
-    return 1
-  fi
-  run_external "$target_dir" bash Scripts/verify-package.sh
-}
 
 package_target() {
   local target="$1"
   local version="$2"
   printf '\nPackaging %s %s\n' "$(target_label "$target")" "$version"
-  case "$target" in
-    kmp)
-      test_kmp_native_abi || return 1
-      run_external "$KMP_DIR" ./gradlew :sweetline:publishToMavenLocal --no-configuration-cache --console=plain
-      ;;
-    ios|macos)
-      test_apple_artifact "$target" "$version"
-      ;;
-  esac
+  test_kmp_native_abi || return 1
+  run_external "$KMP_DIR" ./gradlew :sweetline:publishToMavenLocal --no-configuration-cache --console=plain
 }
 
 assert_publish_workspace() {
@@ -373,52 +279,13 @@ assert_publish_workspace() {
   fi
 }
 
-assert_submodule_publish_state() {
-  local target="$1"
-  local target_dir
-  local changes
-  local head
-  local upstream
-  target_dir="$(target_path "$target")"
-  if [ ! -f "$target_dir/Package.swift" ]; then
-    fail "$(target_label "$target") submodule is not initialized."
-    return 1
-  fi
-  changes="$(git -C "$target_dir" status --porcelain)" || return 1
-  if [ -n "$changes" ]; then
-    fail "$(target_label "$target") submodule has uncommitted changes."
-    return 1
-  fi
-  head="$(git -C "$target_dir" rev-parse HEAD)" || return 1
-  upstream="$(git -C "$target_dir" rev-parse '@{u}')" || return 1
-  if [ "$head" != "$upstream" ]; then
-    fail "$(target_label "$target") submodule HEAD is not pushed."
-    return 1
-  fi
-  echo "$head"
-}
 
 publish_target() {
   local target="$1"
   local version="$2"
-  local head
-  local archive_path
 
   printf '\nPublishing %s %s\n' "$(target_label "$target")" "$version"
-  case "$target" in
-    kmp)
-      run_external "$KMP_DIR" ./gradlew :sweetline:publishAndReleaseToMavenCentral --no-configuration-cache --console=plain
-      ;;
-    ios|macos)
-      head="$(assert_submodule_publish_state "$target")" || return 1
-      archive_path="$(apple_archive_path "$target")"
-      run_external "$(target_path "$target")" gh release create "v$version" "$archive_path" \
-        --repo "$(target_repository "$target")" \
-        --title "$(target_label "$target") v$version" \
-        --generate-notes \
-        --target "$head"
-      ;;
-  esac
+  run_external "$KMP_DIR" ./gradlew :sweetline:publishAndReleaseToMavenCentral --no-configuration-cache --console=plain
 }
 
 resolve_selected_versions() {
@@ -519,33 +386,20 @@ print_target_menu() {
   echo
   for target in "${TARGET_ORDER[@]}"; do
     version="$(target_version "$target")"
-    printf '%2d. %-28s %s\n' "$index" "$(target_label "$target")" "${version:-Submodule not initialized}"
+    printf '%2d. %-28s %s\n' "$index" "$(target_label "$target")" "${version:-Version unavailable}"
     index=$((index + 1))
   done
   echo " 0. Cancel"
 }
 
 read_single_target() {
-  local only_editable="${1:-0}"
   local selection
-  if [ "$only_editable" -eq 1 ]; then
-    printf '\n 1. %-28s %s\n' "$(target_label kmp)" "$(target_version kmp)" >&2
-    echo " 0. Cancel" >&2
-    read -r -p "Select a platform to update: " selection
-    case "$selection" in
-      1) echo "kmp" ;;
-      0|"") return 1 ;;
-      *) fail "Invalid target selection: $selection" ;;
-    esac
-    return
-  fi
 
-  print_target_menu >&2
+  printf '\n 1. %-28s %s\n' "$(target_label kmp)" "$(target_version kmp)" >&2
+  echo " 0. Cancel" >&2
   read -r -p "Select a platform: " selection
   case "$selection" in
     1) echo "kmp" ;;
-    2) echo "ios" ;;
-    3) echo "macos" ;;
     0|"") return 1 ;;
     *) fail "Invalid target selection: $selection" ;;
   esac
@@ -553,32 +407,14 @@ read_single_target() {
 
 read_target_selection() {
   local selection
-  local part
-  local target
-  local parts=()
   SELECTED_TARGETS=()
   print_target_menu
   read -r -p "Select platforms, separated by commas, or enter all: " selection
-  if [ "$selection" = "0" ] || [ -z "$selection" ]; then
-    return 1
-  fi
-  if [ "$selection" = "all" ]; then
-    SELECTED_TARGETS=("${TARGET_ORDER[@]}")
-    return 0
-  fi
-  IFS=',' read -r -a parts <<< "$selection"
-  for part in "${parts[@]}"; do
-    part="$(printf '%s' "$part" | tr -d '[:space:]')"
-    case "$part" in
-      1) target="kmp" ;;
-      2) target="ios" ;;
-      3) target="macos" ;;
-      *) fail "Invalid target selection: $part"; return 1 ;;
-    esac
-    if [[ " ${SELECTED_TARGETS[*]} " != *" $target "* ]]; then
-      SELECTED_TARGETS+=("$target")
-    fi
-  done
+  case "$selection" in
+    all|1) SELECTED_TARGETS=("kmp") ;;
+    0|"") return 1 ;;
+    *) fail "Invalid target selection: $selection"; return 1 ;;
+  esac
 }
 
 show_main_menu() {
@@ -646,9 +482,9 @@ show_usage() {
   cat <<'EOF'
 Usage:
   ./scripts/release-all.sh
-  ./scripts/release-all.sh status <kmp|ios|macos>
-  ./scripts/release-all.sh package [all|targets...]
-  ./scripts/release-all.sh publish <targets...>
+  ./scripts/release-all.sh status kmp
+  ./scripts/release-all.sh package [all|kmp]
+  ./scripts/release-all.sh publish kmp
 EOF
 }
 
