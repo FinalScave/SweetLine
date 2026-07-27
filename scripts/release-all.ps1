@@ -544,7 +544,13 @@ function Invoke-PackageTarget {
         "native" {
             $outputDir = Join-Path $ReleaseDir "native"
             Ensure-Directory $outputDir
-            Invoke-External -FilePath (Join-Path $ScriptDir "package-artifacts.ps1") -Arguments @("-Version", $Version, "-OutputDir", $outputDir, "-Force") -WorkingDirectory $ProjectDir
+            $packageScript = Join-Path $ScriptDir "package-artifacts.ps1"
+            $packageArguments = @{
+                Version = $Version
+                OutputDir = $outputDir
+                Force = $true
+            }
+            & $packageScript @packageArguments
         }
         "android" {
             Invoke-External -FilePath (Join-Path $Target.Path "gradlew.bat") -Arguments @(":sweetline:assembleRelease", ":sweetline:generateBundle", "--console=plain") -WorkingDirectory $Target.Path
