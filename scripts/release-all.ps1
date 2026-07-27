@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [ValidateSet("menu", "status", "package", "publish", "resume")]
     [string]$Action = "menu",
@@ -353,21 +353,26 @@ function Test-OhpmPackage {
     throw "OHPM registry query failed for $PackageId@$Version"
 }
 
-function Test-GitHubRelease {
+function Get-GitHubReleaseStatus {
     param(
         [Parameter(Mandatory = $true)][string]$Repository,
-        [Parameter(Mandatory = $true)][string]$Tag
+        [Parameter(Mandatory = $true)][string]$Tag,
+        [Parameter(Mandatory = $true)][string]$AssetName
     )
 
     try {
-        Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/releases/tags/$Tag" -Headers @{ "User-Agent" = "SweetLine release tool" } | Out-Null
-        return $true
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/releases/tags/$Tag" -Headers @{ "User-Agent" = "SweetLine release tool" }
     } catch {
         if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 404) {
-            return $false
+            return "Pending"
         }
         throw
     }
+
+    if ($AssetName -in @($release.assets.name)) {
+        return "Published"
+    }
+    return "Incomplete"
 }
 
 function Get-RegistryStatus {
@@ -381,14 +386,18 @@ function Get-RegistryStatus {
     }
 
     try {
+        if ($Target.Registry -eq "GitHub") {
+            return Get-GitHubReleaseStatus `
+                -Repository $Target.Repository `
+                -Tag $Version `
+                -AssetName "sweetline-native-v$Version.zip"
+        }
+
         $published = switch ($Target.Registry) {
             "Maven Central" { Test-MavenPackage -PackageId $Target.PackageId -Version $Version }
             "NuGet.org" { Test-NuGetPackage -PackageId $Target.PackageId -Version $Version }
             "pub.dev" { Test-PubPackage -PackageId $Target.PackageId -Version $Version }
             "OHPM" { Test-OhpmPackage -PackageId $Target.PackageId -Version $Version }
-            "GitHub" {
-                Test-GitHubRelease -Repository $Target.Repository -Tag "native-v$Version"
-            }
             default { throw "Unsupported registry: $($Target.Registry)" }
         }
         return $(if ($published) { "Published" } else { "Pending" })
@@ -543,6 +552,9 @@ function Invoke-PackageTarget {
     switch ($Target.Key) {
         "native" {
             $outputDir = Join-Path $ReleaseDir "native"
+            if (Test-Path -LiteralPath $outputDir) {
+                Remove-Item -LiteralPath $outputDir -Recurse -Force
+            }
             Ensure-Directory $outputDir
             $packageScript = Join-Path $ScriptDir "package-artifacts.ps1"
             $packageArguments = @{
@@ -634,12 +646,12 @@ function Invoke-PublishTarget {
     switch ($Target.Key) {
         "native" {
             $outputDir = Join-Path $ReleaseDir "native"
-            $assets = @(Get-ChildItem -LiteralPath $outputDir -File | Select-Object -ExpandProperty FullName)
-            if ($assets.Count -eq 0) {
-                throw "No native release assets were found in $outputDir"
-            }
             $notesPath = Join-Path $outputDir "release-notes-v$Version.md"
-            $arguments = @("release", "create", "native-v$Version") + $assets + @("--repo", $Target.Repository, "--title", "SweetLine Native v$Version", "--target", (git -C $ProjectDir rev-parse HEAD).Trim())
+            $assetPath = Join-Path $outputDir "sweetline-native-v$Version.zip"
+            if (-not (Test-Path -LiteralPath $assetPath)) {
+                throw "Native release asset was not found: $assetPath"
+            }
+            $arguments = @("release", "create", $Version, $assetPath, "--repo", $Target.Repository, "--title", "SweetLine v$Version", "--target", (git -C $ProjectDir rev-parse HEAD).Trim())
             if (Test-Path -LiteralPath $notesPath) {
                 $arguments += @("--notes-file", $notesPath)
             } else {

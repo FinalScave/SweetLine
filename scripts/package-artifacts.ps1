@@ -9,24 +9,18 @@ param(
     [Alias("o")]
     [string]$OutputDir = "",
 
-    [string]$PrebuiltNamePrefix = "sweetline-prebuilt",
-    [string]$HeadersNamePrefix = "sweetline-headers",
-
-    [ValidateSet("android", "ios", "linux", "macos", "ohos", "wasm", "windows")]
-    [string[]]$Platform = @(),
-
     [string]$Commit = "",
 
-    [switch]$SkipPrebuilt,
-    [switch]$SkipHeaders,
     [string]$ReleaseNotesTemplate = "",
     [switch]$SkipReleaseNotes,
-    [switch]$NoPrebuiltReadme,
-    [switch]$NoChecksums,
     [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$') {
+    throw "Invalid version: $Version"
+}
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -53,6 +47,25 @@ $ResolvedOutputDir = if ($OutputDir) {
 } else {
     Join-Path $ProjectDir "build\artifacts"
 }
+$RequiredPlatforms = @("android", "ios", "linux", "macos", "ohos", "wasm", "windows")
+$RequiredPrebuiltFiles = @(
+    "android/arm64-v8a/libsweetline.so",
+    "android/x86_64/libsweetline.so",
+    "ios/arm64/libsweetline.dylib",
+    "ios/simulator-arm64/libsweetline.dylib",
+    "ios/SweetLineCoreIOS.xcframework.zip",
+    "linux/aarch64/libsweetline.so",
+    "linux/x86_64/libsweetline.so",
+    "macos/arm64/libsweetline.dylib",
+    "macos/x86_64/libsweetline.dylib",
+    "macos/SweetLineCoreMacOS.xcframework.zip",
+    "ohos/arm64-v8a/libsweetline.so",
+    "ohos/x86_64/libsweetline.so",
+    "wasm/sweetline.d.ts",
+    "wasm/sweetline.js",
+    "wasm/sweetline.wasm",
+    "windows/x64/sweetline.dll"
+)
 
 function Ensure-Directory {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -100,26 +113,7 @@ function Copy-DirectoryContents {
     Copy-Item -Path (Join-Path $Source "*") -Destination $Destination -Recurse -Force
 }
 
-function Get-PlatformDirectories {
-    param(
-        [Parameter(Mandatory = $true)][string]$RootDir,
-        [AllowEmptyCollection()][string[]]$RequestedPlatforms = @()
-    )
-
-    $existing = Get-ChildItem -LiteralPath $RootDir -Directory | Select-Object -ExpandProperty Name
-    if ($RequestedPlatforms.Count -eq 0) {
-        return $existing | Sort-Object
-    }
-
-    $missing = @($RequestedPlatforms | Where-Object { $_ -notin $existing })
-    if ($missing.Count -gt 0) {
-        throw "Requested platform directories are missing under ${RootDir}: $($missing -join ', ')"
-    }
-
-    return $RequestedPlatforms
-}
-
-function Write-PrebuiltReadmeFile {
+function Write-NativeReadmeFile {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][string]$VersionText,
@@ -128,8 +122,8 @@ function Write-PrebuiltReadmeFile {
     )
 
     $lines = New-Object System.Collections.Generic.List[string]
-    $lines.Add("SweetLine Prebuilt Package")
-    $lines.Add("========================")
+    $lines.Add("SweetLine Native SDK")
+    $lines.Add("====================")
     $lines.Add("")
     $lines.Add("Version: $VersionText")
     if ($CommitText) {
@@ -137,16 +131,19 @@ function Write-PrebuiltReadmeFile {
     }
     $lines.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')")
     $lines.Add("")
-    $lines.Add("Included platform directories:")
+    $lines.Add("Package layout:")
+    $lines.Add("- include/sweetline/: C/C++ headers")
+    $lines.Add("- prebuilt/: native binaries grouped by platform")
+    $lines.Add("")
+    $lines.Add("Included prebuilt platform directories:")
     foreach ($platformName in $Platforms) {
         $lines.Add("- $platformName")
     }
     $lines.Add("")
-    $lines.Add("The zip keeps each platform directory at the archive root.")
-    $lines.Add("For example:")
-    $lines.Add("- windows/x64/sweetline.dll")
-    $lines.Add("- wasm/sweetline.js")
-    $lines.Add("- android/arm64-v8a/libsweetline.so")
+    $lines.Add("Examples:")
+    $lines.Add("- prebuilt/windows/x64/sweetline.dll")
+    $lines.Add("- prebuilt/wasm/sweetline.js")
+    $lines.Add("- prebuilt/android/arm64-v8a/libsweetline.so")
 
     [System.IO.File]::WriteAllLines($Path, $lines, [System.Text.UTF8Encoding]::new($false))
 }
@@ -208,11 +205,11 @@ function Get-ResolvedCommit {
         return $OverrideCommit
     }
 
-    try {
-        return (git -C $ProjectRoot rev-parse HEAD).Trim()
-    } catch {
-        return ""
+    $resolvedCommit = git -C $ProjectRoot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or -not $resolvedCommit) {
+        throw "Unable to resolve the Git commit for $ProjectRoot"
     }
+    return ([string]$resolvedCommit).Trim()
 }
 
 function Write-ReleaseNotesFile {
@@ -220,8 +217,7 @@ function Write-ReleaseNotesFile {
         [Parameter(Mandatory = $true)][string]$TemplatePath,
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$VersionText,
-        [Parameter(Mandatory = $true)][string]$PrebuiltAssetName,
-        [Parameter(Mandatory = $true)][string]$HeadersAssetName,
+        [Parameter(Mandatory = $true)][string]$NativeAssetName,
         [string]$CommitText = ""
     )
 
@@ -233,8 +229,7 @@ function Write-ReleaseNotesFile {
     $replacements = @{
         "{{VERSION}}" = $VersionText
         "{{COMMIT}}" = $CommitText
-        "{{PREBUILT_ASSET_NAME}}" = $PrebuiltAssetName
-        "{{HEADERS_ASSET_NAME}}" = $HeadersAssetName
+        "{{NATIVE_ASSET_NAME}}" = $NativeAssetName
     }
 
     foreach ($entry in $replacements.GetEnumerator()) {
@@ -246,148 +241,97 @@ function Write-ReleaseNotesFile {
     Write-Host "Created release notes: $outputPath"
 }
 
-function Package-PrebuiltArtifacts {
+function Package-NativeArtifacts {
     param(
-        [Parameter(Mandatory = $true)][string]$SourceDir,
+        [Parameter(Mandatory = $true)][string]$PrebuiltSourceDir,
+        [Parameter(Mandatory = $true)][string]$HeadersSourceDir,
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$VersionText,
-        [Parameter(Mandatory = $true)][string]$ArchivePrefix,
         [Parameter(Mandatory = $true)][string[]]$Platforms,
+        [Parameter(Mandatory = $true)][string[]]$RequiredFiles,
         [string]$CommitText = "",
-        [switch]$IncludeReadme,
-        [switch]$IncludeChecksums,
         [switch]$Overwrite
     )
 
-    if (-not (Test-Path -LiteralPath $SourceDir)) {
-        throw "Prebuilt source directory does not exist: $SourceDir"
+    if (-not (Test-Path -LiteralPath $PrebuiltSourceDir)) {
+        throw "Prebuilt source directory does not exist: $PrebuiltSourceDir"
+    }
+    if (-not (Test-Path -LiteralPath $HeadersSourceDir)) {
+        throw "Headers source directory does not exist: $HeadersSourceDir"
     }
 
-    $archiveName = "$ArchivePrefix-v$VersionText.zip"
-    $archivePath = Join-Path $OutputDir $archiveName
-    if ((Test-Path -LiteralPath $archivePath) -and -not $Overwrite) {
-        throw "Archive already exists: $archivePath. Use -Force to overwrite it."
+    $missingPrebuiltFiles = @($RequiredFiles | Where-Object {
+        $relativePath = $_ -replace '/', [System.IO.Path]::DirectorySeparatorChar
+        -not (Test-Path -LiteralPath (Join-Path $PrebuiltSourceDir $relativePath) -PathType Leaf)
+    })
+    if ($missingPrebuiltFiles.Count -gt 0) {
+        throw "Required prebuilt files are missing: $($missingPrebuiltFiles -join ', ')"
     }
 
-    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("sweetline-prebuilt-" + [System.Guid]::NewGuid().ToString("N"))
-    $stageDir = Join-Path $tempRoot "stage"
-    Ensure-Directory -Path $stageDir
-
-    try {
-        foreach ($platformName in $Platforms) {
-            $sourcePlatformDir = Join-Path $SourceDir $platformName
-            $stagePlatformDir = Join-Path $stageDir $platformName
-            Copy-DirectoryContents -Source $sourcePlatformDir -Destination $stagePlatformDir
-        }
-
-        if ($IncludeReadme) {
-            Write-PrebuiltReadmeFile -Path (Join-Path $stageDir "README.txt") -VersionText $VersionText -Platforms $Platforms -CommitText $CommitText
-        }
-
-        if ($IncludeChecksums) {
-            Write-ChecksumsFile -StageDir $stageDir
-        }
-
-        New-ZipFromDirectoryContents -SourceDir $stageDir -ZipPath $archivePath
-        Write-Host "Created prebuilt archive: $archivePath"
-    } finally {
-        Remove-PathIfExists -Path $tempRoot
-    }
-}
-
-function Package-HeadersArtifacts {
-    param(
-        [Parameter(Mandatory = $true)][string]$SourceDir,
-        [Parameter(Mandatory = $true)][string]$OutputDir,
-        [Parameter(Mandatory = $true)][string]$VersionText,
-        [Parameter(Mandatory = $true)][string]$ArchivePrefix,
-        [switch]$IncludeChecksums,
-        [switch]$Overwrite
+    $headerFiles = @(
+        Get-ChildItem -LiteralPath $HeadersSourceDir -Recurse -File |
+            Where-Object { $_.Extension -in @(".h", ".hpp") }
     )
-
-    if (-not (Test-Path -LiteralPath $SourceDir)) {
-        throw "Headers source directory does not exist: $SourceDir"
-    }
-
-    $headerFiles = Get-ChildItem -LiteralPath $SourceDir -Recurse -File |
-        Where-Object { $_.Extension -in @(".h", ".hpp") }
     if ($headerFiles.Count -eq 0) {
-        throw "No header files were found under $SourceDir"
+        throw "No header files were found under $HeadersSourceDir"
     }
 
-    $archiveName = "$ArchivePrefix-v$VersionText.zip"
+    $archiveName = "sweetline-native-v$VersionText.zip"
     $archivePath = Join-Path $OutputDir $archiveName
     if ((Test-Path -LiteralPath $archivePath) -and -not $Overwrite) {
         throw "Archive already exists: $archivePath. Use -Force to overwrite it."
     }
 
-    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("sweetline-headers-" + [System.Guid]::NewGuid().ToString("N"))
+    $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("sweetline-native-" + [System.Guid]::NewGuid().ToString("N"))
     $stageDir = Join-Path $tempRoot "stage"
+    $stagePrebuiltDir = Join-Path $stageDir "prebuilt"
     $stageIncludeDir = Join-Path $stageDir "include"
+    Ensure-Directory -Path $stagePrebuiltDir
     Ensure-Directory -Path $stageIncludeDir
 
     try {
+        foreach ($platformName in $Platforms) {
+            $sourcePlatformDir = Join-Path $PrebuiltSourceDir $platformName
+            $stagePlatformDir = Join-Path $stagePrebuiltDir $platformName
+            Copy-DirectoryContents -Source $sourcePlatformDir -Destination $stagePlatformDir
+        }
+
         foreach ($file in $headerFiles) {
-            $relativePath = Get-RelativePathNormalized -BasePath $SourceDir -TargetPath $file.FullName
+            $relativePath = Get-RelativePathNormalized -BasePath $HeadersSourceDir -TargetPath $file.FullName
             $destinationPath = Join-Path $stageIncludeDir ($relativePath -replace '/', [System.IO.Path]::DirectorySeparatorChar)
             Ensure-Directory -Path (Split-Path -Parent $destinationPath)
             Copy-Item -LiteralPath $file.FullName -Destination $destinationPath -Force
         }
 
-        if ($IncludeChecksums) {
-            Write-ChecksumsFile -StageDir $stageDir
-        }
+        Write-NativeReadmeFile -Path (Join-Path $stageDir "README.txt") -VersionText $VersionText -Platforms $Platforms -CommitText $CommitText
+        Write-ChecksumsFile -StageDir $stageDir
 
         New-ZipFromDirectoryContents -SourceDir $stageDir -ZipPath $archivePath
-        Write-Host "Created headers archive: $archivePath"
+        Write-Host "Created native SDK archive: $archivePath"
     } finally {
         Remove-PathIfExists -Path $tempRoot
     }
 }
 
-if ($SkipPrebuilt -and $SkipHeaders) {
-    throw "Nothing to package. Remove -SkipPrebuilt or -SkipHeaders."
-}
-
 Ensure-Directory -Path $ResolvedOutputDir
 $resolvedCommit = Get-ResolvedCommit -ProjectRoot $ProjectDir -OverrideCommit $Commit
-$prebuiltArchiveName = "$PrebuiltNamePrefix-v$Version.zip"
-$headersArchiveName = "$HeadersNamePrefix-v$Version.zip"
+$nativeArchiveName = "sweetline-native-v$Version.zip"
 
-if (-not $SkipPrebuilt) {
-    $selectedPlatforms = @(Get-PlatformDirectories -RootDir $ResolvedPrebuiltSourceDir -RequestedPlatforms $Platform)
-    if ($selectedPlatforms.Count -eq 0) {
-        throw "No platform directories were found under $ResolvedPrebuiltSourceDir"
-    }
-
-    Package-PrebuiltArtifacts `
-        -SourceDir $ResolvedPrebuiltSourceDir `
-        -OutputDir $ResolvedOutputDir `
-        -VersionText $Version `
-        -ArchivePrefix $PrebuiltNamePrefix `
-        -Platforms $selectedPlatforms `
-        -CommitText $resolvedCommit `
-        -IncludeReadme:(-not $NoPrebuiltReadme) `
-        -IncludeChecksums:(-not $NoChecksums) `
-        -Overwrite:$Force
-}
-
-if (-not $SkipHeaders) {
-    Package-HeadersArtifacts `
-        -SourceDir $ResolvedHeadersSourceDir `
-        -OutputDir $ResolvedOutputDir `
-        -VersionText $Version `
-        -ArchivePrefix $HeadersNamePrefix `
-        -IncludeChecksums:(-not $NoChecksums) `
-        -Overwrite:$Force
-}
+Package-NativeArtifacts `
+    -PrebuiltSourceDir $ResolvedPrebuiltSourceDir `
+    -HeadersSourceDir $ResolvedHeadersSourceDir `
+    -OutputDir $ResolvedOutputDir `
+    -VersionText $Version `
+    -Platforms $RequiredPlatforms `
+    -RequiredFiles $RequiredPrebuiltFiles `
+    -CommitText $resolvedCommit `
+    -Overwrite:$Force
 
 if (-not $SkipReleaseNotes) {
     Write-ReleaseNotesFile `
         -TemplatePath $ResolvedReleaseNotesTemplate `
         -OutputDir $ResolvedOutputDir `
         -VersionText $Version `
-        -PrebuiltAssetName $prebuiltArchiveName `
-        -HeadersAssetName $headersArchiveName `
+        -NativeAssetName $nativeArchiveName `
         -CommitText $resolvedCommit
 }

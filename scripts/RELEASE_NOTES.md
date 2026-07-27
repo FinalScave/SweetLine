@@ -1,13 +1,12 @@
 # SweetLine v{{VERSION}}
 
-Cross-platform release assets for SweetLine.
+Cross-platform native SDK for SweetLine.
 
 ## Assets
 
-- Prebuilt binaries: `{{PREBUILT_ASSET_NAME}}`
-- C/C++ headers: `{{HEADERS_ASSET_NAME}}`
+- Native SDK: `{{NATIVE_ASSET_NAME}}`
 
-## Included Platforms In The Prebuilt Package
+## Included Platforms
 
 - Android: `arm64-v8a`, `x86_64`
 - iOS: `arm64/libsweetline.dylib`, `simulator-arm64/libsweetline.dylib`, `SweetLineCoreIOS.xcframework.zip`
@@ -19,15 +18,12 @@ Cross-platform release assets for SweetLine.
 
 ## Package Layout
 
-- `{{PREBUILT_ASSET_NAME}}`
-  - archive root contains platform directories directly
-  - includes `README.txt` and `SHA256SUMS.txt` by default
-- `{{HEADERS_ASSET_NAME}}`
-  - archive root contains `include/sweetline/...`
-  - includes `SHA256SUMS.txt` by default
+- `include/sweetline/`: C/C++ headers
+- `prebuilt/`: native binaries grouped by platform
+- `README.txt`: package metadata and included platforms
+- `SHA256SUMS.txt`: checksums for all packaged files
 
 ## Notes
 
 - Commit: `{{COMMIT}}`
-- The prebuilt package is built from the repository `prebuilt/` artifacts.
-- The headers package is built from `include/` and uses the install-style layout `include/sweetline/`.
+- The SDK is built from the repository `prebuilt/` and `include/` directories.
