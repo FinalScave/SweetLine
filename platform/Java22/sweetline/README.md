@@ -10,14 +10,14 @@ SweetLine for Java 22 is an FFM binding over the native SweetLine C API. The pac
 <dependency>
   <groupId>com.qiplat</groupId>
   <artifactId>sweetline-ffm</artifactId>
-  <version>1.3.1</version>
+  <version>1.3.2</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation "com.qiplat:sweetline-ffm:1.3.1"
+implementation "com.qiplat:sweetline-ffm:1.3.2"
 ```
 
 ## Requirements

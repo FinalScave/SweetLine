@@ -20,7 +20,7 @@ SweetLine 是一个跨平台、高性能、可扩展的语法高亮引擎，专�
 ## 安装
 
 ```bash
-ohpm install @qiplat/sweetline@1.3.1
+ohpm install @qiplat/sweetline@1.3.2
 ```
 
 OpenHarmony ohpm 环境配置等更多内容，请参考 [如何安装 OpenHarmony ohpm 包](https://ohpm.openharmony.cn/#/cn/help/downloadandinstall)。

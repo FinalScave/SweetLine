@@ -22,7 +22,7 @@ Add the dependency to the shared source set:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.qiplat:sweetline-kmp:1.0.0")
+            implementation("com.qiplat:sweetline-kmp:1.0.1")
         }
     }
 }

@@ -44,7 +44,7 @@ The Apple native binaries require iOS 14.0 or macOS 11.0 and newer.
 
 ```yaml
 dependencies:
-  sweetline: ^1.3.1
+  sweetline: ^1.3.2
 ```
 
 ## Load syntax rules

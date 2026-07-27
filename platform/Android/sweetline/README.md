@@ -6,7 +6,7 @@ SweetLine for Android exposes the native highlighting engine through a Java/JNI 
 
 ```groovy
 dependencies {
-    implementation "com.qiplat:sweetline:1.3.1"
+    implementation "com.qiplat:sweetline:1.3.2"
 }
 ```
 
