@@ -212,7 +212,6 @@ namespace NS_SWEETLINE {
     const size_t total_line_count = m_document_->getLineCount();
     const size_t visible_start = visible_range.start_line;
     const size_t visible_end = visible_start + visible_range.line_count - 1;
-    const size_t scan_end = std::min(total_line_count - 1, visible_end + m_lookahead_lines_);
 
     result->line_states.resize(visible_range.line_count);
 
@@ -222,7 +221,7 @@ namespace NS_SWEETLINE {
     context.visible_start = visible_start;
     context.visible_end = visible_end;
 
-    for (size_t line = visible_start; line <= scan_end; ++line) {
+    for (size_t line = visible_start; line <= visible_end; ++line) {
       if (line != visible_start && line % m_checkpoint_interval_ == 0) {
         saveCheckpoint(line, state);
       }
@@ -528,9 +527,7 @@ namespace NS_SWEETLINE {
         scope.guide_indent = scope_rule->kind == ScopeRuleKind::INDENT_START
           ? scope.start_indent + m_config_.tab_size
           : token_column;
-        scope.guide_column = scope_rule->kind == ScopeRuleKind::INDENT_START
-          ? scope.start_indent
-          : token_column;
+        scope.guide_column = indent_char_column;
         state.scopes.push_back(std::move(scope));
         if (visible) {
           ActiveScope& active_scope = state.scopes.back();

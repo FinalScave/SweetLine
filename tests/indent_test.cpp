@@ -150,12 +150,97 @@ TEST_CASE("ScopeRules keeps nesting level for unclosed blocks at EOF") {
   CHECK(has_level1);
 }
 
-TEST_CASE("ScopeRules guide column uses min of start and end columns") {
+TEST_CASE("ScopeRules guide column starts at opening line indentation") {
   SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
   const U8String syntax = makeBraceScopeSyntax("braceCol", ".bc");
 
   REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
-  SharedPtr<Document> document = makeSharedPtr<Document>("example.bc", "if (ok) {\n    run();\n}");
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.bc", "if (ok) {\n    run();");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
+}
+
+TEST_CASE("ScopeRules guide column uses character indentation for tabs") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeBraceScopeSyntax("braceTabCol", ".btc");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.btc", "\tif (ok) {\n\t\twork();");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 1);
+}
+
+TEST_CASE("ScopeRules visible end can move guide left of opening indentation") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeBraceScopeSyntax("braceEndCol", ".bec");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.bec", "    if (ok) {\n        run();\n}");
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+
+  SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();
+  REQUIRE(result != nullptr);
+  REQUIRE(result->guide_lines.size() == 1);
+  CHECK(result->guide_lines[0].column == 0);
+  CHECK(result->guide_lines[0].end_line == 2);
+}
+
+TEST_CASE("ScopeRules invisible end does not affect visible guide column") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = makeBraceScopeSyntax("braceStableCol", ".bsc");
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  U8String text = "    if (ok) {\n";
+  for (int32_t line = 0; line < 130; ++line) {
+    text += "        run();\n";
+  }
+  text += "}";
+  SharedPtr<Document> document = makeSharedPtr<Document>("example.bsc", text);
+  SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
+
+  SharedPtr<IndentGuideResult> shorter = analyzer->analyzeIndentGuidesInLineRange({0, 3});
+  SharedPtr<IndentGuideResult> longer = analyzer->analyzeIndentGuidesInLineRange({0, 4});
+  REQUIRE(shorter != nullptr);
+  REQUIRE(longer != nullptr);
+  REQUIRE(shorter->guide_lines.size() == 1);
+  REQUIRE(longer->guide_lines.size() == 1);
+  CHECK(shorter->guide_lines[0].column == 4);
+  CHECK(longer->guide_lines[0].column == 4);
+  CHECK(shorter->guide_lines[0].continues_after);
+  CHECK(longer->guide_lines[0].continues_after);
+}
+
+TEST_CASE("Word scope guide column uses opening line indentation") {
+  SharedPtr<HighlightEngine> engine = makeTestHighlightEngine();
+  const U8String syntax = R"({
+  "name": "wordColumn",
+  "fileSuffixes": [".wc"],
+  "states": {
+    "default": [
+      { "pattern": "\\b(if|then|end)\\b", "style": "keyword" }
+    ]
+  },
+  "scopeRules": {
+    "skips": [],
+    "rules": [
+      { "kind": "word", "start": "then", "end": "end" }
+    ]
+  }
+})";
+
+  REQUIRE_NOTHROW(engine->compileSyntaxFromJson(syntax));
+  SharedPtr<Document> document = makeSharedPtr<Document>(
+    "example.wc", "if ready then\n    work()");
   SharedPtr<DocumentAnalyzer> analyzer = engine->loadDocument(document);
 
   SharedPtr<IndentGuideResult> result = analyzer->analyzeIndentGuides();

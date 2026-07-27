@@ -208,7 +208,6 @@ namespace NS_SWEETLINE {
     List<const ScopeRule*> m_ordered_scope_rules_;
     List<Checkpoint> m_checkpoints_;
     size_t m_checkpoint_interval_ {256};
-    size_t m_lookahead_lines_ {128};
   };
 
   /// Bracket pair analyzer independent of highlight analysis
