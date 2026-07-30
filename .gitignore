@@ -15,7 +15,6 @@
 tests/output
 tests/build
 CMakeSettings.json
-/platform/OHOS/signing.local.json
 
 .tmp
 .codex
